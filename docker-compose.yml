@@ -6,7 +6,7 @@ services:
             args:
                 WWWGROUP: '${WWWGROUP:-1000}'
                 WWWUSER: '${WWWUSER:-1000}'
-        image: clarity-tech/sail-8.4
+        image: ghcr.io/clarity-tech/laravel-strict:php8.4
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         ports:
@@ -50,12 +50,12 @@ services:
         networks:
             - sail
     pgsql:
-        image: 'postgres:17'
+        image: postgres:17-alpine
         ports:
             - '${FORWARD_DB_PORT:-5432}:5432'
         environment:
             PGPASSWORD: '${DB_PASSWORD:-secret}'
-            POSTGRES_DB: '${DB_DATABASE}'
+            POSTGRES_DB: '${DB_DATABASE:-laravel}'
             POSTGRES_USER: '${DB_USERNAME:-sail}'
             POSTGRES_PASSWORD: '${DB_PASSWORD:-secret}'
         volumes:
@@ -72,11 +72,10 @@ services:
                 - '${DB_DATABASE}'
                 - '-U'
                 - '${DB_USERNAME}'
-            retries: 3
+            retries: 10
             timeout: 5s
 
     pgweb:
-        container_name: pgweb
         image: sosedoff/pgweb
         ports:
             - '${FORWARD_PGWEB_PORT:-8081}:8081'
