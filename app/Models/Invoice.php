@@ -23,10 +23,13 @@ class Invoice extends Model
         'total',
     ];
 
-    protected $casts = [
-        'issued_at' => 'datetime',
-        'due_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'issued_at' => 'datetime',
+            'due_at' => 'datetime',
+        ];
+    }
 
     protected static function boot()
     {

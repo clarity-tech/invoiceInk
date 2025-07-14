@@ -15,9 +15,12 @@ class Company extends Model
         'primary_location_id',
     ];
 
-    protected $casts = [
-        'emails' => 'json',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'emails' => \App\Casts\EmailCollectionCast::class,
+        ];
+    }
 
     public function locations(): MorphMany
     {
