@@ -3,6 +3,7 @@
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Services\InvoiceCalculator;
+use App\ValueObjects\InvoiceTotals;
 use Illuminate\Support\Collection;
 
 test('calculates invoice with no items', function () {
@@ -12,11 +13,10 @@ test('calculates invoice with no items', function () {
     $calculator = new InvoiceCalculator();
     $result = $calculator->calculateInvoice($invoice);
     
-    expect($result)->toBe([
-        'subtotal' => 0,
-        'tax' => 0,
-        'total' => 0,
-    ]);
+    expect($result)->toBeInstanceOf(InvoiceTotals::class);
+    expect($result->subtotal)->toBe(0);
+    expect($result->tax)->toBe(0);
+    expect($result->total)->toBe(0);
 });
 
 test('calculates invoice with items without tax', function () {
@@ -38,11 +38,10 @@ test('calculates invoice with items without tax', function () {
     $calculator = new InvoiceCalculator();
     $result = $calculator->calculateInvoice($invoice);
     
-    expect($result)->toBe([
-        'subtotal' => 3500, // $35.00
-        'tax' => 0,
-        'total' => 3500,
-    ]);
+    expect($result)->toBeInstanceOf(InvoiceTotals::class);
+    expect($result->subtotal)->toBe(3500); // $35.00
+    expect($result->tax)->toBe(0);
+    expect($result->total)->toBe(3500);
 });
 
 test('calculates invoice with items with tax', function () {
@@ -64,11 +63,10 @@ test('calculates invoice with items with tax', function () {
     $calculator = new InvoiceCalculator();
     $result = $calculator->calculateInvoice($invoice);
     
-    expect($result)->toBe([
-        'subtotal' => 3500, // $35.00
-        'tax' => 500, // $2.00 + $3.00 = $5.00
-        'total' => 4000, // $40.00
-    ]);
+    expect($result)->toBeInstanceOf(InvoiceTotals::class);
+    expect($result->subtotal)->toBe(3500); // $35.00
+    expect($result->tax)->toBe(500); // $2.00 + $3.00 = $5.00
+    expect($result->total)->toBe(4000); // $40.00
 });
 
 test('calculates from items collection', function () {
@@ -88,11 +86,10 @@ test('calculates from items collection', function () {
     $calculator = new InvoiceCalculator();
     $result = $calculator->calculateFromItems($items);
     
-    expect($result)->toBe([
-        'subtotal' => 2000, // $10.00 + $10.00 = $20.00
-        'tax' => 150, // $1.00 + $0.50 = $1.50
-        'total' => 2150, // $21.50
-    ]);
+    expect($result)->toBeInstanceOf(InvoiceTotals::class);
+    expect($result->subtotal)->toBe(2000); // $10.00 + $10.00 = $20.00
+    expect($result->tax)->toBe(150); // $1.00 + $0.50 = $1.50
+    expect($result->total)->toBe(2150); // $21.50
 });
 
 test('updates invoice totals', function () {
@@ -115,4 +112,22 @@ test('updates invoice totals', function () {
     expect($updatedInvoice->subtotal)->toBe(1000);
     expect($updatedInvoice->tax)->toBe(100);
     expect($updatedInvoice->total)->toBe(1100);
+});
+
+test('invoice totals value object has zero factory method', function () {
+    $totals = InvoiceTotals::zero();
+    
+    expect($totals->subtotal)->toBe(0);
+    expect($totals->tax)->toBe(0);
+    expect($totals->total)->toBe(0);
+});
+
+test('invoice totals value object can convert to array', function () {
+    $totals = new InvoiceTotals(1000, 100, 1100);
+    
+    expect($totals->toArray())->toBe([
+        'subtotal' => 1000,
+        'tax' => 100,
+        'total' => 1100,
+    ]);
 });

@@ -3,27 +3,23 @@
 namespace App\Services;
 
 use App\Models\Invoice;
-use App\Models\InvoiceItem;
+use App\ValueObjects\InvoiceTotals;
 use Illuminate\Support\Collection;
 
 class InvoiceCalculator
 {
-    public function calculateInvoice(Invoice $invoice): array
+    public function calculateInvoice(Invoice $invoice): InvoiceTotals
     {
         $items = $invoice->items;
         
         if ($items->isEmpty()) {
-            return [
-                'subtotal' => 0,
-                'tax' => 0,
-                'total' => 0,
-            ];
+            return InvoiceTotals::zero();
         }
 
         return $this->calculateFromItems($items);
     }
 
-    public function calculateFromItems(Collection $items): array
+    public function calculateFromItems(Collection $items): InvoiceTotals
     {
         $subtotal = 0;
         $taxAmount = 0;
@@ -36,20 +32,20 @@ class InvoiceCalculator
             $taxAmount += $lineTax;
         }
 
-        return [
-            'subtotal' => $subtotal,
-            'tax' => $taxAmount,
-            'total' => $subtotal + $taxAmount,
-        ];
+        return new InvoiceTotals(
+            subtotal: $subtotal,
+            tax: $taxAmount,
+            total: $subtotal + $taxAmount
+        );
     }
 
     public function updateInvoiceTotals(Invoice $invoice): Invoice
     {
-        $calculations = $this->calculateInvoice($invoice);
+        $totals = $this->calculateInvoice($invoice);
         
-        $invoice->subtotal = $calculations['subtotal'];
-        $invoice->tax = $calculations['tax'];
-        $invoice->total = $calculations['total'];
+        $invoice->subtotal = $totals->subtotal;
+        $invoice->tax = $totals->tax;
+        $invoice->total = $totals->total;
         
         return $invoice;
     }
