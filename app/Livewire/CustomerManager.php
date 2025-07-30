@@ -201,6 +201,7 @@ class CustomerManager extends Component
 
     public function render()
     {
-        return view('livewire.customer-manager');
+        return view('livewire.customer-manager')
+            ->layout('layouts.app', ['title' => 'Customers']);
     }
 }

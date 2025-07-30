@@ -201,6 +201,7 @@ class CompanyManager extends Component
 
     public function render()
     {
-        return view('livewire.company-manager');
+        return view('livewire.company-manager')
+            ->layout('layouts.app', ['title' => 'Companies']);
     }
 }

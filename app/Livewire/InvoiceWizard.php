@@ -324,6 +324,7 @@ class InvoiceWizard extends Component
 
     public function render()
     {
-        return view('livewire.invoice-wizard');
+        return view('livewire.invoice-wizard')
+            ->layout('layouts.app', ['title' => 'Invoices & Estimates']);
     }
 }
