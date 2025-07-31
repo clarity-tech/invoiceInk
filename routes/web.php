@@ -16,5 +16,5 @@ Route::get('/customers', CustomerManager::class)->name('customers.index');
 Route::get('/invoices', InvoiceWizard::class)->name('invoices.index');
 
 // Public view routes for invoices and estimates
-Route::get('/invoices/{uuid}', [PublicViewController::class, 'showInvoice'])->name('invoices.public');
-Route::get('/estimates/{uuid}', [PublicViewController::class, 'showEstimate'])->name('estimates.public');
+Route::get('/invoices/{ulid}', [PublicViewController::class, 'showInvoice'])->name('invoices.public');
+Route::get('/estimates/{ulid}', [PublicViewController::class, 'showEstimate'])->name('estimates.public');

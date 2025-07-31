@@ -2,16 +2,18 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 
 class Invoice extends Model
 {
+    use HasUlids;
+
     protected $fillable = [
         'type',
-        'uuid',
+        'ulid',
         'company_location_id',
         'customer_location_id',
         'invoice_number',
@@ -31,15 +33,9 @@ class Invoice extends Model
         ];
     }
 
-    protected static function boot()
+    public function uniqueIds(): array
     {
-        parent::boot();
-
-        static::creating(function ($invoice) {
-            if (!$invoice->uuid) {
-                $invoice->uuid = Str::uuid();
-            }
-        });
+        return ['ulid'];
     }
 
     public function companyLocation(): BelongsTo
