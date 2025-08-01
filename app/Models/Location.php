@@ -16,6 +16,8 @@ class Location extends Model
         'state',
         'country',
         'postal_code',
+        'locatable_type',
+        'locatable_id',
     ];
 
     public function locatable(): MorphTo
