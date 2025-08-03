@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
-use Illuminate\Support\Str;
 
 class EstimateToInvoiceConverter
 {
@@ -22,13 +21,12 @@ class EstimateToInvoiceConverter
 
         $invoice = new Invoice([
             'type' => 'invoice',
-            'uuid' => Str::uuid(),
             'company_location_id' => $estimate->company_location_id,
             'customer_location_id' => $estimate->customer_location_id,
             'invoice_number' => $this->generateInvoiceNumber(),
             'status' => 'draft',
-            'issued_at' => now(),
-            'due_at' => now()->addDays(30),
+            'issued_at' => $estimate->issued_at,
+            'due_at' => $estimate->due_at,
             'subtotal' => $estimate->subtotal,
             'tax' => $estimate->tax,
             'total' => $estimate->total,

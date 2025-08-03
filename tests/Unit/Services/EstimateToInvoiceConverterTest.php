@@ -3,6 +3,7 @@
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Services\EstimateToInvoiceConverter;
+use App\Services\InvoiceCalculator;
 
 test('can convert estimate to invoice', function () {
     // Create an estimate with items
@@ -30,7 +31,7 @@ test('can convert estimate to invoice', function () {
         ]
     ]);
 
-    $converter = new EstimateToInvoiceConverter();
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
     $invoice = $converter->convert($estimate);
 
     expect($invoice)->toBeInstanceOf(Invoice::class);
@@ -44,26 +45,21 @@ test('can convert estimate to invoice', function () {
 });
 
 test('converted invoice has all items from estimate', function () {
-    $estimate = Invoice::create([
+    $estimate = createInvoiceWithItems([
         'type' => 'estimate',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'EST-002',
         'status' => 'sent',
         'subtotal' => 7500,
         'tax' => 1350,
         'total' => 8850,
-    ]);
-
-    InvoiceItem::create([
-        'invoice_id' => $estimate->id,
+    ], [[
         'description' => 'Consulting Services',
         'quantity' => 10,
         'unit_price' => 750,
         'tax_rate' => 18,
-    ]);
+    ]]);
 
-    $converter = new EstimateToInvoiceConverter();
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
     $invoice = $converter->convert($estimate);
 
     expect($invoice->items()->count())->toBe(1);
@@ -72,14 +68,12 @@ test('converted invoice has all items from estimate', function () {
     expect($invoiceItem->description)->toBe('Consulting Services');
     expect($invoiceItem->quantity)->toBe(10);
     expect($invoiceItem->unit_price)->toBe(750);
-    expect($invoiceItem->tax_rate)->toBe(18);
+    expect($invoiceItem->tax_rate)->toBe('18.00');
 });
 
 test('converted invoice gets new invoice number', function () {
-    $estimate = Invoice::create([
+    $estimate = createInvoiceWithItems([
         'type' => 'estimate',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'EST-003',
         'status' => 'sent',
         'subtotal' => 5000,
@@ -87,7 +81,7 @@ test('converted invoice gets new invoice number', function () {
         'total' => 5900,
     ]);
 
-    $converter = new EstimateToInvoiceConverter();
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
     $invoice = $converter->convert($estimate);
 
     expect($invoice->invoice_number)->not->toBe($estimate->invoice_number);
@@ -95,10 +89,8 @@ test('converted invoice gets new invoice number', function () {
 });
 
 test('converted invoice has new ULID', function () {
-    $estimate = Invoice::create([
+    $estimate = createInvoiceWithItems([
         'type' => 'estimate',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'EST-004',
         'status' => 'sent',
         'subtotal' => 3000,
@@ -106,7 +98,7 @@ test('converted invoice has new ULID', function () {
         'total' => 3540,
     ]);
 
-    $converter = new EstimateToInvoiceConverter();
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
     $invoice = $converter->convert($estimate);
 
     expect($invoice->ulid)->not->toBe($estimate->ulid);
@@ -118,10 +110,8 @@ test('converter preserves dates from estimate', function () {
     $issuedAt = now()->subDays(5);
     $dueAt = now()->addDays(25);
 
-    $estimate = Invoice::create([
+    $estimate = createInvoiceWithItems([
         'type' => 'estimate',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'EST-005',
         'status' => 'sent',
         'issued_at' => $issuedAt,
@@ -131,7 +121,7 @@ test('converter preserves dates from estimate', function () {
         'total' => 2360,
     ]);
 
-    $converter = new EstimateToInvoiceConverter();
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
     $invoice = $converter->convert($estimate);
 
     expect($invoice->issued_at->format('Y-m-d H:i:s'))->toBe($issuedAt->format('Y-m-d H:i:s'));
@@ -139,10 +129,8 @@ test('converter preserves dates from estimate', function () {
 });
 
 test('converter handles estimate without dates', function () {
-    $estimate = Invoice::create([
+    $estimate = createInvoiceWithItems([
         'type' => 'estimate',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'EST-006',
         'status' => 'sent',
         'subtotal' => 1500,
@@ -150,7 +138,7 @@ test('converter handles estimate without dates', function () {
         'total' => 1770,
     ]);
 
-    $converter = new EstimateToInvoiceConverter();
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
     $invoice = $converter->convert($estimate);
 
     expect($invoice->issued_at)->toBeNull();
@@ -158,18 +146,16 @@ test('converter handles estimate without dates', function () {
 });
 
 test('converter works with estimates that have no items', function () {
-    $estimate = Invoice::create([
+    $estimate = createInvoiceWithItems([
         'type' => 'estimate',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'EST-007',
         'status' => 'sent',
         'subtotal' => 0,
         'tax' => 0,
         'total' => 0,
-    ]);
+    ], []); // Empty array for no items
 
-    $converter = new EstimateToInvoiceConverter();
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
     $invoice = $converter->convert($estimate);
 
     expect($invoice->items()->count())->toBe(0);
@@ -179,51 +165,43 @@ test('converter works with estimates that have no items', function () {
 });
 
 test('converter preserves complex item configurations', function () {
-    $estimate = Invoice::create([
+    $estimate = createInvoiceWithItems([
         'type' => 'estimate',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'EST-008',
         'status' => 'sent',
         'subtotal' => 12000,
         'tax' => 1620,
         'total' => 13620,
+    ], [
+        [
+            'description' => 'Product A',
+            'quantity' => 2,
+            'unit_price' => 3000,
+            'tax_rate' => 12,
+        ],
+        [
+            'description' => 'Service B',
+            'quantity' => 3,
+            'unit_price' => 2000,
+            'tax_rate' => 18,
+        ],
+        [
+            'description' => 'Tax-free item',
+            'quantity' => 1,
+            'unit_price' => 0,
+            'tax_rate' => 0,
+        ]
     ]);
 
-    // Different tax rates and quantities
-    InvoiceItem::create([
-        'invoice_id' => $estimate->id,
-        'description' => 'Product A',
-        'quantity' => 2,
-        'unit_price' => 3000,
-        'tax_rate' => 12,
-    ]);
-
-    InvoiceItem::create([
-        'invoice_id' => $estimate->id,
-        'description' => 'Service B',
-        'quantity' => 3,
-        'unit_price' => 2000,
-        'tax_rate' => 18,
-    ]);
-
-    InvoiceItem::create([
-        'invoice_id' => $estimate->id,
-        'description' => 'Tax-free item',
-        'quantity' => 1,
-        'unit_price' => 0,
-        'tax_rate' => 0,
-    ]);
-
-    $converter = new EstimateToInvoiceConverter();
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
     $invoice = $converter->convert($estimate);
 
     expect($invoice->items()->count())->toBe(3);
     
     $items = $invoice->items->sortBy('description');
     expect($items->first()->description)->toBe('Product A');
-    expect($items->first()->tax_rate)->toBe(12);
+    expect($items->first()->tax_rate)->toBe('12.00');
     
     expect($items->last()->description)->toBe('Tax-free item');
-    expect($items->last()->tax_rate)->toBe(0);
+    expect($items->last()->tax_rate)->toBe('0.00');
 });

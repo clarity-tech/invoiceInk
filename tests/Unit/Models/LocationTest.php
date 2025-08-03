@@ -51,7 +51,6 @@ test('location belongs to company through polymorphic relationship', function ()
     $company = createCompanyWithLocation([
         'name' => 'Test Company',
         'emails' => new \App\ValueObjects\EmailCollection(['test@company.com']),
-        'primary_location_id' => 1,
     ]);
 
     $location = Location::create([
@@ -73,7 +72,6 @@ test('location belongs to customer through polymorphic relationship', function (
     $customer = createCustomerWithLocation([
         'name' => 'Test Customer',
         'emails' => new \App\ValueObjects\EmailCollection(['test@customer.com']),
-        'primary_location_id' => 1,
     ]);
 
     $location = Location::create([
@@ -120,7 +118,6 @@ test('location polymorphic relationship works with different models', function (
     $company = createCompanyWithLocation([
         'name' => 'Test Company',
         'emails' => new \App\ValueObjects\EmailCollection(['company@test.com']),
-        'primary_location_id' => 1,
     ]);
 
     $companyLocation = Location::create([
@@ -138,7 +135,6 @@ test('location polymorphic relationship works with different models', function (
     $customer = createCustomerWithLocation([
         'name' => 'Test Customer',
         'emails' => new \App\ValueObjects\EmailCollection(['customer@test.com']),
-        'primary_location_id' => 1,
     ]);
 
     $customerLocation = Location::create([

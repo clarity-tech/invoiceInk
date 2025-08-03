@@ -17,18 +17,15 @@ test('can create document mailer for invoice', function () {
         'total' => 11800,
     ]);
 
-    $recipientEmail = 'recipient@test.com';
+    $recipients = new EmailCollection(['recipient@test.com']);
 
-    $mailer = new DocumentMailer($invoice, $recipientEmail);
+    $mailer = new DocumentMailer($invoice, $recipients);
 
     expect($mailer)->toBeInstanceOf(DocumentMailer::class);
 });
 
 test('document mailer builds correctly for invoice', function () {
-    $invoice = Invoice::create([
-        'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
+    $invoice = createInvoiceWithItems([
         'invoice_number' => 'INV-002',
         'status' => 'draft',
         'subtotal' => 5000,
@@ -36,19 +33,16 @@ test('document mailer builds correctly for invoice', function () {
         'total' => 5900,
     ]);
 
-    $recipientEmail = 'test@example.com';
+    $recipients = new EmailCollection(['test@example.com']);
 
-    $mailer = new DocumentMailer($invoice, $recipientEmail);
-    $buildResult = $mailer->build();
+    $mailer = new DocumentMailer($invoice, $recipients);
+    $envelope = $mailer->envelope();
 
-    expect($buildResult)->toBeInstanceOf(DocumentMailer::class);
+    expect($envelope->to[0]->address)->toBe('test@example.com');
 });
 
 test('document mailer has correct subject for invoice', function () {
-    $invoice = Invoice::create([
-        'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
+    $invoice = createInvoiceWithItems([
         'invoice_number' => 'INV-003',
         'status' => 'draft',
         'subtotal' => 7500,
@@ -56,23 +50,15 @@ test('document mailer has correct subject for invoice', function () {
         'total' => 8850,
     ]);
 
-    $mailer = new DocumentMailer($invoice, 'test@example.com');
-    $built = $mailer->build();
+    $mailer = new DocumentMailer($invoice, new EmailCollection(['test@example.com']));
+    $envelope = $mailer->envelope();
 
-    // Access the subject through reflection since it's protected
-    $reflection = new ReflectionClass($built);
-    $subjectProperty = $reflection->getProperty('subject');
-    $subjectProperty->setAccessible(true);
-    $subject = $subjectProperty->getValue($built);
-
-    expect($subject)->toBe('Invoice INV-003');
+    expect($envelope->subject)->toBe('Invoice #INV-003');
 });
 
 test('document mailer has correct subject for estimate', function () {
-    $estimate = Invoice::create([
+    $estimate = createInvoiceWithItems([
         'type' => 'estimate',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'EST-001',
         'status' => 'draft',
         'subtotal' => 3000,
@@ -80,22 +66,14 @@ test('document mailer has correct subject for estimate', function () {
         'total' => 3540,
     ]);
 
-    $mailer = new DocumentMailer($estimate, 'test@example.com');
-    $built = $mailer->build();
+    $mailer = new DocumentMailer($estimate, new EmailCollection(['test@example.com']));
+    $envelope = $mailer->envelope();
 
-    $reflection = new ReflectionClass($built);
-    $subjectProperty = $reflection->getProperty('subject');
-    $subjectProperty->setAccessible(true);
-    $subject = $subjectProperty->getValue($built);
-
-    expect($subject)->toBe('Estimate EST-001');
+    expect($envelope->subject)->toBe('Estimate #EST-001');
 });
 
 test('document mailer implements ShouldQueue', function () {
-    $invoice = Invoice::create([
-        'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
+    $invoice = createInvoiceWithItems([
         'invoice_number' => 'INV-004',
         'status' => 'draft',
         'subtotal' => 2000,
@@ -103,16 +81,13 @@ test('document mailer implements ShouldQueue', function () {
         'total' => 2360,
     ]);
 
-    $mailer = new DocumentMailer($invoice, 'test@example.com');
+    $mailer = new DocumentMailer($invoice, new EmailCollection(['test@example.com']));
 
     expect($mailer)->toBeInstanceOf(\Illuminate\Contracts\Queue\ShouldQueue::class);
 });
 
 test('document mailer uses correct view for invoice', function () {
-    $invoice = Invoice::create([
-        'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
+    $invoice = createInvoiceWithItems([
         'invoice_number' => 'INV-005',
         'status' => 'draft',
         'subtotal' => 4000,
@@ -120,22 +95,15 @@ test('document mailer uses correct view for invoice', function () {
         'total' => 4720,
     ]);
 
-    $mailer = new DocumentMailer($invoice, 'test@example.com');
-    $built = $mailer->build();
+    $mailer = new DocumentMailer($invoice, new EmailCollection(['test@example.com']));
+    $content = $mailer->content();
 
-    $reflection = new ReflectionClass($built);
-    $viewProperty = $reflection->getProperty('view');
-    $viewProperty->setAccessible(true);
-    $view = $viewProperty->getValue($built);
-
-    expect($view)->toBe('emails.invoice');
+    expect($content->view)->toBe('emails.invoice');
 });
 
 test('document mailer uses correct view for estimate', function () {
-    $estimate = Invoice::create([
+    $estimate = createInvoiceWithItems([
         'type' => 'estimate',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'EST-002',
         'status' => 'draft',
         'subtotal' => 6000,
@@ -143,22 +111,14 @@ test('document mailer uses correct view for estimate', function () {
         'total' => 7080,
     ]);
 
-    $mailer = new DocumentMailer($estimate, 'test@example.com');
-    $built = $mailer->build();
+    $mailer = new DocumentMailer($estimate, new EmailCollection(['test@example.com']));
+    $content = $mailer->content();
 
-    $reflection = new ReflectionClass($built);
-    $viewProperty = $reflection->getProperty('view');
-    $viewProperty->setAccessible(true);
-    $view = $viewProperty->getValue($built);
-
-    expect($view)->toBe('emails.estimate');
+    expect($content->view)->toBe('emails.estimate');
 });
 
 test('document mailer passes correct data to view', function () {
-    $invoice = Invoice::create([
-        'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
+    $invoice = createInvoiceWithItems([
         'invoice_number' => 'INV-006',
         'status' => 'sent',
         'subtotal' => 8000,
@@ -166,25 +126,17 @@ test('document mailer passes correct data to view', function () {
         'total' => 9440,
     ]);
 
-    $mailer = new DocumentMailer($invoice, 'recipient@test.com');
-    $built = $mailer->build();
+    $mailer = new DocumentMailer($invoice, new EmailCollection(['recipient@test.com']));
+    $content = $mailer->content();
 
-    $reflection = new ReflectionClass($built);
-    $viewDataProperty = $reflection->getProperty('viewData');
-    $viewDataProperty->setAccessible(true);
-    $viewData = $viewDataProperty->getValue($built);
-
-    expect($viewData)->toHaveKey('document');
-    expect($viewData)->toHaveKey('recipientEmail');
-    expect($viewData['document'])->toBe($invoice);
-    expect($viewData['recipientEmail'])->toBe('recipient@test.com');
+    expect($content->with)->toHaveKey('invoice');
+    expect($content->with)->toHaveKey('viewUrl');
+    expect($content->with['invoice'])->toBe($invoice);
+    expect($content->with['viewUrl'])->toBeString();
 });
 
 test('document mailer handles different recipient emails', function () {
-    $invoice = Invoice::create([
-        'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
+    $invoice = createInvoiceWithItems([
         'invoice_number' => 'INV-007',
         'status' => 'draft',
         'subtotal' => 1500,
@@ -199,14 +151,10 @@ test('document mailer handles different recipient emails', function () {
     ];
 
     foreach ($emails as $email) {
-        $mailer = new DocumentMailer($invoice, $email);
-        $built = $mailer->build();
+        $recipients = new EmailCollection([$email]);
+        $mailer = new DocumentMailer($invoice, $recipients);
+        $envelope = $mailer->envelope();
 
-        $reflection = new ReflectionClass($built);
-        $viewDataProperty = $reflection->getProperty('viewData');
-        $viewDataProperty->setAccessible(true);
-        $viewData = $viewDataProperty->getValue($built);
-
-        expect($viewData['recipientEmail'])->toBe($email);
+        expect($envelope->to[0]->address)->toBe($email);
     }
 });

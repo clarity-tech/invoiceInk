@@ -46,8 +46,6 @@ test('invoice item belongs to invoice', function () {
 test('invoice item can have zero tax rate', function () {
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'INV-001',
         'status' => 'draft',
         'subtotal' => 1000,
@@ -69,8 +67,6 @@ test('invoice item can have zero tax rate', function () {
 test('invoice item can have null tax rate', function () {
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'INV-001',
         'status' => 'draft',
         'subtotal' => 1000,
@@ -124,8 +120,10 @@ test('invoice item calculates line total correctly', function () {
 });
 
 test('invoice item handles large quantities and prices', function () {
+    $invoice = createInvoiceWithItems();
+    
     $item = InvoiceItem::create([
-        'invoice_id' => 1,
+        'invoice_id' => $invoice->id,
         'description' => 'Bulk Service',
         'quantity' => 1000,
         'unit_price' => 500000, // $5000.00 in cents
@@ -140,8 +138,10 @@ test('invoice item handles large quantities and prices', function () {
 });
 
 test('invoice item can have fractional tax rates', function () {
+    $invoice = createInvoiceWithItems();
+    
     $item = InvoiceItem::create([
-        'invoice_id' => 1,
+        'invoice_id' => $invoice->id,
         'description' => 'Service with custom tax',
         'quantity' => 1,
         'unit_price' => 10000,

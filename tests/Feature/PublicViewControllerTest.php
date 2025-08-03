@@ -8,15 +8,12 @@ use App\Models\Location;
 use App\ValueObjects\EmailCollection;
 
 beforeEach(function () {
-    // Create test company
-    $this->company = Company::create([
+    // Create test company with location
+    $this->company = createCompanyWithLocation([
         'name' => 'Test Company Ltd',
         'phone' => '+1234567890',
         'emails' => new EmailCollection(['company@test.com']),
-        'primary_location_id' => 1,
-    ]);
-
-    $this->companyLocation = Location::create([
+    ], [
         'name' => 'Company HQ',
         'gstin' => '27AAAAA0000A1Z5',
         'address_line_1' => '123 Business Street',
@@ -25,21 +22,16 @@ beforeEach(function () {
         'state' => 'Maharashtra',
         'country' => 'India',
         'postal_code' => '400001',
-        'locatable_type' => Company::class,
-        'locatable_id' => $this->company->id,
     ]);
+    
+    $this->companyLocation = $this->company->primaryLocation;
 
-    $this->company->update(['primary_location_id' => $this->companyLocation->id]);
-
-    // Create test customer
-    $this->customer = Customer::create([
+    // Create test customer with location
+    $this->customer = createCustomerWithLocation([
         'name' => 'Test Customer Corp',
         'phone' => '+9876543210',
         'emails' => new EmailCollection(['customer@test.com']),
-        'primary_location_id' => 1,
-    ]);
-
-    $this->customerLocation = Location::create([
+    ], [
         'name' => 'Customer Office',
         'gstin' => '29BBBBB1111B2Z6',
         'address_line_1' => '456 Client Avenue',
@@ -47,11 +39,9 @@ beforeEach(function () {
         'state' => 'Karnataka',
         'country' => 'India',
         'postal_code' => '560001',
-        'locatable_type' => Customer::class,
-        'locatable_id' => $this->customer->id,
     ]);
-
-    $this->customer->update(['primary_location_id' => $this->customerLocation->id]);
+    
+    $this->customerLocation = $this->customer->primaryLocation;
 });
 
 test('can view public invoice page', function () {

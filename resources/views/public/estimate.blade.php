@@ -138,7 +138,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $item->description }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ $item->quantity }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">₹{{ number_format($item->unit_price / 100, 2) }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ $item->tax_rate }}%</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ number_format($item->tax_rate, 0) }}%</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">₹{{ number_format(($item->quantity * $item->unit_price) / 100, 2) }}</td>
                                 </tr>
                             @endforeach

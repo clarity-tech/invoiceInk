@@ -51,6 +51,6 @@ class DocumentMailer extends Mailable implements ShouldQueue
     private function getPublicViewUrl(): string
     {
         $type = $this->invoice->isInvoice() ? 'invoices' : 'estimates';
-        return url("/{$type}/{$this->invoice->uuid}");
+        return url("/{$type}/{$this->invoice->ulid}");
     }
 }

@@ -54,21 +54,21 @@ test('invoice can be created as estimate', function () {
 });
 
 test('invoice has company location relationship', function () {
-    $companyLocation = Location::create([
+    $company = createCompanyWithLocation([], [
         'name' => 'Company HQ',
         'address_line_1' => '123 Business St',
         'city' => 'Business City',
         'state' => 'Business State',
         'country' => 'Test Country',
         'postal_code' => '12345',
-        'locatable_type' => Company::class,
-        'locatable_id' => 1,
     ]);
+
+    $customer = createCustomerWithLocation();
 
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
-        'company_location_id' => $companyLocation->id,
-        'customer_location_id' => 1,
+        'company_location_id' => $company->primaryLocation->id,
+        'customer_location_id' => $customer->primaryLocation->id,
         'invoice_number' => 'INV-001',
         'status' => 'draft',
         'subtotal' => 1000,
@@ -81,21 +81,21 @@ test('invoice has company location relationship', function () {
 });
 
 test('invoice has customer location relationship', function () {
-    $customerLocation = Location::create([
+    $company = createCompanyWithLocation();
+    
+    $customer = createCustomerWithLocation([], [
         'name' => 'Customer Office',
         'address_line_1' => '456 Client Ave',
         'city' => 'Client City',
         'state' => 'Client State',
         'country' => 'Test Country',
         'postal_code' => '54321',
-        'locatable_type' => Customer::class,
-        'locatable_id' => 1,
     ]);
 
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => $customerLocation->id,
+        'company_location_id' => $company->primaryLocation->id,
+        'customer_location_id' => $customer->primaryLocation->id,
         'invoice_number' => 'INV-001',
         'status' => 'draft',
         'subtotal' => 1000,
@@ -110,29 +110,24 @@ test('invoice has customer location relationship', function () {
 test('invoice has many items relationship', function () {
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'INV-001',
         'status' => 'draft',
         'subtotal' => 2000,
         'tax' => 360,
         'total' => 2360,
-    ]);
-
-    InvoiceItem::create([
-        'invoice_id' => $invoice->id,
-        'description' => 'Service 1',
-        'quantity' => 1,
-        'unit_price' => 1000,
-        'tax_rate' => 18,
-    ]);
-
-    InvoiceItem::create([
-        'invoice_id' => $invoice->id,
-        'description' => 'Service 2',
-        'quantity' => 1,
-        'unit_price' => 1000,
-        'tax_rate' => 18,
+    ], [
+        [
+            'description' => 'Service 1',
+            'quantity' => 1,
+            'unit_price' => 1000,
+            'tax_rate' => 18,
+        ],
+        [
+            'description' => 'Service 2',
+            'quantity' => 1,
+            'unit_price' => 1000,
+            'tax_rate' => 18,
+        ]
     ]);
 
     expect($invoice->items()->count())->toBe(2);
@@ -142,8 +137,6 @@ test('invoice has many items relationship', function () {
 test('invoice type checking methods work correctly', function () {
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'INV-001',
         'status' => 'draft',
         'subtotal' => 1000,
@@ -153,8 +146,6 @@ test('invoice type checking methods work correctly', function () {
 
     $estimate = createInvoiceWithItems([
         'type' => 'estimate',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'EST-001',
         'status' => 'draft',
         'subtotal' => 1000,
@@ -171,8 +162,6 @@ test('invoice type checking methods work correctly', function () {
 test('invoice dates are cast to Carbon instances', function () {
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'INV-001',
         'status' => 'draft',
         'issued_at' => '2025-01-01',
@@ -191,8 +180,6 @@ test('invoice dates are cast to Carbon instances', function () {
 test('invoice can be created without optional dates', function () {
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'INV-001',
         'status' => 'draft',
         'subtotal' => 1000,

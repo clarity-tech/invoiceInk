@@ -17,7 +17,7 @@ return new class extends Migration
             $table->text('description');
             $table->integer('quantity');
             $table->integer('unit_price');
-            $table->integer('tax_rate')->nullable();
+            $table->decimal('tax_rate', 5, 2)->nullable();
             $table->timestamps();
         });
     }
