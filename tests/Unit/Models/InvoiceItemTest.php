@@ -5,14 +5,8 @@ use App\Models\InvoiceItem;
 
 test('can create invoice item with all fields', function () {
     $invoice = createInvoiceWithItems([
-        'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'INV-001',
         'status' => 'draft',
-        'subtotal' => 1000,
-        'tax' => 180,
-        'total' => 1180,
     ]);
 
     $item = InvoiceItem::create([
@@ -32,14 +26,8 @@ test('can create invoice item with all fields', function () {
 
 test('invoice item belongs to invoice', function () {
     $invoice = createInvoiceWithItems([
-        'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'INV-001',
         'status' => 'draft',
-        'subtotal' => 1000,
-        'tax' => 180,
-        'total' => 1180,
     ]);
 
     $item = InvoiceItem::create([

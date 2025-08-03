@@ -10,8 +10,6 @@ use App\ValueObjects\EmailCollection;
 test('can create invoice with required fields', function () {
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'INV-001',
         'status' => 'draft',
         'subtotal' => 10000,
@@ -29,9 +27,6 @@ test('can create invoice with required fields', function () {
 
 test('invoice automatically generates ULID on creation', function () {
     $invoice = createInvoiceWithItems([
-        'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'INV-001',
         'status' => 'draft',
         'subtotal' => 1000,
@@ -46,8 +41,6 @@ test('invoice automatically generates ULID on creation', function () {
 test('invoice can be created as estimate', function () {
     $invoice = createInvoiceWithItems([
         'type' => 'estimate',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'EST-001',
         'status' => 'draft',
         'subtotal' => 5000,

@@ -8,22 +8,8 @@ use App\Models\Location;
 use App\ValueObjects\EmailCollection;
 
 test('can create document mailer for invoice', function () {
-    $company = Company::create([
-        'name' => 'Test Company',
-        'emails' => new EmailCollection(['company@test.com']),
-        'primary_location_id' => 1,
-    ]);
-
-    $customer = Customer::create([
-        'name' => 'Test Customer',
-        'emails' => new EmailCollection(['customer@test.com']),
-        'primary_location_id' => 1,
-    ]);
-
-    $invoice = Invoice::create([
+    $invoice = createInvoiceWithItems([
         'type' => 'invoice',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'INV-001',
         'status' => 'draft',
         'subtotal' => 10000,

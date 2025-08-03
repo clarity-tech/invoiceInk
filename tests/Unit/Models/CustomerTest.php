@@ -11,7 +11,6 @@ test('can create customer with emails', function () {
         'name' => 'Test Customer',
         'phone' => '+1234567890',
         'emails' => $emails,
-        'primary_location_id' => 1,
     ]);
 
     expect($customer->name)->toBe('Test Customer');
@@ -30,21 +29,14 @@ test('customer emails are cast to EmailCollection', function () {
 });
 
 test('customer can have primary location relationship', function () {
-    $location = Location::create([
+    $customer = createCustomerWithLocation([
+        'name' => 'Test Customer',
+        'emails' => new EmailCollection(['customer@test.com']),
+    ], [
         'name' => 'Customer Office',
         'address_line_1' => '789 Customer St',
         'city' => 'Customer City',
         'state' => 'Customer State',
-        'country' => 'Test Country',
-        'postal_code' => '54321',
-        'locatable_type' => Customer::class,
-        'locatable_id' => 1,
-    ]);
-
-    $customer = createCustomerWithLocation([
-        'name' => 'Test Customer',
-        'emails' => new EmailCollection(['customer@test.com']),
-        'primary_location_id' => $location->id,
     ]);
 
     expect($customer->primaryLocation)->not->toBeNull();
@@ -52,32 +44,13 @@ test('customer can have primary location relationship', function () {
 });
 
 test('customer can have multiple locations', function () {
-    $customer = createCustomerWithLocation([
-        'name' => 'Test Customer',
-        'emails' => new EmailCollection(['customer@test.com']),
-        'primary_location_id' => 1,
-    ]);
+    $customer = createCustomerWithLocation();
 
-    Location::create([
-        'name' => 'Main Office',
-        'address_line_1' => '123 Main St',
-        'city' => 'Main City',
-        'state' => 'Main State',
-        'country' => 'Test Country',
-        'postal_code' => '12345',
-        'locatable_type' => Customer::class,
-        'locatable_id' => $customer->id,
-    ]);
-
-    Location::create([
+    // Create an additional location
+    createLocation(Customer::class, $customer->id, [
         'name' => 'Branch Office',
         'address_line_1' => '456 Branch Ave',
         'city' => 'Branch City',
-        'state' => 'Branch State',
-        'country' => 'Test Country',
-        'postal_code' => '67890',
-        'locatable_type' => Customer::class,
-        'locatable_id' => $customer->id,
     ]);
 
     expect($customer->locations()->count())->toBe(2);
@@ -103,7 +76,6 @@ test('customer can be created without phone', function () {
     $customer = createCustomerWithLocation([
         'name' => 'Test Customer',
         'emails' => new EmailCollection(['customer@test.com']),
-        'primary_location_id' => 1,
     ]);
 
     expect($customer->phone)->toBeNull();

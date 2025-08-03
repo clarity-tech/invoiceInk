@@ -5,11 +5,9 @@ use App\Models\InvoiceItem;
 use App\Services\EstimateToInvoiceConverter;
 
 test('can convert estimate to invoice', function () {
-    // Create an estimate
-    $estimate = Invoice::create([
+    // Create an estimate with items
+    $estimate = createInvoiceWithItems([
         'type' => 'estimate',
-        'company_location_id' => 1,
-        'customer_location_id' => 2,
         'invoice_number' => 'EST-001',
         'status' => 'sent',
         'issued_at' => now(),
@@ -17,23 +15,19 @@ test('can convert estimate to invoice', function () {
         'subtotal' => 10000,
         'tax' => 1800,
         'total' => 11800,
-    ]);
-
-    // Add items to estimate
-    InvoiceItem::create([
-        'invoice_id' => $estimate->id,
-        'description' => 'Website Development',
-        'quantity' => 1,
-        'unit_price' => 5000,
-        'tax_rate' => 18,
-    ]);
-
-    InvoiceItem::create([
-        'invoice_id' => $estimate->id,
-        'description' => 'Mobile App Development',
-        'quantity' => 1,
-        'unit_price' => 5000,
-        'tax_rate' => 18,
+    ], [
+        [
+            'description' => 'Website Development',
+            'quantity' => 1,
+            'unit_price' => 5000,
+            'tax_rate' => 18,
+        ],
+        [
+            'description' => 'Mobile App Development',
+            'quantity' => 1,
+            'unit_price' => 5000,
+            'tax_rate' => 18,
+        ]
     ]);
 
     $converter = new EstimateToInvoiceConverter();
