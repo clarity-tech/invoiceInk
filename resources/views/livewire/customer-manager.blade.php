@@ -145,7 +145,7 @@
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">{{ $customer->name }}</div>
-                                    @if($customer->primaryLocation?.gstin)
+                                    @if($customer->primaryLocation && $customer->primaryLocation->gstin)
                                         <div class="text-sm text-gray-500">GSTIN: {{ $customer->primaryLocation->gstin }}</div>
                                     @endif
                                 </td>
