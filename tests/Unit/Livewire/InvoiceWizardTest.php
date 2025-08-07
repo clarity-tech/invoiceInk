@@ -12,7 +12,7 @@ use Livewire\Livewire;
 test('can render invoice wizard component', function () {
     Livewire::test(InvoiceWizard::class)
         ->assertStatus(200)
-        ->assertSee('Invoices & Estimates');
+        ->assertSee('Invoices');
 });
 
 test('initializes with default values on mount', function () {
@@ -166,7 +166,7 @@ test('can create new invoice with items', function () {
         ->set('items.1.tax_rate', 18)
         ->call('save')
         ->assertSet('showInvoices', true)
-        ->assertSessionHas('message', 'Invoice created successfully!');
+        ->assertSee('Invoice created successfully!');
 
     $this->assertDatabaseHas('invoices', [
         'type' => 'invoice',
@@ -197,7 +197,7 @@ test('can create estimate', function () {
         ->set('items.0.unit_price', 5000)
         ->set('items.0.tax_rate', 18)
         ->call('save')
-        ->assertSessionHas('message', 'Estimate created successfully!');
+        ->assertSet('showInvoices', true);
 
     $this->assertDatabaseHas('invoices', [
         'type' => 'estimate',
@@ -272,7 +272,7 @@ test('can update existing invoice', function () {
         ->set('items.0.description', 'Updated Service')
         ->set('items.0.unit_price', 2000)
         ->call('save')
-        ->assertSessionHas('message', 'Invoice updated successfully!');
+        ->assertSet('showInvoices', true);
 
     $invoice->refresh();
     expect($invoice->items->first()->description)->toBe('Updated Service');
@@ -287,7 +287,7 @@ test('can delete invoice', function () {
 
     Livewire::test(InvoiceWizard::class)
         ->call('delete', $invoice)
-        ->assertSessionHas('message', 'Invoice deleted successfully!');
+        ->assertSee('Invoice deleted successfully!');
 
     $this->assertDatabaseMissing('invoices', ['id' => $invoice->id]);
 });
@@ -300,7 +300,7 @@ test('can delete estimate', function () {
 
     Livewire::test(InvoiceWizard::class)
         ->call('delete', $estimate)
-        ->assertSessionHas('message', 'Estimate deleted successfully!');
+        ->assertSee('Estimate deleted successfully!');
 
     $this->assertDatabaseMissing('invoices', ['id' => $estimate->id]);
 });

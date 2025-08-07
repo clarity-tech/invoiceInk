@@ -86,7 +86,7 @@ class InvoiceWizard extends Component
                 'description' => $item['description'],
                 'quantity' => (int) $item['quantity'],
                 'unit_price' => (int) ($item['unit_price'] * 100), // Convert to cents
-                'tax_rate' => (int) $item['tax_rate'],
+                'tax_rate' => (float) $item['tax_rate'],
             ]);
         });
 
@@ -149,7 +149,7 @@ class InvoiceWizard extends Component
                 'description' => $item->description,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price / 100, // Convert from cents
-                'tax_rate' => $item->tax_rate,
+                'tax_rate' => (float) $item->tax_rate,
             ];
         })->toArray();
 
@@ -168,7 +168,7 @@ class InvoiceWizard extends Component
             'items.*.description' => 'required|string|max:500',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
-            'items.*.tax_rate' => 'nullable|integer|min:0|max:100',
+            'items.*.tax_rate' => 'nullable|numeric|min:0|max:100',
         ]);
 
         if ($this->editingId) {
@@ -208,7 +208,7 @@ class InvoiceWizard extends Component
                 'description' => $item['description'],
                 'quantity' => (int) $item['quantity'],
                 'unit_price' => (int) ($item['unit_price'] * 100), // Convert to cents
-                'tax_rate' => (int) ($item['tax_rate'] ?: 0),
+                'tax_rate' => (float) ($item['tax_rate'] ?: 0),
             ]);
         }
 

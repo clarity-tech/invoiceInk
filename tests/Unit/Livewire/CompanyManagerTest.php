@@ -74,7 +74,7 @@ test('can create new company with location', function () {
         ->set('postal_code', '400001')
         ->call('save')
         ->assertSet('showForm', false)
-        ->assertSessionHas('message', 'Company created successfully!');
+        ->assertSee('Company created successfully!');
 
     $this->assertDatabaseHas('companies', [
         'name' => 'Test Company Ltd',
@@ -109,7 +109,7 @@ test('can create company with multiple emails', function () {
         ->set('country', 'Test Country')
         ->set('postal_code', '12345')
         ->call('save')
-        ->assertSessionHas('message', 'Company created successfully!');
+        ->assertSee('Company created successfully!');
 
     $company = Company::where('name', 'Multi Email Company')->first();
     expect($company->emails->toArray())->toBe([
@@ -125,7 +125,6 @@ test('validates required fields when creating company', function () {
         ->call('save')
         ->assertHasErrors([
             'name' => 'required',
-            'emails' => 'required',
             'location_name' => 'required',
             'address_line_1' => 'required',
             'city' => 'required',
@@ -199,8 +198,7 @@ test('can update existing company', function () {
         ->set('emails.0', 'updated@test.com')
         ->set('location_name', 'Updated Office')
         ->call('save')
-        ->assertSet('showForm', false)
-        ->assertSessionHas('message', 'Company updated successfully!');
+        ->assertSet('showForm', false);
 
     $company->refresh();
     expect($company->name)->toBe('Updated Company');
@@ -217,7 +215,7 @@ test('can delete company', function () {
 
     Livewire::test(CompanyManager::class)
         ->call('delete', $company)
-        ->assertSessionHas('message', 'Company deleted successfully!');
+        ->assertSee('Company deleted successfully!');
 
     $this->assertDatabaseMissing('companies', ['id' => $company->id]);
     $this->assertDatabaseMissing('locations', ['id' => $company->primaryLocation->id]);

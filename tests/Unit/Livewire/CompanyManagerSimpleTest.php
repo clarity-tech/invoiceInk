@@ -72,7 +72,7 @@ test('validates required fields', function () {
     Livewire::test(CompanyManager::class)
         ->call('create')
         ->set('name', '') // Empty required field
-        ->set('emails.0', 'invalid-email') // Invalid email
+        ->set('emails.0', 'notanemail') // Invalid email
         ->call('save')
         ->assertHasErrors(['name', 'emails.0']);
 });

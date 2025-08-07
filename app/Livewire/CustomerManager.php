@@ -20,8 +20,6 @@ class CustomerManager extends Component
     #[Rule('nullable|string|max:20')]
     public string $phone = '';
 
-    #[Rule('required|array|min:1')]
-    #[Rule('emails.*', 'required|email')]
     public array $emails = [''];
 
     #[Rule('required|string|max:255')]
@@ -95,7 +93,20 @@ class CustomerManager extends Component
 
     public function save(): void
     {
-        $this->validate();
+        $this->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'location_name' => 'required|string|max:255',
+            'gstin' => 'nullable|string|max:50',
+            'address_line_1' => 'required|string|max:500',
+            'address_line_2' => 'nullable|string|max:500',
+            'city' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'country' => 'required|string|max:100',
+            'postal_code' => 'required|string|max:20',
+            'emails' => 'required|array|min:1',
+            'emails.*' => 'nullable|email',
+        ]);
 
         $filteredEmails = array_filter($this->emails, fn($email) => !empty(trim($email)));
         
@@ -161,6 +172,11 @@ class CustomerManager extends Component
 
     public function delete(Customer $customer): void
     {
+        // Handle foreign key constraint by setting primary_location_id to null first
+        $customer->primary_location_id = null;
+        $customer->save();
+        
+        // Then delete locations and customer
         $customer->locations()->delete();
         $customer->delete();
         
