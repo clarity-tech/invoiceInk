@@ -14,11 +14,12 @@ return new class extends Migration
         return config('telescope.storage.database.connection');
     }
 
-    protected function skipTelescopeMigrations() : bool
+    protected function skipTelescopeMigrations(): bool
     {
         if (config('telescope.enabled', true) && class_exists(\Laravel\Telescope\Telescope::class)) {
             return false;
         }
+
         return true;
     }
 
