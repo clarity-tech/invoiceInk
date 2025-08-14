@@ -20,7 +20,7 @@ class EmailCollection implements Arrayable, Jsonable, JsonSerializable
     public static function fromJson(string $json): self
     {
         $data = json_decode($json, true);
-        
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new InvalidArgumentException('Invalid JSON provided');
         }
@@ -36,14 +36,15 @@ class EmailCollection implements Arrayable, Jsonable, JsonSerializable
     public function add(string $email): self
     {
         $email = trim($email);
-        
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new InvalidArgumentException("Invalid email address: {$email}");
         }
 
-        if (!in_array($email, $this->emails)) {
+        if (! in_array($email, $this->emails)) {
             $emails = $this->emails;
             $emails[] = $email;
+
             return new self($emails);
         }
 
@@ -52,7 +53,8 @@ class EmailCollection implements Arrayable, Jsonable, JsonSerializable
 
     public function remove(string $email): self
     {
-        $emails = array_filter($this->emails, fn($e) => $e !== trim($email));
+        $emails = array_filter($this->emails, fn ($e) => $e !== trim($email));
+
         return new self($emails);
     }
 
@@ -99,7 +101,7 @@ class EmailCollection implements Arrayable, Jsonable, JsonSerializable
     private function validate(): void
     {
         foreach ($this->emails as $email) {
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 throw new InvalidArgumentException("Invalid email address: {$email}");
             }
         }
