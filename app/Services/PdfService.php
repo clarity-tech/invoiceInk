@@ -15,9 +15,9 @@ class PdfService
     public function generateInvoicePdf(Invoice $invoice): string
     {
         $invoice->load(['items', 'companyLocation', 'customerLocation']);
-        
+
         $html = View::make('pdf.invoice', compact('invoice'))->render();
-        
+
         return $this->generatePdfFromHtml($html, "invoice-{$invoice->invoice_number}");
     }
 
@@ -27,9 +27,9 @@ class PdfService
     public function generateEstimatePdf(Invoice $estimate): string
     {
         $estimate->load(['items', 'companyLocation', 'customerLocation']);
-        
+
         $html = View::make('pdf.estimate', compact('estimate'))->render();
-        
+
         return $this->generatePdfFromHtml($html, "estimate-{$estimate->invoice_number}");
     }
 
@@ -48,7 +48,7 @@ class PdfService
 
             return $pdfContent;
         } catch (CouldNotTakeBrowsershot $e) {
-            throw new \Exception('Failed to generate PDF: ' . $e->getMessage());
+            throw new \Exception('Failed to generate PDF: '.$e->getMessage());
         }
     }
 
