@@ -9,7 +9,6 @@ use App\Models\InvoiceItem;
 use App\Models\Location;
 use App\Services\InvoiceCalculator;
 use App\Services\PdfService;
-use App\ValueObjects\EmailCollection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
@@ -20,6 +19,7 @@ class InvoiceWizard extends Component
     use WithPagination;
 
     public string $type = 'invoice'; // 'invoice' or 'estimate'
+
     public int $currentStep = 1;
 
     // Basic Details
@@ -46,10 +46,13 @@ class InvoiceWizard extends Component
 
     // Totals (computed)
     public int $subtotal = 0;
+
     public int $tax = 0;
+
     public int $total = 0;
 
     public bool $showInvoices = true;
+
     public ?int $editingId = null;
 
     public function mount(): void
@@ -80,7 +83,7 @@ class InvoiceWizard extends Component
 
     public function calculateTotals(): void
     {
-        $calculator = new InvoiceCalculator();
+        $calculator = new InvoiceCalculator;
         $itemsCollection = collect($this->items)->map(function ($item) {
             return new InvoiceItem([
                 'description' => $item['description'],
@@ -134,7 +137,7 @@ class InvoiceWizard extends Component
     public function edit(Invoice $invoice): void
     {
         $invoice->load(['items', 'companyLocation', 'customerLocation']);
-        
+
         $this->editingId = $invoice->id;
         $this->type = $invoice->type;
         $this->company_id = $invoice->companyLocation->locatable_id;
@@ -217,8 +220,8 @@ class InvoiceWizard extends Component
         $this->resetPage();
 
         $documentType = ucfirst($this->type);
-        session()->flash('message', $this->editingId ? 
-            "{$documentType} updated successfully!" : 
+        session()->flash('message', $this->editingId ?
+            "{$documentType} updated successfully!" :
             "{$documentType} created successfully!"
         );
     }
@@ -227,15 +230,15 @@ class InvoiceWizard extends Component
     {
         $invoice->items()->delete();
         $invoice->delete();
-        
+
         $this->resetPage();
-        session()->flash('message', ucfirst($invoice->type) . ' deleted successfully!');
+        session()->flash('message', ucfirst($invoice->type).' deleted successfully!');
     }
 
     public function downloadPdf(Invoice $invoice)
     {
-        $pdfService = new PdfService();
-        
+        $pdfService = new PdfService;
+
         if ($invoice->type === 'invoice') {
             return $pdfService->downloadInvoicePdf($invoice);
         } else {
@@ -273,13 +276,13 @@ class InvoiceWizard extends Component
         $prefix = $this->type === 'invoice' ? 'INV' : 'EST';
         $year = now()->year;
         $month = now()->format('m');
-        
+
         $lastDocument = Invoice::where('type', $this->type)
             ->where('invoice_number', 'like', "{$prefix}-{$year}-{$month}-%")
             ->orderBy('invoice_number', 'desc')
             ->first();
 
-        if (!$lastDocument) {
+        if (! $lastDocument) {
             $sequence = 1;
         } else {
             $lastNumber = $lastDocument->invoice_number;
@@ -305,7 +308,7 @@ class InvoiceWizard extends Component
     #[Computed]
     public function companyLocations()
     {
-        if (!$this->company_id) {
+        if (! $this->company_id) {
             return collect();
         }
 
@@ -317,7 +320,7 @@ class InvoiceWizard extends Component
     #[Computed]
     public function customerLocations()
     {
-        if (!$this->customer_id) {
+        if (! $this->customer_id) {
             return collect();
         }
 

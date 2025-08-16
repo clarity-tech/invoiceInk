@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InvoiceItem extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'invoice_id',
         'description',
@@ -27,7 +30,7 @@ class InvoiceItem extends Model
 
     public function getTaxAmount(): int
     {
-        if (!$this->tax_rate) {
+        if (! $this->tax_rate) {
             return 0;
         }
 

@@ -47,6 +47,7 @@ class CompanyManager extends Component
     public string $postal_code = '';
 
     public bool $showForm = false;
+
     public ?int $editingId = null;
 
     public function addEmailField(): void
@@ -71,12 +72,12 @@ class CompanyManager extends Component
     public function edit(Company $company): void
     {
         $company->load('primaryLocation');
-        
+
         $this->editingId = $company->id;
         $this->name = $company->name;
         $this->phone = $company->phone ?? '';
         $this->emails = $company->emails->toArray() ?: [''];
-        
+
         if ($company->primaryLocation) {
             $this->location_name = $company->primaryLocation->name;
             $this->gstin = $company->primaryLocation->gstin ?? '';
@@ -87,7 +88,7 @@ class CompanyManager extends Component
             $this->country = $company->primaryLocation->country;
             $this->postal_code = $company->primaryLocation->postal_code;
         }
-        
+
         $this->showForm = true;
     }
 
@@ -108,10 +109,11 @@ class CompanyManager extends Component
             'emails.*' => 'nullable|email',
         ]);
 
-        $filteredEmails = array_filter($this->emails, fn($email) => !empty(trim($email)));
-        
+        $filteredEmails = array_filter($this->emails, fn ($email) => ! empty(trim($email)));
+
         if (empty($filteredEmails)) {
             $this->addError('emails.0', 'At least one email is required.');
+
             return;
         }
 
@@ -166,7 +168,7 @@ class CompanyManager extends Component
         $this->resetForm();
         $this->showForm = false;
         $this->resetPage();
-        
+
         session()->flash('message', $this->editingId ? 'Company updated successfully!' : 'Company created successfully!');
     }
 
@@ -175,11 +177,11 @@ class CompanyManager extends Component
         // Handle foreign key constraint by setting primary_location_id to null first
         $company->primary_location_id = null;
         $company->save();
-        
+
         // Then delete locations and company
         $company->locations()->delete();
         $company->delete();
-        
+
         $this->resetPage();
         session()->flash('message', 'Company deleted successfully!');
     }

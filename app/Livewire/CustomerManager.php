@@ -47,6 +47,7 @@ class CustomerManager extends Component
     public string $postal_code = '';
 
     public bool $showForm = false;
+
     public ?int $editingId = null;
 
     public function addEmailField(): void
@@ -71,12 +72,12 @@ class CustomerManager extends Component
     public function edit(Customer $customer): void
     {
         $customer->load('primaryLocation');
-        
+
         $this->editingId = $customer->id;
         $this->name = $customer->name;
         $this->phone = $customer->phone ?? '';
         $this->emails = $customer->emails->toArray() ?: [''];
-        
+
         if ($customer->primaryLocation) {
             $this->location_name = $customer->primaryLocation->name;
             $this->gstin = $customer->primaryLocation->gstin ?? '';
@@ -87,7 +88,7 @@ class CustomerManager extends Component
             $this->country = $customer->primaryLocation->country;
             $this->postal_code = $customer->primaryLocation->postal_code;
         }
-        
+
         $this->showForm = true;
     }
 
@@ -108,10 +109,11 @@ class CustomerManager extends Component
             'emails.*' => 'nullable|email',
         ]);
 
-        $filteredEmails = array_filter($this->emails, fn($email) => !empty(trim($email)));
-        
+        $filteredEmails = array_filter($this->emails, fn ($email) => ! empty(trim($email)));
+
         if (empty($filteredEmails)) {
             $this->addError('emails.0', 'At least one email is required.');
+
             return;
         }
 
@@ -166,7 +168,7 @@ class CustomerManager extends Component
         $this->resetForm();
         $this->showForm = false;
         $this->resetPage();
-        
+
         session()->flash('message', $this->editingId ? 'Customer updated successfully!' : 'Customer created successfully!');
     }
 
@@ -175,11 +177,11 @@ class CustomerManager extends Component
         // Handle foreign key constraint by setting primary_location_id to null first
         $customer->primary_location_id = null;
         $customer->save();
-        
+
         // Then delete locations and customer
         $customer->locations()->delete();
         $customer->delete();
-        
+
         $this->resetPage();
         session()->flash('message', 'Customer deleted successfully!');
     }

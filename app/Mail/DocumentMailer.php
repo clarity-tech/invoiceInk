@@ -23,7 +23,7 @@ class DocumentMailer extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         $type = $this->invoice->isInvoice() ? 'Invoice' : 'Estimate';
-        
+
         return new Envelope(
             to: $this->recipients->toArray(),
             subject: "{$type} #{$this->invoice->invoice_number}",
@@ -33,7 +33,7 @@ class DocumentMailer extends Mailable implements ShouldQueue
     public function content(): Content
     {
         $view = $this->invoice->isInvoice() ? 'emails.invoice' : 'emails.estimate';
-        
+
         return new Content(
             view: $view,
             with: [
@@ -51,6 +51,7 @@ class DocumentMailer extends Mailable implements ShouldQueue
     private function getPublicViewUrl(): string
     {
         $type = $this->invoice->isInvoice() ? 'invoices' : 'estimates';
+
         return url("/{$type}/{$this->invoice->ulid}");
     }
 }
