@@ -11,7 +11,7 @@ class InvoiceCalculator
     public function calculateInvoice(Invoice $invoice): InvoiceTotals
     {
         $items = $invoice->items;
-        
+
         if ($items->isEmpty()) {
             return InvoiceTotals::zero();
         }
@@ -27,7 +27,7 @@ class InvoiceCalculator
         foreach ($items as $item) {
             $lineTotal = $item->getLineTotal();
             $lineTax = $item->getTaxAmount();
-            
+
             $subtotal += $lineTotal;
             $taxAmount += $lineTax;
         }
@@ -42,11 +42,11 @@ class InvoiceCalculator
     public function updateInvoiceTotals(Invoice $invoice): Invoice
     {
         $totals = $this->calculateInvoice($invoice);
-        
+
         $invoice->subtotal = $totals->subtotal;
         $invoice->tax = $totals->tax;
         $invoice->total = $totals->total;
-        
+
         return $invoice;
     }
 
@@ -54,7 +54,7 @@ class InvoiceCalculator
     {
         $invoice->refresh();
         $invoice->load('items');
-        
+
         return $this->updateInvoiceTotals($invoice);
     }
 }
