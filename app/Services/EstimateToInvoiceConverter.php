@@ -13,7 +13,7 @@ class EstimateToInvoiceConverter
 
     public function convert(Invoice $estimate): Invoice
     {
-        if (!$estimate->isEstimate()) {
+        if (! $estimate->isEstimate()) {
             throw new \InvalidArgumentException('Only estimates can be converted to invoices');
         }
 
@@ -56,13 +56,13 @@ class EstimateToInvoiceConverter
         $prefix = 'INV';
         $year = now()->year;
         $month = now()->format('m');
-        
+
         $lastInvoice = Invoice::where('type', 'invoice')
             ->where('invoice_number', 'like', "{$prefix}-{$year}-{$month}-%")
             ->orderBy('invoice_number', 'desc')
             ->first();
 
-        if (!$lastInvoice) {
+        if (! $lastInvoice) {
             $sequence = 1;
         } else {
             $lastNumber = $lastInvoice->invoice_number;
