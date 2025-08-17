@@ -1,5 +1,9 @@
 <?php
 
+pest()->extend(Tests\DuskTestCase::class)
+//  ->use(Illuminate\Foundation\Testing\DatabaseMigrations::class)
+    ->in('Browser');
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -20,7 +24,7 @@ pest()->extend(Tests\TestCase::class)
     ->in('Unit');
 
 // Include test helpers
-require_once __DIR__ . '/TestHelpers.php';
+require_once __DIR__.'/TestHelpers.php';
 
 /*
 |--------------------------------------------------------------------------
