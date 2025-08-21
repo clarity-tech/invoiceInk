@@ -30,3 +30,7 @@ Thumbs.db
 !.yarn/sdks
 !.yarn/versions
 .pnp.*
+
+# Dusk Browser Testing
+/tests/Browser/console
+/tests/Browser/screenshots

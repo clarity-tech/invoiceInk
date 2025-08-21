@@ -74,7 +74,7 @@ abstract class DuskTestCase extends BaseTestCase
      */
     protected function getTestMethodName(): string
     {
-        $testName = $this->getName();
+        $testName = $this->name();
 
         // Clean the test name for filename safety
         $testName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $testName);

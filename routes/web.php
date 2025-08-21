@@ -7,7 +7,7 @@ use App\Livewire\InvoiceWizard;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/invoices');  // Redirect to main application
 });
 
 // Application routes

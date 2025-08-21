@@ -63,6 +63,10 @@
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
+        ],
+        "dusk": [
+            "rm -rf tests/Browser/screenshots/*",
+            "php artisan dusk"
         ]
     },
     "extra": {

@@ -7,32 +7,27 @@ use App\Models\InvoiceItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Dusk\Browser;
 
-uses(RefreshDatabase::class);
+// Don't use RefreshDatabase for browser tests - it causes transaction isolation
+// uses(RefreshDatabase::class);
 
 test('user can view public invoice page', function () {
-    // Create test data
-    $company = Company::factory()->withLocation()->create();
-    $customer = Customer::factory()->withLocation()->create();
+    // Create test data using factory methods with relationships
+    $invoice = Invoice::factory()
+        ->invoice()
+        ->sent()
+        ->withLocations()
+        ->withAmounts(100000, 18) // $1000 subtotal, 18% tax
+        ->create();
 
-    $invoice = Invoice::factory()->create([
-        'type' => 'invoice',
-        'company_location_id' => $company->primaryLocation->id,
-        'customer_location_id' => $customer->primaryLocation->id,
-        'invoice_number' => 'INV-2025-01-0001',
-        'status' => 'sent',
-        'subtotal' => 100000, // $1000 in cents
-        'tax' => 18000,       // $180 in cents
-        'total' => 118000,    // $1180 in cents
-    ]);
-
-    // Create invoice items
-    InvoiceItem::factory()->create([
-        'invoice_id' => $invoice->id,
-        'description' => 'Web Development Services',
-        'quantity' => 10,
-        'unit_price' => 10000, // $100 in cents
-        'tax_rate' => 18,
-    ]);
+    // Add invoice items using factory
+    InvoiceItem::factory()
+        ->for($invoice)
+        ->create([
+            'description' => 'Web Development Services',
+            'quantity' => 10,
+            'unit_price' => 10000, // $100 per unit
+            'tax_rate' => 18.00,
+        ]);
 
     $this->browse(function (Browser $browser) use ($invoice) {
         $browser->visit("/invoices/{$invoice->ulid}")
