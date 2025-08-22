@@ -66,16 +66,16 @@ function createCustomerWithLocation(array $customerAttributes = [], array $locat
 }
 
 function createInvoiceWithItems(
-    array $invoiceAttributes = [], 
-    array $items = null, 
-    Company $company = null, 
-    Customer $customer = null
+    array $invoiceAttributes = [],
+    ?array $items = null,
+    ?Company $company = null,
+    ?Customer $customer = null
 ): Invoice {
-    if (!$company) {
+    if (! $company) {
         $company = createCompanyWithLocation();
     }
-    
-    if (!$customer) {
+
+    if (! $customer) {
         $customer = createCustomerWithLocation();
     }
 
@@ -83,7 +83,7 @@ function createInvoiceWithItems(
         'type' => 'invoice',
         'company_location_id' => $company->primaryLocation->id,
         'customer_location_id' => $customer->primaryLocation->id,
-        'invoice_number' => 'INV-' . time(),
+        'invoice_number' => 'INV-'.time(),
         'status' => 'draft',
         'subtotal' => 10000,
         'tax' => 1800,
@@ -99,8 +99,8 @@ function createInvoiceWithItems(
                 'description' => 'Test Service',
                 'quantity' => 1,
                 'unit_price' => 10000,
-                'tax_rate' => 18,
-            ]
+                'tax_rate' => 18, // 18% as users would enter
+            ],
         ];
     }
 

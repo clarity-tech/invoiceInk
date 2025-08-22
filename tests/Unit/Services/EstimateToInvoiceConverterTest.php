@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Invoice;
-use App\Models\InvoiceItem;
 use App\Services\EstimateToInvoiceConverter;
 use App\Services\InvoiceCalculator;
 
@@ -21,17 +20,17 @@ test('can convert estimate to invoice', function () {
             'description' => 'Website Development',
             'quantity' => 1,
             'unit_price' => 5000,
-            'tax_rate' => 18,
+            'tax_rate' => 18, // 18% as users would enter
         ],
         [
             'description' => 'Mobile App Development',
             'quantity' => 1,
             'unit_price' => 5000,
-            'tax_rate' => 18,
-        ]
+            'tax_rate' => 18, // 18% as users would enter
+        ],
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
     $invoice = $converter->convert($estimate);
 
     expect($invoice)->toBeInstanceOf(Invoice::class);
@@ -56,19 +55,19 @@ test('converted invoice has all items from estimate', function () {
         'description' => 'Consulting Services',
         'quantity' => 10,
         'unit_price' => 750,
-        'tax_rate' => 18,
+        'tax_rate' => 18, // 18% as users would enter
     ]]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->items()->count())->toBe(1);
-    
+
     $invoiceItem = $invoice->items->first();
     expect($invoiceItem->description)->toBe('Consulting Services');
     expect($invoiceItem->quantity)->toBe(10);
     expect($invoiceItem->unit_price)->toBe(750);
-    expect($invoiceItem->tax_rate)->toBe('18.00');
+    expect($invoiceItem->tax_rate)->toBe(18.0); // Should return percentage for display
 });
 
 test('converted invoice gets new invoice number', function () {
@@ -81,7 +80,7 @@ test('converted invoice gets new invoice number', function () {
         'total' => 5900,
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->invoice_number)->not->toBe($estimate->invoice_number);
@@ -98,7 +97,7 @@ test('converted invoice has new ULID', function () {
         'total' => 3540,
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->ulid)->not->toBe($estimate->ulid);
@@ -121,7 +120,7 @@ test('converter preserves dates from estimate', function () {
         'total' => 2360,
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->issued_at->format('Y-m-d H:i:s'))->toBe($issuedAt->format('Y-m-d H:i:s'));
@@ -138,7 +137,7 @@ test('converter handles estimate without dates', function () {
         'total' => 1770,
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->issued_at)->toBeNull();
@@ -155,7 +154,7 @@ test('converter works with estimates that have no items', function () {
         'total' => 0,
     ], []); // Empty array for no items
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->items()->count())->toBe(0);
@@ -177,31 +176,31 @@ test('converter preserves complex item configurations', function () {
             'description' => 'Product A',
             'quantity' => 2,
             'unit_price' => 3000,
-            'tax_rate' => 12,
+            'tax_rate' => 12, // 12% as users would enter
         ],
         [
             'description' => 'Service B',
             'quantity' => 3,
             'unit_price' => 2000,
-            'tax_rate' => 18,
+            'tax_rate' => 18, // 18% as users would enter
         ],
         [
             'description' => 'Tax-free item',
             'quantity' => 1,
             'unit_price' => 0,
             'tax_rate' => 0,
-        ]
+        ],
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator());
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->items()->count())->toBe(3);
-    
+
     $items = $invoice->items->sortBy('description');
     expect($items->first()->description)->toBe('Product A');
-    expect($items->first()->tax_rate)->toBe('12.00');
-    
+    expect($items->first()->tax_rate)->toBe(12.0); // Should return percentage for display
+
     expect($items->last()->description)->toBe('Tax-free item');
-    expect($items->last()->tax_rate)->toBe('0.00');
+    expect($items->last()->tax_rate)->toBe(0.0); // Should return percentage for display
 });

@@ -4,7 +4,6 @@ use App\Livewire\InvoiceWizard;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Invoice;
-use App\ValueObjects\EmailCollection;
 use Livewire\Livewire;
 
 test('invoice wizard component loads', function () {
@@ -55,10 +54,10 @@ test('loads companies and customers', function () {
     $customer = createCustomerWithLocation();
 
     $component = Livewire::test(InvoiceWizard::class);
-    
+
     $companies = $component->instance()->companies;
     $customers = $component->instance()->customers;
-    
+
     expect($companies->count())->toBeGreaterThan(0);
     expect($customers->count())->toBeGreaterThan(0);
 });
@@ -93,7 +92,7 @@ test('calculates totals correctly', function () {
         ->set('items.0.description', 'Test Service')
         ->set('items.0.quantity', 2)
         ->set('items.0.unit_price', 100)
-        ->set('items.0.tax_rate', 18)
+        ->set('items.0.tax_rate', 18) // 18% as users would enter
         ->call('calculateTotals')
         ->assertSet('subtotal', 20000) // $200 in cents
         ->assertSet('tax', 3600) // 18% of $200
@@ -112,7 +111,7 @@ test('can populate form for editing', function () {
             'quantity' => 1,
             'unit_price' => 5000,
             'tax_rate' => 18,
-        ]
+        ],
     ]);
 
     Livewire::test(InvoiceWizard::class)
@@ -141,7 +140,7 @@ test('can create new invoice', function () {
         ->set('items.0.description', 'New Service')
         ->set('items.0.quantity', 1)
         ->set('items.0.unit_price', 1000)
-        ->set('items.0.tax_rate', 18)
+        ->set('items.0.tax_rate', 18) // 18% as users would enter
         ->call('save');
 
     expect(Invoice::count())->toBe($initialCount + 1);
@@ -163,7 +162,7 @@ test('can create estimate', function () {
         ->set('items.0.description', 'Estimate Service')
         ->set('items.0.quantity', 1)
         ->set('items.0.unit_price', 2000)
-        ->set('items.0.tax_rate', 18)
+        ->set('items.0.tax_rate', 18) // 18% as users would enter
         ->call('save');
 
     expect(Invoice::where('type', 'estimate')->count())->toBe($initialCount + 1);
@@ -187,7 +186,7 @@ test('can delete invoice', function () {
 
 test('generates correct invoice numbers', function () {
     $component = Livewire::test(InvoiceWizard::class)->call('create');
-    
+
     // Use reflection to test the private method
     $reflection = new ReflectionClass($component->instance());
     $method = $reflection->getMethod('generateInvoiceNumber');

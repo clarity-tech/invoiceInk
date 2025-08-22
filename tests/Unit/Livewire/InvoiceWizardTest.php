@@ -4,9 +4,7 @@ use App\Livewire\InvoiceWizard;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Invoice;
-use App\Models\InvoiceItem;
 use App\Models\Location;
-use App\ValueObjects\EmailCollection;
 use Livewire\Livewire;
 
 test('can render invoice wizard component', function () {
@@ -28,7 +26,7 @@ test('initializes with default values on mount', function () {
 test('can load invoices with pagination', function () {
     $company = createCompanyWithLocation();
     $customer = createCustomerWithLocation();
-    
+
     // Create test invoices
     for ($i = 1; $i <= 12; $i++) {
         createInvoiceWithItems([
@@ -80,7 +78,7 @@ test('calculates totals when items are updated', function () {
         ->set('items.0.description', 'Test Service')
         ->set('items.0.quantity', 2)
         ->set('items.0.unit_price', 100) // $100 in dollars
-        ->set('items.0.tax_rate', 18)
+        ->set('items.0.tax_rate', 18) // 18% as users would enter
         ->call('calculateTotals')
         ->assertSet('subtotal', 20000) // $200 in cents
         ->assertSet('tax', 3600) // 18% of $200 = $36 in cents
@@ -158,7 +156,7 @@ test('can create new invoice with items', function () {
         ->set('items.0.description', 'Web Development')
         ->set('items.0.quantity', 1)
         ->set('items.0.unit_price', 1000)
-        ->set('items.0.tax_rate', 18)
+        ->set('items.0.tax_rate', 18) // 18% as users would enter
         ->call('addItem')
         ->set('items.1.description', 'SEO Services')
         ->set('items.1.quantity', 2)
@@ -195,7 +193,7 @@ test('can create estimate', function () {
         ->set('items.0.description', 'Project Estimate')
         ->set('items.0.quantity', 1)
         ->set('items.0.unit_price', 5000)
-        ->set('items.0.tax_rate', 18)
+        ->set('items.0.tax_rate', 18) // 18% as users would enter
         ->call('save')
         ->assertSet('showInvoices', true);
 
@@ -235,7 +233,7 @@ test('can edit existing invoice', function () {
             'quantity' => 1,
             'unit_price' => 5000,
             'tax_rate' => 18,
-        ]
+        ],
     ]);
 
     Livewire::test(InvoiceWizard::class)
@@ -264,7 +262,7 @@ test('can update existing invoice', function () {
             'quantity' => 1,
             'unit_price' => 5000,
             'tax_rate' => 18,
-        ]
+        ],
     ]);
 
     Livewire::test(InvoiceWizard::class)
@@ -383,7 +381,7 @@ test('generates correct estimate number format', function () {
 
 test('loads company locations based on selected company', function () {
     $company = createCompanyWithLocation();
-    
+
     // Create additional location for the company
     createLocation(Company::class, $company->id, [
         'name' => 'Branch Office',
@@ -402,7 +400,7 @@ test('loads company locations based on selected company', function () {
 
 test('loads customer locations based on selected customer', function () {
     $customer = createCustomerWithLocation();
-    
+
     // Create additional location for the customer
     createLocation(Customer::class, $customer->id, [
         'name' => 'Customer Branch',
@@ -421,14 +419,14 @@ test('loads customer locations based on selected customer', function () {
 
 test('returns empty collection when no company selected', function () {
     $component = Livewire::test(InvoiceWizard::class)->call('create');
-    
+
     $locations = $component->instance()->companyLocations;
     expect($locations)->toHaveCount(0);
 });
 
 test('returns empty collection when no customer selected', function () {
     $component = Livewire::test(InvoiceWizard::class)->call('create');
-    
+
     $locations = $component->instance()->customerLocations;
     expect($locations)->toHaveCount(0);
 });

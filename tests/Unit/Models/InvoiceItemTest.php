@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Invoice;
 use App\Models\InvoiceItem;
 
 test('can create invoice item with all fields', function () {
@@ -14,14 +13,14 @@ test('can create invoice item with all fields', function () {
         'description' => 'Test Service',
         'quantity' => 2,
         'unit_price' => 1000,
-        'tax_rate' => 18,
+        'tax_rate' => 18, // 18% as users would enter
     ]);
 
     expect($item->invoice_id)->toBe($invoice->id);
     expect($item->description)->toBe('Test Service');
     expect($item->quantity)->toBe(2);
     expect($item->unit_price)->toBe(1000);
-    expect($item->tax_rate)->toBe(18);
+    expect($item->tax_rate)->toBe(18.0); // Should return percentage for display
 });
 
 test('invoice item belongs to invoice', function () {
@@ -35,7 +34,7 @@ test('invoice item belongs to invoice', function () {
         'description' => 'Test Service',
         'quantity' => 1,
         'unit_price' => 1000,
-        'tax_rate' => 18,
+        'tax_rate' => 18, // 18% as users would enter
     ]);
 
     expect($item->invoice)->not->toBeNull();
@@ -61,7 +60,7 @@ test('invoice item can have zero tax rate', function () {
         'tax_rate' => 0,
     ]);
 
-    expect($item->tax_rate)->toBe(0);
+    expect($item->tax_rate)->toBe(0.0);
 });
 
 test('invoice item can have null tax rate', function () {
@@ -100,18 +99,23 @@ test('invoice item fillable attributes work correctly', function () {
     expect($item->description)->toBe('Test Product');
     expect($item->quantity)->toBe(3);
     expect($item->unit_price)->toBe(2500);
-    expect($item->tax_rate)->toBe(12);
+    expect($item->tax_rate)->toBe(12.0);
 });
 
 test('invoice item calculates line total correctly', function () {
-    $item = new InvoiceItem([
+    $invoice = createInvoiceWithItems();
+
+    $item = InvoiceItem::create([
+        'invoice_id' => $invoice->id,
+        'description' => 'Test Item',
         'quantity' => 2,
         'unit_price' => 1000,
-        'tax_rate' => 18,
+        'tax_rate' => 18, // 18% as users would enter
     ]);
 
     $lineSubtotal = $item->quantity * $item->unit_price;
-    $lineTax = ($lineSubtotal * $item->tax_rate) / 100;
+    // Tax calculation: use the model's method which handles the conversion properly
+    $lineTax = $item->getTaxAmount();
     $lineTotal = $lineSubtotal + $lineTax;
 
     expect($lineSubtotal)->toBe(2000);
@@ -121,32 +125,32 @@ test('invoice item calculates line total correctly', function () {
 
 test('invoice item handles large quantities and prices', function () {
     $invoice = createInvoiceWithItems();
-    
+
     $item = InvoiceItem::create([
         'invoice_id' => $invoice->id,
         'description' => 'Bulk Service',
         'quantity' => 1000,
         'unit_price' => 500000, // $5000.00 in cents
-        'tax_rate' => 18,
+        'tax_rate' => 18, // 18% as users would enter
     ]);
 
     expect($item->quantity)->toBe(1000);
     expect($item->unit_price)->toBe(500000);
-    
+
     $lineSubtotal = $item->quantity * $item->unit_price;
     expect($lineSubtotal)->toBe(500000000); // $5,000,000.00 in cents
 });
 
 test('invoice item can have fractional tax rates', function () {
     $invoice = createInvoiceWithItems();
-    
+
     $item = InvoiceItem::create([
         'invoice_id' => $invoice->id,
         'description' => 'Service with custom tax',
         'quantity' => 1,
         'unit_price' => 10000,
-        'tax_rate' => 12.5,
+        'tax_rate' => 12.5, // 12.5% as users would enter
     ]);
 
-    expect($item->tax_rate)->toBe(12.5);
+    expect($item->tax_rate)->toBe(12.5); // Should return percentage for display
 });
