@@ -204,3 +204,238 @@ test('converter preserves complex item configurations', function () {
     expect($items->last()->description)->toBe('Tax-free item');
     expect($items->last()->tax_rate)->toBe(0.0); // Should return percentage for display
 });
+
+test('converter throws exception when trying to convert non-estimate', function () {
+    $invoice = createInvoiceWithItems([
+        'type' => 'invoice',
+        'invoice_number' => 'INV-001',
+        'status' => 'draft',
+    ]);
+
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+
+    expect(fn () => $converter->convert($invoice))
+        ->toThrow(\InvalidArgumentException::class, 'Only estimates can be converted to invoices');
+});
+
+test('converter throws exception when trying to convert invoice type', function () {
+    $invoice = createInvoiceWithItems([
+        'type' => 'invoice',
+        'invoice_number' => 'INV-002',
+        'status' => 'draft',
+    ]);
+
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+
+    expect(fn () => $converter->convert($invoice))
+        ->toThrow(\InvalidArgumentException::class, 'Only estimates can be converted to invoices');
+});
+
+test('converter generates sequential invoice numbers for same month', function () {
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+
+    $estimate1 = createInvoiceWithItems([
+        'type' => 'estimate',
+        'invoice_number' => 'EST-001',
+        'status' => 'sent',
+    ]);
+
+    $estimate2 = createInvoiceWithItems([
+        'type' => 'estimate',
+        'invoice_number' => 'EST-002',
+        'status' => 'sent',
+    ]);
+
+    $invoice1 = $converter->convert($estimate1);
+    $invoice2 = $converter->convert($estimate2);
+
+    expect($invoice1->invoice_number)->toMatch('/INV-\d{4}-\d{2}-\d{4}/');
+    expect($invoice2->invoice_number)->toMatch('/INV-\d{4}-\d{2}-\d{4}/');
+    expect($invoice1->invoice_number)->not->toBe($invoice2->invoice_number);
+
+    $parts1 = explode('-', $invoice1->invoice_number);
+    $parts2 = explode('-', $invoice2->invoice_number);
+
+    expect((int) end($parts2))->toBe((int) end($parts1) + 1);
+});
+
+test('converter generates first invoice number when none exist', function () {
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+
+    $estimate = createInvoiceWithItems([
+        'type' => 'estimate',
+        'invoice_number' => 'EST-FIRST',
+        'status' => 'sent',
+    ]);
+
+    $invoice = $converter->convert($estimate);
+
+    $currentYear = now()->year;
+    $currentMonth = now()->format('m');
+    $expectedPattern = "INV-{$currentYear}-{$currentMonth}-0001";
+
+    expect($invoice->invoice_number)->toBe($expectedPattern);
+});
+
+test('converter handles estimates with null tax rates', function () {
+    $estimate = createInvoiceWithItems([
+        'type' => 'estimate',
+        'invoice_number' => 'EST-NULL-TAX',
+        'status' => 'sent',
+    ], [
+        [
+            'description' => 'Service without tax',
+            'quantity' => 1,
+            'unit_price' => 1000,
+            'tax_rate' => null,
+        ],
+    ]);
+
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $invoice = $converter->convert($estimate);
+
+    expect($invoice->items->first()->tax_rate)->toBeNull();
+});
+
+test('converter handles estimates with zero tax rates', function () {
+    $estimate = createInvoiceWithItems([
+        'type' => 'estimate',
+        'invoice_number' => 'EST-ZERO-TAX',
+        'status' => 'sent',
+    ], [
+        [
+            'description' => 'Service without tax',
+            'quantity' => 1,
+            'unit_price' => 1000,
+            'tax_rate' => 0,
+        ],
+    ]);
+
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $invoice = $converter->convert($estimate);
+
+    expect($invoice->items->first()->tax_rate)->toBe(0.0);
+});
+
+test('converter handles estimates with fractional tax rates', function () {
+    $estimate = createInvoiceWithItems([
+        'type' => 'estimate',
+        'invoice_number' => 'EST-FRACTIONAL',
+        'status' => 'sent',
+    ], [
+        [
+            'description' => 'Service with fractional tax',
+            'quantity' => 1,
+            'unit_price' => 10000,
+            'tax_rate' => 12.5,
+        ],
+    ]);
+
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $invoice = $converter->convert($estimate);
+
+    expect($invoice->items->first()->tax_rate)->toBe(12.5);
+});
+
+test('converter handles estimates with large quantities and amounts', function () {
+    $estimate = createInvoiceWithItems([
+        'type' => 'estimate',
+        'invoice_number' => 'EST-LARGE',
+        'status' => 'sent',
+    ], [
+        [
+            'description' => 'Large quantity service',
+            'quantity' => 100,
+            'unit_price' => 50000,
+            'tax_rate' => 28,
+        ],
+    ]);
+
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $invoice = $converter->convert($estimate);
+
+    expect($invoice->items->first()->quantity)->toBe(100);
+    expect($invoice->items->first()->unit_price)->toBe(50000);
+    expect($invoice->items->first()->tax_rate)->toBe(28.0);
+});
+
+test('converter preserves all estimate status transitions', function () {
+    $statuses = ['draft', 'sent'];
+
+    foreach ($statuses as $status) {
+        $estimate = createInvoiceWithItems([
+            'type' => 'estimate',
+            'invoice_number' => "EST-{$status}",
+            'status' => $status,
+        ]);
+
+        $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+        $invoice = $converter->convert($estimate);
+
+        expect($invoice->status)->toBe('draft');
+    }
+});
+
+test('converter handles estimates with null dates appropriately', function () {
+    $estimate = createInvoiceWithItems([
+        'type' => 'estimate',
+        'invoice_number' => 'EST-NULL-DATES',
+        'status' => 'sent',
+        'issued_at' => null,
+        'due_at' => null,
+    ]);
+
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $invoice = $converter->convert($estimate);
+
+    expect($invoice->issued_at)->toBeNull();
+    expect($invoice->due_at)->toBeNull();
+});
+
+test('converter creates invoice with correct relationships', function () {
+    $estimate = createInvoiceWithItems([
+        'type' => 'estimate',
+        'invoice_number' => 'EST-RELATIONSHIPS',
+        'status' => 'sent',
+    ], [
+        [
+            'description' => 'Test service',
+            'quantity' => 1,
+            'unit_price' => 1000,
+            'tax_rate' => 18,
+        ],
+    ]);
+
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $invoice = $converter->convert($estimate);
+
+    expect($invoice->company_location_id)->toBe($estimate->company_location_id);
+    expect($invoice->customer_location_id)->toBe($estimate->customer_location_id);
+    expect($invoice->exists)->toBeTrue();
+    expect($invoice->wasRecentlyCreated)->toBeTrue();
+});
+
+test('converter recalculates totals after conversion', function () {
+    $estimate = createInvoiceWithItems([
+        'type' => 'estimate',
+        'invoice_number' => 'EST-RECALC',
+        'status' => 'sent',
+        'subtotal' => 0,
+        'tax' => 0,
+        'total' => 0,
+    ], [
+        [
+            'description' => 'Test service',
+            'quantity' => 2,
+            'unit_price' => 1500,
+            'tax_rate' => 18,
+        ],
+    ]);
+
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $invoice = $converter->convert($estimate);
+
+    expect($invoice->subtotal)->toBe(3000);
+    expect($invoice->tax)->toBe(540);
+    expect($invoice->total)->toBe(3540);
+});
