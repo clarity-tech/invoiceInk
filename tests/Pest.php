@@ -1,9 +1,5 @@
 <?php
 
-pest()->extend(Tests\DuskTestCase::class)
-//  ->use(Illuminate\Foundation\Testing\DatabaseMigrations::class)
-    ->in('Browser');
-
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -23,8 +19,10 @@ pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Unit');
 
-// Include test helpers
-require_once __DIR__.'/TestHelpers.php';
+pest()->extend(Tests\DuskTestCase::class)
+    ->use(Laravel\Dusk\Concerns\ProvidesBrowser::class)
+    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->in('Browser');
 
 /*
 |--------------------------------------------------------------------------
@@ -52,7 +50,5 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
-{
-    // ..
-}
+// Include test helpers
+require_once __DIR__.'/TestHelpers.php';

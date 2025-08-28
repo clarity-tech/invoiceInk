@@ -4,41 +4,35 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-test('root route redirects to invoices page', function () {
+test('root route redirects to login when unauthenticated', function () {
     $response = $this->get('/');
 
     $response->assertStatus(302);
-    $response->assertRedirect('/invoices');
+    $response->assertRedirect('/login');
 });
 
-test('invoices page loads successfully', function () {
-    $response = $this->get('/invoices');
+test('root route redirects to dashboard when authenticated', function () {
+    $user = createUserWithTeam();
 
-    $response->assertStatus(200);
-    $response->assertSee('Invoices');
+    $response = $this->actingAs($user)->get('/');
+
+    $response->assertStatus(302);
+    $response->assertRedirect('/dashboard');
 });
 
-test('companies page loads successfully', function () {
-    $response = $this->get('/companies');
+test('protected routes require authentication', function () {
+    $routes = ['/companies', '/customers', '/invoices', '/dashboard'];
 
-    $response->assertStatus(200);
-    $response->assertSee('Companies');
+    foreach ($routes as $route) {
+        $response = $this->get($route);
+        $response->assertStatus(302);
+        $response->assertRedirect('/login');
+    }
 });
 
-test('customers page loads successfully', function () {
-    $response = $this->get('/customers');
+test('protected routes load successfully when authenticated', function () {
+    $user = createUserWithTeam();
 
-    $response->assertStatus(200);
-    $response->assertSee('Customers');
-});
-
-test('non-existent routes return 404', function () {
-    $response = $this->get('/non-existent-route');
-
-    $response->assertStatus(404);
-});
-
-test('main application routes are accessible', function () {
     $routes = [
         '/companies' => 'Companies',
         '/customers' => 'Customers',
@@ -46,9 +40,24 @@ test('main application routes are accessible', function () {
     ];
 
     foreach ($routes as $route => $expectedContent) {
-        $response = $this->get($route);
+        $response = $this->actingAs($user)->get($route);
 
         $response->assertStatus(200);
         $response->assertSee($expectedContent);
     }
+});
+
+test('dashboard loads successfully when authenticated', function () {
+    $user = createUserWithTeam();
+
+    $response = $this->actingAs($user)->get('/dashboard');
+
+    $response->assertStatus(200);
+    $response->assertSee('Dashboard');
+});
+
+test('non-existent routes return 404', function () {
+    $response = $this->get('/non-existent-route');
+
+    $response->assertStatus(404);
 });

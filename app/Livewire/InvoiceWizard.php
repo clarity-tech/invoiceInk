@@ -185,6 +185,7 @@ class InvoiceWizard extends Component
                 'subtotal' => $this->subtotal,
                 'tax' => $this->tax,
                 'total' => $this->total,
+                'currency' => Company::find($this->company_id)?->currency,
             ]);
 
             // Delete existing items and recreate
@@ -201,6 +202,8 @@ class InvoiceWizard extends Component
                 'subtotal' => $this->subtotal,
                 'tax' => $this->tax,
                 'total' => $this->total,
+                'company_id' => $this->company_id,
+                'currency' => Company::find($this->company_id)?->currency,
             ]);
         }
 

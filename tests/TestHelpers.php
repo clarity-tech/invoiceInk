@@ -5,10 +5,19 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Location;
+use App\Models\Team;
+use App\Models\User;
 use App\ValueObjects\EmailCollection;
 
-function createCompanyWithLocation(array $companyAttributes = [], array $locationAttributes = []): Company
+function createCompanyWithLocation(array $companyAttributes = [], array $locationAttributes = [], ?User $user = null): Company
 {
+    // Create a user with team if not provided
+    if (! $user && auth()->check()) {
+        $user = auth()->user();
+    } elseif (! $user) {
+        $user = createUserWithTeam();
+    }
+
     $defaultLocationAttributes = [
         'name' => 'Test Office',
         'address_line_1' => '123 Test Street',
@@ -26,6 +35,7 @@ function createCompanyWithLocation(array $companyAttributes = [], array $locatio
         'name' => 'Test Company',
         'emails' => new EmailCollection(['test@company.com']),
         'primary_location_id' => $location->id,
+        'team_id' => $user->currentTeam->id,
     ];
 
     $company = Company::create(array_merge($defaultCompanyAttributes, $companyAttributes));
@@ -36,8 +46,13 @@ function createCompanyWithLocation(array $companyAttributes = [], array $locatio
     return $company->fresh(['primaryLocation']);
 }
 
-function createCustomerWithLocation(array $customerAttributes = [], array $locationAttributes = []): Customer
+function createCustomerWithLocation(array $customerAttributes = [], array $locationAttributes = [], ?Company $company = null): Customer
 {
+    // Create a company if not provided
+    if (! $company) {
+        $company = createCompanyWithLocation();
+    }
+
     $defaultLocationAttributes = [
         'name' => 'Customer Office',
         'address_line_1' => '456 Customer Avenue',
@@ -55,6 +70,7 @@ function createCustomerWithLocation(array $customerAttributes = [], array $locat
         'name' => 'Test Customer',
         'emails' => new EmailCollection(['test@customer.com']),
         'primary_location_id' => $location->id,
+        'company_id' => $company->id,
     ];
 
     $customer = Customer::create(array_merge($defaultCustomerAttributes, $customerAttributes));
@@ -76,7 +92,7 @@ function createInvoiceWithItems(
     }
 
     if (! $customer) {
-        $customer = createCustomerWithLocation();
+        $customer = createCustomerWithLocation([], [], $company);
     }
 
     $defaultInvoiceAttributes = [
@@ -88,6 +104,7 @@ function createInvoiceWithItems(
         'subtotal' => 10000,
         'tax' => 1800,
         'total' => 11800,
+        'company_id' => $company->id,
     ];
 
     $invoice = Invoice::create(array_merge($defaultInvoiceAttributes, $invoiceAttributes));
@@ -128,4 +145,67 @@ function createLocation(string $type, int $locatableId, array $attributes = []):
     ];
 
     return Location::create(array_merge($defaultAttributes, $attributes));
+}
+
+function createUserWithTeam(array $userAttributes = [], array $teamAttributes = []): User
+{
+    $defaultUserAttributes = [
+        'name' => 'Test User',
+        'email' => 'test-'.uniqid().'@example.com',
+        'password' => 'password',
+        'email_verified_at' => now(),
+    ];
+
+    $user = User::create(array_merge($defaultUserAttributes, $userAttributes));
+
+    $defaultTeamAttributes = [
+        'name' => 'Test Team',
+        'personal_team' => true,
+    ];
+
+    $team = $user->ownedTeams()->create(array_merge($defaultTeamAttributes, $teamAttributes));
+
+    // Set the team as the user's current team
+    $user->switchTeam($team);
+
+    return $user->fresh(['teams', 'currentTeam']);
+}
+
+function loginUserInBrowser($browser, ?User $user = null): User
+{
+    if (! $user) {
+        $user = createUserWithTeam();
+    }
+
+    $browser->visit('/login')
+        ->waitFor('form', 5)
+        ->clear('input[name="email"]')
+        ->clear('input[name="password"]')
+        ->type('input[name="email"]', $user->email)
+        ->type('input[name="password"]', 'password')
+        ->click('button[type="submit"]')
+        ->waitFor('body', 5); // Wait for page to load
+
+    // Check if we're redirected away from login
+    $currentUrl = $browser->driver->getCurrentURL();
+    if (str_contains($currentUrl, '/login')) {
+        // If still on login page, take a screenshot and check for errors
+        $browser->screenshot('login_failed_debug');
+
+        // Check if there are validation errors visible
+        $pageSource = $browser->driver->getPageSource();
+        if (str_contains($pageSource, 'These credentials do not match our records')) {
+            throw new \Exception('Login failed - invalid credentials');
+        }
+        if (str_contains($pageSource, 'The email field is required')) {
+            throw new \Exception('Login failed - email field validation error');
+        }
+        if (str_contains($pageSource, 'The password field is required')) {
+            throw new \Exception('Login failed - password field validation error');
+        }
+
+        throw new \Exception('Login failed - still on login page. User email: '.$user->email);
+    }
+
+    return $user;
 }

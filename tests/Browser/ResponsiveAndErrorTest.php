@@ -7,6 +7,8 @@ uses(RefreshDatabase::class);
 
 test('application is responsive on mobile viewport', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->resize(375, 667) // iPhone viewport
             ->visit('/')
             ->screenshot('mobile_dashboard')
@@ -21,6 +23,8 @@ test('application is responsive on mobile viewport', function () {
 
 test('application is responsive on tablet viewport', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->resize(768, 1024) // iPad viewport
             ->visit('/')
             ->screenshot('tablet_dashboard')
@@ -35,6 +39,8 @@ test('application is responsive on tablet viewport', function () {
 
 test('application works on desktop viewport', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->resize(1920, 1080) // Desktop viewport
             ->visit('/')
             ->screenshot('desktop_dashboard')
@@ -49,6 +55,8 @@ test('application works on desktop viewport', function () {
 
 test('navigation works across all main pages', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->visit('/')
             ->screenshot('navigation_home')
             ->clickLink('Companies')
@@ -81,6 +89,8 @@ test('handles non-existent estimate gracefully', function () {
 
 test('form validation displays error messages', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->visit('/companies')
             ->click('.bg-blue-500')
             ->waitFor('form', 5)
@@ -94,6 +104,8 @@ test('form validation displays error messages', function () {
 
 test('customer form validation works', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->visit('/customers')
             ->click('.bg-blue-500')
             ->waitFor('form', 5)
@@ -107,6 +119,8 @@ test('customer form validation works', function () {
 
 test('invoice form step validation works', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->visit('/invoices')
             ->click('.bg-blue-500')
             ->waitFor('form', 5)
@@ -120,6 +134,8 @@ test('invoice form step validation works', function () {
 
 test('dark mode toggle works if available', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->visit('/')
             ->screenshot('light_mode_dashboard');
 
@@ -137,6 +153,8 @@ test('dark mode toggle works if available', function () {
 
 test('form inputs handle special characters', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->visit('/companies')
             ->click('.bg-blue-500')
             ->waitFor('form')
@@ -164,6 +182,8 @@ test('pagination works in invoice list', function () {
     ]);
 
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->visit('/invoices')
             ->screenshot('invoices_page_with_pagination');
 
@@ -185,6 +205,8 @@ test('search functionality works if available', function () {
     $customer = \App\Models\Customer::factory()->withLocation()->create(['name' => 'Searchable Customer']);
 
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->visit('/companies')
             ->screenshot('companies_before_search');
 

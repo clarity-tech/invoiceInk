@@ -25,7 +25,7 @@
                 
                 <form wire:submit="save" class="p-6 space-y-6">
                     <!-- Company Information -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
                             <input wire:model="name" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -36,6 +36,17 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                             <input wire:model="phone" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             @error('phone') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Currency *</label>
+                            <select wire:model="currency" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Currency</option>
+                                @foreach(\App\Currency::options() as $value => $label)
+                                    <option value="{{ $value }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('currency') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
                     </div>
 
@@ -145,6 +156,9 @@
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">{{ $company->name }}</div>
+                                    @if($company->currency)
+                                        <div class="text-sm text-gray-500">{{ $company->currency->symbol() }} {{ $company->currency->value }}</div>
+                                    @endif
                                     @if($company->primaryLocation && $company->primaryLocation->gstin)
                                         <div class="text-sm text-gray-500">GSTIN: {{ $company->primaryLocation->gstin }}</div>
                                     @endif

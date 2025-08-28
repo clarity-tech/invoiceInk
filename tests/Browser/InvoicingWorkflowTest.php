@@ -9,14 +9,18 @@ uses(RefreshDatabase::class);
 
 test('user can view the dashboard', function () {
     $this->browse(function (Browser $browser) {
-        $browser->visit('/')
-            ->assertSee('Invoices & Estimates')
+        loginUserInBrowser($browser);
+
+        $browser->visit('/dashboard')
+            ->assertSee('Dashboard')
             ->screenshot('dashboard_view');
     });
 });
 
 test('user can view companies page', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->visit('/companies')
             ->assertSee('Companies')
             ->screenshot('companies_page');
@@ -25,6 +29,8 @@ test('user can view companies page', function () {
 
 test('user can create a new company', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->visit('/companies')
             ->screenshot('companies_page_before_click')
             ->click('.bg-blue-500')
@@ -48,6 +54,8 @@ test('user can create a new company', function () {
 
 test('user can view customers page', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->visit('/customers')
             ->assertSee('Customers')
             ->screenshot('customers_page');
@@ -56,6 +64,8 @@ test('user can view customers page', function () {
 
 test('user can create a new customer', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->visit('/customers')
             ->click('.bg-blue-500')
             ->waitFor('form', 3)
@@ -77,6 +87,8 @@ test('user can create a new customer', function () {
 
 test('user can view invoices page', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->visit('/invoices')
             ->assertSee('Invoices')
             ->screenshot('invoices_page');
@@ -85,6 +97,8 @@ test('user can view invoices page', function () {
 
 test('user can create an invoice with items', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         // Create company through UI first
         $browser->visit('/companies')
             ->click('.bg-blue-500')
@@ -150,6 +164,8 @@ test('user can create an invoice with items', function () {
 
 test('user can create an estimate', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         // Create company through UI first
         $browser->visit('/companies')
             ->click('.bg-blue-500')
@@ -211,6 +227,8 @@ test('user can create an estimate', function () {
 
 test('user can add multiple items to invoice', function () {
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         // Create company through UI first
         $browser->visit('/companies')
             ->click('.bg-blue-500')
@@ -295,6 +313,8 @@ test('user can view invoice list with created invoices', function () {
     ]);
 
     $this->browse(function (Browser $browser) {
+        loginUserInBrowser($browser);
+
         $browser->visit('/invoices')
             ->assertSee('Invoices')
             ->screenshot('invoices_list_with_data')

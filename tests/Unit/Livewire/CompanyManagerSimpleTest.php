@@ -6,12 +6,16 @@ use App\ValueObjects\EmailCollection;
 use Livewire\Livewire;
 
 test('company manager component loads', function () {
-    $component = Livewire::test(CompanyManager::class);
+    $user = createUserWithTeam();
+
+    $component = Livewire::actingAs($user)->test(CompanyManager::class);
     expect($component)->not->toBeNull();
 });
 
 test('can show and hide create form', function () {
-    Livewire::test(CompanyManager::class)
+    $user = createUserWithTeam();
+
+    Livewire::actingAs($user)->test(CompanyManager::class)
         ->assertSet('showForm', false)
         ->call('create')
         ->assertSet('showForm', true)
@@ -20,7 +24,9 @@ test('can show and hide create form', function () {
 });
 
 test('can manage email fields', function () {
-    Livewire::test(CompanyManager::class)
+    $user = createUserWithTeam();
+
+    Livewire::actingAs($user)->test(CompanyManager::class)
         ->call('create')
         ->assertCount('emails', 1)
         ->call('addEmailField')
@@ -30,24 +36,28 @@ test('can manage email fields', function () {
 });
 
 test('loads companies through computed property', function () {
+    $user = createUserWithTeam();
+
     createCompanyWithLocation([
         'name' => 'Test Company',
         'emails' => new EmailCollection(['test@company.com']),
-    ]);
+    ], [], $user);
 
-    $component = Livewire::test(CompanyManager::class);
+    $component = Livewire::actingAs($user)->test(CompanyManager::class);
     $companies = $component->instance()->companies;
     expect($companies->total())->toBeGreaterThan(0);
 });
 
 test('can populate form for editing', function () {
+    $user = createUserWithTeam();
+
     $company = createCompanyWithLocation([
         'name' => 'Edit Company',
         'phone' => '+1234567890',
         'emails' => new EmailCollection(['edit@company.com']),
-    ]);
+    ], [], $user);
 
-    Livewire::test(CompanyManager::class)
+    Livewire::actingAs($user)->test(CompanyManager::class)
         ->call('edit', $company)
         ->assertSet('showForm', true)
         ->assertSet('editingId', $company->id)
@@ -57,7 +67,9 @@ test('can populate form for editing', function () {
 });
 
 test('resets form correctly', function () {
-    $component = Livewire::test(CompanyManager::class)
+    $user = createUserWithTeam();
+
+    $component = Livewire::actingAs($user)->test(CompanyManager::class)
         ->set('name', 'Test Name')
         ->set('phone', '+1234567890')
         ->set('emails.0', 'test@test.com')
@@ -69,7 +81,9 @@ test('resets form correctly', function () {
 });
 
 test('validates required fields', function () {
-    Livewire::test(CompanyManager::class)
+    $user = createUserWithTeam();
+
+    Livewire::actingAs($user)->test(CompanyManager::class)
         ->call('create')
         ->set('name', '') // Empty required field
         ->set('emails.0', 'notanemail') // Invalid email
@@ -78,9 +92,11 @@ test('validates required fields', function () {
 });
 
 test('can create company with valid data', function () {
+    $user = createUserWithTeam();
+
     $initialCount = Company::count();
 
-    Livewire::test(CompanyManager::class)
+    Livewire::actingAs($user)->test(CompanyManager::class)
         ->call('create')
         ->set('name', 'New Company')
         ->set('emails.0', 'new@company.com')
@@ -97,14 +113,16 @@ test('can create company with valid data', function () {
 });
 
 test('can delete company', function () {
+    $user = createUserWithTeam();
+
     $company = createCompanyWithLocation([
         'name' => 'Delete Me',
         'emails' => new EmailCollection(['delete@company.com']),
-    ]);
+    ], [], $user);
 
     $initialCount = Company::count();
 
-    Livewire::test(CompanyManager::class)
+    Livewire::actingAs($user)->test(CompanyManager::class)
         ->call('delete', $company);
 
     expect(Company::count())->toBe($initialCount - 1);

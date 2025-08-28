@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\CompanyScope;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +25,8 @@ class Invoice extends Model
         'subtotal',
         'tax',
         'total',
+        'company_id',
+        'currency',
     ];
 
     protected function casts(): array
@@ -31,6 +34,7 @@ class Invoice extends Model
         return [
             'issued_at' => 'datetime',
             'due_at' => 'datetime',
+            'currency' => \App\Currency::class,
         ];
     }
 
@@ -62,5 +66,15 @@ class Invoice extends Model
     public function isEstimate(): bool
     {
         return $this->type === 'estimate';
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new CompanyScope);
     }
 }

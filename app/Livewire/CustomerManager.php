@@ -158,6 +158,7 @@ class CustomerManager extends Component
                 'phone' => $this->phone ?: null,
                 'emails' => $emailCollection,
                 'primary_location_id' => $location->id,
+                'company_id' => auth()->user()?->currentTeam?->companies()?->first()?->id,
             ]);
 
             $location->update([

@@ -11,7 +11,8 @@ class PublicViewController extends Controller
 {
     public function showInvoice(string $ulid): View
     {
-        $invoice = Invoice::with(['items', 'companyLocation', 'customerLocation'])
+        $invoice = Invoice::withoutGlobalScopes()
+            ->with(['items', 'companyLocation', 'customerLocation'])
             ->where('ulid', $ulid)
             ->where('type', 'invoice')
             ->firstOrFail();
@@ -21,7 +22,8 @@ class PublicViewController extends Controller
 
     public function showEstimate(string $ulid): View
     {
-        $estimate = Invoice::with(['items', 'companyLocation', 'customerLocation'])
+        $estimate = Invoice::withoutGlobalScopes()
+            ->with(['items', 'companyLocation', 'customerLocation'])
             ->where('ulid', $ulid)
             ->where('type', 'estimate')
             ->firstOrFail();
@@ -31,7 +33,8 @@ class PublicViewController extends Controller
 
     public function downloadInvoicePdf(string $ulid, PdfService $pdfService): Response
     {
-        $invoice = Invoice::with(['items', 'companyLocation', 'customerLocation'])
+        $invoice = Invoice::withoutGlobalScopes()
+            ->with(['items', 'companyLocation', 'customerLocation'])
             ->where('ulid', $ulid)
             ->where('type', 'invoice')
             ->firstOrFail();
@@ -41,7 +44,8 @@ class PublicViewController extends Controller
 
     public function downloadEstimatePdf(string $ulid, PdfService $pdfService): Response
     {
-        $estimate = Invoice::with(['items', 'companyLocation', 'customerLocation'])
+        $estimate = Invoice::withoutGlobalScopes()
+            ->with(['items', 'companyLocation', 'customerLocation'])
             ->where('ulid', $ulid)
             ->where('type', 'estimate')
             ->firstOrFail();

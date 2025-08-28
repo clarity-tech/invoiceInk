@@ -9,8 +9,10 @@
         "php": "^8.4",
         "akaunting/laravel-money": "^6.0",
         "laravel/framework": "^12.0",
+        "laravel/jetstream": "^5.3",
+        "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
-        "livewire/livewire": "^3.6",
+        "livewire/livewire": "^3.0",
         "luvi-ui/laravel-luvi": "^0.6.0",
         "mallardduck/blade-lucide-icons": "^1.23",
         "spatie/browsershot": "^5.0"

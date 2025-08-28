@@ -2,8 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Currency;
 use App\Models\Company;
 use App\Models\Location;
+use App\Rules\CurrencyCode;
 use App\ValueObjects\EmailCollection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Rule;
@@ -46,6 +48,8 @@ class CompanyManager extends Component
     #[Rule('required|string|max:20')]
     public string $postal_code = '';
 
+    public string $currency = '';
+
     public bool $showForm = false;
 
     public ?int $editingId = null;
@@ -77,6 +81,7 @@ class CompanyManager extends Component
         $this->name = $company->name;
         $this->phone = $company->phone ?? '';
         $this->emails = $company->emails->toArray() ?: [''];
+        $this->currency = $company->currency?->value ?? Currency::default()->value;
 
         if ($company->primaryLocation) {
             $this->location_name = $company->primaryLocation->name;
@@ -97,6 +102,7 @@ class CompanyManager extends Component
         $this->validate([
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
+            'currency' => ['required', 'string', new CurrencyCode],
             'location_name' => 'required|string|max:255',
             'gstin' => 'nullable|string|max:50',
             'address_line_1' => 'required|string|max:500',
@@ -125,6 +131,7 @@ class CompanyManager extends Component
                 'name' => $this->name,
                 'phone' => $this->phone ?: null,
                 'emails' => $emailCollection,
+                'currency' => $this->currency,
             ]);
 
             if ($company->primaryLocation) {
@@ -158,6 +165,8 @@ class CompanyManager extends Component
                 'phone' => $this->phone ?: null,
                 'emails' => $emailCollection,
                 'primary_location_id' => $location->id,
+                'team_id' => auth()->user()?->currentTeam?->id,
+                'currency' => $this->currency,
             ]);
 
             $location->update([
@@ -198,6 +207,7 @@ class CompanyManager extends Component
         $this->name = '';
         $this->phone = '';
         $this->emails = [''];
+        $this->currency = Currency::default()->value;
         $this->location_name = '';
         $this->gstin = '';
         $this->address_line_1 = '';
