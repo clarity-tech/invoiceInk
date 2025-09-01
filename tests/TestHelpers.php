@@ -36,6 +36,7 @@ function createCompanyWithLocation(array $companyAttributes = [], array $locatio
         'emails' => new EmailCollection(['test@company.com']),
         'primary_location_id' => $location->id,
         'team_id' => $user->currentTeam->id,
+        'currency' => 'INR',
     ];
 
     $company = Company::create(array_merge($defaultCompanyAttributes, $companyAttributes));
