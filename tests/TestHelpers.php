@@ -152,7 +152,7 @@ function createUserWithTeam(array $userAttributes = [], array $teamAttributes = 
     $defaultUserAttributes = [
         'name' => 'Test User',
         'email' => 'test-'.uniqid().'@example.com',
-        'password' => 'password',
+        'password' => bcrypt('password'),
         'email_verified_at' => now(),
     ];
 
