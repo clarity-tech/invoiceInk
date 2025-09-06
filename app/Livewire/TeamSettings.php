@@ -32,6 +32,10 @@ class TeamSettings extends Component
 
     public function updateTeamName(): void
     {
+        if (! $this->team) {
+            throw new \Exception('No team available for update');
+        }
+
         $this->validate([
             'name' => 'required|string|max:255',
         ]);
@@ -45,6 +49,10 @@ class TeamSettings extends Component
 
     public function updateSlug(): void
     {
+        if (! $this->team) {
+            throw new \Exception('No team available for update');
+        }
+
         $this->validate([
             'slug' => 'nullable|string|max:50|alpha_dash|unique:teams,slug,'.$this->team->id,
         ]);
@@ -58,6 +66,10 @@ class TeamSettings extends Component
 
     public function updateCustomDomain(): void
     {
+        if (! $this->team) {
+            throw new \Exception('No team available for update');
+        }
+
         $this->validate([
             'custom_domain' => 'nullable|string|max:100|regex:/^([a-z0-9-]+\.)+[a-z]{2,}$/i|unique:teams,custom_domain,'.$this->team->id,
         ]);
