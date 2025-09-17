@@ -2,7 +2,7 @@
 
 namespace App\Policies;
 
-use App\Models\Team;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
@@ -21,7 +21,7 @@ class TeamPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Team $team): bool
+    public function view(User $user, Organization $team): bool
     {
         return $user->belongsToTeam($team);
     }
@@ -37,7 +37,7 @@ class TeamPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Team $team): bool
+    public function update(User $user, Organization $team): bool
     {
         return $user->ownsTeam($team);
     }
@@ -45,7 +45,7 @@ class TeamPolicy
     /**
      * Determine whether the user can add team members.
      */
-    public function addTeamMember(User $user, Team $team): bool
+    public function addTeamMember(User $user, Organization $team): bool
     {
         return $user->ownsTeam($team);
     }
@@ -53,7 +53,7 @@ class TeamPolicy
     /**
      * Determine whether the user can update team member permissions.
      */
-    public function updateTeamMember(User $user, Team $team): bool
+    public function updateTeamMember(User $user, Organization $team): bool
     {
         return $user->ownsTeam($team);
     }
@@ -61,7 +61,7 @@ class TeamPolicy
     /**
      * Determine whether the user can remove team members.
      */
-    public function removeTeamMember(User $user, Team $team): bool
+    public function removeTeamMember(User $user, Organization $team): bool
     {
         return $user->ownsTeam($team);
     }
@@ -69,7 +69,7 @@ class TeamPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Team $team): bool
+    public function delete(User $user, Organization $team): bool
     {
         return $user->ownsTeam($team);
     }

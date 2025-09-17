@@ -13,28 +13,29 @@ class DatabaseSeeder extends Seeder
     {
         if (! app()->environment('local')) {
             $this->command->error('Seeders can only be run in the local environment for safety.');
-            $this->command->error('Current environment: ' . app()->environment());
+            $this->command->error('Current environment: '.app()->environment());
             $this->command->error('To run seeders, set APP_ENV=local in your .env file.');
-            
+
             return;
         }
 
         $this->command->info('Starting comprehensive database seeding...');
         $this->command->info('This will create demo data for the multitenant invoicing application.');
-        
+
         if (! $this->confirmSeeding()) {
             $this->command->warn('Seeding cancelled by user.');
+
             return;
         }
 
         $startTime = microtime(true);
 
         // Run seeders in the correct order to maintain referential integrity
-        $this->command->info('Step 1/4: Creating users and teams...');
+        $this->command->info('Step 1/4: Creating users and organizations...');
         $this->call(UserSeeder::class);
 
-        $this->command->info('Step 2/4: Creating companies with locations...');
-        $this->call(CompanySeeder::class);
+        $this->command->info('Step 2/4: Creating tax templates...');
+        $this->call(TaxTemplateSeeder::class);
 
         $this->command->info('Step 3/4: Creating customers with locations...');
         $this->call(CustomerSeeder::class);
@@ -56,7 +57,7 @@ class DatabaseSeeder extends Seeder
         if (app()->environment('local')) {
             $this->command->warn('You are about to seed the database with demo data.');
             $this->command->warn('This will create multiple users, teams, companies, customers, and invoices.');
-            
+
             return $this->command->confirm('Do you want to continue?', true);
         }
 
@@ -72,21 +73,21 @@ class DatabaseSeeder extends Seeder
         $this->command->info('🎉 Database seeding completed successfully!');
         $this->command->info("⏱️  Execution time: {$executionTime} seconds");
         $this->command->info('');
-        
+
         $this->command->info('📊 Demo Data Summary:');
         $this->command->info('   👥 Users & Teams: Multiple business organizations created');
         $this->command->info('   🏢 Companies: 7 companies across different currencies (USD, EUR, GBP, INR)');
         $this->command->info('   👨‍💼 Customers: 30+ customers with realistic business data');
         $this->command->info('   📄 Invoices: 40+ invoices and estimates with various statuses');
         $this->command->info('');
-        
+
         $this->command->info('🔑 Demo Login Credentials:');
         $this->command->info('   Admin: admin@invoicing.claritytech.io (password: password)');
         $this->command->info('   Demo User: demo@invoicing.claritytech.io (password: password)');
         $this->command->info('   Business Users: john@acmecorp.com, sarah@techstartup.com, maria@euroconsult.de');
         $this->command->info('   All passwords: password');
         $this->command->info('');
-        
+
         $this->command->info('🌐 Demo Scenarios Available:');
         $this->command->info('   🏭 Manufacturing (ACME Corp) - USD with complex B2B invoicing');
         $this->command->info('   💻 Tech Startup (TechStart) - USD with service-based billing');
@@ -94,7 +95,7 @@ class DatabaseSeeder extends Seeder
         $this->command->info('   🇮🇳 Indian Company (Demo Company) - INR with GST');
         $this->command->info('   🌍 Global Corporation - Multi-currency, multi-team setup');
         $this->command->info('');
-        
+
         $this->command->info('✨ Features Demonstrated:');
         $this->command->info('   • Multitenant team isolation');
         $this->command->info('   • Multiple currencies (USD, EUR, GBP, INR)');
@@ -104,7 +105,7 @@ class DatabaseSeeder extends Seeder
         $this->command->info('   • Custom domains and team URLs');
         $this->command->info('   • Complex business relationships');
         $this->command->info('');
-        
+
         $this->command->info('🚀 Ready to demo! Visit your application and login with any of the demo accounts.');
     }
 }

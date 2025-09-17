@@ -5,7 +5,6 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Location;
-use App\Models\Team;
 use App\Models\User;
 use App\ValueObjects\EmailCollection;
 

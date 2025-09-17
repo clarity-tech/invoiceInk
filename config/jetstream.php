@@ -78,4 +78,16 @@ return [
 
     'profile_photo_disk' => 'public',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Team Model
+    |--------------------------------------------------------------------------
+    |
+    | This configuration value specifies the model that should be used for
+    | teams. You may override this if you need to use a custom model.
+    |
+    */
+
+    'team_model' => App\Models\Organization::class,
+
 ];

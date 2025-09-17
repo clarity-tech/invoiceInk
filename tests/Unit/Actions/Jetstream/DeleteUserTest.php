@@ -1,7 +1,7 @@
 <?php
 
 use App\Actions\Jetstream\DeleteUser;
-use App\Models\Team;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -39,7 +39,7 @@ it('deletes user within database transaction', function () {
 });
 
 it('deletes owned teams', function () {
-    $ownedTeam = Team::factory()->create(['user_id' => $this->user->id]);
+    $ownedTeam = Organization::factory()->create(['user_id' => $this->user->id]);
     $this->user->ownedTeams()->save($ownedTeam);
 
     // User has personal team + new owned team = 2 teams to delete
@@ -51,7 +51,7 @@ it('deletes owned teams', function () {
 });
 
 it('detaches user from teams', function () {
-    $team = Team::factory()->create();
+    $team = Organization::factory()->create();
     $this->user->teams()->attach($team);
 
     // Personal team gets deleted, so only expect 1 delete call
@@ -85,8 +85,8 @@ it('deletes user tokens', function () {
 });
 
 it('deletes multiple owned teams', function () {
-    $team1 = Team::factory()->create(['user_id' => $this->user->id]);
-    $team2 = Team::factory()->create(['user_id' => $this->user->id]);
+    $team1 = Organization::factory()->create(['user_id' => $this->user->id]);
+    $team2 = Organization::factory()->create(['user_id' => $this->user->id]);
 
     $this->user->ownedTeams()->saveMany([$team1, $team2]);
 

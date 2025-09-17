@@ -68,4 +68,23 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Get all of the teams the user belongs to.
+     *
+     * Override the HasTeams trait method to specify correct foreign key names.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function teams()
+    {
+        return $this->belongsToMany(
+            \Laravel\Jetstream\Jetstream::teamModel(),
+            \Laravel\Jetstream\Jetstream::membershipModel(),
+            'user_id',     // Foreign key on pivot table for User model
+            'team_id'      // Foreign key on pivot table for Team/Organization model
+        )->withPivot('role')
+            ->withTimestamps()
+            ->as('membership');
+    }
 }

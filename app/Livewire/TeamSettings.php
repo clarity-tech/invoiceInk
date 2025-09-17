@@ -2,7 +2,6 @@
 
 namespace App\Livewire;
 
-use App\Models\Team;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 

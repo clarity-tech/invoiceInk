@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\CompanyScope;
+use App\Models\Scopes\OrganizationScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,7 +17,7 @@ class Customer extends Model
         'phone',
         'emails',
         'primary_location_id',
-        'company_id',
+        'organization_id',
     ];
 
     protected function casts(): array
@@ -37,13 +37,13 @@ class Customer extends Model
         return $this->belongsTo(Location::class, 'primary_location_id');
     }
 
-    public function company(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Company::class);
+        return $this->belongsTo(Organization::class);
     }
 
     protected static function booted(): void
     {
-        static::addGlobalScope(new CompanyScope);
+        static::addGlobalScope(new OrganizationScope);
     }
 }

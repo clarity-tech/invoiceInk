@@ -2,7 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Team;
+use App\Models\Location;
+use App\Models\Organization;
 use App\Models\TeamInvitation;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -15,38 +16,98 @@ class UserSeeder extends ProductionSafeSeeder
 
         // Create primary admin user
         $admin = $this->createAdminUser();
-        
-        // Create business users with their own teams
+
+        // Create business users with their organizations
         $johnUser = $this->createBusinessUser(
             name: 'John Smith',
             email: 'john@acmecorp.com',
-            teamName: 'ACME Manufacturing Corp',
-            teamSlug: 'acme-corp',
-            customDomain: 'invoicing.acmecorp.com'
+            orgData: [
+                'name' => 'ACME Manufacturing Corp',
+                'company_name' => 'ACME Manufacturing Corporation',
+                'tax_number' => 'US-123456789',
+                'registration_number' => 'REG-ACME-2020',
+                'emails' => ['billing@acmecorp.com', 'john@acmecorp.com'],
+                'phone' => '+1-555-0123',
+                'website' => 'https://acmecorp.com',
+                'currency' => 'USD',
+                'custom_domain' => 'invoicing.acmecorp.com',
+                'location' => [
+                    'street' => '123 Industrial Ave',
+                    'city' => 'Detroit',
+                    'state' => 'Michigan',
+                    'postal_code' => '48201',
+                    'country' => 'US',
+                ],
+            ]
         );
 
         $sarahUser = $this->createBusinessUser(
             name: 'Sarah Johnson',
             email: 'sarah@techstartup.com',
-            teamName: 'TechStart Innovation Hub',
-            teamSlug: 'techstart',
-            customDomain: 'billing.techstartup.com'
+            orgData: [
+                'name' => 'TechStart Innovation Hub',
+                'company_name' => 'TechStart Inc.',
+                'tax_number' => 'US-987654321',
+                'registration_number' => 'REG-TECH-2021',
+                'emails' => ['hello@techstartup.com', 'sarah@techstartup.com'],
+                'phone' => '+1-555-0456',
+                'website' => 'https://techstartup.com',
+                'currency' => 'USD',
+                'custom_domain' => 'billing.techstartup.com',
+                'location' => [
+                    'street' => '456 Innovation Blvd',
+                    'city' => 'San Francisco',
+                    'state' => 'California',
+                    'postal_code' => '94105',
+                    'country' => 'US',
+                ],
+            ]
         );
 
         $mariaUser = $this->createBusinessUser(
             name: 'Maria Schmidt',
             email: 'maria@euroconsult.de',
-            teamName: 'EuroConsult GmbH',
-            teamSlug: 'euroconsult',
-            customDomain: null
+            orgData: [
+                'name' => 'EuroConsult GmbH',
+                'company_name' => 'EuroConsult GmbH',
+                'tax_number' => 'DE-123456789',
+                'registration_number' => 'HRB-12345',
+                'emails' => ['info@euroconsult.de', 'maria@euroconsult.de'],
+                'phone' => '+49-30-12345678',
+                'website' => 'https://euroconsult.de',
+                'currency' => 'EUR',
+                'custom_domain' => null,
+                'location' => [
+                    'street' => 'Unter den Linden 1',
+                    'city' => 'Berlin',
+                    'state' => 'Berlin',
+                    'postal_code' => '10117',
+                    'country' => 'DE',
+                ],
+            ]
         );
 
         $demoUser = $this->createBusinessUser(
             name: 'Demo User',
             email: 'demo@invoicing.claritytech.io',
-            teamName: 'Demo Company Ltd',
-            teamSlug: 'demo-company',
-            customDomain: null
+            orgData: [
+                'name' => 'Demo Company Ltd',
+                'company_name' => 'Demo Company Private Limited',
+                'tax_number' => 'IN-27AABCU9603R1ZX',
+                'registration_number' => 'U74999DL2018PTC331234',
+                'emails' => ['demo@invoicing.claritytech.io', 'accounts@democompany.in'],
+                'phone' => '+91-11-12345678',
+                'website' => 'https://democompany.in',
+                'currency' => 'INR',
+                'custom_domain' => null,
+                'location' => [
+                    'street' => 'A-123, Connaught Place',
+                    'city' => 'New Delhi',
+                    'state' => 'Delhi',
+                    'postal_code' => '110001',
+                    'country' => 'IN',
+                ],
+            ]
         );
 
         // Create GlobalCorp multi-team organization
@@ -80,13 +141,8 @@ class UserSeeder extends ProductionSafeSeeder
         return $admin;
     }
 
-    private function createBusinessUser(
-        string $name,
-        string $email,
-        string $teamName,
-        string $teamSlug,
-        ?string $customDomain = null
-    ): User {
+    private function createBusinessUser(string $name, string $email, array $orgData): User
+    {
         $user = User::create([
             'name' => $name,
             'email' => $email,
@@ -96,19 +152,41 @@ class UserSeeder extends ProductionSafeSeeder
 
         // Create user's personal team
         $personalTeam = $user->ownedTeams()->create([
-            'name' => $name . "'s Team",
+            'name' => $name."'s Team",
             'personal_team' => true,
         ]);
 
-        // Create business team
-        $businessTeam = $user->ownedTeams()->create([
-            'name' => $teamName,
-            'personal_team' => false,
-            'slug' => $teamSlug,
-            'custom_domain' => $customDomain,
+        // Create organization location
+        $location = Location::create([
+            'locatable_type' => Organization::class,
+            'locatable_id' => 0, // Temporary, will update after organization creation
+            'name' => 'Head Office',
+            'address_line_1' => $orgData['location']['street'],
+            'city' => $orgData['location']['city'],
+            'state' => $orgData['location']['state'],
+            'postal_code' => $orgData['location']['postal_code'],
+            'country' => $orgData['location']['country'],
         ]);
 
-        $user->switchTeam($businessTeam);
+        // Create business organization
+        $businessOrg = $user->ownedTeams()->create([
+            'name' => $orgData['name'],
+            'personal_team' => false,
+            'company_name' => $orgData['company_name'],
+            'tax_number' => $orgData['tax_number'],
+            'registration_number' => $orgData['registration_number'],
+            'emails' => $orgData['emails'],
+            'phone' => $orgData['phone'],
+            'website' => $orgData['website'],
+            'currency' => $orgData['currency'],
+            'custom_domain' => $orgData['custom_domain'],
+            'primary_location_id' => $location->id,
+        ]);
+
+        // Update location with correct organization ID
+        $location->update(['locatable_id' => $businessOrg->id]);
+
+        $user->switchTeam($businessOrg);
 
         return $user;
     }
@@ -132,7 +210,6 @@ class UserSeeder extends ProductionSafeSeeder
         $holdingTeam = $owner->ownedTeams()->create([
             'name' => 'GlobalCorp Holdings',
             'personal_team' => false,
-            'slug' => 'globalcorp-holdings',
             'custom_domain' => 'invoicing.globalcorp.com',
         ]);
 
@@ -140,14 +217,12 @@ class UserSeeder extends ProductionSafeSeeder
         $techTeam = $owner->ownedTeams()->create([
             'name' => 'GlobalCorp Tech Solutions',
             'personal_team' => false,
-            'slug' => 'globalcorp-tech',
             'custom_domain' => null,
         ]);
 
         $servicesTeam = $owner->ownedTeams()->create([
             'name' => 'GlobalCorp Business Services',
             'personal_team' => false,
-            'slug' => 'globalcorp-services',
             'custom_domain' => null,
         ]);
 
@@ -166,14 +241,14 @@ class UserSeeder extends ProductionSafeSeeder
         $johnBusinessTeam = $johnUser->ownedTeams()
             ->where('personal_team', false)
             ->first();
-            
+
         $johnBusinessTeam->users()->attach($sarahUser, ['role' => 'editor']);
 
         // Add John as admin to Maria's team
         $mariaBusinessTeam = $mariaUser->ownedTeams()
             ->where('personal_team', false)
             ->first();
-            
+
         $mariaBusinessTeam->users()->attach($johnUser, ['role' => 'admin']);
 
         // Create pending team invitations

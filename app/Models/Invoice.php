@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\CompanyScope;
+use App\Models\Scopes\OrganizationScope;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,17 +16,24 @@ class Invoice extends Model
     protected $fillable = [
         'type',
         'ulid',
-        'company_location_id',
+        'organization_id',
+        'organization_location_id',
+        'customer_id',
         'customer_location_id',
         'invoice_number',
         'status',
         'issued_at',
         'due_at',
+        'currency',
+        'exchange_rate',
         'subtotal',
         'tax',
         'total',
-        'company_id',
-        'currency',
+        'tax_type',
+        'tax_breakdown',
+        'email_recipients',
+        'notes',
+        'terms',
     ];
 
     protected function casts(): array
@@ -34,7 +41,9 @@ class Invoice extends Model
         return [
             'issued_at' => 'datetime',
             'due_at' => 'datetime',
-            'currency' => \App\Currency::class,
+            'exchange_rate' => 'decimal:6',
+            'tax_breakdown' => 'json',
+            'email_recipients' => 'json',
         ];
     }
 
@@ -43,9 +52,14 @@ class Invoice extends Model
         return ['ulid'];
     }
 
-    public function companyLocation(): BelongsTo
+    public function organizationLocation(): BelongsTo
     {
-        return $this->belongsTo(Location::class, 'company_location_id');
+        return $this->belongsTo(Location::class, 'organization_location_id');
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     public function customerLocation(): BelongsTo
@@ -68,13 +82,13 @@ class Invoice extends Model
         return $this->type === 'estimate';
     }
 
-    public function company(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(Company::class);
+        return $this->belongsTo(Organization::class);
     }
 
     protected static function booted(): void
     {
-        static::addGlobalScope(new CompanyScope);
+        static::addGlobalScope(new OrganizationScope);
     }
 }

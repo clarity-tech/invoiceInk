@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Team;
+use App\Models\Organization;
 use App\Models\TeamInvitation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -26,7 +26,7 @@ class TeamInvitationFactory extends Factory
     public function definition(): array
     {
         return [
-            'team_id' => Team::factory(),
+            'team_id' => Organization::factory(),
             'email' => $this->faker->unique()->safeEmail(),
             'role' => $this->faker->randomElement(['admin', 'editor', 'member']),
         ];
