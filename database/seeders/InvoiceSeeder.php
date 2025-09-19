@@ -2,60 +2,60 @@
 
 namespace Database\Seeders;
 
-use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Organization;
 use Carbon\Carbon;
 
 class InvoiceSeeder extends ProductionSafeSeeder
 {
     private int $invoiceCounter = 1;
-    
+
     protected function seed(): void
     {
         $this->info('Seeding invoices and invoice items...');
 
-        $companies = Company::with(['customers', 'primaryLocation'])->get();
+        $organizations = Organization::with(['customers', 'primaryLocation'])->get();
 
-        foreach ($companies as $company) {
-            if ($company->customers->count() > 0) {
-                $this->createInvoicesForCompany($company);
+        foreach ($organizations as $organization) {
+            if ($organization->customers->count() > 0 && $organization->primaryLocation) {
+                $this->createInvoicesForOrganization($organization);
             }
         }
 
         $this->info('Created invoices and invoice items successfully!');
     }
 
-    private function createInvoicesForCompany(Company $company): void
+    private function createInvoicesForOrganization(Organization $organization): void
     {
-        $customers = $company->customers;
+        $customers = $organization->customers;
         $invoiceCount = 0;
 
         foreach ($customers as $customer) {
             // Create different types of invoices for each customer
-            $invoiceCount += $this->createInvoicesForCustomer($company, $customer);
+            $invoiceCount += $this->createInvoicesForCustomer($organization, $customer);
         }
 
-        $this->info("Created {$invoiceCount} invoices for {$company->name}");
+        $this->info("Created {$invoiceCount} invoices for {$organization->name}");
     }
 
-    private function createInvoicesForCustomer(Company $company, Customer $customer): int
+    private function createInvoicesForCustomer(Organization $organization, Customer $customer): int
     {
         $invoices = [];
 
         // Create a mix of invoices and estimates with different statuses and dates
-        $invoiceScenarios = $this->getInvoiceScenarios($company, $customer);
+        $invoiceScenarios = $this->getInvoiceScenarios($organization, $customer);
 
         foreach ($invoiceScenarios as $scenario) {
-            $invoice = $this->createInvoiceWithItems($company, $customer, $scenario);
+            $invoice = $this->createInvoiceWithItems($organization, $customer, $scenario);
             $invoices[] = $invoice;
         }
 
         return count($invoices);
     }
 
-    private function getInvoiceScenarios(Company $company, Customer $customer): array
+    private function getInvoiceScenarios(Organization $organization, Customer $customer): array
     {
         $baseScenarios = [
             // Recent invoice (draft)
@@ -64,7 +64,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 'status' => 'draft',
                 'date' => Carbon::now()->subDays(2),
                 'due_date' => Carbon::now()->addDays(30),
-                'items' => $this->getServiceItems($company),
+                'items' => $this->getServiceItems($organization),
             ],
             // Sent invoice (pending payment)
             [
@@ -72,7 +72,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 'status' => 'sent',
                 'date' => Carbon::now()->subDays(15),
                 'due_date' => Carbon::now()->addDays(15),
-                'items' => $this->getProductItems($company),
+                'items' => $this->getProductItems($organization),
             ],
             // Paid invoice (completed)
             [
@@ -80,7 +80,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 'status' => 'paid',
                 'date' => Carbon::now()->subDays(45),
                 'due_date' => Carbon::now()->subDays(15),
-                'items' => $this->getMixedItems($company),
+                'items' => $this->getMixedItems($organization),
             ],
             // Overdue invoice
             [
@@ -88,7 +88,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 'status' => 'sent',
                 'date' => Carbon::now()->subDays(60),
                 'due_date' => Carbon::now()->subDays(30),
-                'items' => $this->getConsultingItems($company),
+                'items' => $this->getConsultingItems($organization),
             ],
             // Current estimate
             [
@@ -96,7 +96,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 'status' => 'draft',
                 'date' => Carbon::now()->subDays(5),
                 'due_date' => Carbon::now()->addDays(30),
-                'items' => $this->getProjectItems($company),
+                'items' => $this->getProjectItems($organization),
             ],
             // Sent estimate
             [
@@ -104,29 +104,29 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 'status' => 'sent',
                 'date' => Carbon::now()->subDays(10),
                 'due_date' => Carbon::now()->addDays(20),
-                'items' => $this->getMaintenanceItems($company),
+                'items' => $this->getMaintenanceItems($organization),
             ],
         ];
 
         // Add company-specific scenarios
-        return array_merge($baseScenarios, $this->getCompanySpecificScenarios($company, $customer));
+        return array_merge($baseScenarios, $this->getCompanySpecificScenarios($organization, $customer));
     }
 
-    private function getCompanySpecificScenarios(Company $company, Customer $customer): array
+    private function getCompanySpecificScenarios(Organization $organization, Customer $customer): array
     {
-        switch ($company->name) {
+        switch ($organization->name) {
             case 'ACME Manufacturing Corp':
                 return $this->getManufacturingScenarios();
-            
+
             case 'TechStart Innovation Hub':
                 return $this->getTechScenarios();
-            
+
             case 'EuroConsult GmbH':
                 return $this->getConsultingScenarios();
-            
+
             case 'Demo Company Ltd':
                 return $this->getDemoScenarios();
-            
+
             default:
                 return [];
         }
@@ -316,7 +316,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
         ];
     }
 
-    private function createInvoiceWithItems(Company $company, Customer $customer, array $scenario): Invoice
+    private function createInvoiceWithItems(Organization $organization, Customer $customer, array $scenario): Invoice
     {
         $items = $scenario['items'];
         $subtotal = 0;
@@ -332,12 +332,14 @@ class InvoiceSeeder extends ProductionSafeSeeder
         $total = $subtotal + $taxTotal;
 
         // Generate invoice number
-        $invoiceNumber = $this->generateInvoiceNumber($scenario['type'], $company);
+        $invoiceNumber = $this->generateInvoiceNumber($scenario['type'], $organization);
 
         // Create invoice
         $invoice = Invoice::create([
             'type' => $scenario['type'],
-            'company_location_id' => $company->primaryLocation->id,
+            'organization_id' => $organization->id,
+            'customer_id' => $customer->id,
+            'organization_location_id' => $organization->primaryLocation->id,
             'customer_location_id' => $customer->primaryLocation->id,
             'invoice_number' => $invoiceNumber,
             'status' => $scenario['status'],
@@ -346,8 +348,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
             'subtotal' => $subtotal,
             'tax' => $taxTotal,
             'total' => $total,
-            'company_id' => $company->id,
-            'currency' => $company->currency,
+            'currency' => $organization->currency,
         ]);
 
         // Create invoice items
@@ -364,145 +365,145 @@ class InvoiceSeeder extends ProductionSafeSeeder
         return $invoice;
     }
 
-    private function getServiceItems(Company $company): array
+    private function getServiceItems(Organization $organization): array
     {
         return [
             [
                 'description' => 'Professional Services',
                 'quantity' => 20,
                 'unit_price' => 15000, // $150.00 per hour
-                'tax_rate' => $this->getTaxRate($company),
+                'tax_rate' => $this->getTaxRate($organization),
             ],
             [
                 'description' => 'Project Management',
                 'quantity' => 1,
                 'unit_price' => 200000, // $2,000.00
-                'tax_rate' => $this->getTaxRate($company),
+                'tax_rate' => $this->getTaxRate($organization),
             ],
         ];
     }
 
-    private function getProductItems(Company $company): array
+    private function getProductItems(Organization $organization): array
     {
         return [
             [
                 'description' => 'Product License',
                 'quantity' => 5,
                 'unit_price' => 50000, // $500.00 each
-                'tax_rate' => $this->getTaxRate($company),
+                'tax_rate' => $this->getTaxRate($organization),
             ],
             [
                 'description' => 'Setup and Configuration',
                 'quantity' => 1,
                 'unit_price' => 75000, // $750.00
-                'tax_rate' => $this->getTaxRate($company),
+                'tax_rate' => $this->getTaxRate($organization),
             ],
         ];
     }
 
-    private function getMixedItems(Company $company): array
+    private function getMixedItems(Organization $organization): array
     {
         return [
             [
                 'description' => 'Hardware Components',
                 'quantity' => 10,
                 'unit_price' => 25000, // $250.00 each
-                'tax_rate' => $this->getTaxRate($company),
+                'tax_rate' => $this->getTaxRate($organization),
             ],
             [
                 'description' => 'Installation Services',
                 'quantity' => 8,
                 'unit_price' => 12500, // $125.00 per hour
-                'tax_rate' => $this->getTaxRate($company),
+                'tax_rate' => $this->getTaxRate($organization),
             ],
             [
                 'description' => 'Extended Warranty',
                 'quantity' => 1,
                 'unit_price' => 30000, // $300.00
-                'tax_rate' => $this->getTaxRate($company),
+                'tax_rate' => $this->getTaxRate($organization),
             ],
         ];
     }
 
-    private function getConsultingItems(Company $company): array
+    private function getConsultingItems(Organization $organization): array
     {
         return [
             [
                 'description' => 'Strategic Consulting',
                 'quantity' => 40,
                 'unit_price' => 20000, // $200.00 per hour
-                'tax_rate' => $this->getTaxRate($company),
+                'tax_rate' => $this->getTaxRate($organization),
             ],
             [
                 'description' => 'Report Preparation',
                 'quantity' => 1,
                 'unit_price' => 100000, // $1,000.00
-                'tax_rate' => $this->getTaxRate($company),
+                'tax_rate' => $this->getTaxRate($organization),
             ],
         ];
     }
 
-    private function getProjectItems(Company $company): array
+    private function getProjectItems(Organization $organization): array
     {
         return [
             [
                 'description' => 'Project Phase 1',
                 'quantity' => 1,
                 'unit_price' => 500000, // $5,000.00
-                'tax_rate' => $this->getTaxRate($company),
+                'tax_rate' => $this->getTaxRate($organization),
             ],
             [
                 'description' => 'Project Phase 2',
                 'quantity' => 1,
                 'unit_price' => 750000, // $7,500.00
-                'tax_rate' => $this->getTaxRate($company),
+                'tax_rate' => $this->getTaxRate($organization),
             ],
             [
                 'description' => 'Project Phase 3',
                 'quantity' => 1,
                 'unit_price' => 600000, // $6,000.00
-                'tax_rate' => $this->getTaxRate($company),
+                'tax_rate' => $this->getTaxRate($organization),
             ],
         ];
     }
 
-    private function getMaintenanceItems(Company $company): array
+    private function getMaintenanceItems(Organization $organization): array
     {
         return [
             [
                 'description' => 'Monthly Maintenance',
                 'quantity' => 12,
                 'unit_price' => 50000, // $500.00 per month
-                'tax_rate' => $this->getTaxRate($company),
+                'tax_rate' => $this->getTaxRate($organization),
             ],
             [
                 'description' => 'Emergency Support',
                 'quantity' => 1,
                 'unit_price' => 150000, // $1,500.00
-                'tax_rate' => $this->getTaxRate($company),
+                'tax_rate' => $this->getTaxRate($organization),
             ],
         ];
     }
 
-    private function getTaxRate(Company $company): int
+    private function getTaxRate(Organization $organization): int
     {
-        return match ($company->currency) {
+        return match ($organization->currency->value) {
             'USD' => rand(0, 1) ? 8 : 0, // Some states have no sales tax
             'EUR' => 19, // German VAT
             'GBP' => 20, // UK VAT
             'INR' => 18, // GST
+            'AED' => 5, // UAE VAT
             default => 10,
         };
     }
 
-    private function generateInvoiceNumber(string $type, Company $company): string
+    private function generateInvoiceNumber(string $type, Organization $organization): string
     {
         $prefix = $type === 'invoice' ? 'INV' : 'EST';
-        $companyCode = strtoupper(substr(str_replace(' ', '', $company->name), 0, 3));
+        $organizationCode = strtoupper(substr(str_replace(' ', '', $organization->name), 0, 3));
         $timestamp = Carbon::now()->format('Ymd');
         $counter = str_pad($this->invoiceCounter++, 4, '0', STR_PAD_LEFT);
-        
-        return "{$prefix}-{$companyCode}-{$timestamp}-{$counter}";
-    }
 
+        return "{$prefix}-{$organizationCode}-{$timestamp}-{$counter}";
+    }
 }

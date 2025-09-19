@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Location;
+use App\Models\Organization;
 use App\ValueObjects\EmailCollection;
 
 class CustomerSeeder extends ProductionSafeSeeder
@@ -13,51 +13,54 @@ class CustomerSeeder extends ProductionSafeSeeder
     {
         $this->info('Seeding customers with locations...');
 
-        $companies = Company::with('team')->get();
+        $organizations = Organization::all();
 
-        foreach ($companies as $company) {
-            $this->createCustomersForCompany($company);
+        foreach ($organizations as $organization) {
+            $this->createCustomersForOrganization($organization);
         }
 
         $this->info('Created customers and locations successfully!');
     }
 
-    private function createCustomersForCompany(Company $company): void
+    private function createCustomersForOrganization(Organization $organization): void
     {
-        $customerData = $this->getCustomerDataForCompany($company);
+        $customerData = $this->getCustomerDataForOrganization($organization);
 
         foreach ($customerData as $data) {
-            $this->createCustomerWithLocation($company, $data);
+            $this->createCustomerWithLocation($organization, $data);
         }
 
         $count = count($customerData);
-        $this->info("Created {$count} customers for {$company->name}");
+        $this->info("Created {$count} customers for {$organization->name}");
     }
 
-    private function getCustomerDataForCompany(Company $company): array
+    private function getCustomerDataForOrganization(Organization $organization): array
     {
-        switch ($company->name) {
+        switch ($organization->name) {
             case 'ACME Manufacturing Corp':
                 return $this->getACMECustomers();
-            
+
             case 'TechStart Innovation Hub':
                 return $this->getTechStartCustomers();
-            
+
             case 'EuroConsult GmbH':
                 return $this->getEuroConsultCustomers();
-            
+
             case 'Demo Company Ltd':
                 return $this->getDemoCompanyCustomers();
-            
+
+            case 'Dubai Trading LLC':
+                return $this->getDubaiTradingCustomers();
+
             case 'GlobalCorp Holdings Inc':
                 return $this->getGlobalCorpHoldingsCustomers();
-            
+
             case 'GlobalCorp Tech Solutions':
                 return $this->getGlobalCorpTechCustomers();
-            
+
             case 'GlobalCorp Business Services Ltd':
                 return $this->getGlobalCorpServicesCustomers();
-            
+
             default:
                 return [];
         }
@@ -371,6 +374,42 @@ class CustomerSeeder extends ProductionSafeSeeder
         ];
     }
 
+    private function getDubaiTradingCustomers(): array
+    {
+        return [
+            [
+                'name' => 'Sandline LLC',
+                'emails' => ['billing@sandline.test', 'finance@sandline.test'],
+                'phone' => '+971-4-2345678',
+                'type' => 'B2B',
+                'location' => [
+                    'name' => 'Sandline Healthcare HQ',
+                    'address_line_1' => 'Dubai Healthcare City',
+                    'address_line_2' => 'Building 64, Office 4001',
+                    'city' => 'Dubai',
+                    'state' => 'Dubai',
+                    'country' => 'United Arab Emirates',
+                    'postal_code' => '00000',
+                ],
+            ],
+            [
+                'name' => 'Corniche Labs',
+                'emails' => ['priya@Corniche Labs.com', 'consult@Corniche Labs.com'],
+                'phone' => '+971-4-3456789',
+                'type' => 'B2B',
+                'location' => [
+                    'name' => 'Corniche Labs',
+                    'address_line_1' => 'Al Warsan Towers, 305',
+                    'address_line_2' => 'Barsha Heights',
+                    'city' => 'Dubai',
+                    'state' => 'Dubai',
+                    'country' => 'United Arab Emirates',
+                    'postal_code' => '00000',
+                ],
+            ],
+        ];
+    }
+
     private function getGlobalCorpHoldingsCustomers(): array
     {
         return [
@@ -516,7 +555,7 @@ class CustomerSeeder extends ProductionSafeSeeder
         ];
     }
 
-    private function createCustomerWithLocation(Company $company, array $customerData): Customer
+    private function createCustomerWithLocation(Organization $organization, array $customerData): Customer
     {
         // Create the location first
         $locationData = $customerData['location'];
@@ -538,7 +577,7 @@ class CustomerSeeder extends ProductionSafeSeeder
             'emails' => new EmailCollection($customerData['emails']),
             'phone' => $customerData['phone'] ?? null,
             'primary_location_id' => $location->id,
-            'company_id' => $company->id,
+            'organization_id' => $organization->id,
         ]);
 
         // Update location with correct customer ID

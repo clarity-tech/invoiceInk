@@ -110,11 +110,34 @@ class UserSeeder extends ProductionSafeSeeder
             ]
         );
 
+        $uaeUser = $this->createBusinessUser(
+            name: 'Ahmed Al-Mahmoud',
+            email: 'ahmed@dubaitrading.ae',
+            orgData: [
+                'name' => 'Dubai Trading LLC',
+                'company_name' => 'Dubai Trading Limited Liability Company',
+                'tax_number' => 'AE-100234567890003',
+                'registration_number' => 'CN-1234567',
+                'emails' => ['info@dubaitrading.ae', 'ahmed@dubaitrading.ae'],
+                'phone' => '+971-4-1234567',
+                'website' => 'https://dubaitrading.ae',
+                'currency' => 'AED',
+                'custom_domain' => null,
+                'location' => [
+                    'street' => 'Office 1205, Business Bay Tower',
+                    'city' => 'Dubai',
+                    'state' => 'Dubai',
+                    'postal_code' => '00000',
+                    'country' => 'AE',
+                ],
+            ]
+        );
+
         // Create GlobalCorp multi-team organization
         $globalCorpOwner = $this->createGlobalCorpOrganization();
 
         // Add team members and invitations
-        $this->createTeamMembersAndInvitations($johnUser, $sarahUser, $mariaUser, $globalCorpOwner);
+        $this->createTeamMembersAndInvitations($johnUser, $sarahUser, $mariaUser, $uaeUser, $globalCorpOwner);
 
         $this->info('Created users and teams successfully!');
         $this->info('Admin user: admin@invoicing.claritytech.io (password: password)');
@@ -235,6 +258,7 @@ class UserSeeder extends ProductionSafeSeeder
         User $johnUser,
         User $sarahUser,
         User $mariaUser,
+        User $uaeUser,
         User $globalCorpOwner
     ): void {
         // Add Sarah as editor to John's team

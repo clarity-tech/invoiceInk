@@ -12,6 +12,7 @@ enum Currency: string
     case CAD = 'CAD';
     case SGD = 'SGD';
     case JPY = 'JPY';
+    case AED = 'AED';
 
     public function symbol(): string
     {
@@ -24,6 +25,7 @@ enum Currency: string
             self::CAD => 'C$',
             self::SGD => 'S$',
             self::JPY => '¥',
+            self::AED => 'د.إ',
         };
     }
 
@@ -38,6 +40,7 @@ enum Currency: string
             self::CAD => 'Canadian Dollar',
             self::SGD => 'Singapore Dollar',
             self::JPY => 'Japanese Yen',
+            self::AED => 'UAE Dirham',
         };
     }
 

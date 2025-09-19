@@ -26,7 +26,7 @@ class TaxTemplateSeeder extends Seeder
 
     private function createTaxTemplatesForOrganization(Organization $organization): void
     {
-        $countryTaxes = $this->getTaxTemplatesByCountry($organization->currency);
+        $countryTaxes = $this->getTaxTemplatesByCountry($organization->currency->value);
 
         foreach ($countryTaxes as $taxData) {
             TaxTemplate::create([
@@ -50,6 +50,7 @@ class TaxTemplateSeeder extends Seeder
             'USD' => $this->getUSATaxTemplates(),
             'EUR' => $this->getGermanyTaxTemplates(),
             'GBP' => $this->getUKTaxTemplates(),
+            'AED' => $this->getUAETaxTemplates(),
             default => $this->getGenericTaxTemplates(),
         };
     }
@@ -213,6 +214,52 @@ class TaxTemplateSeeder extends Seeder
                 'category' => 'Zero Rate',
                 'country_code' => 'GB',
                 'description' => 'Zero-rated VAT for certain goods and services',
+            ],
+        ];
+    }
+
+    private function getUAETaxTemplates(): array
+    {
+        return [
+            [
+                'name' => 'VAT 5%',
+                'type' => 'VAT',
+                'rate' => 5.000,
+                'category' => 'Standard Rate',
+                'country_code' => 'AE',
+                'description' => 'Value Added Tax at standard rate of 5%',
+            ],
+            [
+                'name' => 'VAT 0%',
+                'type' => 'VAT',
+                'rate' => 0.000,
+                'category' => 'Zero Rate',
+                'country_code' => 'AE',
+                'description' => 'Zero-rated VAT for exports and certain goods/services',
+            ],
+            [
+                'name' => 'VAT Exempt',
+                'type' => 'VAT',
+                'rate' => 0.000,
+                'category' => 'Exempt',
+                'country_code' => 'AE',
+                'description' => 'VAT exempt goods and services',
+            ],
+            [
+                'name' => 'Excise Tax 50%',
+                'type' => 'Excise Tax',
+                'rate' => 50.000,
+                'category' => 'Excise Rate',
+                'country_code' => 'AE',
+                'description' => 'Excise tax on carbonated drinks and energy drinks',
+            ],
+            [
+                'name' => 'Excise Tax 99%',
+                'type' => 'Excise Tax',
+                'rate' => 99.000,
+                'category' => 'Excise Rate',
+                'country_code' => 'AE',
+                'description' => 'Excise tax on tobacco products (max rate within system limits)',
             ],
         ];
     }
