@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -30,7 +30,9 @@ class InvoiceFactory extends Factory
 
         return [
             'type' => $type,
-            'company_location_id' => null, // Will be set by relationships
+            'organization_id' => null, // Will be set by relationships
+            'customer_id' => null, // Will be set by relationships
+            'organization_location_id' => null, // Will be set by relationships
             'customer_location_id' => null, // Will be set by relationships
             'invoice_number' => $number,
             'status' => fake()->randomElement(['draft', 'sent', 'paid', 'void']),
@@ -43,15 +45,17 @@ class InvoiceFactory extends Factory
     }
 
     /**
-     * Create an invoice with company and customer locations
+     * Create an invoice with organization and customer locations
      */
     public function withLocations(): static
     {
         return $this->afterMaking(function (Invoice $invoice) {
-            $company = Company::factory()->withLocation()->create();
+            $organization = Organization::factory()->withLocation()->create();
             $customer = Customer::factory()->withLocation()->create();
 
-            $invoice->company_location_id = $company->primaryLocation->id;
+            $invoice->organization_id = $organization->id;
+            $invoice->customer_id = $customer->id;
+            $invoice->organization_location_id = $organization->primaryLocation->id;
             $invoice->customer_location_id = $customer->primaryLocation->id;
         });
     }

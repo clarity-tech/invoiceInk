@@ -31,4 +31,29 @@ class OrganizationFactory extends Factory
             'notes' => $this->faker->optional()->sentence(),
         ];
     }
+
+    /**
+     * Create an organization with a primary location.
+     */
+    public function withLocation(array $locationAttributes = []): static
+    {
+        return $this->afterCreating(function ($organization) use ($locationAttributes) {
+            $defaultLocationAttributes = [
+                'name' => 'Head Office',
+                'address_line_1' => $this->faker->streetAddress,
+                'city' => $this->faker->city,
+                'state' => $this->faker->state,
+                'country' => 'India',
+                'postal_code' => $this->faker->postcode,
+                'locatable_type' => get_class($organization),
+                'locatable_id' => $organization->id,
+            ];
+
+            $location = \App\Models\Location::create(array_merge($defaultLocationAttributes, $locationAttributes));
+
+            $organization->update(['primary_location_id' => $location->id]);
+
+            return $organization->fresh(['primaryLocation']);
+        });
+    }
 }

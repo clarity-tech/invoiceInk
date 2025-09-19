@@ -31,6 +31,7 @@ class CustomerFactory extends Factory
                 fake()->unique()->safeEmail(),
                 fake()->randomFloat() < 0.4 ? fake()->unique()->safeEmail() : null,
             ])),
+            'organization_id' => \App\Models\Organization::factory(),
             'primary_location_id' => null, // Will be set after location creation
         ];
     }

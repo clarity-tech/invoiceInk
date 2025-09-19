@@ -26,19 +26,19 @@ class LocationFactory extends Factory
             'state' => fake()->state(),
             'country' => fake()->country(),
             'postal_code' => fake()->postcode(),
-            'locatable_type' => \App\Models\Company::class, // Default to Company
+            'locatable_type' => \App\Models\Organization::class, // Default to Organization
             'locatable_id' => 1, // Default value, will be overridden by relationships
         ];
     }
 
     /**
-     * Create a location for a company
+     * Create a location for an organization
      */
-    public function forCompany($companyId = null): static
+    public function forOrganization($organizationId = null): static
     {
         return $this->state(fn (array $attributes) => [
-            'locatable_type' => \App\Models\Company::class,
-            'locatable_id' => $companyId,
+            'locatable_type' => \App\Models\Organization::class,
+            'locatable_id' => $organizationId,
             'name' => fake()->company().' Headquarters',
         ]);
     }
