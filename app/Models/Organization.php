@@ -70,6 +70,7 @@ class Organization extends JetstreamTeam
         return [
             'personal_team' => 'boolean',
             'emails' => EmailCollectionCast::class,
+            'currency' => \App\Currency::class,
         ];
     }
 

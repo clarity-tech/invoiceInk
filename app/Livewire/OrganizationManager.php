@@ -3,8 +3,8 @@
 namespace App\Livewire;
 
 use App\Currency;
-use App\Models\Company;
 use App\Models\Location;
+use App\Models\Organization;
 use App\Rules\CurrencyCode;
 use App\ValueObjects\EmailCollection;
 use Livewire\Attributes\Computed;
@@ -12,7 +12,7 @@ use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-class CompanyManager extends Component
+class OrganizationManager extends Component
 {
     use WithPagination;
 
@@ -73,25 +73,25 @@ class CompanyManager extends Component
         $this->showForm = true;
     }
 
-    public function edit(Company $company): void
+    public function edit(Organization $organization): void
     {
-        $company->load('primaryLocation');
+        $organization->load('primaryLocation');
 
-        $this->editingId = $company->id;
-        $this->name = $company->name;
-        $this->phone = $company->phone ?? '';
-        $this->emails = $company->emails->toArray() ?: [''];
-        $this->currency = $company->currency?->value ?? Currency::default()->value;
+        $this->editingId = $organization->id;
+        $this->name = $organization->name;
+        $this->phone = $organization->phone ?? '';
+        $this->emails = $organization->emails->toArray() ?: [''];
+        $this->currency = $organization->currency?->value ?? Currency::default()->value;
 
-        if ($company->primaryLocation) {
-            $this->location_name = $company->primaryLocation->name;
-            $this->gstin = $company->primaryLocation->gstin ?? '';
-            $this->address_line_1 = $company->primaryLocation->address_line_1;
-            $this->address_line_2 = $company->primaryLocation->address_line_2 ?? '';
-            $this->city = $company->primaryLocation->city;
-            $this->state = $company->primaryLocation->state;
-            $this->country = $company->primaryLocation->country;
-            $this->postal_code = $company->primaryLocation->postal_code;
+        if ($organization->primaryLocation) {
+            $this->location_name = $organization->primaryLocation->name;
+            $this->gstin = $organization->primaryLocation->gstin ?? '';
+            $this->address_line_1 = $organization->primaryLocation->address_line_1;
+            $this->address_line_2 = $organization->primaryLocation->address_line_2 ?? '';
+            $this->city = $organization->primaryLocation->city;
+            $this->state = $organization->primaryLocation->state;
+            $this->country = $organization->primaryLocation->country;
+            $this->postal_code = $organization->primaryLocation->postal_code;
         }
 
         $this->showForm = true;
@@ -126,16 +126,16 @@ class CompanyManager extends Component
         $emailCollection = new EmailCollection($filteredEmails);
 
         if ($this->editingId) {
-            $company = Company::findOrFail($this->editingId);
-            $company->update([
+            $organization = Organization::findOrFail($this->editingId);
+            $organization->update([
                 'name' => $this->name,
                 'phone' => $this->phone ?: null,
                 'emails' => $emailCollection,
                 'currency' => $this->currency,
             ]);
 
-            if ($company->primaryLocation) {
-                $company->primaryLocation->update([
+            if ($organization->primaryLocation) {
+                $organization->primaryLocation->update([
                     'name' => $this->location_name,
                     'gstin' => $this->gstin ?: null,
                     'address_line_1' => $this->address_line_1,
@@ -156,11 +156,11 @@ class CompanyManager extends Component
                 'state' => $this->state,
                 'country' => $this->country,
                 'postal_code' => $this->postal_code,
-                'locatable_type' => Company::class,
+                'locatable_type' => Organization::class,
                 'locatable_id' => 0,
             ]);
 
-            $company = Company::create([
+            $organization = Organization::create([
                 'name' => $this->name,
                 'phone' => $this->phone ?: null,
                 'emails' => $emailCollection,
@@ -170,7 +170,7 @@ class CompanyManager extends Component
             ]);
 
             $location->update([
-                'locatable_id' => $company->id,
+                'locatable_id' => $organization->id,
             ]);
         }
 
@@ -178,21 +178,21 @@ class CompanyManager extends Component
         $this->showForm = false;
         $this->resetPage();
 
-        session()->flash('message', $this->editingId ? 'Company updated successfully!' : 'Company created successfully!');
+        session()->flash('message', $this->editingId ? 'Organization updated successfully!' : 'Organization created successfully!');
     }
 
-    public function delete(Company $company): void
+    public function delete(Organization $organization): void
     {
         // Handle foreign key constraint by setting primary_location_id to null first
-        $company->primary_location_id = null;
-        $company->save();
+        $organization->primary_location_id = null;
+        $organization->save();
 
-        // Then delete locations and company
-        $company->locations()->delete();
-        $company->delete();
+        // Then delete locations and organization
+        $organization->locations()->delete();
+        $organization->delete();
 
         $this->resetPage();
-        session()->flash('message', 'Company deleted successfully!');
+        session()->flash('message', 'Organization deleted successfully!');
     }
 
     public function cancel(): void
@@ -220,16 +220,16 @@ class CompanyManager extends Component
     }
 
     #[Computed]
-    public function companies()
+    public function organizations()
     {
-        return Company::with('primaryLocation')
+        return Organization::with('primaryLocation')
             ->latest()
             ->paginate(10);
     }
 
     public function render()
     {
-        return view('livewire.company-manager')
-            ->layout('layouts.app', ['title' => 'Companies']);
+        return view('livewire.organization-manager')
+            ->layout('layouts.app', ['title' => 'Organizations']);
     }
 }
