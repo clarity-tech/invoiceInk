@@ -2,11 +2,11 @@
 
 namespace App\Livewire;
 
-use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Location;
+use App\Models\Organization;
 use App\Services\InvoiceCalculator;
 use App\Services\PdfService;
 use Livewire\Attributes\Computed;
@@ -23,14 +23,14 @@ class InvoiceWizard extends Component
     public int $currentStep = 1;
 
     // Basic Details
-    #[Rule('required|exists:companies,id')]
-    public ?int $company_id = null;
+    #[Rule('required|exists:teams,id')]
+    public ?int $organization_id = null;
 
     #[Rule('required|exists:customers,id')]
     public ?int $customer_id = null;
 
     #[Rule('required|exists:locations,id')]
-    public ?int $company_location_id = null;
+    public ?int $organization_location_id = null;
 
     #[Rule('required|exists:locations,id')]
     public ?int $customer_location_id = null;
@@ -108,9 +108,9 @@ class InvoiceWizard extends Component
     {
         if ($this->currentStep === 1) {
             $this->validate([
-                'company_id' => 'required|exists:companies,id',
+                'organization_id' => 'required|exists:teams,id',
                 'customer_id' => 'required|exists:customers,id',
-                'company_location_id' => 'required|exists:locations,id',
+                'organization_location_id' => 'required|exists:locations,id',
                 'customer_location_id' => 'required|exists:locations,id',
             ]);
         }
@@ -136,13 +136,13 @@ class InvoiceWizard extends Component
 
     public function edit(Invoice $invoice): void
     {
-        $invoice->load(['items', 'companyLocation', 'customerLocation']);
+        $invoice->load(['items', 'organizationLocation', 'customerLocation']);
 
         $this->editingId = $invoice->id;
         $this->type = $invoice->type;
-        $this->company_id = $invoice->companyLocation->locatable_id;
+        $this->organization_id = $invoice->organizationLocation->locatable_id;
         $this->customer_id = $invoice->customerLocation->locatable_id;
-        $this->company_location_id = $invoice->company_location_id;
+        $this->organization_location_id = $invoice->organization_location_id;
         $this->customer_location_id = $invoice->customer_location_id;
         $this->issued_at = $invoice->issued_at?->format('Y-m-d');
         $this->due_at = $invoice->due_at?->format('Y-m-d');
@@ -164,9 +164,9 @@ class InvoiceWizard extends Component
     public function save(): void
     {
         $this->validate([
-            'company_id' => 'required|exists:companies,id',
+            'organization_id' => 'required|exists:teams,id',
             'customer_id' => 'required|exists:customers,id',
-            'company_location_id' => 'required|exists:locations,id',
+            'organization_location_id' => 'required|exists:locations,id',
             'customer_location_id' => 'required|exists:locations,id',
             'items.*.description' => 'required|string|max:500',
             'items.*.quantity' => 'required|integer|min:1',
@@ -178,14 +178,16 @@ class InvoiceWizard extends Component
             $invoice = Invoice::findOrFail($this->editingId);
             $invoice->update([
                 'type' => $this->type,
-                'company_location_id' => $this->company_location_id,
+                'organization_id' => $this->organization_id,
+                'customer_id' => $this->customer_id,
+                'organization_location_id' => $this->organization_location_id,
                 'customer_location_id' => $this->customer_location_id,
                 'issued_at' => $this->issued_at ? now()->parse($this->issued_at) : null,
                 'due_at' => $this->due_at ? now()->parse($this->due_at) : null,
                 'subtotal' => $this->subtotal,
                 'tax' => $this->tax,
                 'total' => $this->total,
-                'currency' => Company::find($this->company_id)?->currency,
+                'currency' => Organization::find($this->organization_id)?->currency,
             ]);
 
             // Delete existing items and recreate
@@ -193,7 +195,9 @@ class InvoiceWizard extends Component
         } else {
             $invoice = Invoice::create([
                 'type' => $this->type,
-                'company_location_id' => $this->company_location_id,
+                'organization_id' => $this->organization_id,
+                'customer_id' => $this->customer_id,
+                'organization_location_id' => $this->organization_location_id,
                 'customer_location_id' => $this->customer_location_id,
                 'invoice_number' => $this->generateInvoiceNumber(),
                 'status' => 'draft',
@@ -202,8 +206,7 @@ class InvoiceWizard extends Component
                 'subtotal' => $this->subtotal,
                 'tax' => $this->tax,
                 'total' => $this->total,
-                'company_id' => $this->company_id,
-                'currency' => Company::find($this->company_id)?->currency,
+                'currency' => Organization::find($this->organization_id)?->currency,
             ]);
         }
 
@@ -260,9 +263,9 @@ class InvoiceWizard extends Component
         $this->editingId = null;
         $this->type = 'invoice';
         $this->currentStep = 1;
-        $this->company_id = null;
+        $this->organization_id = null;
         $this->customer_id = null;
-        $this->company_location_id = null;
+        $this->organization_location_id = null;
         $this->customer_location_id = null;
         $this->issued_at = now()->format('Y-m-d');
         $this->due_at = now()->addDays(30)->format('Y-m-d');
@@ -297,9 +300,9 @@ class InvoiceWizard extends Component
     }
 
     #[Computed]
-    public function companies()
+    public function organizations()
     {
-        return Company::with('primaryLocation')->get();
+        return Organization::with('primaryLocation')->get();
     }
 
     #[Computed]
@@ -311,12 +314,12 @@ class InvoiceWizard extends Component
     #[Computed]
     public function companyLocations()
     {
-        if (! $this->company_id) {
+        if (! $this->organization_id) {
             return collect();
         }
 
-        return Location::where('locatable_type', Company::class)
-            ->where('locatable_id', $this->company_id)
+        return Location::where('locatable_type', Organization::class)
+            ->where('locatable_id', $this->organization_id)
             ->get();
     }
 
@@ -335,7 +338,7 @@ class InvoiceWizard extends Component
     #[Computed]
     public function invoices()
     {
-        return Invoice::with(['companyLocation', 'customerLocation'])
+        return Invoice::with(['organizationLocation', 'customerLocation'])
             ->latest()
             ->paginate(10);
     }
