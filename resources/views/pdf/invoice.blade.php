@@ -48,20 +48,20 @@
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900 mb-3">From:</h3>
                         <div class="text-gray-700">
-                            <p class="font-medium text-lg">{{ $invoice->companyLocation->locatable->name }}</p>
-                            <p class="text-sm mb-2">{{ $invoice->companyLocation->name }}</p>
+                            <p class="font-medium text-lg">{{ $invoice->organizationLocation->locatable->name }}</p>
+                            <p class="text-sm mb-2">{{ $invoice->organizationLocation->name }}</p>
                             <div class="text-sm space-y-1">
-                                <p>{{ $invoice->companyLocation->address_line_1 }}</p>
-                                @if($invoice->companyLocation->address_line_2)
-                                    <p>{{ $invoice->companyLocation->address_line_2 }}</p>
+                                <p>{{ $invoice->organizationLocation->address_line_1 }}</p>
+                                @if($invoice->organizationLocation->address_line_2)
+                                    <p>{{ $invoice->organizationLocation->address_line_2 }}</p>
                                 @endif
-                                <p>{{ $invoice->companyLocation->city }}, {{ $invoice->companyLocation->state }} {{ $invoice->companyLocation->postal_code }}</p>
-                                <p>{{ $invoice->companyLocation->country }}</p>
-                                @if($invoice->companyLocation->gstin)
-                                    <p class="mt-2"><span class="font-medium">GSTIN:</span> {{ $invoice->companyLocation->gstin }}</p>
+                                <p>{{ $invoice->organizationLocation->city }}, {{ $invoice->organizationLocation->state }} {{ $invoice->organizationLocation->postal_code }}</p>
+                                <p>{{ $invoice->organizationLocation->country }}</p>
+                                @if($invoice->organizationLocation->gstin)
+                                    <p class="mt-2"><span class="font-medium">GSTIN:</span> {{ $invoice->organizationLocation->gstin }}</p>
                                 @endif
-                                @if($invoice->companyLocation->locatable->emails && !$invoice->companyLocation->locatable->emails->isEmpty())
-                                    <p><span class="font-medium">Email:</span> {{ $invoice->companyLocation->locatable->emails->first() }}</p>
+                                @if($invoice->organizationLocation->locatable->emails && !$invoice->organizationLocation->locatable->emails->isEmpty())
+                                    <p><span class="font-medium">Email:</span> {{ $invoice->organizationLocation->locatable->emails->first() }}</p>
                                 @endif
                             </div>
                         </div>

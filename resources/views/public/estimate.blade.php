@@ -50,22 +50,22 @@
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900 mb-3">From:</h3>
                         <div class="text-gray-700">
-                            <p class="font-medium">{{ $estimate->companyLocation->locatable->name }}</p>
-                            <p class="text-sm">{{ $estimate->companyLocation->name }}</p>
+                            <p class="font-medium">{{ $estimate->organizationLocation->locatable->company_name }}</p>
+                            <p class="text-sm">{{ $estimate->organizationLocation->name }}</p>
                             <div class="mt-2 text-sm">
-                                <p>{{ $estimate->companyLocation->address_line_1 }}</p>
-                                @if($estimate->companyLocation->address_line_2)
-                                    <p>{{ $estimate->companyLocation->address_line_2 }}</p>
+                                <p>{{ $estimate->organizationLocation->address_line_1 }}</p>
+                                @if($estimate->organizationLocation->address_line_2)
+                                    <p>{{ $estimate->organizationLocation->address_line_2 }}</p>
                                 @endif
-                                <p>{{ $estimate->companyLocation->city }}, {{ $estimate->companyLocation->state }} {{ $estimate->companyLocation->postal_code }}</p>
-                                <p>{{ $estimate->companyLocation->country }}</p>
-                                @if($estimate->companyLocation->gstin)
-                                    <p class="mt-1"><span class="font-medium">GSTIN:</span> {{ $estimate->companyLocation->gstin }}</p>
+                                <p>{{ $estimate->organizationLocation->city }}, {{ $estimate->organizationLocation->state }} {{ $estimate->organizationLocation->postal_code }}</p>
+                                <p>{{ $estimate->organizationLocation->country }}</p>
+                                @if($estimate->organizationLocation->gstin)
+                                    <p class="mt-1"><span class="font-medium">GSTIN:</span> {{ $estimate->organizationLocation->gstin }}</p>
                                 @endif
                             </div>
-                            @if($estimate->companyLocation->locatable->emails && !$estimate->companyLocation->locatable->emails->isEmpty())
+                            @if($estimate->organizationLocation->locatable->emails && !$estimate->organizationLocation->locatable->emails->isEmpty())
                                 <div class="mt-2 text-sm">
-                                    <p><span class="font-medium">Email:</span> {{ $estimate->companyLocation->locatable->emails->first() }}</p>
+                                    <p><span class="font-medium">Email:</span> {{ $estimate->organizationLocation->locatable->emails->first() }}</p>
                                 </div>
                             @endif
                         </div>
