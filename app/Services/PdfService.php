@@ -14,7 +14,7 @@ class PdfService
      */
     public function generateInvoicePdf(Invoice $invoice): string
     {
-        $invoice->load(['items', 'companyLocation', 'customerLocation']);
+        $invoice->load(['items', 'organizationLocation', 'customerLocation']);
 
         $html = View::make('pdf.invoice', compact('invoice'))->render();
 
@@ -26,7 +26,7 @@ class PdfService
      */
     public function generateEstimatePdf(Invoice $estimate): string
     {
-        $estimate->load(['items', 'companyLocation', 'customerLocation']);
+        $estimate->load(['items', 'organizationLocation', 'customerLocation']);
 
         $html = View::make('pdf.estimate', compact('estimate'))->render();
 

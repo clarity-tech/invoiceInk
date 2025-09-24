@@ -21,7 +21,9 @@ class EstimateToInvoiceConverter
 
         $invoice = new Invoice([
             'type' => 'invoice',
-            'company_location_id' => $estimate->company_location_id,
+            'organization_id' => $estimate->organization_id,
+            'customer_id' => $estimate->customer_id,
+            'organization_location_id' => $estimate->organization_location_id,
             'customer_location_id' => $estimate->customer_location_id,
             'invoice_number' => $this->generateInvoiceNumber(),
             'status' => 'draft',
