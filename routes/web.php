@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\PublicViewController;
-use App\Livewire\CompanyManager;
 use App\Livewire\CustomerManager;
 use App\Livewire\InvoiceWizard;
+use App\Livewire\OrganizationManager;
 use App\Livewire\TeamSettings;
 use Illuminate\Support\Facades\Route;
 
@@ -32,7 +32,7 @@ Route::middleware([
     })->name('dashboard');
 
     // Main application routes (protected)
-    Route::get('/companies', CompanyManager::class)->name('companies.index');
+    Route::get('/organizations', OrganizationManager::class)->name('organizations.index');
     Route::get('/customers', CustomerManager::class)->name('customers.index');
     Route::get('/invoices', InvoiceWizard::class)->name('invoices.index');
     Route::get('/team/settings', TeamSettings::class)->name('team.settings');
