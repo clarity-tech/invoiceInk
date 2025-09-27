@@ -1,16 +1,17 @@
 <?php
 
-use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Location;
+use App\Models\Organization;
 use App\ValueObjects\EmailCollection;
 
 beforeEach(function () {
-    // Create test company with location
-    $this->company = createCompanyWithLocation([
-        'name' => 'Test Company Ltd',
+    // Create test organization with location
+    $this->organization = createOrganizationWithLocation([
+        'name' => 'Test Organization Ltd',
+        'company_name' => 'Test Company Ltd',
         'phone' => '+1234567890',
         'emails' => new EmailCollection(['company@test.com']),
     ], [
@@ -23,8 +24,8 @@ beforeEach(function () {
         'country' => 'India',
         'postal_code' => '400001',
     ]);
-    
-    $this->companyLocation = $this->company->primaryLocation;
+
+    $this->organizationLocation = $this->organization->primaryLocation;
 
     // Create test customer with location
     $this->customer = createCustomerWithLocation([
@@ -39,16 +40,21 @@ beforeEach(function () {
         'state' => 'Karnataka',
         'country' => 'India',
         'postal_code' => '560001',
-    ]);
-    
+    ], $this->organization);
+
     $this->customerLocation = $this->customer->primaryLocation;
 });
 
 test('can view public invoice page', function () {
     $invoice = Invoice::create([
         'type' => 'invoice',
-        'company_location_id' => $this->companyLocation->id,
+        'organization_id' => $this->organization->id,
+        'organization_location_id' => $this->organizationLocation->id,
+        'customer_id' => $this->customer->id,
         'customer_location_id' => $this->customerLocation->id,
+        'currency' => 'INR',
+        'exchange_rate' => 1.000000,
+        'email_recipients' => ['customer@test.com'],
         'invoice_number' => 'INV-2025-001',
         'status' => 'sent',
         'issued_at' => now(),
@@ -82,8 +88,13 @@ test('can view public invoice page', function () {
 test('can view public estimate page', function () {
     $estimate = Invoice::create([
         'type' => 'estimate',
-        'company_location_id' => $this->companyLocation->id,
+        'organization_id' => $this->organization->id,
+        'organization_location_id' => $this->organizationLocation->id,
+        'customer_id' => $this->customer->id,
         'customer_location_id' => $this->customerLocation->id,
+        'currency' => 'INR',
+        'exchange_rate' => 1.000000,
+        'email_recipients' => ['customer@test.com'],
         'invoice_number' => 'EST-2025-001',
         'status' => 'sent',
         'issued_at' => now(),
@@ -129,8 +140,13 @@ test('returns 404 for non-existent estimate', function () {
 test('returns 404 when accessing invoice with estimate ULID', function () {
     $estimate = Invoice::create([
         'type' => 'estimate',
-        'company_location_id' => $this->companyLocation->id,
+        'organization_id' => $this->organization->id,
+        'organization_location_id' => $this->organizationLocation->id,
+        'customer_id' => $this->customer->id,
         'customer_location_id' => $this->customerLocation->id,
+        'currency' => 'INR',
+        'exchange_rate' => 1.000000,
+        'email_recipients' => ['customer@test.com'],
         'invoice_number' => 'EST-2025-002',
         'status' => 'sent',
         'subtotal' => 3000,
@@ -146,8 +162,13 @@ test('returns 404 when accessing invoice with estimate ULID', function () {
 test('returns 404 when accessing estimate with invoice ULID', function () {
     $invoice = Invoice::create([
         'type' => 'invoice',
-        'company_location_id' => $this->companyLocation->id,
+        'organization_id' => $this->organization->id,
+        'organization_location_id' => $this->organizationLocation->id,
+        'customer_id' => $this->customer->id,
         'customer_location_id' => $this->customerLocation->id,
+        'currency' => 'INR',
+        'exchange_rate' => 1.000000,
+        'email_recipients' => ['customer@test.com'],
         'invoice_number' => 'INV-2025-002',
         'status' => 'sent',
         'subtotal' => 4000,
@@ -163,8 +184,13 @@ test('returns 404 when accessing estimate with invoice ULID', function () {
 test('public invoice page displays all address details', function () {
     $invoice = Invoice::create([
         'type' => 'invoice',
-        'company_location_id' => $this->companyLocation->id,
+        'organization_id' => $this->organization->id,
+        'organization_location_id' => $this->organizationLocation->id,
+        'customer_id' => $this->customer->id,
         'customer_location_id' => $this->customerLocation->id,
+        'currency' => 'INR',
+        'exchange_rate' => 1.000000,
+        'email_recipients' => ['customer@test.com'],
         'invoice_number' => 'INV-2025-003',
         'status' => 'sent',
         'subtotal' => 2000,
@@ -181,7 +207,7 @@ test('public invoice page displays all address details', function () {
     $response->assertSee('Maharashtra');
     $response->assertSee('400001');
     $response->assertSee('27AAAAA0000A1Z5'); // Company GSTIN
-    
+
     $response->assertSee('456 Client Avenue');
     $response->assertSee('Bangalore');
     $response->assertSee('Karnataka');
@@ -192,8 +218,13 @@ test('public invoice page displays all address details', function () {
 test('public invoice page displays multiple items correctly', function () {
     $invoice = Invoice::create([
         'type' => 'invoice',
-        'company_location_id' => $this->companyLocation->id,
+        'organization_id' => $this->organization->id,
+        'organization_location_id' => $this->organizationLocation->id,
+        'customer_id' => $this->customer->id,
         'customer_location_id' => $this->customerLocation->id,
+        'currency' => 'INR',
+        'exchange_rate' => 1.000000,
+        'email_recipients' => ['customer@test.com'],
         'invoice_number' => 'INV-2025-004',
         'status' => 'paid',
         'subtotal' => 15000,
@@ -231,8 +262,13 @@ test('public invoice page displays multiple items correctly', function () {
 test('can download invoice PDF', function () {
     $invoice = Invoice::create([
         'type' => 'invoice',
-        'company_location_id' => $this->companyLocation->id,
+        'organization_id' => $this->organization->id,
+        'organization_location_id' => $this->organizationLocation->id,
+        'customer_id' => $this->customer->id,
         'customer_location_id' => $this->customerLocation->id,
+        'currency' => 'INR',
+        'exchange_rate' => 1.000000,
+        'email_recipients' => ['customer@test.com'],
         'invoice_number' => 'INV-2025-005',
         'status' => 'sent',
         'subtotal' => 5000,
@@ -243,11 +279,11 @@ test('can download invoice PDF', function () {
     // Mock the PdfService to avoid Puppeteer dependency
     $this->mock(\App\Services\PdfService::class, function ($mock) {
         $mock->shouldReceive('downloadInvoicePdf')
-             ->once()
-             ->andReturn(response('fake-pdf-content', 200, [
-                 'Content-Type' => 'application/pdf',
-                 'Content-Disposition' => 'attachment; filename="invoice-INV-2025-005.pdf"'
-             ]));
+            ->once()
+            ->andReturn(response('fake-pdf-content', 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="invoice-INV-2025-005.pdf"',
+            ]));
     });
 
     $response = $this->get("/invoices/{$invoice->ulid}/pdf");
@@ -259,8 +295,13 @@ test('can download invoice PDF', function () {
 test('can download estimate PDF', function () {
     $estimate = Invoice::create([
         'type' => 'estimate',
-        'company_location_id' => $this->companyLocation->id,
+        'organization_id' => $this->organization->id,
+        'organization_location_id' => $this->organizationLocation->id,
+        'customer_id' => $this->customer->id,
         'customer_location_id' => $this->customerLocation->id,
+        'currency' => 'INR',
+        'exchange_rate' => 1.000000,
+        'email_recipients' => ['customer@test.com'],
         'invoice_number' => 'EST-2025-003',
         'status' => 'sent',
         'subtotal' => 7500,
@@ -271,11 +312,11 @@ test('can download estimate PDF', function () {
     // Mock the PdfService
     $this->mock(\App\Services\PdfService::class, function ($mock) {
         $mock->shouldReceive('downloadEstimatePdf')
-             ->once()
-             ->andReturn(response('fake-pdf-content', 200, [
-                 'Content-Type' => 'application/pdf',
-                 'Content-Disposition' => 'attachment; filename="estimate-EST-2025-003.pdf"'
-             ]));
+            ->once()
+            ->andReturn(response('fake-pdf-content', 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="estimate-EST-2025-003.pdf"',
+            ]));
     });
 
     $response = $this->get("/estimates/{$estimate->ulid}/pdf");

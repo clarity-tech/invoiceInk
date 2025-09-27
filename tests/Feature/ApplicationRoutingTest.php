@@ -21,7 +21,7 @@ test('root route redirects to dashboard when authenticated', function () {
 });
 
 test('protected routes require authentication', function () {
-    $routes = ['/companies', '/customers', '/invoices', '/dashboard'];
+    $routes = ['/organizations', '/customers', '/invoices', '/dashboard'];
 
     foreach ($routes as $route) {
         $response = $this->get($route);
@@ -34,7 +34,7 @@ test('protected routes load successfully when authenticated', function () {
     $user = createUserWithTeam();
 
     $routes = [
-        '/companies' => 'Companies',
+        '/organizations' => 'Organizations',
         '/customers' => 'Customers',
         '/invoices' => 'Invoices',
     ];
