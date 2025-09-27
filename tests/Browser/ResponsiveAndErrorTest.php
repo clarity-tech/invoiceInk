@@ -12,8 +12,8 @@ test('application is responsive on mobile viewport', function () {
         $browser->resize(375, 667) // iPhone viewport
             ->visit('/')
             ->screenshot('mobile_dashboard')
-            ->visit('/companies')
-            ->screenshot('mobile_companies_page')
+            ->visit('/organizations')
+            ->screenshot('mobile_organizations_page')
             ->visit('/customers')
             ->screenshot('mobile_customers_page')
             ->visit('/invoices')
@@ -28,8 +28,8 @@ test('application is responsive on tablet viewport', function () {
         $browser->resize(768, 1024) // iPad viewport
             ->visit('/')
             ->screenshot('tablet_dashboard')
-            ->visit('/companies')
-            ->screenshot('tablet_companies_page')
+            ->visit('/organizations')
+            ->screenshot('tablet_organizations_page')
             ->visit('/customers')
             ->screenshot('tablet_customers_page')
             ->visit('/invoices')
@@ -44,8 +44,8 @@ test('application works on desktop viewport', function () {
         $browser->resize(1920, 1080) // Desktop viewport
             ->visit('/')
             ->screenshot('desktop_dashboard')
-            ->visit('/companies')
-            ->screenshot('desktop_companies_page')
+            ->visit('/organizations')
+            ->screenshot('desktop_organizations_page')
             ->visit('/customers')
             ->screenshot('desktop_customers_page')
             ->visit('/invoices')
@@ -59,8 +59,8 @@ test('navigation works across all main pages', function () {
 
         $browser->visit('/')
             ->screenshot('navigation_home')
-            ->clickLink('Companies')
-            ->assertPathIs('/companies')
+            ->clickLink('Organizations')
+            ->assertPathIs('/organizations')
             ->screenshot('navigation_companies')
             ->clickLink('Customers')
             ->assertPathIs('/customers')
@@ -91,13 +91,13 @@ test('form validation displays error messages', function () {
     $this->browse(function (Browser $browser) {
         loginUserInBrowser($browser);
 
-        $browser->visit('/companies')
+        $browser->visit('/organizations')
             ->click('.bg-blue-500')
             ->waitFor('form', 5)
-            ->screenshot('company_form_empty')
+            ->screenshot('organization_form_empty')
             ->click('button[type="submit"]')
             ->pause(2000)
-            ->screenshot('company_form_validation_errors')
+            ->screenshot('organization_form_validation_errors')
             ->assertPresent('form');
     });
 });
@@ -155,10 +155,10 @@ test('form inputs handle special characters', function () {
     $this->browse(function (Browser $browser) {
         loginUserInBrowser($browser);
 
-        $browser->visit('/companies')
+        $browser->visit('/organizations')
             ->click('.bg-blue-500')
             ->waitFor('form')
-            ->type('[wire\\:model="name"]', 'Test & Company "Special" Chars')
+            ->type('[wire\\:model="name"]', 'Test & Organization "Special" Chars')
             ->type('[wire\\:model="phone"]', '+91-98765-43210')
             ->type('[wire\\:model="emails.0"]', 'test+special@company.co.in')
             ->type('[wire\\:model="location_name"]', 'Head Office & Warehouse')
@@ -167,17 +167,19 @@ test('form inputs handle special characters', function () {
             ->type('[wire\\:model="state"]', 'Delhi')
             ->type('[wire\\:model="country"]', 'India')
             ->type('[wire\\:model="postal_code"]', '110001')
-            ->screenshot('company_form_special_chars');
+            ->screenshot('organization_form_special_chars');
     });
 });
 
 test('pagination works in invoice list', function () {
     // Create many invoices to test pagination
-    $company = \App\Models\Company::factory()->withLocation()->create();
+    $organization = \App\Models\Organization::factory()->withLocation()->create();
     $customer = \App\Models\Customer::factory()->withLocation()->create();
 
     \App\Models\Invoice::factory()->count(25)->create([
-        'company_location_id' => $company->primaryLocation->id,
+        'organization_id' => $organization->id,
+        'customer_id' => $customer->id,
+        'organization_location_id' => $organization->primaryLocation->id,
         'customer_location_id' => $customer->primaryLocation->id,
     ]);
 
@@ -201,20 +203,20 @@ test('pagination works in invoice list', function () {
 
 test('search functionality works if available', function () {
     // Create some test data first
-    $company = \App\Models\Company::factory()->withLocation()->create(['name' => 'Searchable Company']);
+    $organization = \App\Models\Organization::factory()->withLocation()->create(['name' => 'Searchable Organization']);
     $customer = \App\Models\Customer::factory()->withLocation()->create(['name' => 'Searchable Customer']);
 
     $this->browse(function (Browser $browser) {
         loginUserInBrowser($browser);
 
-        $browser->visit('/companies')
-            ->screenshot('companies_before_search');
+        $browser->visit('/organizations')
+            ->screenshot('organizations_before_search');
 
         // Try to find search input and use it
         try {
             $browser->type('input[type="search"], input[placeholder*="search"], input[name*="search"]', 'Searchable')
                 ->pause(1000)
-                ->screenshot('companies_search_results');
+                ->screenshot('organizations_search_results');
         } catch (\Exception $e) {
             // Search input not found, this is expected if search is not implemented
             $browser->screenshot('companies_no_search');

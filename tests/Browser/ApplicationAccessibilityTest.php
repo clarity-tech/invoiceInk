@@ -7,8 +7,8 @@ test('application homepage loads and displays main content', function () {
         loginUserInBrowser($browser);
 
         $browser->visit('/dashboard')
-            ->pause(3000)  // Wait for page to load
-            ->assertSee('Dashboard')
+            ->pause(2000)  // Wait for page to load
+            ->waitForText('Dashboard', 10)  // Wait up to 10 seconds for Dashboard text
             ->screenshot('application_home_page');
     });
 });

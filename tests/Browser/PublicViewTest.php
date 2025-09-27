@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Dusk\Browser;
 
@@ -42,7 +42,7 @@ test('user can view public invoice page', function () {
 
 test('user can view public estimate page', function () {
     // Create test data
-    $company = Company::factory()->withLocation()->create();
+    $company = Organization::factory()->withLocation()->create();
     $customer = Customer::factory()->withLocation()->create();
 
     $estimate = Invoice::factory()->create([
@@ -78,7 +78,7 @@ test('user can view public estimate page', function () {
 
 test('public invoice page displays all required details', function () {
     // Create test data with detailed information
-    $company = Company::factory()->withLocation()->create([
+    $company = Organization::factory()->withLocation()->create([
         'name' => 'Tech Solutions Ltd',
     ]);
 
@@ -134,7 +134,7 @@ test('public invoice page displays all required details', function () {
 
 test('public invoice page shows company and customer addresses', function () {
     // Create test data with specific address information
-    $company = Company::factory()->withLocation()->create();
+    $company = Organization::factory()->withLocation()->create();
     $company->primaryLocation->update([
         'name' => 'Corporate Headquarters',
         'address_line_1' => '123 Business Park',
@@ -189,7 +189,7 @@ test('public invoice page shows company and customer addresses', function () {
 
 test('public invoice page handles different tax scenarios', function () {
     // Create test data
-    $company = Company::factory()->withLocation()->create();
+    $company = Organization::factory()->withLocation()->create();
     $customer = Customer::factory()->withLocation()->create();
 
     $invoice = Invoice::factory()->create([

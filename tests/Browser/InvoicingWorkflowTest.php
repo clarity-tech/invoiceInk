@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Company;
 use App\Models\Customer;
+use App\Models\Organization;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Dusk\Browser;
 
@@ -12,32 +12,32 @@ test('user can view the dashboard', function () {
         loginUserInBrowser($browser);
 
         $browser->visit('/dashboard')
-            ->assertSee('Dashboard')
+            ->assertSee('Welcome to your Invoicing Application')
             ->screenshot('dashboard_view');
     });
 });
 
-test('user can view companies page', function () {
+test('user can view organizations page', function () {
     $this->browse(function (Browser $browser) {
         loginUserInBrowser($browser);
 
-        $browser->visit('/companies')
-            ->assertSee('Companies')
-            ->screenshot('companies_page');
+        $browser->visit('/organizations')
+            ->assertSee('Organizations')
+            ->screenshot('organizations_page');
     });
 });
 
-test('user can create a new company', function () {
+test('user can create a new organization', function () {
     $this->browse(function (Browser $browser) {
         loginUserInBrowser($browser);
 
-        $browser->visit('/companies')
-            ->screenshot('companies_page_before_click')
+        $browser->visit('/organizations')
+            ->screenshot('organizations_page_before_click')
             ->click('.bg-blue-500')
             ->waitFor('form', 3)
-            ->type('[wire\\:model="name"]', 'Test Company Ltd')
+            ->type('[wire\\:model="name"]', 'Test Organization Ltd')
             ->type('[wire\\:model="phone"]', '+91-9876543210')
-            ->type('[wire\\:model="emails.0"]', 'test@company.com')
+            ->type('[wire\\:model="emails.0"]', 'test@organization.com')
             ->type('[wire\\:model="location_name"]', 'Head Office')
             ->type('[wire\\:model="address_line_1"]', '123 Business Street')
             ->type('[wire\\:model="city"]', 'Mumbai')
@@ -45,10 +45,10 @@ test('user can create a new company', function () {
             ->type('[wire\\:model="country"]', 'India')
             ->type('[wire\\:model="postal_code"]', '400001')
             ->type('[wire\\:model="gstin"]', '27ABCDE1234F1Z5')
-            ->screenshot('company_creation_form')
+            ->screenshot('organization_creation_form')
             ->click('button[type="submit"]')
             ->pause(2000)
-            ->screenshot('company_created_success');
+            ->screenshot('organization_created_success');
     });
 });
 
@@ -99,13 +99,13 @@ test('user can create an invoice with items', function () {
     $this->browse(function (Browser $browser) {
         loginUserInBrowser($browser);
 
-        // Create company through UI first
-        $browser->visit('/companies')
+        // Create organization through UI first
+        $browser->visit('/organizations')
             ->click('.bg-blue-500')
             ->waitFor('form', 3)
-            ->type('[wire\\:model="name"]', 'Test Company Ltd')
+            ->type('[wire\\:model="name"]', 'Test Organization Ltd')
             ->type('[wire\\:model="phone"]', '+91-9876543210')
-            ->type('[wire\\:model="emails.0"]', 'test@company.com')
+            ->type('[wire\\:model="emails.0"]', 'test@organization.com')
             ->type('[wire\\:model="location_name"]', 'Head Office')
             ->type('[wire\\:model="address_line_1"]', '123 Business Street')
             ->type('[wire\\:model="city"]', 'Mumbai')
@@ -137,10 +137,10 @@ test('user can create an invoice with items', function () {
             ->click('.bg-blue-500')  // Create Invoice button
             ->waitFor('form', 3)
             ->screenshot('invoice_creation_step1')
-            ->select('[wire\\:model\\.live="company_id"]', '1')  // First company
+            ->select('[wire\\:model\\.live="organization_id"]', '1')  // First company
             ->select('[wire\\:model\\.live="customer_id"]', '1')  // First customer
             ->pause(2000)  // Wait for location dropdowns to appear
-            ->select('[wire\\:model="company_location_id"]', '1')  // First company location
+            ->select('[wire\\:model="organization_location_id"]', '1')  // First company location
             ->select('[wire\\:model="customer_location_id"]', '2')  // First customer location
             ->screenshot('invoice_creation_step1_filled')
             ->click('button[wire\\:click="nextStep"]')
@@ -166,13 +166,13 @@ test('user can create an estimate', function () {
     $this->browse(function (Browser $browser) {
         loginUserInBrowser($browser);
 
-        // Create company through UI first
+        // Create organization through UI first
         $browser->visit('/companies')
             ->click('.bg-blue-500')
             ->waitFor('form', 3)
-            ->type('[wire\\:model="name"]', 'Estimate Company Ltd')
+            ->type('[wire\\:model="name"]', 'Estimate Organization Ltd')
             ->type('[wire\\:model="phone"]', '+91-9876543210')
-            ->type('[wire\\:model="emails.0"]', 'estimate@company.com')
+            ->type('[wire\\:model="emails.0"]', 'estimate@organization.com')
             ->type('[wire\\:model="location_name"]', 'Head Office')
             ->type('[wire\\:model="address_line_1"]', '123 Business Street')
             ->type('[wire\\:model="city"]', 'Mumbai')
@@ -204,10 +204,10 @@ test('user can create an estimate', function () {
             ->click('.bg-green-500')  // Create Estimate button
             ->waitFor('form', 3)
             ->screenshot('estimate_creation_step1')
-            ->select('[wire\\:model\\.live="company_id"]', '1')  // First company
+            ->select('[wire\\:model\\.live="organization_id"]', '1')  // First company
             ->select('[wire\\:model\\.live="customer_id"]', '1')  // First customer
             ->pause(2000)  // Wait for location dropdowns to appear
-            ->select('[wire\\:model="company_location_id"]', '1')  // First company location
+            ->select('[wire\\:model="organization_location_id"]', '1')  // First company location
             ->select('[wire\\:model="customer_location_id"]', '2')  // First customer location
             ->screenshot('estimate_creation_step1_filled')
             ->click('button[wire\\:click="nextStep"]')  // Use proper button selector
@@ -229,13 +229,13 @@ test('user can add multiple items to invoice', function () {
     $this->browse(function (Browser $browser) {
         loginUserInBrowser($browser);
 
-        // Create company through UI first
+        // Create organization through UI first
         $browser->visit('/companies')
             ->click('.bg-blue-500')
             ->waitFor('form', 3)
-            ->type('[wire\\:model="name"]', 'Multi-Item Company Ltd')
+            ->type('[wire\\:model="name"]', 'Multi-Item Organization Ltd')
             ->type('[wire\\:model="phone"]', '+91-9876543210')
-            ->type('[wire\\:model="emails.0"]', 'multi@company.com')
+            ->type('[wire\\:model="emails.0"]', 'multi@organization.com')
             ->type('[wire\\:model="location_name"]', 'Head Office')
             ->type('[wire\\:model="address_line_1"]', '123 Business Street')
             ->type('[wire\\:model="city"]', 'Mumbai')
@@ -265,10 +265,10 @@ test('user can add multiple items to invoice', function () {
             ->visit('/invoices')
             ->click('.bg-blue-500')  // Create Invoice button
             ->waitFor('form', 3)
-            ->select('[wire\\:model\\.live="company_id"]', '1')  // First company
+            ->select('[wire\\:model\\.live="organization_id"]', '1')  // First company
             ->select('[wire\\:model\\.live="customer_id"]', '1')  // First customer
             ->pause(2000)  // Wait for location dropdowns to appear
-            ->select('[wire\\:model="company_location_id"]', '1')  // First company location
+            ->select('[wire\\:model="organization_location_id"]', '1')  // First company location
             ->select('[wire\\:model="customer_location_id"]', '2')  // First customer location
             ->click('button[wire\\:click="nextStep"]')
             ->pause(2000)
@@ -303,12 +303,12 @@ test('user can add multiple items to invoice', function () {
 
 test('user can view invoice list with created invoices', function () {
     // Create test data
-    $company = Company::factory()->withLocation()->create();
+    $organization = Organization::factory()->withLocation()->create();
     $customer = Customer::factory()->withLocation()->create();
 
     // Create some test invoices using factories
     \App\Models\Invoice::factory()->count(3)->create([
-        'company_location_id' => $company->primaryLocation->id,
+        'organization_location_id' => $organization->primaryLocation->id,
         'customer_location_id' => $customer->primaryLocation->id,
     ]);
 
