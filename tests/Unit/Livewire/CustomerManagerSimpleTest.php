@@ -78,6 +78,9 @@ test('validates required fields', function () {
 });
 
 test('can create customer with valid data', function () {
+    $user = createUserWithTeam();
+    $this->actingAs($user);
+
     $initialCount = Customer::count();
 
     Livewire::test(CustomerManager::class)

@@ -1,9 +1,9 @@
 <?php
 
 use App\Livewire\InvoiceWizard;
-use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\Organization;
 use Livewire\Livewire;
 
 test('invoice wizard component loads', function () {
@@ -50,28 +50,28 @@ test('loads invoices through computed property', function () {
 });
 
 test('loads companies and customers', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
 
     $component = Livewire::test(InvoiceWizard::class);
 
-    $companies = $component->instance()->companies;
+    $organizations = $component->instance()->organizations;
     $customers = $component->instance()->customers;
 
-    expect($companies->count())->toBeGreaterThan(0);
+    expect($organizations->count())->toBeGreaterThan(0);
     expect($customers->count())->toBeGreaterThan(0);
 });
 
 test('can navigate wizard steps', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
 
     Livewire::test(InvoiceWizard::class)
         ->call('create')
         ->assertSet('currentStep', 1)
-        ->set('company_id', $company->id)
+        ->set('organization_id', $organization->id)
         ->set('customer_id', $customer->id)
-        ->set('company_location_id', $company->primaryLocation->id)
+        ->set('organization_location_id', $organization->primaryLocation->id)
         ->set('customer_location_id', $customer->primaryLocation->id)
         ->call('nextStep')
         ->assertSet('currentStep', 2)
@@ -83,7 +83,7 @@ test('validates step 1 requirements', function () {
     Livewire::test(InvoiceWizard::class)
         ->call('create')
         ->call('nextStep')
-        ->assertHasErrors(['company_id', 'customer_id', 'company_location_id', 'customer_location_id']);
+        ->assertHasErrors(['organization_id', 'customer_id', 'organization_location_id', 'customer_location_id']);
 });
 
 test('calculates totals correctly', function () {
@@ -126,16 +126,16 @@ test('can populate form for editing', function () {
 });
 
 test('can create new invoice', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
     $initialCount = Invoice::count();
 
     Livewire::test(InvoiceWizard::class)
         ->call('create')
         ->set('type', 'invoice')
-        ->set('company_id', $company->id)
+        ->set('organization_id', $organization->id)
         ->set('customer_id', $customer->id)
-        ->set('company_location_id', $company->primaryLocation->id)
+        ->set('organization_location_id', $organization->primaryLocation->id)
         ->set('customer_location_id', $customer->primaryLocation->id)
         ->set('items.0.description', 'New Service')
         ->set('items.0.quantity', 1)
@@ -148,16 +148,16 @@ test('can create new invoice', function () {
 });
 
 test('can create estimate', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
     $initialCount = Invoice::where('type', 'estimate')->count();
 
     Livewire::test(InvoiceWizard::class)
         ->call('create')
         ->set('type', 'estimate')
-        ->set('company_id', $company->id)
+        ->set('organization_id', $organization->id)
         ->set('customer_id', $customer->id)
-        ->set('company_location_id', $company->primaryLocation->id)
+        ->set('organization_location_id', $organization->primaryLocation->id)
         ->set('customer_location_id', $customer->primaryLocation->id)
         ->set('items.0.description', 'Estimate Service')
         ->set('items.0.quantity', 1)
@@ -202,11 +202,11 @@ test('generates correct invoice numbers', function () {
 });
 
 test('loads locations based on selected entities', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
 
     // Create additional locations
-    createLocation(Company::class, $company->id, [
+    createLocation(Organization::class, $organization->id, [
         'name' => 'Branch Office',
         'address_line_1' => '789 Branch St',
         'city' => 'Branch City',
@@ -220,7 +220,7 @@ test('loads locations based on selected entities', function () {
 
     $component = Livewire::test(InvoiceWizard::class)
         ->call('create')
-        ->set('company_id', $company->id)
+        ->set('organization_id', $organization->id)
         ->set('customer_id', $customer->id);
 
     $companyLocations = $component->instance()->companyLocations;

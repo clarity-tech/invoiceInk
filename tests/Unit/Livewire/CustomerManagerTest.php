@@ -59,6 +59,9 @@ test('cannot remove last email field', function () {
 });
 
 test('can create new customer with location', function () {
+    $user = createUserWithTeam();
+    $this->actingAs($user);
+
     Livewire::test(CustomerManager::class)
         ->call('create')
         ->set('name', 'Test Customer Corp')
@@ -94,6 +97,9 @@ test('can create new customer with location', function () {
 });
 
 test('can create customer with multiple emails', function () {
+    $user = createUserWithTeam();
+    $this->actingAs($user);
+
     Livewire::test(CustomerManager::class)
         ->call('create')
         ->set('name', 'Multi Email Customer')
@@ -114,8 +120,8 @@ test('can create customer with multiple emails', function () {
     $customer = Customer::where('name', 'Multi Email Customer')->first();
     expect($customer->emails->toArray())->toBe([
         'primary@customer.com',
-        'billing@customer.com', 
-        'support@customer.com'
+        'billing@customer.com',
+        'support@customer.com',
     ]);
 });
 
@@ -233,6 +239,9 @@ test('can cancel form', function () {
 });
 
 test('resets form after successful save', function () {
+    $user = createUserWithTeam();
+    $this->actingAs($user);
+
     Livewire::test(CustomerManager::class)
         ->call('create')
         ->set('name', 'Test Customer')
@@ -251,6 +260,9 @@ test('resets form after successful save', function () {
 });
 
 test('handles customer without primary location when editing', function () {
+    $user = createUserWithTeam();
+    $this->actingAs($user);
+
     $location = Location::create([
         'name' => 'Test Location',
         'address_line_1' => '123 Test St',
@@ -266,6 +278,7 @@ test('handles customer without primary location when editing', function () {
         'name' => 'No Location Customer',
         'emails' => new EmailCollection(['test@customer.com']),
         'primary_location_id' => null,
+        'organization_id' => $user->currentTeam->id,
     ]);
 
     Livewire::test(CustomerManager::class)

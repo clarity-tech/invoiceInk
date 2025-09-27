@@ -1,10 +1,10 @@
 <?php
 
 use App\Livewire\InvoiceWizard;
-use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Location;
+use App\Models\Organization;
 use Livewire\Livewire;
 
 test('can render invoice wizard component', function () {
@@ -24,7 +24,7 @@ test('initializes with default values on mount', function () {
 });
 
 test('can load invoices with pagination', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
 
     // Create exactly 11 test invoices to trigger pagination (page size is 10)
@@ -32,7 +32,7 @@ test('can load invoices with pagination', function () {
         createInvoiceWithItems([
             'type' => 'invoice',
             'invoice_number' => "TEST-INV-{$i}",
-            'company_location_id' => $company->primaryLocation->id,
+            'organization_location_id' => $organization->primaryLocation->id,
             'customer_location_id' => $customer->primaryLocation->id,
         ]);
     }
@@ -91,15 +91,15 @@ test('calculates totals when items are updated', function () {
 });
 
 test('can navigate between wizard steps', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
 
     Livewire::test(InvoiceWizard::class)
         ->call('create')
         ->assertSet('currentStep', 1)
-        ->set('company_id', $company->id)
+        ->set('organization_id', $organization->id)
         ->set('customer_id', $customer->id)
-        ->set('company_location_id', $company->primaryLocation->id)
+        ->set('organization_location_id', $organization->primaryLocation->id)
         ->set('customer_location_id', $customer->primaryLocation->id)
         ->call('nextStep')
         ->assertSet('currentStep', 2)
@@ -116,22 +116,22 @@ test('validates step 1 when moving to next step', function () {
         ->call('create')
         ->call('nextStep')
         ->assertHasErrors([
-            'company_id' => 'required',
+            'organization_id' => 'required',
             'customer_id' => 'required',
-            'company_location_id' => 'required',
+            'organization_location_id' => 'required',
             'customer_location_id' => 'required',
         ]);
 });
 
 test('cannot go beyond step 3 or below step 1', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
 
     Livewire::test(InvoiceWizard::class)
         ->call('create')
-        ->set('company_id', $company->id)
+        ->set('organization_id', $organization->id)
         ->set('customer_id', $customer->id)
-        ->set('company_location_id', $company->primaryLocation->id)
+        ->set('organization_location_id', $organization->primaryLocation->id)
         ->set('customer_location_id', $customer->primaryLocation->id)
         ->call('nextStep')
         ->call('nextStep')
@@ -146,15 +146,15 @@ test('cannot go beyond step 3 or below step 1', function () {
 });
 
 test('can create new invoice with items', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
 
     Livewire::test(InvoiceWizard::class)
         ->call('create')
         ->set('type', 'invoice')
-        ->set('company_id', $company->id)
+        ->set('organization_id', $organization->id)
         ->set('customer_id', $customer->id)
-        ->set('company_location_id', $company->primaryLocation->id)
+        ->set('organization_location_id', $organization->primaryLocation->id)
         ->set('customer_location_id', $customer->primaryLocation->id)
         ->set('issued_at', '2025-01-01')
         ->set('due_at', '2025-01-31')
@@ -173,7 +173,7 @@ test('can create new invoice with items', function () {
 
     $this->assertDatabaseHas('invoices', [
         'type' => 'invoice',
-        'company_location_id' => $company->primaryLocation->id,
+        'organization_location_id' => $organization->primaryLocation->id,
         'customer_location_id' => $customer->primaryLocation->id,
         'status' => 'draft',
     ]);
@@ -185,15 +185,15 @@ test('can create new invoice with items', function () {
 });
 
 test('can create estimate', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
 
     Livewire::test(InvoiceWizard::class)
         ->call('create')
         ->set('type', 'estimate')
-        ->set('company_id', $company->id)
+        ->set('organization_id', $organization->id)
         ->set('customer_id', $customer->id)
-        ->set('company_location_id', $company->primaryLocation->id)
+        ->set('organization_location_id', $organization->primaryLocation->id)
         ->set('customer_location_id', $customer->primaryLocation->id)
         ->set('items.0.description', 'Project Estimate')
         ->set('items.0.quantity', 1)
@@ -216,9 +216,9 @@ test('validates all fields when saving', function () {
         ->set('items.0.unit_price', -100) // Invalid
         ->call('save')
         ->assertHasErrors([
-            'company_id' => 'required',
+            'organization_id' => 'required',
             'customer_id' => 'required',
-            'company_location_id' => 'required',
+            'organization_location_id' => 'required',
             'customer_location_id' => 'required',
             'items.0.description' => 'required',
             'items.0.quantity' => 'min:1',
@@ -246,7 +246,7 @@ test('can edit existing invoice', function () {
         ->assertSet('showInvoices', false)
         ->assertSet('editingId', $invoice->id)
         ->assertSet('type', 'invoice')
-        ->assertSet('company_id', $invoice->companyLocation->locatable_id)
+        ->assertSet('organization_id', $invoice->organizationLocation->locatable_id)
         ->assertSet('customer_id', $invoice->customerLocation->locatable_id)
         ->assertSet('issued_at', '2025-01-01')
         ->assertSet('due_at', '2025-01-31')
@@ -311,29 +311,29 @@ test('can delete estimate', function () {
 test('can cancel form', function () {
     Livewire::test(InvoiceWizard::class)
         ->call('create')
-        ->set('company_id', 1)
+        ->set('organization_id', 1)
         ->assertSet('showInvoices', false)
         ->call('cancel')
         ->assertSet('showInvoices', true)
-        ->assertSet('company_id', null)
+        ->assertSet('organization_id', null)
         ->assertSet('editingId', null);
 });
 
 test('resets form after successful save', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
 
     Livewire::test(InvoiceWizard::class)
         ->call('create')
-        ->set('company_id', $company->id)
+        ->set('organization_id', $organization->id)
         ->set('customer_id', $customer->id)
-        ->set('company_location_id', $company->primaryLocation->id)
+        ->set('organization_location_id', $organization->primaryLocation->id)
         ->set('customer_location_id', $customer->primaryLocation->id)
         ->set('items.0.description', 'Test Service')
         ->set('items.0.quantity', 1)
         ->set('items.0.unit_price', 1000)
         ->call('save')
-        ->assertSet('company_id', null)
+        ->assertSet('organization_id', null)
         ->assertSet('customer_id', null)
         ->assertSet('editingId', null)
         ->assertCount('items', 1)
@@ -341,15 +341,15 @@ test('resets form after successful save', function () {
 });
 
 test('generates correct invoice number format', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
 
     Livewire::test(InvoiceWizard::class)
         ->call('create')
         ->set('type', 'invoice')
-        ->set('company_id', $company->id)
+        ->set('organization_id', $organization->id)
         ->set('customer_id', $customer->id)
-        ->set('company_location_id', $company->primaryLocation->id)
+        ->set('organization_location_id', $organization->primaryLocation->id)
         ->set('customer_location_id', $customer->primaryLocation->id)
         ->set('items.0.description', 'Test')
         ->set('items.0.quantity', 1)
@@ -363,15 +363,15 @@ test('generates correct invoice number format', function () {
 });
 
 test('generates correct estimate number format', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
 
     Livewire::test(InvoiceWizard::class)
         ->call('create')
         ->set('type', 'estimate')
-        ->set('company_id', $company->id)
+        ->set('organization_id', $organization->id)
         ->set('customer_id', $customer->id)
-        ->set('company_location_id', $company->primaryLocation->id)
+        ->set('organization_location_id', $organization->primaryLocation->id)
         ->set('customer_location_id', $customer->primaryLocation->id)
         ->set('items.0.description', 'Test')
         ->set('items.0.quantity', 1)
@@ -385,10 +385,10 @@ test('generates correct estimate number format', function () {
 });
 
 test('loads company locations based on selected company', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
 
     // Create additional location for the company
-    createLocation(Company::class, $company->id, [
+    createLocation(Organization::class, $organization->id, [
         'name' => 'Branch Office',
         'address_line_1' => '456 Branch St',
         'city' => 'Branch City',
@@ -396,7 +396,7 @@ test('loads company locations based on selected company', function () {
 
     $component = Livewire::test(InvoiceWizard::class)
         ->call('create')
-        ->set('company_id', $company->id);
+        ->set('organization_id', $organization->id);
 
     $locations = $component->instance()->companyLocations;
     expect($locations)->toHaveCount(2);
@@ -437,14 +437,14 @@ test('returns empty collection when no customer selected', function () {
 });
 
 test('handles dates correctly when saving', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
 
     Livewire::test(InvoiceWizard::class)
         ->call('create')
-        ->set('company_id', $company->id)
+        ->set('organization_id', $organization->id)
         ->set('customer_id', $customer->id)
-        ->set('company_location_id', $company->primaryLocation->id)
+        ->set('organization_location_id', $organization->primaryLocation->id)
         ->set('customer_location_id', $customer->primaryLocation->id)
         ->set('issued_at', '2025-03-15')
         ->set('due_at', '2025-04-15')
@@ -459,14 +459,14 @@ test('handles dates correctly when saving', function () {
 });
 
 test('handles null dates when saving', function () {
-    $company = createCompanyWithLocation();
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
 
     Livewire::test(InvoiceWizard::class)
         ->call('create')
-        ->set('company_id', $company->id)
+        ->set('organization_id', $organization->id)
         ->set('customer_id', $customer->id)
-        ->set('company_location_id', $company->primaryLocation->id)
+        ->set('organization_location_id', $organization->primaryLocation->id)
         ->set('customer_location_id', $customer->primaryLocation->id)
         ->set('issued_at', null)
         ->set('due_at', null)
