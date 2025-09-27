@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Location;
+use App\Models\Organization;
 
 test('can create location with all fields', function () {
     $location = Location::create([
@@ -14,7 +14,7 @@ test('can create location with all fields', function () {
         'state' => 'Test State',
         'country' => 'Test Country',
         'postal_code' => '12345',
-        'locatable_type' => Company::class,
+        'locatable_type' => Organization::class,
         'locatable_id' => 1,
     ]);
 
@@ -26,7 +26,7 @@ test('can create location with all fields', function () {
     expect($location->state)->toBe('Test State');
     expect($location->country)->toBe('Test Country');
     expect($location->postal_code)->toBe('12345');
-    expect($location->locatable_type)->toBe(Company::class);
+    expect($location->locatable_type)->toBe(Organization::class);
     expect($location->locatable_id)->toBe(1);
 });
 
@@ -47,25 +47,25 @@ test('can create location with minimal required fields', function () {
     expect($location->address_line_2)->toBeNull();
 });
 
-test('location belongs to company through polymorphic relationship', function () {
-    $company = createCompanyWithLocation([
-        'name' => 'Test Company',
-        'emails' => new \App\ValueObjects\EmailCollection(['test@company.com']),
+test('location belongs to organization through polymorphic relationship', function () {
+    $organization = createOrganizationWithLocation([
+        'name' => 'Test Organization',
+        'emails' => new \App\ValueObjects\EmailCollection(['test@organization.com']),
     ]);
 
     $location = Location::create([
-        'name' => 'Company Office',
-        'address_line_1' => '123 Company St',
-        'city' => 'Company City',
-        'state' => 'Company State',
+        'name' => 'Organization Office',
+        'address_line_1' => '123 Organization St',
+        'city' => 'Organization City',
+        'state' => 'Organization State',
         'country' => 'Test Country',
         'postal_code' => '12345',
-        'locatable_type' => Company::class,
-        'locatable_id' => $company->id,
+        'locatable_type' => Organization::class,
+        'locatable_id' => $organization->id,
     ]);
 
-    expect($location->locatable)->toBeInstanceOf(Company::class);
-    expect($location->locatable->name)->toBe('Test Company');
+    expect($location->locatable)->toBeInstanceOf(Organization::class);
+    expect($location->locatable->name)->toBe('Test Organization');
 });
 
 test('location belongs to customer through polymorphic relationship', function () {
@@ -99,7 +99,7 @@ test('location fillable attributes work correctly', function () {
         'state' => 'Test State',
         'country' => 'Test Country',
         'postal_code' => '12345',
-        'locatable_type' => Company::class,
+        'locatable_type' => Organization::class,
         'locatable_id' => 1,
     ];
 
@@ -109,26 +109,26 @@ test('location fillable attributes work correctly', function () {
     expect($location->gstin)->toBe('27AAAAA0000A1Z5');
     expect($location->address_line_1)->toBe('123 Test St');
     expect($location->address_line_2)->toBe('Floor 2');
-    expect($location->locatable_type)->toBe(Company::class);
+    expect($location->locatable_type)->toBe(Organization::class);
     expect($location->locatable_id)->toBe(1);
 });
 
 test('location polymorphic relationship works with different models', function () {
-    // Test with Company
-    $company = createCompanyWithLocation([
-        'name' => 'Test Company',
-        'emails' => new \App\ValueObjects\EmailCollection(['company@test.com']),
+    // Test with Organization
+    $organization = createOrganizationWithLocation([
+        'name' => 'Test Organization',
+        'emails' => new \App\ValueObjects\EmailCollection(['organization@test.com']),
     ]);
 
-    $companyLocation = Location::create([
-        'name' => 'Company HQ',
+    $organizationLocation = Location::create([
+        'name' => 'Organization HQ',
         'address_line_1' => '123 Business St',
         'city' => 'Business City',
         'state' => 'Business State',
         'country' => 'Test Country',
         'postal_code' => '11111',
-        'locatable_type' => Company::class,
-        'locatable_id' => $company->id,
+        'locatable_type' => Organization::class,
+        'locatable_id' => $organization->id,
     ]);
 
     // Test with Customer
@@ -148,8 +148,8 @@ test('location polymorphic relationship works with different models', function (
         'locatable_id' => $customer->id,
     ]);
 
-    expect($companyLocation->locatable_type)->toBe(Company::class);
+    expect($organizationLocation->locatable_type)->toBe(Organization::class);
     expect($customerLocation->locatable_type)->toBe(Customer::class);
-    expect($companyLocation->locatable->name)->toBe('Test Company');
+    expect($organizationLocation->locatable->name)->toBe('Test Organization');
     expect($customerLocation->locatable->name)->toBe('Test Customer');
 });

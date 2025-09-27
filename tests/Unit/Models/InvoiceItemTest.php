@@ -20,7 +20,7 @@ test('can create invoice item with all fields', function () {
     expect($item->description)->toBe('Test Service');
     expect($item->quantity)->toBe(2);
     expect($item->unit_price)->toBe(1000);
-    expect($item->tax_rate)->toBe(18.0); // Should return percentage for display
+    expect($item->tax_rate)->toBe('18.00'); // Should return percentage as decimal string
 });
 
 test('invoice item belongs to invoice', function () {
@@ -60,7 +60,7 @@ test('invoice item can have zero tax rate', function () {
         'tax_rate' => 0,
     ]);
 
-    expect($item->tax_rate)->toBe(0.0);
+    expect($item->tax_rate)->toBe('0.00');
 });
 
 test('invoice item can have null tax rate', function () {
@@ -99,7 +99,7 @@ test('invoice item fillable attributes work correctly', function () {
     expect($item->description)->toBe('Test Product');
     expect($item->quantity)->toBe(3);
     expect($item->unit_price)->toBe(2500);
-    expect($item->tax_rate)->toBe(12.0);
+    expect($item->tax_rate)->toBe('12.00');
 });
 
 test('invoice item calculates line total correctly', function () {
@@ -152,5 +152,5 @@ test('invoice item can have fractional tax rates', function () {
         'tax_rate' => 12.5, // 12.5% as users would enter
     ]);
 
-    expect($item->tax_rate)->toBe(12.5); // Should return percentage for display
+    expect($item->tax_rate)->toBe('12.50'); // Should return percentage as decimal string
 });

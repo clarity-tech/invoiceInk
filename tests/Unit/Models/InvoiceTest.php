@@ -1,11 +1,6 @@
 <?php
 
-use App\Models\Company;
-use App\Models\Customer;
 use App\Models\Invoice;
-use App\Models\InvoiceItem;
-use App\Models\Location;
-use App\ValueObjects\EmailCollection;
 
 test('can create invoice with required fields', function () {
     $invoice = createInvoiceWithItems([
@@ -53,9 +48,9 @@ test('invoice can be created as estimate', function () {
     expect($invoice->isInvoice())->toBeFalse();
 });
 
-test('invoice has company location relationship', function () {
-    $company = createCompanyWithLocation([], [
-        'name' => 'Company HQ',
+test('invoice has organization location relationship', function () {
+    $organization = createOrganizationWithLocation([], [
+        'name' => 'Organization HQ',
         'address_line_1' => '123 Business St',
         'city' => 'Business City',
         'state' => 'Business State',
@@ -63,26 +58,26 @@ test('invoice has company location relationship', function () {
         'postal_code' => '12345',
     ]);
 
-    $customer = createCustomerWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
 
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
-        'company_location_id' => $company->primaryLocation->id,
+        'organization_location_id' => $organization->primaryLocation->id,
         'customer_location_id' => $customer->primaryLocation->id,
         'invoice_number' => 'INV-001',
         'status' => 'draft',
         'subtotal' => 1000,
         'tax' => 180,
         'total' => 1180,
-    ]);
+    ], null, $organization, $customer);
 
-    expect($invoice->companyLocation)->not->toBeNull();
-    expect($invoice->companyLocation->name)->toBe('Company HQ');
+    expect($invoice->organizationLocation)->not->toBeNull();
+    expect($invoice->organizationLocation->name)->toBe('Organization HQ');
 });
 
 test('invoice has customer location relationship', function () {
-    $company = createCompanyWithLocation();
-    
+    $organization = createOrganizationWithLocation();
+
     $customer = createCustomerWithLocation([], [
         'name' => 'Customer Office',
         'address_line_1' => '456 Client Ave',
@@ -90,18 +85,18 @@ test('invoice has customer location relationship', function () {
         'state' => 'Client State',
         'country' => 'Test Country',
         'postal_code' => '54321',
-    ]);
+    ], $organization);
 
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
-        'company_location_id' => $company->primaryLocation->id,
+        'organization_location_id' => $organization->primaryLocation->id,
         'customer_location_id' => $customer->primaryLocation->id,
         'invoice_number' => 'INV-001',
         'status' => 'draft',
         'subtotal' => 1000,
         'tax' => 180,
         'total' => 1180,
-    ]);
+    ], null, $organization, $customer);
 
     expect($invoice->customerLocation)->not->toBeNull();
     expect($invoice->customerLocation->name)->toBe('Customer Office');
@@ -127,7 +122,7 @@ test('invoice has many items relationship', function () {
             'quantity' => 1,
             'unit_price' => 1000,
             'tax_rate' => 18,
-        ]
+        ],
     ]);
 
     expect($invoice->items()->count())->toBe(2);
@@ -195,39 +190,49 @@ test('invoice fillable attributes work correctly', function () {
     $data = [
         'type' => 'invoice',
         'ulid' => 'test-ulid',
-        'company_location_id' => 1,
+        'organization_id' => 1,
+        'organization_location_id' => 1,
+        'customer_id' => 1,
         'customer_location_id' => 2,
         'invoice_number' => 'INV-001',
         'status' => 'sent',
+        'currency' => 'INR',
+        'exchange_rate' => 1.000000,
         'issued_at' => now(),
         'due_at' => now()->addDays(30),
         'subtotal' => 1000,
         'tax' => 180,
         'total' => 1180,
+        'email_recipients' => ['test@example.com'],
     ];
 
     $invoice = new Invoice($data);
 
     expect($invoice->type)->toBe('invoice');
     expect($invoice->ulid)->toBe('test-ulid');
-    expect($invoice->company_location_id)->toBe(1);
+    expect($invoice->organization_id)->toBe(1);
+    expect($invoice->organization_location_id)->toBe(1);
+    expect($invoice->customer_id)->toBe(1);
     expect($invoice->customer_location_id)->toBe(2);
     expect($invoice->invoice_number)->toBe('INV-001');
     expect($invoice->status)->toBe('sent');
+    expect($invoice->currency)->toBe('INR');
+    expect($invoice->exchange_rate)->toBe('1.000000');
     expect($invoice->subtotal)->toBe(1000);
     expect($invoice->tax)->toBe(180);
     expect($invoice->total)->toBe(1180);
+    expect($invoice->email_recipients)->toBe(['test@example.com']);
 });
 
 test('invoice uses HasUlids trait', function () {
-    $invoice = new Invoice();
+    $invoice = new Invoice;
     $traits = class_uses($invoice);
-    
+
     expect($traits)->toHaveKey(\Illuminate\Database\Eloquent\Concerns\HasUlids::class);
 });
 
 test('invoice unique ids configuration', function () {
-    $invoice = new Invoice();
-    
+    $invoice = new Invoice;
+
     expect($invoice->uniqueIds())->toBe(['ulid']);
 });

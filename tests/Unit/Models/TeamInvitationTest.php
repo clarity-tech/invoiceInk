@@ -1,27 +1,27 @@
 <?php
 
-use App\Models\Team;
+use App\Models\Organization;
 use App\Models\TeamInvitation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->team = Team::factory()->create();
-    $this->invitation = TeamInvitation::factory()->create(['team_id' => $this->team->id]);
+    $this->organization = Organization::factory()->create();
+    $this->invitation = TeamInvitation::factory()->create(['team_id' => $this->organization->id]);
 });
 
 it('can create a team invitation', function () {
     $invitation = TeamInvitation::factory()->create([
         'email' => 'test@example.com',
         'role' => 'member',
-        'team_id' => $this->team->id,
+        'team_id' => $this->organization->id,
     ]);
 
     expect($invitation)
         ->email->toBe('test@example.com')
         ->role->toBe('member')
-        ->team_id->toBe($this->team->id);
+        ->team_id->toBe($this->organization->id);
 });
 
 it('has fillable attributes', function () {
@@ -31,8 +31,8 @@ it('has fillable attributes', function () {
 });
 
 it('belongs to a team', function () {
-    expect($this->invitation->team)->toBeInstanceOf(Team::class);
-    expect($this->invitation->team->id)->toBe($this->team->id);
+    expect($this->invitation->team)->toBeInstanceOf(Organization::class);
+    expect($this->invitation->team->id)->toBe($this->organization->id);
 });
 
 it('extends JetstreamTeamInvitation', function () {
@@ -42,12 +42,12 @@ it('extends JetstreamTeamInvitation', function () {
 it('can have different roles', function () {
     $adminInvitation = TeamInvitation::factory()->create([
         'role' => 'admin',
-        'team_id' => $this->team->id,
+        'team_id' => $this->organization->id,
     ]);
 
     $memberInvitation = TeamInvitation::factory()->create([
         'role' => 'member',
-        'team_id' => $this->team->id,
+        'team_id' => $this->organization->id,
     ]);
 
     expect($adminInvitation->role)->toBe('admin');
@@ -57,7 +57,7 @@ it('can have different roles', function () {
 it('stores email address', function () {
     $invitation = TeamInvitation::factory()->create([
         'email' => 'invite@example.com',
-        'team_id' => $this->team->id,
+        'team_id' => $this->organization->id,
     ]);
 
     expect($invitation->email)->toBe('invite@example.com');

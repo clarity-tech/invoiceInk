@@ -87,11 +87,11 @@ test('customer emails field uses EmailCollectionCast', function () {
     expect($casts['emails'])->toBe(\App\Casts\EmailCollectionCast::class);
 });
 
-test('customer has company relationship', function () {
+test('customer has organization relationship', function () {
     $customer = createCustomerWithLocation();
 
-    expect($customer->company)->toBeInstanceOf(\App\Models\Company::class);
-    expect($customer->company_id)->toBe($customer->company->id);
+    expect($customer->organization)->toBeInstanceOf(\App\Models\Organization::class);
+    expect($customer->organization_id)->toBe($customer->organization->id);
 });
 
 test('customer uses HasFactory trait', function () {
@@ -106,7 +106,7 @@ test('customer has correct fillable attributes', function () {
         'phone',
         'emails',
         'primary_location_id',
-        'company_id',
+        'organization_id',
     ];
 
     $customer = new Customer;
@@ -135,18 +135,18 @@ test('customer primary location belongs to relationship works', function () {
     expect($customer->primaryLocation)->toBeInstanceOf(\App\Models\Location::class);
 });
 
-test('customer company belongs to relationship works', function () {
+test('customer organization belongs to relationship works', function () {
     $customer = createCustomerWithLocation();
 
-    expect($customer->company())->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
-    expect($customer->company)->toBeInstanceOf(\App\Models\Company::class);
+    expect($customer->organization())->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
+    expect($customer->organization)->toBeInstanceOf(\App\Models\Organization::class);
 });
 
-test('customer has company scope applied', function () {
+test('customer has organization scope applied', function () {
     $customer = new Customer;
     $globalScopes = $customer->getGlobalScopes();
 
-    expect($globalScopes)->toHaveKey(\App\Models\Scopes\CompanyScope::class);
+    expect($globalScopes)->toHaveKey(\App\Models\Scopes\OrganizationScope::class);
 });
 
 test('customer can be created with all fillable attributes', function () {
@@ -155,7 +155,7 @@ test('customer can be created with all fillable attributes', function () {
         'phone' => '+1234567890',
         'emails' => new EmailCollection(['full@customer.com']),
         'primary_location_id' => 1,
-        'company_id' => 1,
+        'organization_id' => 1,
     ];
 
     $customer = new Customer($data);
@@ -164,7 +164,7 @@ test('customer can be created with all fillable attributes', function () {
     expect($customer->phone)->toBe('+1234567890');
     expect($customer->emails)->toBeInstanceOf(EmailCollection::class);
     expect($customer->primary_location_id)->toBe(1);
-    expect($customer->company_id)->toBe(1);
+    expect($customer->organization_id)->toBe(1);
 });
 
 test('customer handles empty emails collection', function () {
@@ -225,21 +225,21 @@ test('customer locations polymorphic relationship is configured correctly', func
     expect($location->locatable->id)->toBe($customer->id);
 });
 
-test('customer can have invoices through company', function () {
+test('customer can have invoices through organization', function () {
     $customer = createCustomerWithLocation();
     $invoice = createInvoiceWithItems([
-        'company_id' => $customer->company_id,
+        'organization_id' => $customer->organization_id,
         'customer_location_id' => $customer->primaryLocation->id,
     ]);
 
-    expect($customer->company->invoices)->toHaveCount(1);
-    expect($customer->company->invoices->first()->customer_location_id)->toBe($customer->primaryLocation->id);
+    expect($customer->organization->invoices)->toHaveCount(1);
+    expect($customer->organization->invoices->first()->customer_location_id)->toBe($customer->primaryLocation->id);
 });
 
-test('customer belongs to correct company after creation', function () {
-    $company = createCompanyWithLocation(['name' => 'Specific Company']);
-    $customer = createCustomerWithLocation(['company_id' => $company->id]);
+test('customer belongs to correct organization after creation', function () {
+    $organization = createOrganizationWithLocation(['name' => 'Specific Organization']);
+    $customer = createCustomerWithLocation(['organization_id' => $organization->id], [], $organization);
 
-    expect($customer->company->id)->toBe($company->id);
-    expect($customer->company->name)->toBe('Specific Company');
+    expect($customer->organization->id)->toBe($organization->id);
+    expect($customer->organization->name)->toBe('Specific Organization');
 });

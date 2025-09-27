@@ -21,7 +21,7 @@ test('invoice item handles very large numbers', function () {
 
     expect($item->quantity)->toBe(999999);
     expect($item->unit_price)->toBe(999999999);
-    expect($item->tax_rate)->toBe(99.99); // Should return percentage for display
+    expect($item->tax_rate)->toBe('99.99'); // Should return percentage as decimal string
 });
 
 test('invoice item line total calculation with zero values', function () {
@@ -41,7 +41,7 @@ test('invoice item line total calculation with zero values', function () {
 
     expect($item->quantity)->toBe(1);
     expect($item->unit_price)->toBe(0);
-    expect($item->tax_rate)->toBe(0.0);
+    expect($item->tax_rate)->toBe('0.00');
 });
 
 test('invoice item line total calculation with null tax rate', function () {
@@ -91,7 +91,7 @@ test('invoice item can be updated after creation', function () {
     expect($item->description)->toBe('Updated Service');
     expect($item->quantity)->toBe(3);
     expect($item->unit_price)->toBe(7500);
-    expect($item->tax_rate)->toBe(15.0); // Should return percentage for display
+    expect($item->tax_rate)->toBe('15.00'); // Should return percentage as decimal string
 });
 
 test('invoice item belongs to correct invoice after creation', function () {
