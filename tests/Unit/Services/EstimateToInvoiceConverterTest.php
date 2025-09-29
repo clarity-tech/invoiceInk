@@ -67,7 +67,7 @@ test('converted invoice has all items from estimate', function () {
     expect($invoiceItem->description)->toBe('Consulting Services');
     expect($invoiceItem->quantity)->toBe(10);
     expect($invoiceItem->unit_price)->toBe(750);
-    expect($invoiceItem->tax_rate)->toBe(18.0); // Should return percentage for display
+    expect($invoiceItem->tax_rate)->toBe('18.00'); // Should return percentage as decimal string
 });
 
 test('converted invoice gets new invoice number', function () {
@@ -199,10 +199,10 @@ test('converter preserves complex item configurations', function () {
 
     $items = $invoice->items->sortBy('description');
     expect($items->first()->description)->toBe('Product A');
-    expect($items->first()->tax_rate)->toBe(12.0); // Should return percentage for display
+    expect($items->first()->tax_rate)->toBe('12.00'); // Should return percentage as decimal string
 
     expect($items->last()->description)->toBe('Tax-free item');
-    expect($items->last()->tax_rate)->toBe(0.0); // Should return percentage for display
+    expect($items->last()->tax_rate)->toBe('0.00'); // Should return percentage for display
 });
 
 test('converter throws exception when trying to convert non-estimate', function () {
@@ -314,7 +314,7 @@ test('converter handles estimates with zero tax rates', function () {
     $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
     $invoice = $converter->convert($estimate);
 
-    expect($invoice->items->first()->tax_rate)->toBe(0.0);
+    expect($invoice->items->first()->tax_rate)->toBe('0.00');
 });
 
 test('converter handles estimates with fractional tax rates', function () {
@@ -334,7 +334,7 @@ test('converter handles estimates with fractional tax rates', function () {
     $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
     $invoice = $converter->convert($estimate);
 
-    expect($invoice->items->first()->tax_rate)->toBe(12.5);
+    expect($invoice->items->first()->tax_rate)->toBe('12.50');
 });
 
 test('converter handles estimates with large quantities and amounts', function () {
@@ -356,7 +356,7 @@ test('converter handles estimates with large quantities and amounts', function (
 
     expect($invoice->items->first()->quantity)->toBe(100);
     expect($invoice->items->first()->unit_price)->toBe(50000);
-    expect($invoice->items->first()->tax_rate)->toBe(28.0);
+    expect($invoice->items->first()->tax_rate)->toBe('28.00');
 });
 
 test('converter preserves all estimate status transitions', function () {

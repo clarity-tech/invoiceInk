@@ -1,10 +1,6 @@
 <?php
 
 use App\Mail\DocumentMailer;
-use App\Models\Company;
-use App\Models\Customer;
-use App\Models\Invoice;
-use App\Models\Location;
 use App\ValueObjects\EmailCollection;
 
 test('can create document mailer for invoice', function () {
@@ -147,7 +143,7 @@ test('document mailer handles different recipient emails', function () {
     $emails = [
         'user1@test.com',
         'admin@company.com',
-        'billing@client.org'
+        'billing@client.org',
     ];
 
     foreach ($emails as $email) {
