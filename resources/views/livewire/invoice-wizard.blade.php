@@ -163,12 +163,12 @@
                                     @error('customer_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                 </div>
 
-                                @if($organization_id && $this->companyLocations->count() > 0)
+                                @if($organization_id && $this->organizationLocations->count() > 0)
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Organization Location *</label>
                                         <select wire:model="organization_location_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                             <option value="">Select Location</option>
-                                            @foreach($this->companyLocations as $location)
+                                            @foreach($this->organizationLocations as $location)
                                                 <option value="{{ $location->id }}">{{ $location->name }} - {{ $location->city }}</option>
                                             @endforeach
                                         </select>

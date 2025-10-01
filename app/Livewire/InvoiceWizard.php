@@ -312,7 +312,7 @@ class InvoiceWizard extends Component
     }
 
     #[Computed]
-    public function companyLocations()
+    public function organizationLocations()
     {
         if (! $this->organization_id) {
             return collect();

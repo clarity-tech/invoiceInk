@@ -4,7 +4,6 @@ use App\Http\Controllers\PublicViewController;
 use App\Livewire\CustomerManager;
 use App\Livewire\InvoiceWizard;
 use App\Livewire\OrganizationManager;
-use App\Livewire\TeamSettings;
 use Illuminate\Support\Facades\Route;
 
 // Public view routes for invoices and estimates (no authentication required)
@@ -35,5 +34,4 @@ Route::middleware([
     Route::get('/organizations', OrganizationManager::class)->name('organizations.index');
     Route::get('/customers', CustomerManager::class)->name('customers.index');
     Route::get('/invoices', InvoiceWizard::class)->name('invoices.index');
-    Route::get('/team/settings', TeamSettings::class)->name('team.settings');
 });

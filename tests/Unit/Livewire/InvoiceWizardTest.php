@@ -384,7 +384,7 @@ test('generates correct estimate number format', function () {
     expect($estimate->invoice_number)->toStartWith("EST-{$year}-{$month}-");
 });
 
-test('loads company locations based on selected company', function () {
+test('loads organization locations based on selected organization', function () {
     $organization = createOrganizationWithLocation();
 
     // Create additional location for the company
@@ -398,7 +398,7 @@ test('loads company locations based on selected company', function () {
         ->call('create')
         ->set('organization_id', $organization->id);
 
-    $locations = $component->instance()->companyLocations;
+    $locations = $component->instance()->organizationLocations;
     expect($locations)->toHaveCount(2);
     expect($locations->pluck('name')->toArray())->toContain('Branch Office');
 });
@@ -422,10 +422,10 @@ test('loads customer locations based on selected customer', function () {
     expect($locations->pluck('name')->toArray())->toContain('Customer Branch');
 });
 
-test('returns empty collection when no company selected', function () {
+test('returns empty collection when no organization selected', function () {
     $component = Livewire::test(InvoiceWizard::class)->call('create');
 
-    $locations = $component->instance()->companyLocations;
+    $locations = $component->instance()->organizationLocations;
     expect($locations)->toHaveCount(0);
 });
 
