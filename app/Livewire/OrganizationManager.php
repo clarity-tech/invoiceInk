@@ -162,10 +162,11 @@ class OrganizationManager extends Component
 
             $organization = Organization::create([
                 'name' => $this->name,
+                'user_id' => auth()->id(),
+                'personal_team' => false,
                 'phone' => $this->phone ?: null,
                 'emails' => $emailCollection,
                 'primary_location_id' => $location->id,
-                'team_id' => auth()->user()?->currentTeam?->id,
                 'currency' => $this->currency,
             ]);
 

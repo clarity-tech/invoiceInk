@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\EmailCollectionCast;
+use App\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -38,6 +39,7 @@ class Organization extends JetstreamTeam
      */
     protected $fillable = [
         'name',
+        'user_id',
         'personal_team',
         'company_name',
         'tax_number',
@@ -107,6 +109,14 @@ class Organization extends JetstreamTeam
     }
 
     /**
+     * Get all locations for this organization.
+     */
+    public function locations()
+    {
+        return $this->morphMany(Location::class, 'locatable');
+    }
+
+    /**
      * Get the organization's public URL.
      */
     public function getUrlAttribute(): string
@@ -140,11 +150,11 @@ class Organization extends JetstreamTeam
     public function getCurrencySymbolAttribute(): string
     {
         return match ($this->currency) {
-            'USD' => '$',
-            'EUR' => '€',
-            'GBP' => '£',
-            'INR' => '₹',
-            default => $this->currency,
+            Currency::USD => '$',
+            Currency::EUR => '€',
+            Currency::GBP => '£',
+            Currency::INR => '₹',
+            default => $this->currency->value,
         };
     }
 
