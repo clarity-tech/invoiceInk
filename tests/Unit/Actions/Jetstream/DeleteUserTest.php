@@ -4,24 +4,15 @@ use App\Actions\Jetstream\DeleteUser;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
-use Laravel\Jetstream\Contracts\DeletesTeams;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->deletesTeams = Mockery::mock(DeletesTeams::class);
-    $this->action = new DeleteUser($this->deletesTeams);
+    $this->action = new DeleteUser;
     $this->user = User::factory()->withPersonalTeam()->create();
 });
 
 it('can delete a user', function () {
-    DB::shouldReceive('transaction')->once()->andReturnUsing(function ($callback) {
-        return $callback();
-    });
-
-    $this->deletesTeams->shouldReceive('delete')->once();
-
     $userId = $this->user->id;
     $this->action->delete($this->user);
 
@@ -29,8 +20,6 @@ it('can delete a user', function () {
 });
 
 it('deletes user within database transaction', function () {
-    $this->deletesTeams->shouldReceive('delete')->once();
-
     $userId = $this->user->id;
     $this->action->delete($this->user);
 
@@ -38,24 +27,20 @@ it('deletes user within database transaction', function () {
     expect(User::find($userId))->toBeNull();
 });
 
-it('deletes owned teams', function () {
+it('does not delete owned organizations', function () {
     $ownedTeam = Organization::factory()->create(['user_id' => $this->user->id]);
     $this->user->ownedTeams()->save($ownedTeam);
 
-    // User has personal team + new owned team = 2 teams to delete
-    $this->deletesTeams->shouldReceive('delete')->twice();
-
+    $teamId = $ownedTeam->id;
     $this->action->delete($this->user);
 
-    $this->deletesTeams->shouldHaveReceived('delete')->twice();
+    // Organizations are preserved (contain business data)
+    expect(Organization::find($teamId))->not->toBeNull();
 });
 
-it('detaches user from teams', function () {
+it('detaches user from organizations', function () {
     $team = Organization::factory()->create();
     $this->user->teams()->attach($team);
-
-    // Personal team gets deleted, so only expect 1 delete call
-    $this->deletesTeams->shouldReceive('delete')->once();
 
     expect($this->user->teams()->count())->toBeGreaterThan(0); // User has teams attached
 
@@ -65,8 +50,6 @@ it('detaches user from teams', function () {
 });
 
 it('deletes user profile photo', function () {
-    $this->deletesTeams->shouldReceive('delete')->once();
-
     // Test that action completes without error (profile photo deletion is internal)
     $this->action->delete($this->user);
 
@@ -75,8 +58,6 @@ it('deletes user profile photo', function () {
 });
 
 it('deletes user tokens', function () {
-    $this->deletesTeams->shouldReceive('delete')->once();
-
     // Test that action completes without error (token deletion is internal)
     $this->action->delete($this->user);
 
@@ -84,29 +65,30 @@ it('deletes user tokens', function () {
     expect(true)->toBeTrue();
 });
 
-it('deletes multiple owned teams', function () {
+it('preserves multiple owned organizations', function () {
     $team1 = Organization::factory()->create(['user_id' => $this->user->id]);
     $team2 = Organization::factory()->create(['user_id' => $this->user->id]);
 
     $this->user->ownedTeams()->saveMany([$team1, $team2]);
 
-    $this->deletesTeams->shouldReceive('delete')->times(3); // 2 created + 1 personal
+    $team1Id = $team1->id;
+    $team2Id = $team2->id;
 
     $this->action->delete($this->user);
 
-    $this->deletesTeams->shouldHaveReceived('delete')->times(3);
+    // Organizations are preserved (contain business data)
+    expect(Organization::find($team1Id))->not->toBeNull();
+    expect(Organization::find($team2Id))->not->toBeNull();
 });
 
 it('handles user with no tokens', function () {
-    $this->deletesTeams->shouldReceive('delete')->once();
-
     $this->action->delete($this->user);
 
     // If we reach here without exception, the test passes
     expect(true)->toBeTrue();
 });
 
-it('handles user with no owned teams', function () {
+it('handles user with no owned organizations', function () {
     $user = User::factory()->create(); // User without personal team
 
     $this->action->delete($user);
@@ -116,8 +98,6 @@ it('handles user with no owned teams', function () {
 });
 
 it('processes deletion steps in correct order', function () {
-    $this->deletesTeams->shouldReceive('delete')->once();
-
     // Test that action completes without error (order is internal)
     $this->action->delete($this->user);
 

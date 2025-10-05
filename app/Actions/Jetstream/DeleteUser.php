@@ -2,41 +2,29 @@
 
 namespace App\Actions\Jetstream;
 
-use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Laravel\Jetstream\Contracts\DeletesTeams;
 use Laravel\Jetstream\Contracts\DeletesUsers;
 
 class DeleteUser implements DeletesUsers
 {
-    /**
-     * Create a new action instance.
-     */
-    public function __construct(protected DeletesTeams $deletesTeams) {}
-
     /**
      * Delete the given user.
      */
     public function delete(User $user): void
     {
         DB::transaction(function () use ($user) {
-            $this->deleteTeams($user);
+            // Clean up organizations and team associations
+            $user->teams()->detach();
+
+            // Note: We don't delete owned organizations since they may contain
+            // important business data (invoices, customers, etc.)
+            // In a real application, you'd want to handle organization ownership transfer
+
+            // Clean up user data
             $user->deleteProfilePhoto();
             $user->tokens->each->delete();
             $user->delete();
-        });
-    }
-
-    /**
-     * Delete the teams and team associations attached to the user.
-     */
-    protected function deleteTeams(User $user): void
-    {
-        $user->teams()->detach();
-
-        $user->ownedTeams->each(function (Organization $team) {
-            $this->deletesTeams->delete($team);
         });
     }
 }
