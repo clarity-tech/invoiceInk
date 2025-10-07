@@ -223,19 +223,19 @@ test('loads locations based on selected entities', function () {
         ->set('organization_id', $organization->id)
         ->set('customer_id', $customer->id);
 
-    $companyLocations = $component->instance()->companyLocations;
+    $organizationLocations = $component->instance()->organizationLocations;
     $customerLocations = $component->instance()->customerLocations;
 
-    expect($companyLocations->count())->toBe(2);
+    expect($organizationLocations->count())->toBe(2);
     expect($customerLocations->count())->toBe(2);
 });
 
 test('returns empty collections when no entity selected', function () {
     $component = Livewire::test(InvoiceWizard::class)->call('create');
 
-    $companyLocations = $component->instance()->companyLocations;
+    $organizationLocations = $component->instance()->organizationLocations;
     $customerLocations = $component->instance()->customerLocations;
 
-    expect($companyLocations->count())->toBe(0);
+    expect($organizationLocations->count())->toBe(0);
     expect($customerLocations->count())->toBe(0);
 });
