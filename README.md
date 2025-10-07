@@ -1,22 +1,13 @@
 ![CLARITY Logo](.github/clarity-logo.png)
-# Laravel Essentials Starter Kit
+# Clarity Invoicing Application
 
-with Stricter Rules and CLARITY way
+A modern Laravel-based invoicing system with organization-centric architecture, multi-currency support, and comprehensive document management.
 
 ## Getting Started
-**Create via Composer:**
-```bash
-composer create-project clarity-tech/laravel-strict
-```
 
-**Create via Laravel CLI:**
-```bash
-laravel new --using clarity-tech/laravel-strict
-```
+**Installation via Laravel Sail:**
 
-**Direct Clone and initialize via Laravel Sail in Docker environments **
-You may install the application's dependencies by navigating to the application's directory and executing the following command. This command uses a small Docker container containing PHP and Composer to install the application's dependencies:
-
+1. Clone the repository and install dependencies:
 ```shell
 docker run --rm \
     -u "$(id -u):$(id -g)" \
@@ -26,7 +17,11 @@ docker run --rm \
     composer install --ignore-platform-reqs
 ```
 
-then run `sail composer install` or other sail commands
+2. Start the application:
+```bash
+sail up -d
+sail artisan migrate:fresh --seed
+```
 
 
 ## Database Management with pgweb
@@ -50,25 +45,41 @@ The project includes [pgweb](https://github.com/sosedoff/pgweb), a web-based Pos
 The interface will be available after starting the Docker containers.
 
 ## Introduction
-The CLARITY Laravel Starter Kit provides a robust foundation for building Laravel applications with pre-configured packages like Sail, Telescope, and Octane. This project adheres to CLARITY's development standards to ensure consistency and quality across all projects.  
+The Clarity Invoicing Application is a comprehensive Laravel-based invoicing system designed with organization-centric architecture. It provides robust invoice and estimate management with multi-currency support, tax templates, and PDF generation capabilities.
 
 ## Features  
-- Pre-configured Sail for local development  
-- Integrated Telescope for debugging and performance monitoring  
-- Octane for high-performance request handling  
-- CLARITY-standard directory structure and coding conventions  
+- **Organization-Centric Architecture**: Unified organization model replacing team/company separation
+- **Multi-Currency Support**: Support for AED, USD, EUR, GBP, INR with proper currency symbols
+- **Tax Templates**: Flexible tax system supporting multiple countries (UAE, India, etc.)
+- **Invoice & Estimate Management**: Complete document lifecycle with status tracking
+- **PDF Generation**: High-quality PDF generation using Spatie Browsershot
+- **Public Document Sharing**: ULID-based public URLs for invoices and estimates
+- **Livewire Components**: Modern reactive UI components for seamless user experience
+- **Comprehensive Testing**: 94.7% test coverage with Unit, Feature, and Browser tests
+- **Docker Development**: Pre-configured Laravel Sail for containerized development  
 
-## CLARITY Development Standards  
-- **Coding Standards:** Follow PSR-12 and CLARITY's internal style guide.  
-- **Git Workflow:** Use feature branches and pull requests as outlined in CLARITY's Git workflow documentation.  
-- **Testing:** All features require unit and integration tests.  
-- **Deployment:** Follow CLARITY's deployment pipeline standards.  
+## Development Standards  
+- **Coding Standards:** Follow PSR-12 and Laravel coding conventions
+- **Testing:** Maintain 90%+ test coverage with comprehensive Unit, Feature, and Browser tests
+- **Architecture:** Follow Domain-Driven Design principles with Value Objects and Service Layer patterns
+- **Git Workflow:** Use conventional commits with atomic changes and linear history
+- **Code Quality:** Run `sail pint --dirty` before all commits to maintain code formatting
 
-## Contribution Guidelines  
-Contributions should align with CLARITY's internal development processes. For more details, refer to our [Internal Contribution Guide](link-to-internal-doc).  
+## Technology Stack
+- **Backend:** Laravel 11.19.3 with PHP 8.4.8
+- **Database:** PostgreSQL with comprehensive migrations
+- **Frontend:** Livewire 3.6.3 + luvi-ui/laravel-luvi (shadcn for Livewire)
+- **Testing:** Pest framework with Laravel Dusk for browser testing
+- **PDF Generation:** Spatie Browsershot with headless Chrome
+- **Containerization:** Laravel Sail with Docker Compose
 
-## Support  
-For questions or support, visit our [official website](https://www.claritytech.io/) or contact support@claritytech.io.  
+## Architecture Overview
+- **Organization Model**: Unified business entity management (replaces Team/Company)
+- **Customer Management**: Customer entities with polymorphic location relationships
+- **Invoice System**: Unified invoice/estimate model with flexible tax handling
+- **Location System**: Polymorphic location model serving organizations and customers
+- **Value Objects**: EmailCollection, InvoiceTotals for robust data handling
+- **Service Layer**: InvoiceCalculator, PdfService, EstimateToInvoiceConverter
 
 ## License  
-This starter kit is licensed under the MIT license.
+This application is intellectual property of CLARITY Technologies.
