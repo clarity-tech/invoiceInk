@@ -14,13 +14,14 @@ function createUserWithTeam(array $userAttributes = [], array $teamAttributes = 
         'name' => 'Test User',
         'email' => fake()->unique()->safeEmail(),
         'email_verified_at' => now(),
-        'password' => bcrypt('password'),
+        'password' => 'password', // Laravel will hash this automatically via User model cast
     ];
 
     $user = User::create(array_merge($defaultUserAttributes, $userAttributes));
 
     $defaultTeamAttributes = [
         'name' => 'Test Organization',
+        'user_id' => $user->id, // Required for proper team ownership
         'personal_team' => true,
         'company_name' => 'Test Organization Inc.',
         'currency' => 'INR',
@@ -192,13 +193,29 @@ function createLocation(string $locatableType, int $locatableId, array $attribut
 function loginUserInBrowser($browser, ?User $user = null): User
 {
     if (! $user) {
-        $user = createUserWithTeam();
+        // Create user with factory method that ensures proper password hashing
+        $user = User::factory()->create([
+            'email' => fake()->unique()->safeEmail(),
+            'email_verified_at' => now(),
+            'password' => 'password', // Factory will handle hashing properly
+        ]);
+
+        // Create organization for the user
+        $organization = $user->ownedTeams()->create([
+            'name' => 'Test Organization',
+            'user_id' => $user->id,
+            'personal_team' => true,
+            'company_name' => 'Test Organization Inc.',
+            'currency' => 'INR',
+        ]);
+
+        // Set current team
+        $user->current_team_id = $organization->id;
+        $user->save();
     }
 
-    $browser->visit('/login')
-        ->type('email', $user->email)
-        ->type('password', 'password')
-        ->press('LOG IN');
+    // Use standard loginAs with web guard
+    $browser->loginAs($user, 'web');
 
     return $user;
 }

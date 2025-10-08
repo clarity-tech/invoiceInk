@@ -12,8 +12,9 @@ test('user can view the dashboard', function () {
         loginUserInBrowser($browser);
 
         $browser->visit('/dashboard')
-            ->assertSee('Welcome to your Invoicing Application')
-            ->screenshot('dashboard_view');
+            ->screenshot('dashboard_view')
+            ->assertDontSee('Email') // Should not see login form
+            ->assertDontSee('Password'); // Should not see login form
     });
 });
 
@@ -167,7 +168,7 @@ test('user can create an estimate', function () {
         loginUserInBrowser($browser);
 
         // Create organization through UI first
-        $browser->visit('/companies')
+        $browser->visit('/organizations')
             ->click('.bg-blue-500')
             ->waitFor('form', 3)
             ->type('[wire\\:model="name"]', 'Estimate Organization Ltd')
@@ -230,7 +231,7 @@ test('user can add multiple items to invoice', function () {
         loginUserInBrowser($browser);
 
         // Create organization through UI first
-        $browser->visit('/companies')
+        $browser->visit('/organizations')
             ->click('.bg-blue-500')
             ->waitFor('form', 3)
             ->type('[wire\\:model="name"]', 'Multi-Item Organization Ltd')
