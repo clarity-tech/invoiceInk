@@ -58,9 +58,9 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">₹{{ number_format($invoice->total / 100, 2) }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $invoice->formatted_total }}</div>
                                     @if($invoice->tax > 0)
-                                        <div class="text-sm text-gray-500">Tax: ₹{{ number_format($invoice->tax / 100, 2) }}</div>
+                                        <div class="text-sm text-gray-500">Tax: {{ $invoice->formatted_tax }}</div>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -228,7 +228,7 @@
                                         </div>
 
                                         <div class="col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Price (₹) *</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Price ({{ $this->currencySymbol }}) *</label>
                                             <input wire:model.live="items.{{ $index }}.unit_price" type="number" step="0.01" min="0" 
                                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                             @error("items.{$index}.unit_price") <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
@@ -255,15 +255,15 @@
                             <div class="bg-gray-50 rounded-lg p-4">
                                 <div class="flex justify-between">
                                     <span class="text-sm text-gray-600">Subtotal:</span>
-                                    <span class="text-sm font-medium">₹{{ number_format($subtotal / 100, 2) }}</span>
+                                    <span class="text-sm font-medium">{{ $this->formatAmount($subtotal) }}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-sm text-gray-600">Tax:</span>
-                                    <span class="text-sm font-medium">₹{{ number_format($tax / 100, 2) }}</span>
+                                    <span class="text-sm font-medium">{{ $this->formatAmount($tax) }}</span>
                                 </div>
                                 <div class="border-t pt-2 mt-2 flex justify-between">
                                     <span class="text-lg font-bold">Total:</span>
-                                    <span class="text-lg font-bold">₹{{ number_format($total / 100, 2) }}</span>
+                                    <span class="text-lg font-bold">{{ $this->formatAmount($total) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -294,7 +294,7 @@
                                         @foreach($items as $item)
                                             <div class="flex justify-between text-sm">
                                                 <span>{{ $item['description'] }} ({{ $item['quantity'] }}x)</span>
-                                                <span>₹{{ number_format(($item['quantity'] * $item['unit_price']), 2) }}</span>
+                                                <span>{{ $this->formatAmount($item['quantity'] * $item['unit_price'] * 100) }}</span>
                                             </div>
                                         @endforeach
                                     </div>
@@ -303,7 +303,7 @@
                                 <div class="mt-6 pt-4 border-t">
                                     <div class="flex justify-between font-bold">
                                         <span>Total:</span>
-                                        <span>₹{{ number_format($total / 100, 2) }}</span>
+                                        <span>{{ $this->formatAmount($total) }}</span>
                                     </div>
                                 </div>
                             </div>

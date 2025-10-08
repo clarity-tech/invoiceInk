@@ -15,7 +15,7 @@
     <ul>
         <li>Invoice Number: {{ $document->invoice_number }}</li>
         <li>Status: {{ ucfirst($document->status) }}</li>
-        <li>Total: ₹{{ number_format($document->total / 100, 2) }}</li>
+        <li>Total: {{ $document->formatted_total }}</li>
         @if($document->due_at)
             <li>Due Date: {{ $document->due_at->format('F j, Y') }}</li>
         @endif

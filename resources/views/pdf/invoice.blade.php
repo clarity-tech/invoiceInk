@@ -107,7 +107,7 @@
                     @endif
                     <div>
                         <h4 class="text-sm font-medium text-gray-500 uppercase">Total Amount</h4>
-                        <p class="mt-1 text-lg font-bold text-gray-900">₹{{ number_format($invoice->total / 100, 2) }}</p>
+                        <p class="mt-1 text-lg font-bold text-gray-900">{{ $invoice->formatted_total }}</p>
                     </div>
                 </div>
             </div>
@@ -130,9 +130,9 @@
                             <tr>
                                 <td class="border border-gray-300 px-4 py-3 text-sm text-gray-900">{{ $item->description }}</td>
                                 <td class="border border-gray-300 px-4 py-3 text-sm text-gray-900 text-right">{{ $item->quantity }}</td>
-                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-900 text-right">₹{{ number_format($item->unit_price / 100, 2) }}</td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-900 text-right">{{ $item->formatted_unit_price }}</td>
                                 <td class="border border-gray-300 px-4 py-3 text-sm text-gray-900 text-right">{{ number_format($item->tax_rate, 0) }}%</td>
-                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-900 text-right">₹{{ number_format(($item->quantity * $item->unit_price) / 100, 2) }}</td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-900 text-right">{{ $item->formatted_line_total }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -144,15 +144,15 @@
                         <div class="bg-gray-50 border border-gray-300 p-4">
                             <div class="flex justify-between py-2">
                                 <span class="text-sm text-gray-600">Subtotal:</span>
-                                <span class="text-sm font-medium text-gray-900">₹{{ number_format($invoice->subtotal / 100, 2) }}</span>
+                                <span class="text-sm font-medium text-gray-900">{{ $invoice->formatted_subtotal }}</span>
                             </div>
                             <div class="flex justify-between py-2">
                                 <span class="text-sm text-gray-600">Tax:</span>
-                                <span class="text-sm font-medium text-gray-900">₹{{ number_format($invoice->tax / 100, 2) }}</span>
+                                <span class="text-sm font-medium text-gray-900">{{ $invoice->formatted_tax }}</span>
                             </div>
                             <div class="border-t border-gray-300 pt-2 mt-2 flex justify-between">
                                 <span class="text-lg font-bold text-gray-900">Total:</span>
-                                <span class="text-lg font-bold text-gray-900">₹{{ number_format($invoice->total / 100, 2) }}</span>
+                                <span class="text-lg font-bold text-gray-900">{{ $invoice->formatted_total }}</span>
                             </div>
                         </div>
                     </div>

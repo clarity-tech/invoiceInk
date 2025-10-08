@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Akaunting\Money\Money;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -51,5 +52,68 @@ class InvoiceItem extends Model
     public function getLineTotalWithTax(): int
     {
         return $this->getLineTotal() + $this->getTaxAmount();
+    }
+
+    /**
+     * Format a monetary amount using the invoice's currency
+     */
+    public function formatMoney(int $amount): string
+    {
+        // Get the currency, falling back to INR if invalid
+        $currency = $this->invoice->currency ?? 'INR';
+
+        // Validate the currency code and fallback to INR if invalid
+        try {
+            // Use the static method instead of make() to avoid potential conflicts
+            return Money::{$currency}($amount)->format();
+        } catch (\Exception $e) {
+            // If currency is invalid, fallback to INR
+            // Use manual formatting to avoid any further currency validation issues
+            return '₹'.number_format($amount / 100, 2);
+        }
+    }
+
+    /**
+     * Format the unit price
+     */
+    public function getFormattedUnitPriceAttribute(): string
+    {
+        return $this->formatMoney($this->unit_price);
+    }
+
+    /**
+     * Format the line total
+     */
+    public function getFormattedLineTotalAttribute(): string
+    {
+        return $this->formatMoney($this->getLineTotal());
+    }
+
+    /**
+     * Format the tax amount for this line item
+     */
+    public function getFormattedTaxAmountAttribute(): string
+    {
+        return $this->formatMoney($this->getTaxAmount());
+    }
+
+    /**
+     * Format the line total with tax
+     */
+    public function getFormattedLineTotalWithTaxAttribute(): string
+    {
+        return $this->formatMoney($this->getLineTotalWithTax());
+    }
+
+    /**
+     * Get the currency symbol for this invoice item
+     */
+    public function getCurrencySymbolAttribute(): string
+    {
+        try {
+            return Money::{$this->invoice->currency}(0)->getCurrency()->getSymbol();
+        } catch (\Exception $e) {
+            return '₹';
+        }
     }
 }

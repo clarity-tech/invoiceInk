@@ -187,7 +187,7 @@ class InvoiceWizard extends Component
                 'subtotal' => $this->subtotal,
                 'tax' => $this->tax,
                 'total' => $this->total,
-                'currency' => Organization::find($this->organization_id)?->currency,
+                'currency' => Organization::find($this->organization_id)?->currency?->value,
             ]);
 
             // Delete existing items and recreate
@@ -206,7 +206,7 @@ class InvoiceWizard extends Component
                 'subtotal' => $this->subtotal,
                 'tax' => $this->tax,
                 'total' => $this->total,
-                'currency' => Organization::find($this->organization_id)?->currency,
+                'currency' => Organization::find($this->organization_id)?->currency?->value,
             ]);
         }
 
@@ -341,6 +341,46 @@ class InvoiceWizard extends Component
         return Invoice::with(['organizationLocation', 'customerLocation'])
             ->latest()
             ->paginate(10);
+    }
+
+    #[Computed]
+    public function currentCurrency(): string
+    {
+        if ($this->organization_id) {
+            $organization = Organization::find($this->organization_id);
+
+            return $organization?->currency?->value ?? 'INR';
+        }
+
+        return 'INR';
+    }
+
+    #[Computed]
+    public function currencySymbol(): string
+    {
+        try {
+            $currency = $this->currentCurrency;
+
+            return \Akaunting\Money\Money::{$currency}(0)->getCurrency()->getSymbol();
+        } catch (\Exception $e) {
+            // If currency is invalid, fallback to INR symbol
+            return '₹';
+        }
+    }
+
+    /**
+     * Format a monetary amount using the current currency
+     */
+    public function formatAmount(int $amount): string
+    {
+        try {
+            $currency = $this->currentCurrency;
+
+            return \Akaunting\Money\Money::{$currency}($amount)->format();
+        } catch (\Exception $e) {
+            // If currency is invalid, fallback to INR formatting
+            return '₹'.number_format($amount / 100, 2);
+        }
     }
 
     public function render()

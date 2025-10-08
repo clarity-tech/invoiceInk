@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Akaunting\Money\Money;
 use App\Models\Scopes\OrganizationScope;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -90,5 +91,60 @@ class Invoice extends Model
     protected static function booted(): void
     {
         static::addGlobalScope(new OrganizationScope);
+    }
+
+    /**
+     * Format a monetary amount using the invoice's currency
+     */
+    public function formatMoney(int $amount): string
+    {
+        // Get the currency, falling back to INR if invalid
+        $currency = $this->currency ?? 'INR';
+
+        // Validate the currency code and fallback to INR if invalid
+        try {
+            // Use the static method instead of make() to avoid potential conflicts
+            return Money::{$currency}($amount)->format();
+        } catch (\Exception $e) {
+            // If currency is invalid, fallback to INR
+            // Use manual formatting to avoid any further currency validation issues
+            return '₹'.number_format($amount / 100, 2);
+        }
+    }
+
+    /**
+     * Format the invoice subtotal
+     */
+    public function getFormattedSubtotalAttribute(): string
+    {
+        return $this->formatMoney($this->subtotal);
+    }
+
+    /**
+     * Format the invoice tax amount
+     */
+    public function getFormattedTaxAttribute(): string
+    {
+        return $this->formatMoney($this->tax);
+    }
+
+    /**
+     * Format the invoice total
+     */
+    public function getFormattedTotalAttribute(): string
+    {
+        return $this->formatMoney($this->total);
+    }
+
+    /**
+     * Get the currency symbol for this invoice
+     */
+    public function getCurrencySymbolAttribute(): string
+    {
+        try {
+            return Money::{$this->currency}(0)->getCurrency()->getSymbol();
+        } catch (\Exception $e) {
+            return '₹';
+        }
     }
 }
