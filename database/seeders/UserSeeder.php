@@ -157,6 +157,7 @@ class UserSeeder extends ProductionSafeSeeder
         $adminTeam = $admin->ownedTeams()->create([
             'name' => 'Clarity Tech Admin',
             'personal_team' => true,
+            'currency' => 'INR',
         ]);
 
         $admin->switchTeam($adminTeam);
@@ -177,6 +178,7 @@ class UserSeeder extends ProductionSafeSeeder
         $personalTeam = $user->ownedTeams()->create([
             'name' => $name."'s Team",
             'personal_team' => true,
+            'currency' => 'INR',
         ]);
 
         // Create organization location
@@ -227,12 +229,14 @@ class UserSeeder extends ProductionSafeSeeder
         $personalTeam = $owner->ownedTeams()->create([
             'name' => "Robert Global's Team",
             'personal_team' => true,
+            'currency' => 'INR',
         ]);
 
         // Create main holding company team
         $holdingTeam = $owner->ownedTeams()->create([
             'name' => 'GlobalCorp Holdings',
             'personal_team' => false,
+            'currency' => 'INR',
             'custom_domain' => 'invoicing.globalcorp.com',
         ]);
 
@@ -240,12 +244,14 @@ class UserSeeder extends ProductionSafeSeeder
         $techTeam = $owner->ownedTeams()->create([
             'name' => 'GlobalCorp Tech Solutions',
             'personal_team' => false,
+            'currency' => 'INR',
             'custom_domain' => null,
         ]);
 
         $servicesTeam = $owner->ownedTeams()->create([
             'name' => 'GlobalCorp Business Services',
             'personal_team' => false,
+            'currency' => 'INR',
             'custom_domain' => null,
         ]);
 
