@@ -29,6 +29,8 @@ class EstimateToInvoiceConverter
             'status' => 'draft',
             'issued_at' => $estimate->issued_at,
             'due_at' => $estimate->due_at,
+            'currency' => $estimate->currency,
+            'exchange_rate' => $estimate->exchange_rate,
             'subtotal' => $estimate->subtotal,
             'tax' => $estimate->tax,
             'total' => $estimate->total,

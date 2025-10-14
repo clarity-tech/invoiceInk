@@ -20,13 +20,13 @@ test('can convert estimate to invoice', function () {
             'description' => 'Website Development',
             'quantity' => 1,
             'unit_price' => 5000,
-            'tax_rate' => 18, // 18% as users would enter
+            'tax_rate' => 1800, // 18% in basis points
         ],
         [
             'description' => 'Mobile App Development',
             'quantity' => 1,
             'unit_price' => 5000,
-            'tax_rate' => 18, // 18% as users would enter
+            'tax_rate' => 1800, // 18% in basis points
         ],
     ]);
 
@@ -55,7 +55,7 @@ test('converted invoice has all items from estimate', function () {
         'description' => 'Consulting Services',
         'quantity' => 10,
         'unit_price' => 750,
-        'tax_rate' => 18, // 18% as users would enter
+        'tax_rate' => 1800, // 18% in basis points
     ]]);
 
     $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
@@ -67,7 +67,7 @@ test('converted invoice has all items from estimate', function () {
     expect($invoiceItem->description)->toBe('Consulting Services');
     expect($invoiceItem->quantity)->toBe(10);
     expect($invoiceItem->unit_price)->toBe(750);
-    expect($invoiceItem->tax_rate)->toBe('18.00'); // Should return percentage as decimal string
+    expect($invoiceItem->tax_rate)->toBe(1800); // Should return basis points as integer
 });
 
 test('converted invoice gets new invoice number', function () {
@@ -176,13 +176,13 @@ test('converter preserves complex item configurations', function () {
             'description' => 'Product A',
             'quantity' => 2,
             'unit_price' => 3000,
-            'tax_rate' => 12, // 12% as users would enter
+            'tax_rate' => 1200, // 12% in basis points // 12% as users would enter
         ],
         [
             'description' => 'Service B',
             'quantity' => 3,
             'unit_price' => 2000,
-            'tax_rate' => 18, // 18% as users would enter
+            'tax_rate' => 1800, // 18% in basis points
         ],
         [
             'description' => 'Tax-free item',
@@ -199,10 +199,10 @@ test('converter preserves complex item configurations', function () {
 
     $items = $invoice->items->sortBy('description');
     expect($items->first()->description)->toBe('Product A');
-    expect($items->first()->tax_rate)->toBe('12.00'); // Should return percentage as decimal string
+    expect($items->first()->tax_rate)->toBe(1200); // Should return basis points as integer
 
     expect($items->last()->description)->toBe('Tax-free item');
-    expect($items->last()->tax_rate)->toBe('0.00'); // Should return percentage for display
+    expect($items->last()->tax_rate)->toBe(0); // Should return basis points as integer
 });
 
 test('converter throws exception when trying to convert non-estimate', function () {
@@ -314,7 +314,7 @@ test('converter handles estimates with zero tax rates', function () {
     $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
     $invoice = $converter->convert($estimate);
 
-    expect($invoice->items->first()->tax_rate)->toBe('0.00');
+    expect($invoice->items->first()->tax_rate)->toBe(0);
 });
 
 test('converter handles estimates with fractional tax rates', function () {
@@ -327,14 +327,14 @@ test('converter handles estimates with fractional tax rates', function () {
             'description' => 'Service with fractional tax',
             'quantity' => 1,
             'unit_price' => 10000,
-            'tax_rate' => 12.5,
+            'tax_rate' => 1250, // 12.5% in basis points
         ],
     ]);
 
     $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
     $invoice = $converter->convert($estimate);
 
-    expect($invoice->items->first()->tax_rate)->toBe('12.50');
+    expect($invoice->items->first()->tax_rate)->toBe(1250);
 });
 
 test('converter handles estimates with large quantities and amounts', function () {
@@ -347,7 +347,7 @@ test('converter handles estimates with large quantities and amounts', function (
             'description' => 'Large quantity service',
             'quantity' => 100,
             'unit_price' => 50000,
-            'tax_rate' => 28,
+            'tax_rate' => 2800, // 28% in basis points
         ],
     ]);
 
@@ -356,7 +356,7 @@ test('converter handles estimates with large quantities and amounts', function (
 
     expect($invoice->items->first()->quantity)->toBe(100);
     expect($invoice->items->first()->unit_price)->toBe(50000);
-    expect($invoice->items->first()->tax_rate)->toBe('28.00');
+    expect($invoice->items->first()->tax_rate)->toBe(2800);
 });
 
 test('converter preserves all estimate status transitions', function () {
@@ -402,7 +402,7 @@ test('converter creates invoice with correct relationships', function () {
             'description' => 'Test service',
             'quantity' => 1,
             'unit_price' => 1000,
-            'tax_rate' => 18,
+            'tax_rate' => 1800, // 18% in basis points
         ],
     ]);
 
@@ -428,7 +428,7 @@ test('converter recalculates totals after conversion', function () {
             'description' => 'Test service',
             'quantity' => 2,
             'unit_price' => 1500,
-            'tax_rate' => 18,
+            'tax_rate' => 1800, // 18% in basis points
         ],
     ]);
 

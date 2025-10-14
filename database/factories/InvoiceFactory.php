@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Currency;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Organization;
@@ -38,6 +39,7 @@ class InvoiceFactory extends Factory
             'status' => fake()->randomElement(['draft', 'sent', 'paid', 'void']),
             'issued_at' => fake()->optional(0.8)->dateTimeBetween('-6 months', 'now'),
             'due_at' => fake()->optional(0.7)->dateTimeBetween('now', '+3 months'),
+            'currency' => fake()->randomElement(Currency::cases())->value,
             'subtotal' => $subtotal,
             'tax' => $tax,
             'total' => $total,

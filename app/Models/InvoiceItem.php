@@ -22,7 +22,8 @@ class InvoiceItem extends Model
     protected function casts(): array
     {
         return [
-            'tax_rate' => 'decimal:2',
+            // tax_rate is now stored as integer basis points (18% = 1800)
+            'tax_rate' => 'integer',
         ];
     }
 
@@ -38,15 +39,15 @@ class InvoiceItem extends Model
 
     public function getTaxAmount(): int
     {
-        $taxRatePercentage = $this->tax_rate ?? 0;
+        $taxRateBasisPoints = $this->tax_rate ?? 0;
 
-        if (! $taxRatePercentage) {
+        if (! $taxRateBasisPoints) {
             return 0;
         }
 
-        // tax_rate is stored as percentage (e.g., 18.00 for 18%)
-        // So we divide by 100 to get the decimal (18.00/100 = 0.18)
-        return (int) round(($this->getLineTotal() * $taxRatePercentage) / 100);
+        // tax_rate is stored as basis points (e.g., 1800 for 18%)
+        // So we divide by 10000 to get the decimal (1800/10000 = 0.18)
+        return (int) round(($this->getLineTotal() * $taxRateBasisPoints) / 10000);
     }
 
     public function getLineTotalWithTax(): int
@@ -59,18 +60,9 @@ class InvoiceItem extends Model
      */
     public function formatMoney(int $amount): string
     {
-        // Get the currency, falling back to INR if invalid
-        $currency = $this->invoice->currency ?? 'INR';
+        $currency = $this->invoice->currency->value;
 
-        // Validate the currency code and fallback to INR if invalid
-        try {
-            // Use the static method instead of make() to avoid potential conflicts
-            return Money::{$currency}($amount)->format();
-        } catch (\Exception $e) {
-            // If currency is invalid, fallback to INR
-            // Use manual formatting to avoid any further currency validation issues
-            return '₹'.number_format($amount / 100, 2);
-        }
+        return Money::{$currency}($amount)->format();
     }
 
     /**
@@ -110,10 +102,21 @@ class InvoiceItem extends Model
      */
     public function getCurrencySymbolAttribute(): string
     {
-        try {
-            return Money::{$this->invoice->currency}(0)->getCurrency()->getSymbol();
-        } catch (\Exception $e) {
-            return '₹';
+        return Money::{$this->invoice->currency->value}(0)->getCurrency()->getSymbol();
+    }
+
+    /**
+     * Format tax rate as percentage for display (basis points to percentage)
+     */
+    public function getFormattedTaxRateAttribute(): string
+    {
+        if (! $this->tax_rate) {
+            return '0.00%';
         }
+
+        // Convert basis points to percentage (1800 -> 18.00%)
+        $percentage = $this->tax_rate / 100;
+
+        return number_format($percentage, 2).'%';
     }
 }

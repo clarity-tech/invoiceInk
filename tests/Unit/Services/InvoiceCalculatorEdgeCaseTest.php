@@ -18,13 +18,13 @@ test('invoice calculator handles mixed tax rates', function () {
             'description' => 'Low Tax Item',
             'quantity' => 2,
             'unit_price' => 5000, // $50 each
-            'tax_rate' => 5.5, // 5.5% as users would enter
+            'tax_rate' => 550, // 5.5% in basis points
         ]),
         new InvoiceItem([
             'description' => 'High Tax Item',
             'quantity' => 1,
             'unit_price' => 20000, // $200
-            'tax_rate' => 25, // 25% as users would enter
+            'tax_rate' => 2500, // 25% in basis points
         ]),
     ]);
 
@@ -48,7 +48,7 @@ test('invoice calculator handles fractional quantities', function () {
             'description' => 'Fractional Service',
             'quantity' => 2, // InvoiceItem quantity is integer, but unit_price can represent fractions
             'unit_price' => 3333, // $33.33 each
-            'tax_rate' => 10, // 10% as users would enter
+            'tax_rate' => 1000, // 10% in basis points
         ]),
     ]);
 
@@ -96,7 +96,7 @@ test('invoice calculator handles very high tax rates', function () {
             'description' => 'Luxury Tax Item',
             'quantity' => 1,
             'unit_price' => 10000, // $100
-            'tax_rate' => 100, // 100% tax rate as users would enter
+            'tax_rate' => 10000, // 100% tax rate in basis points
         ]),
     ]);
 
@@ -115,7 +115,7 @@ test('invoice calculator precision with small amounts', function () {
             'description' => 'Small Amount Item',
             'quantity' => 1,
             'unit_price' => 1, // $0.01
-            'tax_rate' => 7.25, // 7.25% as users would enter
+            'tax_rate' => 725, // 7.25% in basis points
         ]),
     ]);
 

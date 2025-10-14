@@ -223,7 +223,7 @@ test('invoice fillable attributes work correctly', function () {
     expect($invoice->customer_location_id)->toBe(2);
     expect($invoice->invoice_number)->toBe('INV-001');
     expect($invoice->status)->toBe('sent');
-    expect($invoice->currency)->toBe('INR');
+    expect($invoice->currency->value)->toBe('INR');
     expect($invoice->exchange_rate)->toBe('1.000000');
     expect($invoice->subtotal)->toBe(1000);
     expect($invoice->tax)->toBe(180);
@@ -282,7 +282,7 @@ test('invoice casts method returns correct array', function () {
 
     expect($casts['issued_at'])->toBe('datetime');
     expect($casts['due_at'])->toBe('datetime');
-    expect($casts['exchange_rate'])->toBe('decimal:6');
+    expect($casts['exchange_rate'])->toBe(\App\Casts\ExchangeRateCast::class);
     expect($casts['tax_breakdown'])->toBe('json');
     expect($casts['email_recipients'])->toBe('json');
 });
@@ -435,7 +435,7 @@ test('invoice can be created with all fillable attributes', function () {
     expect($invoice->status)->toBe('sent');
     expect($invoice->issued_at->format('Y-m-d H:i:s'))->toBe($issuedAt->format('Y-m-d H:i:s'));
     expect($invoice->due_at->format('Y-m-d H:i:s'))->toBe($dueAt->format('Y-m-d H:i:s'));
-    expect($invoice->currency)->toBe('EUR');
+    expect($invoice->currency->value)->toBe('EUR');
     expect($invoice->exchange_rate)->toBe('1.234567');
     expect($invoice->subtotal)->toBe(10000);
     expect($invoice->tax)->toBe(1800);
@@ -471,7 +471,7 @@ test('invoice handles nullable fields correctly', function () {
     expect($invoice->notes)->toBeNull();
     expect($invoice->terms)->toBeNull();
     // Test the fields that can actually be null
-    expect($invoice->currency)->toBe('INR');
+    expect($invoice->currency->value)->toBe('INR');
     expect($invoice->exchange_rate)->toBe('1.000000');
 });
 
@@ -492,7 +492,7 @@ test('invoice can be updated with new attributes', function () {
     ]);
 
     expect($invoice->status)->toBe('sent');
-    expect($invoice->currency)->toBe('USD');
+    expect($invoice->currency->value)->toBe('USD');
     expect($invoice->exchange_rate)->toBe('82.500000');
     expect($invoice->notes)->toBe('Updated notes');
     expect($invoice->terms)->toBe('Updated terms');

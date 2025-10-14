@@ -2,6 +2,7 @@
 
 namespace App\Actions\Fortify;
 
+use App\Currency;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -48,6 +49,7 @@ class CreateNewUser implements CreatesNewUsers
             'user_id' => $user->id,
             'name' => explode(' ', $user->name, 2)[0]."'s Team",
             'personal_team' => true,
+            'currency' => Currency::default(),
         ]));
     }
 }

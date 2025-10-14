@@ -17,14 +17,15 @@ test('can create invoice item with all fields', function () {
         'description' => 'Test Service',
         'quantity' => 2,
         'unit_price' => 1000,
-        'tax_rate' => 18, // 18% as users would enter
+        'tax_rate' => 1800, // 18% in basis points
     ]);
 
     expect($item->invoice_id)->toBe($invoice->id);
     expect($item->description)->toBe('Test Service');
     expect($item->quantity)->toBe(2);
     expect($item->unit_price)->toBe(1000);
-    expect($item->tax_rate)->toBe('18.00'); // Should return percentage as decimal string
+    expect($item->tax_rate)->toBe(1800); // Should return basis points as integer
+    expect($item->formatted_tax_rate)->toBe('18.00%'); // Should format for display
 });
 
 test('invoice item belongs to invoice', function () {
@@ -38,7 +39,7 @@ test('invoice item belongs to invoice', function () {
         'description' => 'Test Service',
         'quantity' => 1,
         'unit_price' => 1000,
-        'tax_rate' => 18, // 18% as users would enter
+        'tax_rate' => 1800, // 18% in basis points
     ]);
 
     expect($item->invoice)->not->toBeNull();
@@ -64,7 +65,7 @@ test('invoice item can have zero tax rate', function () {
         'tax_rate' => 0,
     ]);
 
-    expect($item->tax_rate)->toBe('0.00');
+    expect($item->tax_rate)->toBe(0);
 });
 
 test('invoice item can have null tax rate', function () {
@@ -94,7 +95,7 @@ test('invoice item fillable attributes work correctly', function () {
         'description' => 'Test Product',
         'quantity' => 3,
         'unit_price' => 2500,
-        'tax_rate' => 12,
+        'tax_rate' => 1200, // 12% in basis points
     ];
 
     $item = new InvoiceItem($data);
@@ -103,7 +104,7 @@ test('invoice item fillable attributes work correctly', function () {
     expect($item->description)->toBe('Test Product');
     expect($item->quantity)->toBe(3);
     expect($item->unit_price)->toBe(2500);
-    expect($item->tax_rate)->toBe('12.00');
+    expect($item->tax_rate)->toBe(1200); // 12% in basis points
 });
 
 test('invoice item calculates line total correctly', function () {
@@ -114,7 +115,7 @@ test('invoice item calculates line total correctly', function () {
         'description' => 'Test Item',
         'quantity' => 2,
         'unit_price' => 1000,
-        'tax_rate' => 18, // 18% as users would enter
+        'tax_rate' => 1800, // 18% in basis points
     ]);
 
     $lineSubtotal = $item->quantity * $item->unit_price;
@@ -135,7 +136,7 @@ test('invoice item handles large quantities and prices', function () {
         'description' => 'Bulk Service',
         'quantity' => 1000,
         'unit_price' => 500000, // $5000.00 in cents
-        'tax_rate' => 18, // 18% as users would enter
+        'tax_rate' => 1800, // 18% in basis points
     ]);
 
     expect($item->quantity)->toBe(1000);
@@ -153,10 +154,10 @@ test('invoice item can have fractional tax rates', function () {
         'description' => 'Service with custom tax',
         'quantity' => 1,
         'unit_price' => 10000,
-        'tax_rate' => 12.5, // 12.5% as users would enter
+        'tax_rate' => 1250, // 12.5% in basis points
     ]);
 
-    expect($item->tax_rate)->toBe('12.50'); // Should return percentage as decimal string
+    expect($item->tax_rate)->toBe(1250); // 12.50% in basis points
 });
 
 test('invoice item has correct fillable attributes', function () {
@@ -180,7 +181,7 @@ test('invoice item casts method returns correct array', function () {
     $item = new InvoiceItem;
     $casts = $item->getCasts();
 
-    expect($casts['tax_rate'])->toBe('decimal:2');
+    expect($casts['tax_rate'])->toBe('integer');
 });
 
 test('invoice item uses HasFactory trait', function () {
@@ -232,7 +233,7 @@ test('invoice item getTaxAmount calculates correctly with tax', function () {
         'description' => 'Taxed Item',
         'quantity' => 1,
         'unit_price' => 10000,
-        'tax_rate' => 18.00, // 18%
+        'tax_rate' => 1800, // 18% in basis points
     ]);
 
     $expectedTax = (int) round((10000 * 18.00) / 100);
@@ -262,7 +263,7 @@ test('invoice item getTaxAmount returns zero with zero tax rate', function () {
         'description' => 'Zero Tax Item',
         'quantity' => 1,
         'unit_price' => 10000,
-        'tax_rate' => 0.00,
+        'tax_rate' => 0, // 0% in basis points
     ]);
 
     expect($item->getTaxAmount())->toBe(0);
@@ -276,7 +277,7 @@ test('invoice item getLineTotalWithTax calculates correctly', function () {
         'description' => 'Full Test Item',
         'quantity' => 2,
         'unit_price' => 5000,
-        'tax_rate' => 10.00, // 10%
+        'tax_rate' => 1000, // 10% in basis points
     ]);
 
     $lineTotal = $item->getLineTotal(); // 2 * 5000 = 10000
@@ -296,7 +297,7 @@ test('invoice item handles fractional tax calculations', function () {
         'description' => 'Fractional Tax Item',
         'quantity' => 1,
         'unit_price' => 10000,
-        'tax_rate' => 12.50, // 12.5%
+        'tax_rate' => 1250, // 12.5% in basis points
     ]);
 
     $expectedTax = (int) round((10000 * 12.50) / 100);
@@ -307,9 +308,9 @@ test('invoice item handles fractional tax calculations', function () {
 
 test('invoice item handles complex tax calculations', function () {
     $testCases = [
-        ['quantity' => 3, 'unit_price' => 3333, 'tax_rate' => 18.00, 'expected_line_total' => 9999, 'expected_tax' => 1800],
-        ['quantity' => 1, 'unit_price' => 99999, 'tax_rate' => 5.50, 'expected_line_total' => 99999, 'expected_tax' => 5500],
-        ['quantity' => 7, 'unit_price' => 1428, 'tax_rate' => 28.00, 'expected_line_total' => 9996, 'expected_tax' => 2799],
+        ['quantity' => 3, 'unit_price' => 3333, 'tax_rate' => 1800, 'expected_line_total' => 9999, 'expected_tax' => 1800],
+        ['quantity' => 1, 'unit_price' => 99999, 'tax_rate' => 550, 'expected_line_total' => 99999, 'expected_tax' => 5500],
+        ['quantity' => 7, 'unit_price' => 1428, 'tax_rate' => 2800, 'expected_line_total' => 9996, 'expected_tax' => 2799],
     ];
 
     foreach ($testCases as $testCase) {
@@ -337,7 +338,7 @@ test('invoice item can handle very large quantities and prices', function () {
         'description' => 'Large Values Item',
         'quantity' => 999999,
         'unit_price' => 999999,
-        'tax_rate' => 18.00,
+        'tax_rate' => 1800, // 18% in basis points
     ]);
 
     $expectedLineTotal = 999999 * 999999;
@@ -356,7 +357,7 @@ test('invoice item can handle zero values', function () {
         'description' => 'Free Item',
         'quantity' => 1,
         'unit_price' => 0,
-        'tax_rate' => 18.00,
+        'tax_rate' => 1800, // 18% in basis points
     ]);
 
     expect($item->getLineTotal())->toBe(0);
@@ -372,7 +373,7 @@ test('invoice item can handle zero quantity', function () {
         'description' => 'Zero Quantity Item',
         'quantity' => 0,
         'unit_price' => 5000,
-        'tax_rate' => 18.00,
+        'tax_rate' => 1800, // 18% in basis points
     ]);
 
     expect($item->getLineTotal())->toBe(0);
@@ -383,18 +384,27 @@ test('invoice item can handle zero quantity', function () {
 test('invoice item tax rate precision is maintained', function () {
     $invoice = createInvoiceWithItems();
 
-    $taxRates = [0.01, 0.10, 1.25, 12.50, 28.00, 99.99];
+    // Test various rates stored as basis points
+    $testCases = [
+        ['rate' => 1, 'percentage' => 0.01],    // 0.01% = 1 basis point
+        ['rate' => 10, 'percentage' => 0.10],   // 0.10% = 10 basis points
+        ['rate' => 125, 'percentage' => 1.25],  // 1.25% = 125 basis points
+        ['rate' => 1250, 'percentage' => 12.50], // 12.50% = 1250 basis points
+        ['rate' => 2800, 'percentage' => 28.00], // 28.00% = 2800 basis points
+        ['rate' => 9999, 'percentage' => 99.99], // 99.99% = 9999 basis points
+    ];
 
-    foreach ($taxRates as $rate) {
+    foreach ($testCases as $test) {
         $item = InvoiceItem::create([
             'invoice_id' => $invoice->id,
-            'description' => "Precision Test {$rate}%",
+            'description' => "Precision Test {$test['percentage']}%",
             'quantity' => 1,
             'unit_price' => 1000,
-            'tax_rate' => $rate,
+            'tax_rate' => $test['rate'], // Store as basis points
         ]);
 
-        expect($item->tax_rate)->toBe(number_format($rate, 2, '.', ''));
+        expect($item->tax_rate)->toBe($test['rate']); // Should return basis points as integer
+        expect($item->formatted_tax_rate)->toBe(number_format($test['percentage'], 2).'%'); // Should format for display
     }
 });
 
@@ -429,13 +439,13 @@ test('invoice item can be updated after creation', function () {
         'description' => 'Updated Description',
         'quantity' => 3,
         'unit_price' => 2000,
-        'tax_rate' => 18.00,
+        'tax_rate' => 1800, // 18% in basis points
     ]);
 
     expect($item->description)->toBe('Updated Description');
     expect($item->quantity)->toBe(3);
     expect($item->unit_price)->toBe(2000);
-    expect($item->tax_rate)->toBe('18.00');
+    expect($item->tax_rate)->toBe(1800); // 18% in basis points
     expect($item->getLineTotal())->toBe(6000);
     expect($item->getTaxAmount())->toBe(1080);
     expect($item->getLineTotalWithTax())->toBe(7080);
@@ -479,7 +489,7 @@ test('invoice item mass assignment works correctly', function () {
         'description' => 'Mass Assignment Test',
         'quantity' => 5,
         'unit_price' => 1500,
-        'tax_rate' => 15.75,
+        'tax_rate' => 1575, // 15.75% in basis points
     ];
 
     $item = new InvoiceItem($data);
@@ -488,7 +498,7 @@ test('invoice item mass assignment works correctly', function () {
     expect($item->description)->toBe('Mass Assignment Test');
     expect($item->quantity)->toBe(5);
     expect($item->unit_price)->toBe(1500);
-    expect($item->tax_rate)->toBe('15.75');
+    expect($item->tax_rate)->toBe(1575); // 15.75% in basis points
 });
 
 test('invoice item business logic methods work with edge cases', function () {
@@ -500,7 +510,7 @@ test('invoice item business logic methods work with edge cases', function () {
         'description' => 'Small Tax',
         'quantity' => 1,
         'unit_price' => 100,
-        'tax_rate' => 0.01, // 0.01%
+        'tax_rate' => 1, // 0.01% in basis points
     ]);
 
     expect($item1->getTaxAmount())->toBe(0); // Should round to 0
@@ -511,7 +521,7 @@ test('invoice item business logic methods work with edge cases', function () {
         'description' => 'High Precision',
         'quantity' => 3,
         'unit_price' => 3333,
-        'tax_rate' => 18.33,
+        'tax_rate' => 1833, // 18.33% in basis points
     ]);
 
     $expectedTax = (int) round((9999 * 18.33) / 100);

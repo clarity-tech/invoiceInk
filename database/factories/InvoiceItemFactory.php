@@ -40,7 +40,7 @@ class InvoiceItemFactory extends Factory
             'description' => fake()->randomElement($services),
             'quantity' => fake()->numberBetween(1, 10),
             'unit_price' => fake()->numberBetween(5000, 50000), // $50 to $500 in cents
-            'tax_rate' => fake()->randomElement([0, 5, 12, 18, 28]), // Common GST rates as percentages
+            'tax_rate' => fake()->randomElement([0, 500, 1200, 1800, 2800]), // Common GST rates in basis points
         ];
     }
 
@@ -60,7 +60,7 @@ class InvoiceItemFactory extends Factory
     public function withoutTax(): static
     {
         return $this->state(fn (array $attributes) => [
-            'tax_rate' => 0,
+            'tax_rate' => 0, // 0% in basis points
         ]);
     }
 
@@ -80,7 +80,7 @@ class InvoiceItemFactory extends Factory
     public function withHighTax(): static
     {
         return $this->state(fn (array $attributes) => [
-            'tax_rate' => 28, // 28% as users would enter
+            'tax_rate' => 2800, // 28% in basis points
         ]);
     }
 
@@ -90,7 +90,7 @@ class InvoiceItemFactory extends Factory
     public function withFractionalTax(): static
     {
         return $this->state(fn (array $attributes) => [
-            'tax_rate' => fake()->randomElement([2.5, 7.5, 12.5, 18.5]), // Fractional rates as percentages
+            'tax_rate' => fake()->randomElement([250, 750, 1250, 1850]), // Fractional rates in basis points
         ]);
     }
 
@@ -109,7 +109,7 @@ class InvoiceItemFactory extends Factory
             ]),
             'quantity' => fake()->numberBetween(1, 5),
             'unit_price' => fake()->numberBetween(15000, 75000), // $150 to $750 per hour
-            'tax_rate' => 18, // 18% as users would enter
+            'tax_rate' => 1800, // 18% in basis points
         ]);
     }
 
@@ -128,7 +128,7 @@ class InvoiceItemFactory extends Factory
             ]),
             'quantity' => fake()->numberBetween(10, 100),
             'unit_price' => fake()->numberBetween(8000, 25000), // $80 to $250 per hour
-            'tax_rate' => 18, // 18% as users would enter
+            'tax_rate' => 1800, // 18% in basis points
         ]);
     }
 
@@ -147,7 +147,7 @@ class InvoiceItemFactory extends Factory
             ]),
             'quantity' => fake()->numberBetween(5, 20),
             'unit_price' => fake()->numberBetween(6000, 20000), // $60 to $200 per hour
-            'tax_rate' => 18, // 18% as users would enter
+            'tax_rate' => 1800, // 18% in basis points
         ]);
     }
 
@@ -176,7 +176,7 @@ class InvoiceItemFactory extends Factory
             ]),
             'quantity' => 1,
             'unit_price' => fake()->numberBetween(100000, 1000000), // $1,000 to $10,000
-            'tax_rate' => 18, // 18% as users would enter
+            'tax_rate' => 1800, // 18% in basis points
         ]);
     }
 
@@ -194,20 +194,20 @@ class InvoiceItemFactory extends Factory
             ]),
             'quantity' => 1,
             'unit_price' => 0,
-            'tax_rate' => 0,
+            'tax_rate' => 0, // 0% in basis points
         ]);
     }
 
     /**
      * Create an item with custom specifications
      */
-    public function custom(string $description, int $quantity, int $unitPrice, ?float $taxRate = 18): static
+    public function custom(string $description, int $quantity, int $unitPrice, ?int $taxRateBasisPoints = 1800): static
     {
         return $this->state(fn (array $attributes) => [
             'description' => $description,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
-            'tax_rate' => $taxRate, // Expected as percentage (will be auto-converted)
+            'tax_rate' => $taxRateBasisPoints, // Expected as basis points
         ]);
     }
 }

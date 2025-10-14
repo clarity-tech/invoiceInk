@@ -81,7 +81,7 @@ test('can generate PDF for estimate', function () {
             'description' => 'Test Service',
             'quantity' => 2,
             'unit_price' => 1500,
-            'tax_rate' => 12.5,
+            'tax_rate' => 1250, // 12.5% in basis points
         ],
     ]);
 

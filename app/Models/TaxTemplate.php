@@ -26,7 +26,7 @@ class TaxTemplate extends Model
     protected function casts(): array
     {
         return [
-            'rate' => 'decimal:3',
+            'rate' => 'integer', // Store as basis points (18% = 1800)
             'is_active' => 'boolean',
             'metadata' => 'json',
         ];
@@ -69,7 +69,9 @@ class TaxTemplate extends Model
      */
     public function getFormattedRateAttribute(): string
     {
-        return number_format($this->rate, 2).'%';
+        $percentage = $this->rate / 100; // Convert basis points to percentage
+
+        return number_format($percentage, 2).'%';
     }
 
     /**

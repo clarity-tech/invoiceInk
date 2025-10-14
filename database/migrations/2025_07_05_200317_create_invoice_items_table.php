@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('invoice_id')->constrained()->onDelete('cascade');
             $table->text('description');
-            $table->integer('quantity');
-            $table->integer('unit_price');
-            $table->decimal('tax_rate', 5, 2)->nullable();
+            $table->unsignedInteger('quantity');
+            $table->unsignedBigInteger('unit_price'); // Price in cents
+            $table->unsignedInteger('tax_rate')->nullable(); // Tax rate in basis points (18% = 1800)
             $table->timestamps();
         });
     }

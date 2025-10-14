@@ -24,7 +24,7 @@ return new class extends Migration
             $table->json('emails')->nullable();
             $table->string('phone')->nullable();
             $table->string('website')->nullable();
-            $table->string('currency', 3)->default('INR');
+            $table->char('currency', 3);
             $table->text('notes')->nullable();
 
             // Location relationship

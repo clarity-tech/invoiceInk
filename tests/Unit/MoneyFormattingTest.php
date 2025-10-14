@@ -119,28 +119,3 @@ test('InvoiceTotals formats money correctly for different currencies', function 
     expect($totals->formatTax('EUR'))->toContain('€10,00');
     expect($totals->formatTotal('EUR'))->toContain('€110,00');
 });
-
-test('Money formatting handles invalid currency gracefully', function () {
-    // Create organization and customer using test helpers
-    $organization = createOrganizationWithLocation(['currency' => 'INR']);
-    $customer = createCustomerWithLocation([], [], $organization);
-
-    $invoice = Invoice::create([
-        'type' => 'invoice',
-        'organization_id' => $organization->id,
-        'organization_location_id' => $organization->primary_location_id,
-        'customer_id' => $customer->id,
-        'customer_location_id' => $customer->primary_location_id,
-        'invoice_number' => 'INV-INVALID-001',
-        'status' => 'draft',
-        'currency' => 'XXX', // 3-character invalid currency
-        'subtotal' => 10000,
-        'tax' => 1000,
-        'total' => 11000,
-    ]);
-
-    // Should fallback to INR formatting
-    expect($invoice->formatted_subtotal)->toContain('₹100.00');
-    expect($invoice->formatted_tax)->toContain('₹10.00');
-    expect($invoice->formatted_total)->toContain('₹110.00');
-});

@@ -41,7 +41,7 @@ class TaxTemplateFactory extends Factory
                 'Excise Tax 10%',
             ]),
             'type' => $this->faker->randomElement($taxTypes),
-            'rate' => $this->faker->randomFloat(3, 0, 30), // 0% to 30% with 3 decimal places
+            'rate' => $this->faker->numberBetween(0, 300000), // 0% to 30% in basis points (18% = 180000)
             'category' => $this->faker->randomElement($categories),
             'country_code' => $this->faker->randomElement($countryCodes),
             'description' => $this->faker->optional(0.7)->sentence(),
@@ -78,12 +78,14 @@ class TaxTemplateFactory extends Factory
     /**
      * Create a GST tax template.
      */
-    public function gst(float $rate = 18.000): static
+    public function gst(int $rateBasisPoints = 180000): static
     {
+        $ratePercent = $rateBasisPoints / 10000;
+
         return $this->state(fn (array $attributes) => [
-            'name' => "GST {$rate}%",
+            'name' => "GST {$ratePercent}%",
             'type' => 'GST',
-            'rate' => $rate,
+            'rate' => $rateBasisPoints,
             'country_code' => 'IN',
             'category' => 'standard',
         ]);
@@ -92,12 +94,14 @@ class TaxTemplateFactory extends Factory
     /**
      * Create a VAT tax template.
      */
-    public function vat(float $rate = 5.000): static
+    public function vat(int $rateBasisPoints = 50000): static
     {
+        $ratePercent = $rateBasisPoints / 10000;
+
         return $this->state(fn (array $attributes) => [
-            'name' => "VAT {$rate}%",
+            'name' => "VAT {$ratePercent}%",
             'type' => 'VAT',
-            'rate' => $rate,
+            'rate' => $rateBasisPoints,
             'country_code' => 'AE',
             'category' => 'standard',
         ]);
@@ -106,12 +110,14 @@ class TaxTemplateFactory extends Factory
     /**
      * Create a CGST tax template.
      */
-    public function cgst(float $rate = 9.000): static
+    public function cgst(int $rateBasisPoints = 90000): static
     {
+        $ratePercent = $rateBasisPoints / 10000;
+
         return $this->state(fn (array $attributes) => [
-            'name' => "CGST {$rate}%",
+            'name' => "CGST {$ratePercent}%",
             'type' => 'CGST',
-            'rate' => $rate,
+            'rate' => $rateBasisPoints,
             'country_code' => 'IN',
             'category' => 'standard',
         ]);
@@ -120,12 +126,14 @@ class TaxTemplateFactory extends Factory
     /**
      * Create a SGST tax template.
      */
-    public function sgst(float $rate = 9.000): static
+    public function sgst(int $rateBasisPoints = 90000): static
     {
+        $ratePercent = $rateBasisPoints / 10000;
+
         return $this->state(fn (array $attributes) => [
-            'name' => "SGST {$rate}%",
+            'name' => "SGST {$ratePercent}%",
             'type' => 'SGST',
-            'rate' => $rate,
+            'rate' => $rateBasisPoints,
             'country_code' => 'IN',
             'category' => 'standard',
         ]);
@@ -134,12 +142,14 @@ class TaxTemplateFactory extends Factory
     /**
      * Create an IGST tax template.
      */
-    public function igst(float $rate = 18.000): static
+    public function igst(int $rateBasisPoints = 180000): static
     {
+        $ratePercent = $rateBasisPoints / 10000;
+
         return $this->state(fn (array $attributes) => [
-            'name' => "IGST {$rate}%",
+            'name' => "IGST {$ratePercent}%",
             'type' => 'IGST',
-            'rate' => $rate,
+            'rate' => $rateBasisPoints,
             'country_code' => 'IN',
             'category' => 'standard',
         ]);

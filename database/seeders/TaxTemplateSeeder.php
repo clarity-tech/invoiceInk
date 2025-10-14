@@ -61,7 +61,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'CGST 9%',
                 'type' => 'CGST',
-                'rate' => 9.000,
+                'rate' => 90000, // 9% in basis points
                 'category' => 'Central GST',
                 'country_code' => 'IN',
                 'description' => 'Central Goods and Services Tax at 9%',
@@ -70,7 +70,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'SGST 9%',
                 'type' => 'SGST',
-                'rate' => 9.000,
+                'rate' => 90000, // 9% in basis points
                 'category' => 'State GST',
                 'country_code' => 'IN',
                 'description' => 'State Goods and Services Tax at 9%',
@@ -79,7 +79,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'IGST 18%',
                 'type' => 'IGST',
-                'rate' => 18.000,
+                'rate' => 180000, // 18% in basis points
                 'category' => 'Integrated GST',
                 'country_code' => 'IN',
                 'description' => 'Integrated Goods and Services Tax at 18%',
@@ -88,7 +88,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'GST 5%',
                 'type' => 'GST',
-                'rate' => 5.000,
+                'rate' => 50000, // 5% in basis points
                 'category' => 'Standard Rate',
                 'country_code' => 'IN',
                 'description' => 'Goods and Services Tax at 5%',
@@ -96,7 +96,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'GST 12%',
                 'type' => 'GST',
-                'rate' => 12.000,
+                'rate' => 120000, // 12% in basis points
                 'category' => 'Standard Rate',
                 'country_code' => 'IN',
                 'description' => 'Goods and Services Tax at 12%',
@@ -104,7 +104,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'GST 28%',
                 'type' => 'GST',
-                'rate' => 28.000,
+                'rate' => 280000, // 28% in basis points
                 'category' => 'Luxury Rate',
                 'country_code' => 'IN',
                 'description' => 'Goods and Services Tax at 28%',
@@ -112,7 +112,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'TDS 10%',
                 'type' => 'TDS',
-                'rate' => 10.000,
+                'rate' => 100000, // 10% in basis points
                 'category' => 'Tax Deducted at Source',
                 'country_code' => 'IN',
                 'description' => 'Tax Deducted at Source at 10%',
@@ -126,7 +126,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'Sales Tax 6%',
                 'type' => 'Sales Tax',
-                'rate' => 6.000,
+                'rate' => 60000, // 6% in basis points
                 'category' => 'Standard Rate',
                 'country_code' => 'US',
                 'description' => 'State Sales Tax at 6%',
@@ -134,7 +134,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'Sales Tax 8.25%',
                 'type' => 'Sales Tax',
-                'rate' => 8.250,
+                'rate' => 82500, // 8.25% in basis points
                 'category' => 'California Rate',
                 'country_code' => 'US',
                 'description' => 'California State Sales Tax at 8.25%',
@@ -142,7 +142,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'Sales Tax 4%',
                 'type' => 'Sales Tax',
-                'rate' => 4.000,
+                'rate' => 40000, // 4% in basis points
                 'category' => 'Low Rate',
                 'country_code' => 'US',
                 'description' => 'State Sales Tax at 4%',
@@ -150,7 +150,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'No Tax',
                 'type' => 'Exempt',
-                'rate' => 0.000,
+                'rate' => 0, // 0% in basis points
                 'category' => 'Tax Exempt',
                 'country_code' => 'US',
                 'description' => 'Tax Exempt Items',
@@ -164,7 +164,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'VAT 19%',
                 'type' => 'VAT',
-                'rate' => 19.000,
+                'rate' => 190000, // 19% in basis points
                 'category' => 'Standard Rate',
                 'country_code' => 'DE',
                 'description' => 'Value Added Tax at standard rate of 19%',
@@ -172,7 +172,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'VAT 7%',
                 'type' => 'VAT',
-                'rate' => 7.000,
+                'rate' => 70000, // 7% in basis points
                 'category' => 'Reduced Rate',
                 'country_code' => 'DE',
                 'description' => 'Value Added Tax at reduced rate of 7%',
@@ -180,7 +180,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'VAT 0%',
                 'type' => 'VAT',
-                'rate' => 0.000,
+                'rate' => 0, // 0% in basis points
                 'category' => 'Zero Rate',
                 'country_code' => 'DE',
                 'description' => 'Zero-rated VAT for exports and certain services',
@@ -194,7 +194,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'VAT 20%',
                 'type' => 'VAT',
-                'rate' => 20.000,
+                'rate' => 200000, // 20% in basis points
                 'category' => 'Standard Rate',
                 'country_code' => 'GB',
                 'description' => 'Value Added Tax at standard rate of 20%',
@@ -202,7 +202,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'VAT 5%',
                 'type' => 'VAT',
-                'rate' => 5.000,
+                'rate' => 50000, // 5% in basis points
                 'category' => 'Reduced Rate',
                 'country_code' => 'GB',
                 'description' => 'Value Added Tax at reduced rate of 5%',
@@ -210,7 +210,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'VAT 0%',
                 'type' => 'VAT',
-                'rate' => 0.000,
+                'rate' => 0, // 0% in basis points
                 'category' => 'Zero Rate',
                 'country_code' => 'GB',
                 'description' => 'Zero-rated VAT for certain goods and services',
@@ -224,7 +224,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'VAT 5%',
                 'type' => 'VAT',
-                'rate' => 5.000,
+                'rate' => 50000, // 5% in basis points
                 'category' => 'Standard Rate',
                 'country_code' => 'AE',
                 'description' => 'Value Added Tax at standard rate of 5%',
@@ -232,7 +232,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'VAT 0%',
                 'type' => 'VAT',
-                'rate' => 0.000,
+                'rate' => 0, // 0% in basis points
                 'category' => 'Zero Rate',
                 'country_code' => 'AE',
                 'description' => 'Zero-rated VAT for exports and certain goods/services',
@@ -240,7 +240,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'VAT Exempt',
                 'type' => 'VAT',
-                'rate' => 0.000,
+                'rate' => 0, // 0% in basis points
                 'category' => 'Exempt',
                 'country_code' => 'AE',
                 'description' => 'VAT exempt goods and services',
@@ -248,7 +248,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'Excise Tax 50%',
                 'type' => 'Excise Tax',
-                'rate' => 50.000,
+                'rate' => 500000, // 50% in basis points
                 'category' => 'Excise Rate',
                 'country_code' => 'AE',
                 'description' => 'Excise tax on carbonated drinks and energy drinks',
@@ -256,7 +256,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'Excise Tax 99%',
                 'type' => 'Excise Tax',
-                'rate' => 99.000,
+                'rate' => 990000, // 99% in basis points
                 'category' => 'Excise Rate',
                 'country_code' => 'AE',
                 'description' => 'Excise tax on tobacco products (max rate within system limits)',
@@ -270,7 +270,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'Standard Tax 10%',
                 'type' => 'Standard Tax',
-                'rate' => 10.000,
+                'rate' => 100000, // 10% in basis points
                 'category' => 'Standard Rate',
                 'country_code' => 'XX',
                 'description' => 'Standard tax rate at 10%',
@@ -278,7 +278,7 @@ class TaxTemplateSeeder extends Seeder
             [
                 'name' => 'No Tax',
                 'type' => 'Exempt',
-                'rate' => 0.000,
+                'rate' => 0, // 0% in basis points
                 'category' => 'Tax Exempt',
                 'country_code' => 'XX',
                 'description' => 'Tax exempt items',

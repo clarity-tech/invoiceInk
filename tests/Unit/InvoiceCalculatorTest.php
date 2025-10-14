@@ -48,13 +48,13 @@ test('calculates invoice with items with tax', function () {
     $item1 = new InvoiceItem([
         'quantity' => 2,
         'unit_price' => 1000, // $10.00
-        'tax_rate' => 10, // 10% as users would enter
+        'tax_rate' => 1000, // 10% in basis points
     ]);
 
     $item2 = new InvoiceItem([
         'quantity' => 1,
         'unit_price' => 1500, // $15.00
-        'tax_rate' => 20, // 20% as users would enter
+        'tax_rate' => 2000, // 20% in basis points
     ]);
 
     $invoice = new Invoice;
@@ -74,12 +74,12 @@ test('calculates from items collection', function () {
         new InvoiceItem([
             'quantity' => 1,
             'unit_price' => 1000,
-            'tax_rate' => 10, // 10% as users would enter
+            'tax_rate' => 1000, // 10% in basis points
         ]),
         new InvoiceItem([
             'quantity' => 2,
             'unit_price' => 500,
-            'tax_rate' => 5, // 5% as users would enter
+            'tax_rate' => 500, // 5% in basis points
         ]),
     ]);
 
@@ -96,7 +96,7 @@ test('updates invoice totals', function () {
     $item = new InvoiceItem([
         'quantity' => 1,
         'unit_price' => 1000,
-        'tax_rate' => 10, // 10% as users would enter
+        'tax_rate' => 1000, // 10% in basis points
     ]);
 
     $invoice = new Invoice([
@@ -142,7 +142,7 @@ test('recalculate invoice refreshes data and updates totals', function () {
             'description' => 'Test Service',
             'quantity' => 2,
             'unit_price' => 1500,
-            'tax_rate' => 18,
+            'tax_rate' => 1800, // 18% in basis points
         ],
     ]);
 
@@ -164,7 +164,7 @@ test('recalculate invoice handles invoice with modified items', function () {
             'description' => 'Original Service',
             'quantity' => 1,
             'unit_price' => 1000,
-            'tax_rate' => 18,
+            'tax_rate' => 1800, // 18% in basis points
         ],
     ]);
 
@@ -191,13 +191,13 @@ test('recalculate invoice handles removal of items', function () {
             'description' => 'Service 1',
             'quantity' => 1,
             'unit_price' => 2000,
-            'tax_rate' => 18,
+            'tax_rate' => 1800, // 18% in basis points
         ],
         [
             'description' => 'Service 2',
             'quantity' => 1,
             'unit_price' => 3000,
-            'tax_rate' => 18,
+            'tax_rate' => 1800, // 18% in basis points
         ],
     ]);
 
@@ -221,7 +221,7 @@ test('recalculate invoice handles addition of new items', function () {
             'description' => 'Original Service',
             'quantity' => 1,
             'unit_price' => 2000,
-            'tax_rate' => 18,
+            'tax_rate' => 1800, // 18% in basis points
         ],
     ]);
 
@@ -229,7 +229,7 @@ test('recalculate invoice handles addition of new items', function () {
         'description' => 'New Service',
         'quantity' => 1,
         'unit_price' => 1500,
-        'tax_rate' => 12,
+        'tax_rate' => 1200, // 12% in basis points
     ]);
 
     $calculator = new InvoiceCalculator;
@@ -252,7 +252,7 @@ test('calculator works with persistent invoice models', function () {
             'description' => 'Database Service',
             'quantity' => 1,
             'unit_price' => 1000,
-            'tax_rate' => 10,
+            'tax_rate' => 1000, // 10% in basis points
         ],
     ]);
 
@@ -278,19 +278,19 @@ test('calculator handles complex integration scenario', function () {
             'description' => 'Consulting',
             'quantity' => 10,
             'unit_price' => 12500,
-            'tax_rate' => 18,
+            'tax_rate' => 1800, // 18% in basis points
         ],
         [
             'description' => 'Development',
             'quantity' => 5,
             'unit_price' => 25000,
-            'tax_rate' => 18,
+            'tax_rate' => 1800, // 18% in basis points
         ],
         [
             'description' => 'Testing',
             'quantity' => 3,
             'unit_price' => 8000,
-            'tax_rate' => 12,
+            'tax_rate' => 1200, // 12% in basis points
         ],
     ]);
 
@@ -300,7 +300,7 @@ test('calculator handles complex integration scenario', function () {
     $updatedInvoice = $calculator->updateInvoiceTotals($invoice);
 
     $expectedSubtotal = (10 * 12500) + (5 * 25000) + (3 * 8000);
-    $expectedTax = (125000 * 18 / 100) + (125000 * 18 / 100) + (24000 * 12 / 100);
+    $expectedTax = (125000 * 1800 / 10000) + (125000 * 1800 / 10000) + (24000 * 1200 / 10000);
     $expectedTotal = $expectedSubtotal + $expectedTax;
 
     expect($calculatedTotals->subtotal)->toBe($expectedSubtotal);
@@ -320,13 +320,13 @@ test('calculator handles zero-value items in collections', function () {
             'description' => 'Free consultation',
             'quantity' => 1,
             'unit_price' => 0,
-            'tax_rate' => 0,
+            'tax_rate' => 0, // 0% in basis points
         ]),
         new InvoiceItem([
             'description' => 'Paid service',
             'quantity' => 1,
             'unit_price' => 1000,
-            'tax_rate' => 18,
+            'tax_rate' => 1800, // 18% in basis points
         ]),
     ]);
 

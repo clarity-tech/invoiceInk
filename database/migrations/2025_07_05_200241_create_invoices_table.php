@@ -25,11 +25,11 @@ return new class extends Migration
             $table->timestamp('due_at')->nullable();
 
             // Financial fields with currency support
-            $table->string('currency', 3)->default('INR');
-            $table->decimal('exchange_rate', 10, 6)->default(1.000000);
-            $table->integer('subtotal');
-            $table->integer('tax');
-            $table->integer('total');
+            $table->char('currency', 3);
+            $table->unsignedBigInteger('exchange_rate')->default(1000000); // Exchange rate in micro-units (1.000000 = 1000000)
+            $table->unsignedBigInteger('subtotal'); // Amount in cents
+            $table->unsignedBigInteger('tax'); // Amount in cents
+            $table->unsignedBigInteger('total'); // Amount in cents
 
             // Tax information
             $table->string('tax_type')->nullable(); // Flexible tax type (not enum)

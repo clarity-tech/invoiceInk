@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Akaunting\Money\Money;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -89,7 +90,7 @@ class InvoiceWizard extends Component
                 'description' => $item['description'],
                 'quantity' => (int) $item['quantity'],
                 'unit_price' => (int) ($item['unit_price'] * 100), // Convert to cents
-                'tax_rate' => (float) $item['tax_rate'],
+                'tax_rate' => (int) ($item['tax_rate'] * 100), // Convert percentage to basis points
             ]);
         });
 
@@ -152,7 +153,7 @@ class InvoiceWizard extends Component
                 'description' => $item->description,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price / 100, // Convert from cents
-                'tax_rate' => (float) $item->tax_rate,
+                'tax_rate' => $item->tax_rate / 100, // Convert from basis points to percentage
             ];
         })->toArray();
 
@@ -217,7 +218,7 @@ class InvoiceWizard extends Component
                 'description' => $item['description'],
                 'quantity' => (int) $item['quantity'],
                 'unit_price' => (int) ($item['unit_price'] * 100), // Convert to cents
-                'tax_rate' => (float) ($item['tax_rate'] ?: 0),
+                'tax_rate' => (int) (($item['tax_rate'] ?: 0) * 100), // Convert percentage to basis points
             ]);
         }
 
@@ -358,14 +359,9 @@ class InvoiceWizard extends Component
     #[Computed]
     public function currencySymbol(): string
     {
-        try {
-            $currency = $this->currentCurrency;
+        $currency = $this->currentCurrency;
 
-            return \Akaunting\Money\Money::{$currency}(0)->getCurrency()->getSymbol();
-        } catch (\Exception $e) {
-            // If currency is invalid, fallback to INR symbol
-            return '₹';
-        }
+        return Money::{$currency}(0)->getCurrency()->getSymbol();
     }
 
     /**
@@ -373,14 +369,9 @@ class InvoiceWizard extends Component
      */
     public function formatAmount(int $amount): string
     {
-        try {
-            $currency = $this->currentCurrency;
+        $currency = $this->currentCurrency;
 
-            return \Akaunting\Money\Money::{$currency}($amount)->format();
-        } catch (\Exception $e) {
-            // If currency is invalid, fallback to INR formatting
-            return '₹'.number_format($amount / 100, 2);
-        }
+        return Money::{$currency}($amount)->format();
     }
 
     public function render()

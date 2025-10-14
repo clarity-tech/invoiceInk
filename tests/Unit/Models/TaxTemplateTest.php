@@ -14,14 +14,14 @@ test('can create tax template with required fields', function () {
         'organization_id' => $organization->id,
         'name' => 'GST 18%',
         'type' => 'GST',
-        'rate' => 18.000,
+        'rate' => 1800, // 18% in basis points
         'country_code' => 'IN',
     ]);
 
     expect($taxTemplate)->toBeInstanceOf(TaxTemplate::class);
     expect($taxTemplate->name)->toBe('GST 18%');
     expect($taxTemplate->type)->toBe('GST');
-    expect($taxTemplate->rate)->toBe('18.000');
+    expect($taxTemplate->rate)->toBe(1800); // Should return basis points as integer
     expect($taxTemplate->country_code)->toBe('IN');
     expect($taxTemplate->organization_id)->toBe($organization->id);
 });
@@ -47,18 +47,18 @@ test('tax template has correct fillable attributes', function () {
     }
 });
 
-test('tax template rate is cast to decimal with 3 places', function () {
+test('tax template rate is cast to integer basis points', function () {
     $organization = createOrganizationWithLocation();
 
     $taxTemplate = TaxTemplate::create([
         'organization_id' => $organization->id,
         'name' => 'GST 18%',
         'type' => 'GST',
-        'rate' => 18.123456,
+        'rate' => 1812, // 18.12% in basis points
         'country_code' => 'IN',
     ]);
 
-    expect($taxTemplate->rate)->toBe('18.123');
+    expect($taxTemplate->rate)->toBe(1812); // Should return basis points as integer
 });
 
 test('tax template is_active is cast to boolean', function () {
@@ -201,7 +201,7 @@ test('tax template getFormattedRateAttribute returns formatted percentage', func
         'organization_id' => $organization->id,
         'name' => 'GST 18%',
         'type' => 'GST',
-        'rate' => 18.500,
+        'rate' => 1850, // 18.50% in basis points
         'country_code' => 'IN',
     ]);
 
@@ -269,7 +269,7 @@ test('tax template can be created with all fillable attributes', function () {
         'organization_id' => $organization->id,
         'name' => 'Complete Tax Template',
         'type' => 'GST',
-        'rate' => 18.000,
+        'rate' => 1800, // 18% in basis points
         'category' => 'standard',
         'country_code' => 'IN',
         'description' => 'Standard GST rate for goods and services',
@@ -284,7 +284,7 @@ test('tax template can be created with all fillable attributes', function () {
     expect($taxTemplate->organization_id)->toBe($organization->id);
     expect($taxTemplate->name)->toBe('Complete Tax Template');
     expect($taxTemplate->type)->toBe('GST');
-    expect($taxTemplate->rate)->toBe('18.000');
+    expect($taxTemplate->rate)->toBe(1800); // Should return basis points as integer
     expect($taxTemplate->category)->toBe('standard');
     expect($taxTemplate->country_code)->toBe('IN');
     expect($taxTemplate->description)->toBe('Standard GST rate for goods and services');
@@ -335,19 +335,19 @@ test('tax template can be updated', function () {
         'organization_id' => $organization->id,
         'name' => 'Original Name',
         'type' => 'GST',
-        'rate' => 18.000,
+        'rate' => 1800, // 18% in basis points
         'country_code' => 'IN',
         'is_active' => true,
     ]);
 
     $taxTemplate->update([
         'name' => 'Updated Name',
-        'rate' => 28.000,
+        'rate' => 2800, // 28% in basis points
         'is_active' => false,
     ]);
 
     expect($taxTemplate->name)->toBe('Updated Name');
-    expect($taxTemplate->rate)->toBe('28.000');
+    expect($taxTemplate->rate)->toBe(2800); // Should return basis points as integer
     expect($taxTemplate->is_active)->toBeFalse();
 });
 
@@ -404,19 +404,19 @@ test('tax template factory creates valid instances', function () {
 });
 
 test('tax template factory gst state creates GST template', function () {
-    $gstTemplate = TaxTemplate::factory()->gst(18.000)->create();
+    $gstTemplate = TaxTemplate::factory()->gst(180000)->create(); // 18% in basis points
 
     expect($gstTemplate->type)->toBe('GST');
-    expect($gstTemplate->rate)->toBe('18.000');
+    expect($gstTemplate->rate)->toBe(180000); // Should return basis points as integer
     expect($gstTemplate->country_code)->toBe('IN');
     expect($gstTemplate->name)->toContain('GST 18%');
 });
 
 test('tax template factory vat state creates VAT template', function () {
-    $vatTemplate = TaxTemplate::factory()->vat(5.000)->create();
+    $vatTemplate = TaxTemplate::factory()->vat(50000)->create(); // 5% in basis points
 
     expect($vatTemplate->type)->toBe('VAT');
-    expect($vatTemplate->rate)->toBe('5.000');
+    expect($vatTemplate->rate)->toBe(50000); // Should return basis points as integer
     expect($vatTemplate->country_code)->toBe('AE');
     expect($vatTemplate->name)->toContain('VAT 5%');
 });
@@ -434,28 +434,28 @@ test('tax template factory inactive state creates inactive template', function (
 });
 
 test('tax template factory cgst state creates CGST template', function () {
-    $cgstTemplate = TaxTemplate::factory()->cgst(9.000)->create();
+    $cgstTemplate = TaxTemplate::factory()->cgst(90000)->create(); // 9% in basis points
 
     expect($cgstTemplate->type)->toBe('CGST');
-    expect($cgstTemplate->rate)->toBe('9.000');
+    expect($cgstTemplate->rate)->toBe(90000); // Should return basis points as integer
     expect($cgstTemplate->country_code)->toBe('IN');
     expect($cgstTemplate->isGST())->toBeTrue();
 });
 
 test('tax template factory sgst state creates SGST template', function () {
-    $sgstTemplate = TaxTemplate::factory()->sgst(9.000)->create();
+    $sgstTemplate = TaxTemplate::factory()->sgst(90000)->create(); // 9% in basis points
 
     expect($sgstTemplate->type)->toBe('SGST');
-    expect($sgstTemplate->rate)->toBe('9.000');
+    expect($sgstTemplate->rate)->toBe(90000); // Should return basis points as integer
     expect($sgstTemplate->country_code)->toBe('IN');
     expect($sgstTemplate->isGST())->toBeTrue();
 });
 
 test('tax template factory igst state creates IGST template', function () {
-    $igstTemplate = TaxTemplate::factory()->igst(18.000)->create();
+    $igstTemplate = TaxTemplate::factory()->igst(180000)->create(); // 18% in basis points
 
     expect($igstTemplate->type)->toBe('IGST');
-    expect($igstTemplate->rate)->toBe('18.000');
+    expect($igstTemplate->rate)->toBe(180000); // Should return basis points as integer
     expect($igstTemplate->country_code)->toBe('IN');
     expect($igstTemplate->isGST())->toBeTrue();
 });
@@ -477,7 +477,7 @@ test('tax template casts method returns correct array', function () {
     $taxTemplate = new TaxTemplate;
     $casts = $taxTemplate->getCasts();
 
-    expect($casts['rate'])->toBe('decimal:3');
+    expect($casts['rate'])->toBe('integer'); // Now stores basis points as integers
     expect($casts['is_active'])->toBe('boolean');
     expect($casts['metadata'])->toBe('json');
 });

@@ -31,12 +31,7 @@ readonly class InvoiceTotals
      */
     public function formatSubtotal(string $currency = 'INR'): string
     {
-        try {
-            // Use the static method instead of make() to avoid potential conflicts
-            return Money::{$currency}($this->subtotal)->format();
-        } catch (\Exception $e) {
-            return '₹'.number_format($this->subtotal / 100, 2);
-        }
+        return Money::{$currency}($this->subtotal)->format();
     }
 
     /**
@@ -44,12 +39,7 @@ readonly class InvoiceTotals
      */
     public function formatTax(string $currency = 'INR'): string
     {
-        try {
-            // Use the static method instead of make() to avoid potential conflicts
-            return Money::{$currency}($this->tax)->format();
-        } catch (\Exception $e) {
-            return '₹'.number_format($this->tax / 100, 2);
-        }
+        return Money::{$currency}($this->tax)->format();
     }
 
     /**
@@ -57,12 +47,7 @@ readonly class InvoiceTotals
      */
     public function formatTotal(string $currency = 'INR'): string
     {
-        try {
-            // Use the static method instead of make() to avoid potential conflicts
-            return Money::{$currency}($this->total)->format();
-        } catch (\Exception $e) {
-            return '₹'.number_format($this->total / 100, 2);
-        }
+        return Money::{$currency}($this->total)->format();
     }
 
     /**

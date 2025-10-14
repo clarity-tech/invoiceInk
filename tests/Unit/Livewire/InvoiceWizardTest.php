@@ -237,7 +237,7 @@ test('can edit existing invoice', function () {
             'description' => 'Original Service',
             'quantity' => 1,
             'unit_price' => 5000,
-            'tax_rate' => 18,
+            'tax_rate' => 1800, // 18% in basis points
         ],
     ]);
 
@@ -254,7 +254,7 @@ test('can edit existing invoice', function () {
         ->assertSet('items.0.description', 'Original Service')
         ->assertSet('items.0.quantity', 1)
         ->assertSet('items.0.unit_price', 50.0) // Converted from cents
-        ->assertSet('items.0.tax_rate', '18.00');
+        ->assertSet('items.0.tax_rate', 18); // Converted from basis points to percentage
 });
 
 test('can update existing invoice', function () {
@@ -266,7 +266,7 @@ test('can update existing invoice', function () {
             'description' => 'Original Service',
             'quantity' => 1,
             'unit_price' => 5000,
-            'tax_rate' => 18,
+            'tax_rate' => 1800, // 18% in basis points
         ],
     ]);
 

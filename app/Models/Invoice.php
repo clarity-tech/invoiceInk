@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Akaunting\Money\Money;
+use App\Casts\ExchangeRateCast;
 use App\Models\Scopes\OrganizationScope;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -42,7 +43,8 @@ class Invoice extends Model
         return [
             'issued_at' => 'datetime',
             'due_at' => 'datetime',
-            'exchange_rate' => 'decimal:6',
+            'exchange_rate' => ExchangeRateCast::class,
+            'currency' => \App\Currency::class,
             'tax_breakdown' => 'json',
             'email_recipients' => 'json',
         ];
@@ -98,18 +100,9 @@ class Invoice extends Model
      */
     public function formatMoney(int $amount): string
     {
-        // Get the currency, falling back to INR if invalid
-        $currency = $this->currency ?? 'INR';
+        $currency = $this->currency->value;
 
-        // Validate the currency code and fallback to INR if invalid
-        try {
-            // Use the static method instead of make() to avoid potential conflicts
-            return Money::{$currency}($amount)->format();
-        } catch (\Exception $e) {
-            // If currency is invalid, fallback to INR
-            // Use manual formatting to avoid any further currency validation issues
-            return '₹'.number_format($amount / 100, 2);
-        }
+        return Money::{$currency}($amount)->format();
     }
 
     /**
@@ -141,10 +134,6 @@ class Invoice extends Model
      */
     public function getCurrencySymbolAttribute(): string
     {
-        try {
-            return Money::{$this->currency}(0)->getCurrency()->getSymbol();
-        } catch (\Exception $e) {
-            return '₹';
-        }
+        return Money::{$this->currency->value}(0)->getCurrency()->getSymbol();
     }
 }

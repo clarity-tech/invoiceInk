@@ -95,7 +95,7 @@ test('calculates totals correctly', function () {
         ->set('items.0.tax_rate', 18) // 18% as users would enter
         ->call('calculateTotals')
         ->assertSet('subtotal', 20000) // $200 in cents
-        ->assertSet('tax', 3600) // 18% of $200
+        ->assertSet('tax', 3600) // 18% of $200 = $36
         ->assertSet('total', 23600); // $236 in cents
 });
 
@@ -110,7 +110,7 @@ test('can populate form for editing', function () {
             'description' => 'Edit Service',
             'quantity' => 1,
             'unit_price' => 5000,
-            'tax_rate' => 18,
+            'tax_rate' => 1800, // 18% in basis points
         ],
     ]);
 

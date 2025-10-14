@@ -326,7 +326,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
         foreach ($items as $item) {
             $lineTotal = $item['quantity'] * $item['unit_price'];
             $subtotal += $lineTotal;
-            $taxTotal += $lineTotal * ($item['tax_rate'] / 100);
+            $taxTotal += $lineTotal * ($item['tax_rate'] / 10000); // Convert basis points to decimal
         }
 
         $total = $subtotal + $taxTotal;
