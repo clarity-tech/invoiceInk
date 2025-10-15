@@ -3,6 +3,7 @@
 use App\Models\Invoice;
 use App\Services\EstimateToInvoiceConverter;
 use App\Services\InvoiceCalculator;
+use App\Services\InvoiceNumberingService;
 
 test('can convert estimate to invoice', function () {
     // Create an estimate with items
@@ -30,7 +31,7 @@ test('can convert estimate to invoice', function () {
         ],
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
     $invoice = $converter->convert($estimate);
 
     expect($invoice)->toBeInstanceOf(Invoice::class);
@@ -58,7 +59,7 @@ test('converted invoice has all items from estimate', function () {
         'tax_rate' => 1800, // 18% in basis points
     ]]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->items()->count())->toBe(1);
@@ -80,7 +81,7 @@ test('converted invoice gets new invoice number', function () {
         'total' => 5900,
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->invoice_number)->not->toBe($estimate->invoice_number);
@@ -97,7 +98,7 @@ test('converted invoice has new ULID', function () {
         'total' => 3540,
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->ulid)->not->toBe($estimate->ulid);
@@ -120,7 +121,7 @@ test('converter preserves dates from estimate', function () {
         'total' => 2360,
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->issued_at->format('Y-m-d H:i:s'))->toBe($issuedAt->format('Y-m-d H:i:s'));
@@ -137,7 +138,7 @@ test('converter handles estimate without dates', function () {
         'total' => 1770,
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->issued_at)->toBeNull();
@@ -154,7 +155,7 @@ test('converter works with estimates that have no items', function () {
         'total' => 0,
     ], []); // Empty array for no items
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->items()->count())->toBe(0);
@@ -192,7 +193,7 @@ test('converter preserves complex item configurations', function () {
         ],
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->items()->count())->toBe(3);
@@ -212,7 +213,7 @@ test('converter throws exception when trying to convert non-estimate', function 
         'status' => 'draft',
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
 
     expect(fn () => $converter->convert($invoice))
         ->toThrow(\InvalidArgumentException::class, 'Only estimates can be converted to invoices');
@@ -225,26 +226,30 @@ test('converter throws exception when trying to convert invoice type', function 
         'status' => 'draft',
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
 
     expect(fn () => $converter->convert($invoice))
         ->toThrow(\InvalidArgumentException::class, 'Only estimates can be converted to invoices');
 });
 
 test('converter generates sequential invoice numbers for same month', function () {
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
+
+    // Create organization and customer to use for both estimates
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
 
     $estimate1 = createInvoiceWithItems([
         'type' => 'estimate',
         'invoice_number' => 'EST-001',
         'status' => 'sent',
-    ]);
+    ], null, $organization, $customer);
 
     $estimate2 = createInvoiceWithItems([
         'type' => 'estimate',
         'invoice_number' => 'EST-002',
         'status' => 'sent',
-    ]);
+    ], null, $organization, $customer);
 
     $invoice1 = $converter->convert($estimate1);
     $invoice2 = $converter->convert($estimate2);
@@ -260,7 +265,7 @@ test('converter generates sequential invoice numbers for same month', function (
 });
 
 test('converter generates first invoice number when none exist', function () {
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
 
     $estimate = createInvoiceWithItems([
         'type' => 'estimate',
@@ -291,7 +296,7 @@ test('converter handles estimates with null tax rates', function () {
         ],
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->items->first()->tax_rate)->toBeNull();
@@ -311,7 +316,7 @@ test('converter handles estimates with zero tax rates', function () {
         ],
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->items->first()->tax_rate)->toBe(0);
@@ -331,7 +336,7 @@ test('converter handles estimates with fractional tax rates', function () {
         ],
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->items->first()->tax_rate)->toBe(1250);
@@ -351,7 +356,7 @@ test('converter handles estimates with large quantities and amounts', function (
         ],
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->items->first()->quantity)->toBe(100);
@@ -369,7 +374,7 @@ test('converter preserves all estimate status transitions', function () {
             'status' => $status,
         ]);
 
-        $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+        $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
         $invoice = $converter->convert($estimate);
 
         expect($invoice->status)->toBe('draft');
@@ -385,7 +390,7 @@ test('converter handles estimates with null dates appropriately', function () {
         'due_at' => null,
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->issued_at)->toBeNull();
@@ -406,7 +411,7 @@ test('converter creates invoice with correct relationships', function () {
         ],
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->organization_location_id)->toBe($estimate->organization_location_id);
@@ -432,7 +437,7 @@ test('converter recalculates totals after conversion', function () {
         ],
     ]);
 
-    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
     $invoice = $converter->convert($estimate);
 
     expect($invoice->subtotal)->toBe(3000);

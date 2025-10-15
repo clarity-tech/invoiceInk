@@ -12,16 +12,14 @@
 */
 
 pest()->extend(Tests\TestCase::class)
-    // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Feature');
 
 pest()->extend(Tests\TestCase::class)
-    // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Unit');
 
 pest()->extend(Tests\DuskTestCase::class)
     ->use(Laravel\Dusk\Concerns\ProvidesBrowser::class)
-    // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Browser');
 
 /*

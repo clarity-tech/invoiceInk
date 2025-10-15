@@ -29,7 +29,7 @@ test('can create invoice with required fields', function () {
 
 test('invoice automatically generates ULID on creation', function () {
     $invoice = createInvoiceWithItems([
-        'invoice_number' => 'INV-001',
+        'invoice_number' => 'INV-ULID',
         'status' => 'draft',
         'subtotal' => 1000,
         'tax' => 180,

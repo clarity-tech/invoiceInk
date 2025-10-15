@@ -162,8 +162,10 @@ test('organization can have multiple invoices', function () {
     ], null, $organization, $customer);
 
     expect($organization->invoices)->toHaveCount(2);
-    expect($organization->invoices->pluck('invoice_number')->toArray())->toContain('INV-001');
-    expect($organization->invoices->pluck('invoice_number')->toArray())->toContain('INV-002');
+    // Check that the invoice numbers start with expected prefixes (they'll have unique suffixes)
+    $invoiceNumbers = $organization->invoices->pluck('invoice_number')->toArray();
+    expect(collect($invoiceNumbers)->filter(fn($num) => str_starts_with($num, 'INV-001')))->toHaveCount(1);
+    expect(collect($invoiceNumbers)->filter(fn($num) => str_starts_with($num, 'INV-002')))->toHaveCount(1);
 });
 
 test('organization can have multiple tax templates', function () {

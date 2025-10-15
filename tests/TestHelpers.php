@@ -9,11 +9,27 @@ use App\Models\User;
 use App\ValueObjects\EmailCollection;
 use Illuminate\Support\Facades\Hash;
 
+// Global test counter to ensure unique values
+$GLOBALS['test_counter'] = $GLOBALS['test_counter'] ?? 0;
+
+function getUniqueTestId(): int
+{
+    return ++$GLOBALS['test_counter'] . rand(1, 9999999);
+}
+
+function makeUniqueInvoiceNumber(string $baseNumber): string
+{
+    // With database cleanup, just add a simple counter for uniqueness within test run
+    $counter = getUniqueTestId();
+    return $baseNumber . '-T' . $counter;
+}
+
+
 function createUserWithTeam(array $userAttributes = [], array $teamAttributes = []): User
 {
     $defaultUserAttributes = [
         'name' => 'Test User',
-        'email' => fake()->unique()->safeEmail(),
+        'email' => 'user' . uniqid() . rand(1, 99999999) . '@example.test',
         'email_verified_at' => now(),
         'password' => 'password', // Laravel will hash this automatically via User model cast
     ];
@@ -62,9 +78,9 @@ function createOrganizationWithLocation(array $orgAttributes = [], array $locati
         'name' => 'Test Organization',
         'personal_team' => false,
         'company_name' => 'Test Organization Inc.',
-        'tax_number' => 'TX-123456789',
-        'registration_number' => 'REG-TEST-2024',
-        'emails' => new EmailCollection(['contact@testorg.com']),
+        'tax_number' => 'TX-' . getUniqueTestId(),
+        'registration_number' => 'REG-' . getUniqueTestId(),
+        'emails' => new EmailCollection(['org' . getUniqueTestId() . '@example.test']),
         'phone' => '+1-555-0123',
         'website' => 'https://testorg.com',
         'currency' => 'INR',
@@ -102,7 +118,7 @@ function createCustomerWithLocation(array $customerAttributes = [], array $locat
 
     $defaultCustomerAttributes = [
         'name' => 'Test Customer',
-        'emails' => new EmailCollection(['test@customer.com']),
+        'emails' => new EmailCollection(['customer' . getUniqueTestId() . '@example.test']),
         'primary_location_id' => $location->id,
         'organization_id' => $organization->id,
     ];
@@ -135,7 +151,7 @@ function createInvoiceWithItems(
         'organization_location_id' => $organization->primary_location_id,
         'customer_id' => $customer->id,
         'customer_location_id' => $customer->primary_location_id,
-        'invoice_number' => 'INV-'.rand(1000, 9999),
+        'invoice_number' => 'INV-' . fake()->unique()->numerify('########'),
         'status' => 'draft',
         'currency' => $organization->currency ?? 'INR',
         'exchange_rate' => 1.000000,
@@ -145,7 +161,15 @@ function createInvoiceWithItems(
         'email_recipients' => ['customer@example.com'],
     ];
 
-    $invoice = Invoice::create(array_merge($defaultInvoiceAttributes, $invoiceAttributes));
+    // Merge attributes, only make auto-generated invoice numbers unique
+    $mergedAttributes = array_merge($defaultInvoiceAttributes, $invoiceAttributes);
+    
+    // Only apply uniqueness suffix if invoice_number wasn't explicitly provided in test
+    if (!isset($invoiceAttributes['invoice_number']) && isset($mergedAttributes['invoice_number'])) {
+        $mergedAttributes['invoice_number'] = makeUniqueInvoiceNumber($mergedAttributes['invoice_number']);
+    }
+
+    $invoice = Invoice::create($mergedAttributes);
 
     // Create default items if none provided
     if ($items === null) {
@@ -196,14 +220,14 @@ function loginUserInBrowser($browser, ?User $user = null): User
     // Use seeded test user (created by BrowserTestSeeder)
     if (!$user) {
         $user = User::where('email', 'browser@example.test')->first();
-        
+
         if (!$user) {
             throw new \Exception('Browser test user not found. Please run: sail artisan migrate:fresh --env=testing --seed');
         }
     }
-    
+
     // Use Laravel Dusk's built-in loginAs method with seeded user
     $browser->loginAs($user, 'web');
-    
+
     return $user;
 }
