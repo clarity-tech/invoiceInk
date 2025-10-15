@@ -1,6 +1,13 @@
 <?php
 
+use App\Models\Organization;
+use App\Models\Customer;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use Laravel\Dusk\Browser;
+use Tests\Browser\Pages\PublicInvoice;
+
+// Note: RefreshDatabase is already applied to all Browser tests via Pest.php configuration
 
 test('test basic route access', function () {
     $this->browse(function (Browser $browser) {
@@ -11,32 +18,50 @@ test('test basic route access', function () {
 });
 
 test('simple public route test', function () {
-    // Create a simple invoice manually
-    $invoice = createInvoiceWithItems([
-        'type' => 'invoice',
-        'status' => 'sent',
-        'invoice_number' => 'INV-SIMPLE-001',
-    ], [
-        [
-            'description' => 'Simple Test Service',
-            'quantity' => 1,
-            'unit_price' => 10000,
-            'tax_rate' => 18,
-        ],
+    // Create test data inline - self-contained and clean
+    $organization = Organization::factory()->withLocation()->create([
+        'name' => 'Simple Test Company',
+        'company_name' => 'Simple Test Company Ltd.',
+        'currency' => 'INR',
+    ]);
+    
+    $customer = Customer::factory()->withLocation()->for($organization)->create([
+        'name' => 'Simple Test Customer',
+    ]);
+    
+    $invoice = Invoice::factory()
+        ->invoice()
+        ->sent()
+        ->for($organization)
+        ->for($customer)
+        ->withLocations()
+        ->create([
+            'invoice_number' => 'SIMPLE-001',
+            'subtotal' => 100000, // ₹1000
+            'tax' => 18000,       // ₹180 (18%)
+            'total' => 118000,    // ₹1180
+        ]);
+    
+    // Add invoice item
+    InvoiceItem::factory()->for($invoice)->create([
+        'description' => 'Web Development Services',
+        'quantity' => 10,
+        'unit_price' => 10000, // ₹100
+        'tax_rate' => 18.00,
     ]);
 
-    // Debug: verify the invoice was created
-    expect($invoice->ulid)->not()->toBeEmpty();
-    expect($invoice->invoice_number)->toBe('INV-SIMPLE-001');
-
-    // Also verify the route exists by checking if it passes basic feature tests
+    // Verify the invoice is publicly accessible
     $response = $this->get("/invoices/{$invoice->ulid}");
     expect($response->status())->toBe(200);
 
     $this->browse(function (Browser $browser) use ($invoice) {
-        $url = "/invoices/{$invoice->ulid}";
-        $browser->visit($url)
-            ->screenshot('simple_public_invoice_debug')
-            ->assertSee($invoice->invoice_number);
+        // Use PublicInvoice page object for clean navigation
+        $publicInvoicePage = new PublicInvoice($invoice->ulid);
+        
+        $browser->visit($publicInvoicePage)
+            ->pause(2000) // Wait for page to load
+            ->screenshot('simple_public_invoice')
+            ->assertSee($invoice->invoice_number)
+            ->assertSee('Web Development Services');
     });
 });

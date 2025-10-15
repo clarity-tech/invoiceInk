@@ -2,9 +2,9 @@
 
 use App\Models\Organization;
 use App\Models\TeamInvitation;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
+
+
 
 beforeEach(function () {
     $this->organization = Organization::factory()->create();

@@ -2,11 +2,11 @@
 
 use App\Actions\Fortify\ResetUserPassword;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
-uses(RefreshDatabase::class);
+
 
 beforeEach(function () {
     $this->action = new ResetUserPassword;

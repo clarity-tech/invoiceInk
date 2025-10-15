@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
+
+
 
 test('root route redirects to login when unauthenticated', function () {
     $response = $this->get('/');

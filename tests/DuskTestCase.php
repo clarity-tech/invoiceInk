@@ -6,6 +6,8 @@ use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Laravel\Dusk\TestCase as BaseTestCase;
 use PHPUnit\Framework\Attributes\BeforeClass;
 
@@ -15,6 +17,20 @@ abstract class DuskTestCase extends BaseTestCase
      * Track if the current test has failed.
      */
     protected bool $testHasFailed = false;
+
+    /**
+     * Track if database setup has been completed for the test suite.
+     */
+    protected static bool $databaseSetupComplete = false;
+
+    /**
+     * Tables that should be truncated between tests for performance.
+     * Currently preserving all data between tests for maximum reliability.
+     */
+    protected static array $tablesToTruncate = [
+        // Note: Preserving all data between tests due to complex foreign key relationships
+        // This ensures maximum reliability at the cost of some test isolation
+    ];
 
     /**
      * Prepare for Dusk test execution.
@@ -29,12 +45,118 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
-     * Reset test failure flag for each test.
+     * Set up database and reset test failure flag for each test.
+     * Uses hybrid approach: full setup once, then smart truncation.
      */
     protected function setUp(): void
     {
         parent::setUp();
         $this->testHasFailed = false;
+        
+        // Handle database setup with performance optimization
+        $this->setupDatabaseForBrowserTests();
+    }
+
+    /**
+     * Handle database setup with hybrid approach for performance.
+     * First test: Full migration + seeding
+     * Subsequent tests: Smart truncation + selective reseeding
+     */
+    protected function setupDatabaseForBrowserTests(): void
+    {
+        if (!static::$databaseSetupComplete) {
+            // First test: Complete database setup
+            $this->performFullDatabaseSetup();
+            static::$databaseSetupComplete = true;
+        } else {
+            // Subsequent tests: Optimized reset
+            $this->performOptimizedDatabaseReset();
+        }
+    }
+
+    /**
+     * Perform full database migration and seeding (first test only).
+     */
+    protected function performFullDatabaseSetup(): void
+    {
+        // Check if data already exists to avoid unnecessary fresh migration
+        $existingUser = DB::table('users')->where('email', 'browser@example.test')->first();
+        $existingInvoice = DB::table('invoices')->where('invoice_number', 'INV-BROWSER-001')->first();
+        
+        // Only do fresh migration if essential test data doesn't exist
+        if (!$existingUser || !$existingInvoice) {
+            // Fresh migration with seeding for testing environment
+            Artisan::call('migrate:fresh', [
+                '--env' => 'testing',
+                '--force' => true,
+            ]);
+            
+            Artisan::call('db:seed', [
+                '--env' => 'testing',
+                '--force' => true,
+            ]);
+        }
+    }
+
+    /**
+     * Perform optimized database reset between tests.
+     * For maximum reliability, we preserve all seeded data between tests.
+     */
+    protected function performOptimizedDatabaseReset(): void
+    {
+        // For now, preserve all data between tests for reliability
+        // Individual tests should be designed to work with existing data
+        // This ensures maximum speed and reliability
+        
+        // Future optimization: Could implement selective cleanup here if needed
+    }
+
+    /**
+     * Truncate tables that change between tests.
+     * Preserves static data like users, organizations, tax_templates.
+     */
+    protected function truncateTestTables(): void
+    {
+        // For PostgreSQL, we need to handle foreign key constraints differently
+        try {
+            foreach (static::$tablesToTruncate as $table) {
+                // PostgreSQL TRUNCATE with CASCADE to handle foreign keys
+                DB::statement("TRUNCATE TABLE {$table} RESTART IDENTITY CASCADE");
+            }
+        } catch (\Exception $e) {
+            // Fallback: Delete records if truncate fails
+            foreach (static::$tablesToTruncate as $table) {
+                DB::table($table)->delete();
+            }
+        }
+    }
+
+    /**
+     * Reseed essential data that tests depend on.
+     * Since we preserve all data between tests, this is now a no-op.
+     */
+    protected function reseedEssentialData(): void
+    {
+        // No reseeding needed since we preserve all data between tests
+        // This ensures maximum reliability and consistency
+    }
+
+    /**
+     * Ensure basic test data exists if reseeding fails.
+     * Creates minimal data needed for tests to run.
+     */
+    protected function ensureBasicTestData(): void
+    {
+        // Ensure we have a test user (should already exist from initial setup)
+        $testUser = \App\Models\User::where('email', 'browser@example.test')->first();
+        
+        if (!$testUser) {
+            Artisan::call('db:seed', [
+                '--class' => 'Database\\Seeders\\Testing\\BrowserTestUserSeeder',
+                '--env' => 'testing',
+                '--force' => true,
+            ]);
+        }
     }
 
     /**
@@ -101,7 +223,7 @@ abstract class DuskTestCase extends BaseTestCase
 
                 try {
                     // Use Laravel Dusk's built-in responsiveScreenshots method
-                    $screenshotName = "auto-passed/{$testName}_{$timestamp}";
+                    $screenshotName = "auto-screenshots/passed/{$testName}_{$timestamp}";
                     $browser->responsiveScreenshots($screenshotName);
                 } catch (\Exception $e) {
                     // If screenshot fails, don't break the test

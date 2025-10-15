@@ -2,19 +2,17 @@
 
 use App\Models\Customer;
 use App\Models\Organization;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Dusk\Browser;
 
-uses(RefreshDatabase::class);
 
 test('user can view the dashboard', function () {
     $this->browse(function (Browser $browser) {
         loginUserInBrowser($browser);
 
-        $browser->visit('/dashboard')
+        $browser->assertAuthenticated()
+            ->visit('/dashboard')
             ->screenshot('dashboard_view')
-            ->assertDontSee('Email') // Should not see login form
-            ->assertDontSee('Password'); // Should not see login form
+            ->assertSee('Dashboard'); // Check for actual dashboard content
     });
 });
 
@@ -303,23 +301,14 @@ test('user can add multiple items to invoice', function () {
 });
 
 test('user can view invoice list with created invoices', function () {
-    // Create test data
-    $organization = Organization::factory()->withLocation()->create();
-    $customer = Customer::factory()->withLocation()->create();
-
-    // Create some test invoices using factories
-    \App\Models\Invoice::factory()->count(3)->create([
-        'organization_location_id' => $organization->primaryLocation->id,
-        'customer_location_id' => $customer->primaryLocation->id,
-    ]);
-
     $this->browse(function (Browser $browser) {
         loginUserInBrowser($browser);
 
         $browser->visit('/invoices')
             ->assertSee('Invoices')
             ->screenshot('invoices_list_with_data')
-            // ->assertSee('INV-') // May not have any invoices initially
+            ->assertSee('INV-BROWSER-001') // Should see seeded invoices
+            ->assertSee('EST-BROWSER-001') // Should see seeded estimates
             ->screenshot('invoices_list_populated');
     });
 });

@@ -1,9 +1,9 @@
 <?php
 
 use App\Models\Membership;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
+
+
 
 beforeEach(function () {
     $this->membership = new Membership;

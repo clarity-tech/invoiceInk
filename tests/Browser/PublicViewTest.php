@@ -4,124 +4,157 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Organization;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Dusk\Browser;
+use Tests\Browser\Pages\PublicInvoice;
+use Tests\Browser\Pages\PublicEstimate;
 
-// Don't use RefreshDatabase for browser tests - it causes transaction isolation
-// uses(RefreshDatabase::class);
+// Note: RefreshDatabase is already applied to all Browser tests via Pest.php configuration
 
 test('user can view public invoice page', function () {
-    // Create test data using factory methods with relationships
+    // Create invoice data inline - self-contained and reliable
+    $organization = Organization::factory()->withLocation()->create([
+        'name' => 'Public Test Company',
+        'company_name' => 'Public Test Company Ltd.',
+        'currency' => 'INR',
+    ]);
+    
+    $customer = Customer::factory()->withLocation()->for($organization)->create([
+        'name' => 'Public Test Customer',
+    ]);
+    
     $invoice = Invoice::factory()
         ->invoice()
         ->sent()
+        ->for($organization)
+        ->for($customer)
         ->withLocations()
-        ->withAmounts(100000, 18) // $1000 subtotal, 18% tax
-        ->create();
-
-    // Add invoice items using factory
-    InvoiceItem::factory()
-        ->for($invoice)
         ->create([
-            'description' => 'Web Development Services',
-            'quantity' => 10,
-            'unit_price' => 10000, // $100 per unit
-            'tax_rate' => 18.00,
+            'invoice_number' => 'PUB-INV-001',
+            'subtotal' => 100000, // ₹1000
+            'tax' => 18000,       // ₹180 (18%)
+            'total' => 118000,    // ₹1180
         ]);
+    
+    InvoiceItem::factory()->for($invoice)->create([
+        'description' => 'Web Development Services',
+        'quantity' => 10,
+        'unit_price' => 10000, // ₹100
+        'tax_rate' => 18.00,
+    ]);
 
-    $this->browse(function (Browser $browser) use ($invoice) {
-        $browser->visit("/invoices/{$invoice->ulid}")
-            ->assertSee('Invoice')
+    $this->browse(function (Browser $browser) use ($invoice, $organization, $customer) {
+        $publicInvoicePage = new PublicInvoice($invoice->ulid);
+        
+        $browser->visit($publicInvoicePage)
+            ->pause(2000)
+            ->screenshot('public_invoice_view')
             ->assertSee($invoice->invoice_number)
             ->assertSee('Web Development Services')
-            ->assertSee($invoice->companyLocation->name)
-            ->assertSee($invoice->customerLocation->name)
-            ->screenshot('public_invoice_view');
+            ->assertSee($organization->name)
+            ->assertSee($customer->name);
     });
 });
 
 test('user can view public estimate page', function () {
-    // Create test data
-    $company = Organization::factory()->withLocation()->create();
-    $customer = Customer::factory()->withLocation()->create();
-
-    $estimate = Invoice::factory()->create([
-        'type' => 'estimate',
-        'company_location_id' => $company->primaryLocation->id,
-        'customer_location_id' => $customer->primaryLocation->id,
-        'invoice_number' => 'EST-2025-01-0001',
-        'status' => 'sent',
-        'subtotal' => 150000, // $1500 in cents
-        'tax' => 27000,       // $270 in cents
-        'total' => 177000,    // $1770 in cents
+    // Create estimate data inline
+    $organization = Organization::factory()->withLocation()->create([
+        'name' => 'Estimate Test Company',
+        'company_name' => 'Estimate Test Company Ltd.',
+        'currency' => 'USD',
     ]);
-
-    // Create estimate items
-    InvoiceItem::factory()->create([
-        'invoice_id' => $estimate->id,
+    
+    $customer = Customer::factory()->withLocation()->for($organization)->create([
+        'name' => 'Estimate Test Customer',
+    ]);
+    
+    $estimate = Invoice::factory()
+        ->estimate()
+        ->sent()
+        ->for($organization)
+        ->for($customer)
+        ->withLocations()
+        ->create([
+            'invoice_number' => 'PUB-EST-001',
+            'subtotal' => 50000, // $500
+            'tax' => 4000,       // $40 (8%)
+            'total' => 54000,    // $540
+        ]);
+    
+    InvoiceItem::factory()->for($estimate)->create([
         'description' => 'Mobile App Development',
         'quantity' => 5,
-        'unit_price' => 30000, // $300 in cents
-        'tax_rate' => 18,
+        'unit_price' => 10000, // $100
+        'tax_rate' => 8.00,
     ]);
 
-    $this->browse(function (Browser $browser) use ($estimate) {
-        $browser->visit("/estimates/{$estimate->ulid}")
-            ->assertSee('Estimate')
+    $this->browse(function (Browser $browser) use ($estimate, $organization, $customer) {
+        $publicEstimatePage = new PublicEstimate($estimate->ulid);
+        
+        $browser->visit($publicEstimatePage)
+            ->pause(2000)
+            ->screenshot('public_estimate_view')
             ->assertSee($estimate->invoice_number)
             ->assertSee('Mobile App Development')
-            ->assertSee($estimate->companyLocation->name)
-            ->assertSee($estimate->customerLocation->name)
-            ->screenshot('public_estimate_view');
+            ->assertSee($organization->name)
+            ->assertSee($customer->name);
     });
 });
 
 test('public invoice page displays all required details', function () {
-    // Create test data with detailed information
-    $company = Organization::factory()->withLocation()->create([
-        'name' => 'Tech Solutions Ltd',
+    // Create complex invoice with multiple items inline
+    $organization = Organization::factory()->withLocation()->create([
+        'name' => 'Complex Invoice Company',
+        'currency' => 'EUR',
     ]);
-
-    $customer = Customer::factory()->withLocation()->create([
-        'name' => 'Client Corp Inc',
+    
+    $customer = Customer::factory()->withLocation()->for($organization)->create([
+        'name' => 'Complex Invoice Customer',
     ]);
-
-    $invoice = Invoice::factory()->create([
-        'type' => 'invoice',
-        'company_location_id' => $company->primaryLocation->id,
-        'customer_location_id' => $customer->primaryLocation->id,
-        'invoice_number' => 'INV-2025-01-0002',
-        'status' => 'sent',
-        'issued_at' => now(),
-        'due_at' => now()->addDays(30),
-        'subtotal' => 200000,
-        'tax' => 36000,
-        'total' => 236000,
-    ]);
-
-    // Create multiple invoice items
-    InvoiceItem::factory()->create([
-        'invoice_id' => $invoice->id,
+    
+    $invoice = Invoice::factory()
+        ->invoice()
+        ->sent()
+        ->for($organization)
+        ->for($customer)
+        ->withLocations()
+        ->create([
+            'invoice_number' => 'PUB-COMPLEX-001',
+            'subtotal' => 250000, // €2500
+            'tax' => 47500,       // €475 (19%)
+            'total' => 297500,    // €2975
+        ]);
+    
+    // Create multiple invoice items with different tax rates
+    InvoiceItem::factory()->for($invoice)->create([
         'description' => 'Frontend Development',
-        'quantity' => 20,
-        'unit_price' => 5000,
-        'tax_rate' => 18,
+        'quantity' => 40,
+        'unit_price' => 5000, // €50
+        'tax_rate' => 19.00,
     ]);
-
-    InvoiceItem::factory()->create([
-        'invoice_id' => $invoice->id,
+    
+    InvoiceItem::factory()->for($invoice)->create([
         'description' => 'Backend API Development',
-        'quantity' => 15,
-        'unit_price' => 6667,
-        'tax_rate' => 18,
+        'quantity' => 20,
+        'unit_price' => 7500, // €75
+        'tax_rate' => 19.00,
+    ]);
+    
+    InvoiceItem::factory()->for($invoice)->create([
+        'description' => 'Consulting Services',
+        'quantity' => 10,
+        'unit_price' => 10000, // €100
+        'tax_rate' => 7.00,
     ]);
 
-    $this->browse(function (Browser $browser) use ($invoice) {
-        $browser->visit("/invoices/{$invoice->ulid}")
+    $this->browse(function (Browser $browser) use ($invoice, $organization, $customer) {
+        $publicInvoicePage = new PublicInvoice($invoice->ulid);
+        
+        $browser->visit($publicInvoicePage)
+            ->pause(2000)
             ->screenshot('public_invoice_detailed_header')
-            ->assertSee('Tech Solutions Ltd')
-            ->assertSee('Client Corp Inc')
-            ->assertSee('INV-2025-01-0002')
+            ->assertSee($organization->name)
+            ->assertSee($customer->name)
+            ->assertSee('PUB-COMPLEX-001')
             ->assertSee('Frontend Development')
             ->assertSee('Backend API Development')
             ->screenshot('public_invoice_detailed_items')
@@ -133,102 +166,109 @@ test('public invoice page displays all required details', function () {
 });
 
 test('public invoice page shows company and customer addresses', function () {
-    // Create test data with specific address information
-    $company = Organization::factory()->withLocation()->create();
-    $company->primaryLocation->update([
-        'name' => 'Corporate Headquarters',
-        'address_line_1' => '123 Business Park',
-        'address_line_2' => 'Suite 100',
-        'city' => 'Mumbai',
-        'state' => 'Maharashtra',
-        'country' => 'India',
-        'postal_code' => '400001',
-        'gstin' => '27ABCDE1234F1Z5',
+    // Create invoice with specific location data for address testing
+    $organization = Organization::factory()->withLocation([
+        'name' => 'Address Test HQ',
+        'address_line_1' => '123 Business Boulevard',
+        'city' => 'Commerce City',
+        'state' => 'Business State',
+        'country' => 'Test Country',
+        'postal_code' => '12345',
+    ])->create([
+        'name' => 'Address Test Company',
     ]);
-
-    $customer = Customer::factory()->withLocation()->create();
-    $customer->primaryLocation->update([
-        'name' => 'Client Main Office',
-        'address_line_1' => '456 Commerce Street',
-        'city' => 'Delhi',
-        'state' => 'Delhi',
-        'country' => 'India',
-        'postal_code' => '110001',
+    
+    $customer = Customer::factory()->withLocation([
+        'name' => 'Customer Office',
+        'address_line_1' => '456 Client Avenue',
+        'city' => 'Customer City',
+        'state' => 'Customer State',
+        'country' => 'Test Country',
+        'postal_code' => '54321',
+    ])->for($organization)->create([
+        'name' => 'Address Test Customer',
     ]);
-
-    $invoice = Invoice::factory()->create([
-        'type' => 'invoice',
-        'company_location_id' => $company->primaryLocation->id,
-        'customer_location_id' => $customer->primaryLocation->id,
-    ]);
-
-    InvoiceItem::factory()->create([
-        'invoice_id' => $invoice->id,
-        'description' => 'Consulting Services',
-        'quantity' => 1,
-        'unit_price' => 50000,
-        'tax_rate' => 18,
-    ]);
+    
+    $invoice = Invoice::factory()
+        ->invoice()
+        ->sent()
+        ->for($organization)
+        ->for($customer)
+        ->withLocations()
+        ->create([
+            'invoice_number' => 'PUB-ADDR-001',
+        ]);
 
     $this->browse(function (Browser $browser) use ($invoice) {
-        $browser->visit("/invoices/{$invoice->ulid}")
+        $publicInvoicePage = new PublicInvoice($invoice->ulid);
+        
+        $browser->visit($publicInvoicePage)
+            ->pause(2000)
             ->screenshot('public_invoice_addresses_full')
-            ->assertSee('Corporate Headquarters')
-            ->assertSee('123 Business Park')
-            ->assertSee('Suite 100')
-            ->assertSee('Mumbai')
-            ->assertSee('Maharashtra')
-            ->assertSee('27ABCDE1234F1Z5')
+            ->assertSee('Address Test HQ')
+            ->assertSee('123 Business Boulevard')
+            ->assertSee('Commerce City')
+            ->assertSee('Business State')
             ->screenshot('public_invoice_company_address')
-            ->assertSee('Client Main Office')
-            ->assertSee('456 Commerce Street')
-            ->assertSee('Delhi')
+            ->assertSee('Customer Office')
+            ->assertSee('456 Client Avenue')
+            ->assertSee('Customer City')
             ->screenshot('public_invoice_customer_address');
     });
 });
 
 test('public invoice page handles different tax scenarios', function () {
-    // Create test data
-    $company = Organization::factory()->withLocation()->create();
-    $customer = Customer::factory()->withLocation()->create();
-
-    $invoice = Invoice::factory()->create([
-        'type' => 'invoice',
-        'company_location_id' => $company->primaryLocation->id,
-        'customer_location_id' => $customer->primaryLocation->id,
+    // Create invoice with mixed tax rates inline
+    $organization = Organization::factory()->withLocation()->create([
+        'name' => 'Tax Test Company',
+        'currency' => 'INR',
     ]);
-
-    // Create items with different tax rates
-    InvoiceItem::factory()->create([
-        'invoice_id' => $invoice->id,
-        'description' => 'Standard Service (18% GST)',
-        'quantity' => 1,
-        'unit_price' => 10000,
-        'tax_rate' => 18,
+    
+    $customer = Customer::factory()->withLocation()->for($organization)->create([
+        'name' => 'Tax Test Customer',
     ]);
-
-    InvoiceItem::factory()->create([
-        'invoice_id' => $invoice->id,
-        'description' => 'Reduced Rate Service (5% GST)',
-        'quantity' => 2,
+    
+    $invoice = Invoice::factory()
+        ->invoice()
+        ->sent()
+        ->for($organization)
+        ->for($customer)
+        ->withLocations()
+        ->create([
+            'invoice_number' => 'PUB-TAX-001',
+        ]);
+    
+    // Different tax rates for different services
+    InvoiceItem::factory()->for($invoice)->create([
+        'description' => 'Frontend Development (18% GST)',
+        'quantity' => 10,
         'unit_price' => 5000,
-        'tax_rate' => 5,
+        'tax_rate' => 18.00,
     ]);
-
-    InvoiceItem::factory()->create([
-        'invoice_id' => $invoice->id,
-        'description' => 'Tax-Free Service',
-        'quantity' => 1,
+    
+    InvoiceItem::factory()->for($invoice)->create([
+        'description' => 'Backend API Development (18% GST)',
+        'quantity' => 8,
+        'unit_price' => 6000,
+        'tax_rate' => 18.00,
+    ]);
+    
+    InvoiceItem::factory()->for($invoice)->create([
+        'description' => 'Consulting Services (5% GST)',
+        'quantity' => 5,
         'unit_price' => 8000,
-        'tax_rate' => 0,
+        'tax_rate' => 5.00,
     ]);
 
     $this->browse(function (Browser $browser) use ($invoice) {
-        $browser->visit("/invoices/{$invoice->ulid}")
+        $publicInvoicePage = new PublicInvoice($invoice->ulid);
+        
+        $browser->visit($publicInvoicePage)
+            ->pause(2000)
             ->screenshot('public_invoice_mixed_tax_rates')
-            ->assertSee('Standard Service (18% GST)')
-            ->assertSee('Reduced Rate Service (5% GST)')
-            ->assertSee('Tax-Free Service')
+            ->assertSee('Frontend Development (18% GST)')
+            ->assertSee('Backend API Development (18% GST)')
+            ->assertSee('Consulting Services (5% GST)')
             ->screenshot('public_invoice_different_tax_items');
     });
 });

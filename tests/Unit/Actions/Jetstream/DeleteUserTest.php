@@ -3,9 +3,9 @@
 use App\Actions\Jetstream\DeleteUser;
 use App\Models\Organization;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
+
+
 
 beforeEach(function () {
     $this->action = new DeleteUser;

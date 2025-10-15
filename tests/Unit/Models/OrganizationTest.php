@@ -7,9 +7,9 @@ use App\Models\Organization;
 use App\Models\TaxTemplate;
 use App\Models\User;
 use App\ValueObjects\EmailCollection;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
+
+
 
 test('can create organization with required fields', function () {
     $user = User::factory()->create();

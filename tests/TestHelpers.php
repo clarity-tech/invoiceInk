@@ -7,6 +7,7 @@ use App\Models\Location;
 use App\Models\Organization;
 use App\Models\User;
 use App\ValueObjects\EmailCollection;
+use Illuminate\Support\Facades\Hash;
 
 function createUserWithTeam(array $userAttributes = [], array $teamAttributes = []): User
 {
@@ -192,30 +193,17 @@ function createLocation(string $locatableType, int $locatableId, array $attribut
 
 function loginUserInBrowser($browser, ?User $user = null): User
 {
-    if (! $user) {
-        // Create user with factory method that ensures proper password hashing
-        $user = User::factory()->create([
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => 'password', // Factory will handle hashing properly
-        ]);
-
-        // Create organization for the user
-        $organization = $user->ownedTeams()->create([
-            'name' => 'Test Organization',
-            'user_id' => $user->id,
-            'personal_team' => true,
-            'company_name' => 'Test Organization Inc.',
-            'currency' => 'INR',
-        ]);
-
-        // Set current team
-        $user->current_team_id = $organization->id;
-        $user->save();
+    // Use seeded test user (created by BrowserTestSeeder)
+    if (!$user) {
+        $user = User::where('email', 'browser@example.test')->first();
+        
+        if (!$user) {
+            throw new \Exception('Browser test user not found. Please run: sail artisan migrate:fresh --env=testing --seed');
+        }
     }
-
-    // Use standard loginAs with web guard
+    
+    // Use Laravel Dusk's built-in loginAs method with seeded user
     $browser->loginAs($user, 'web');
-
+    
     return $user;
 }

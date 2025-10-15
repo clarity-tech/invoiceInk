@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'chrome' => [
+        'enabled' => env('CHROME_SERVICE_ENABLED', true),
+        'url' => env('CHROME_SERVICE_URL', 'http://chrome:3000'),
+        'timeout' => env('CHROME_SERVICE_TIMEOUT', 30),
+    ],
+
 ];

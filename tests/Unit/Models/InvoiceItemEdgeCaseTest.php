@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
+
+
 
 test('invoice item handles very large numbers', function () {
     $invoice = createInvoiceWithItems([

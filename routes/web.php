@@ -35,3 +35,4 @@ Route::middleware([
     Route::get('/customers', CustomerManager::class)->name('customers.index');
     Route::get('/invoices', InvoiceWizard::class)->name('invoices.index');
 });
+

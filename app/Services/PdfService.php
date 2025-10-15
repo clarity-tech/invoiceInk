@@ -4,8 +4,7 @@ namespace App\Services;
 
 use App\Models\Invoice;
 use Illuminate\Support\Facades\View;
-use Spatie\Browsershot\Browsershot;
-use Spatie\Browsershot\Exceptions\CouldNotTakeBrowsershot;
+use Illuminate\Support\Facades\Http;
 
 class PdfService
 {
@@ -39,18 +38,54 @@ class PdfService
     private function generatePdfFromHtml(string $html, string $filename): string
     {
         try {
-            $pdfContent = Browsershot::html($html)
-                ->paperSize(210, 297, 'mm') // A4 size
-                ->margins(10, 10, 10, 10, 'mm')
-                ->showBackground()
-                ->waitUntilNetworkIdle()
-                ->pdf();
+            // Use Chrome HTTP service when enabled
+            if ($this->shouldUseRemoteChrome()) {
+                return $this->generatePdfViaHttpService($html);
+            }
 
-            return $pdfContent;
-        } catch (CouldNotTakeBrowsershot $e) {
+            // Fallback to local generation (if needed for local development)
+            throw new \Exception('PDF generation requires Chrome service to be enabled');
+        } catch (\Exception $e) {
             throw new \Exception('Failed to generate PDF: '.$e->getMessage());
         }
     }
+
+    /**
+     * Generate PDF via Chrome HTTP service
+     */
+    private function generatePdfViaHttpService(string $html): string
+    {
+        $response = Http::timeout(config('services.chrome.timeout', 30))
+            ->post(config('services.chrome.url') . '/generate-pdf', [
+                'html' => $html,
+                'options' => [
+                    'format' => 'A4',
+                    'margin' => [
+                        'top' => '10mm',
+                        'right' => '10mm',
+                        'bottom' => '10mm',
+                        'left' => '10mm'
+                    ],
+                    'printBackground' => true
+                ]
+            ]);
+
+        if ($response->failed()) {
+            $errorMessage = $response->json('error') ?? 'PDF generation failed';
+            throw new \Exception("PDF generation failed: {$errorMessage}");
+        }
+
+        return $response->body();
+    }
+
+    /**
+     * Check if we should use remote Chrome instance
+     */
+    private function shouldUseRemoteChrome(): bool
+    {
+        return config('services.chrome.enabled', false);
+    }
+
 
     /**
      * Download PDF for an invoice

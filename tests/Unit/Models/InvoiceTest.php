@@ -5,9 +5,9 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Organization;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
+
+
 
 test('can create invoice with required fields', function () {
     $invoice = createInvoiceWithItems([

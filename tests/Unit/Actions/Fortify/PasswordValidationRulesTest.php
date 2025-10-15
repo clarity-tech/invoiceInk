@@ -1,10 +1,10 @@
 <?php
 
 use App\Actions\Fortify\PasswordValidationRules;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use Illuminate\Validation\Rules\Password;
 
-uses(RefreshDatabase::class);
+
 
 beforeEach(function () {
     $this->testClass = new class

@@ -4,7 +4,7 @@ namespace Tests\Unit\Actions\Fortify;
 
 use App\Actions\Fortify\UpdateUserProfileInformation;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -12,7 +12,7 @@ use Tests\TestCase;
 
 class UpdateUserProfileInformationTest extends TestCase
 {
-    use RefreshDatabase;
+    
 
     private UpdateUserProfileInformation $action;
 

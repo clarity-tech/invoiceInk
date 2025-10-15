@@ -35,7 +35,7 @@ test('can convert estimate to invoice', function () {
 
     expect($invoice)->toBeInstanceOf(Invoice::class);
     expect($invoice->type)->toBe('invoice');
-    expect($invoice->company_location_id)->toBe($estimate->company_location_id);
+    expect($invoice->organization_location_id)->toBe($estimate->organization_location_id);
     expect($invoice->customer_location_id)->toBe($estimate->customer_location_id);
     expect($invoice->subtotal)->toBe($estimate->subtotal);
     expect($invoice->tax)->toBe($estimate->tax);
@@ -409,7 +409,7 @@ test('converter creates invoice with correct relationships', function () {
     $converter = new EstimateToInvoiceConverter(new InvoiceCalculator);
     $invoice = $converter->convert($estimate);
 
-    expect($invoice->company_location_id)->toBe($estimate->company_location_id);
+    expect($invoice->organization_location_id)->toBe($estimate->organization_location_id);
     expect($invoice->customer_location_id)->toBe($estimate->customer_location_id);
     expect($invoice->exists)->toBeTrue();
     expect($invoice->wasRecentlyCreated)->toBeTrue();

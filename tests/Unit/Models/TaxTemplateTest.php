@@ -3,9 +3,9 @@
 use App\Models\Organization;
 use App\Models\TaxTemplate;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
+
+
 
 test('can create tax template with required fields', function () {
     $organization = createOrganizationWithLocation();

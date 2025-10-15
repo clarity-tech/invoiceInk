@@ -8,6 +8,7 @@ class DatabaseSeeder extends Seeder
 {
     /**
      * Seed the application's database with comprehensive demo data.
+     * Note: Browser tests now use inline data creation, no longer need seeders.
      */
     public function run(): void
     {

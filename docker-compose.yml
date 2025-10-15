@@ -117,6 +117,21 @@ services:
         networks:
             - sail
 
+    chrome:
+        image: 'ghcr.io/zenika/alpine-chrome:with-puppeteer'
+        ports:
+            - '${FORWARD_CHROME_PORT:-3000}:3000'
+        volumes:
+            - './docker/chrome/pdf-service.js:/usr/src/app/pdf-service.js'
+        command: ['node', '/usr/src/app/pdf-service.js']
+        networks:
+            - sail
+        healthcheck:
+            test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+
 networks:
     sail:
         driver: bridge

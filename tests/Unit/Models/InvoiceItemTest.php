@@ -2,9 +2,9 @@
 
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
+
+
 
 test('can create invoice item with all fields', function () {
     $invoice = createInvoiceWithItems([
