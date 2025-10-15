@@ -4,11 +4,13 @@ namespace App\Services;
 
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Location;
 
 class EstimateToInvoiceConverter
 {
     public function __construct(
-        private InvoiceCalculator $invoiceCalculator
+        private InvoiceCalculator $invoiceCalculator,
+        private InvoiceNumberingService $numberingService
     ) {}
 
     public function convert(Invoice $estimate): Invoice
@@ -17,7 +19,13 @@ class EstimateToInvoiceConverter
             throw new \InvalidArgumentException('Only estimates can be converted to invoices');
         }
 
-        $estimate->load('items');
+        $estimate->load('items', 'organization', 'organizationLocation');
+
+        // Generate invoice number using new numbering service
+        $invoiceNumberData = $this->numberingService->generateInvoiceNumber(
+            $estimate->organization, 
+            $estimate->organizationLocation
+        );
 
         $invoice = new Invoice([
             'type' => 'invoice',
@@ -25,7 +33,8 @@ class EstimateToInvoiceConverter
             'customer_id' => $estimate->customer_id,
             'organization_location_id' => $estimate->organization_location_id,
             'customer_location_id' => $estimate->customer_location_id,
-            'invoice_number' => $this->generateInvoiceNumber(),
+            'invoice_number' => $invoiceNumberData['invoice_number'],
+            'invoice_numbering_series_id' => $invoiceNumberData['series_id'],
             'status' => 'draft',
             'issued_at' => $estimate->issued_at,
             'due_at' => $estimate->due_at,
@@ -55,25 +64,4 @@ class EstimateToInvoiceConverter
         return $invoice;
     }
 
-    private function generateInvoiceNumber(): string
-    {
-        $prefix = 'INV';
-        $year = now()->year;
-        $month = now()->format('m');
-
-        $lastInvoice = Invoice::where('type', 'invoice')
-            ->where('invoice_number', 'like', "{$prefix}-{$year}-{$month}-%")
-            ->orderBy('invoice_number', 'desc')
-            ->first();
-
-        if (! $lastInvoice) {
-            $sequence = 1;
-        } else {
-            $lastNumber = $lastInvoice->invoice_number;
-            $parts = explode('-', $lastNumber);
-            $sequence = (int) end($parts) + 1;
-        }
-
-        return sprintf('%s-%s-%s-%04d', $prefix, $year, $month, $sequence);
-    }
 }

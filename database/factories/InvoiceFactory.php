@@ -6,6 +6,7 @@ use App\Currency;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Organization;
+use App\Services\InvoiceNumberingService;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -31,10 +32,14 @@ class InvoiceFactory extends Factory
 
         return [
             'type' => $type,
-            'organization_id' => null, // Will be set by relationships
-            'customer_id' => null, // Will be set by relationships
-            'organization_location_id' => null, // Will be set by relationships
-            'customer_location_id' => null, // Will be set by relationships
+            'organization_id' => Organization::factory()->withLocation(),
+            'customer_id' => Customer::factory()->withLocation(),
+            'organization_location_id' => function (array $attributes) {
+                return Organization::find($attributes['organization_id'])->primaryLocation->id;
+            },
+            'customer_location_id' => function (array $attributes) {
+                return Customer::find($attributes['customer_id'])->primaryLocation->id;
+            },
             'invoice_number' => $number,
             'status' => fake()->randomElement(['draft', 'sent', 'paid', 'void']),
             'issued_at' => fake()->optional(0.8)->dateTimeBetween('-6 months', 'now'),
@@ -51,14 +56,19 @@ class InvoiceFactory extends Factory
      */
     public function withLocations(): static
     {
-        return $this->afterMaking(function (Invoice $invoice) {
-            $organization = Organization::factory()->withLocation()->create();
-            $customer = Customer::factory()->withLocation()->create();
-
-            $invoice->organization_id = $organization->id;
-            $invoice->customer_id = $customer->id;
-            $invoice->organization_location_id = $organization->primaryLocation->id;
-            $invoice->customer_location_id = $customer->primaryLocation->id;
+        return $this->afterCreating(function (Invoice $invoice) {
+            // Use numbering service for invoices after creation
+            if ($invoice->type === 'invoice') {
+                $numberingService = new InvoiceNumberingService();
+                $invoiceNumberData = $numberingService->generateInvoiceNumber(
+                    $invoice->organization, 
+                    $invoice->organizationLocation
+                );
+                $invoice->update([
+                    'invoice_number' => $invoiceNumberData['invoice_number'],
+                    'invoice_numbering_series_id' => $invoiceNumberData['series_id'],
+                ]);
+            }
         });
     }
 
@@ -69,7 +79,7 @@ class InvoiceFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'type' => 'invoice',
-            'invoice_number' => 'INV-'.fake()->unique()->numberBetween(1000, 9999),
+            'invoice_number' => 'INV-'.fake()->unique()->numberBetween(1000, 9999), // Will be overridden by numbering service when used with withLocations
             'status' => fake()->randomElement(['draft', 'sent', 'paid']),
         ]);
     }

@@ -23,6 +23,7 @@ class Invoice extends Model
         'customer_id',
         'customer_location_id',
         'invoice_number',
+        'invoice_numbering_series_id',
         'status',
         'issued_at',
         'due_at',
@@ -88,6 +89,11 @@ class Invoice extends Model
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    public function numberingSeries(): BelongsTo
+    {
+        return $this->belongsTo(InvoiceNumberingSeries::class, 'invoice_numbering_series_id');
     }
 
     protected static function booted(): void

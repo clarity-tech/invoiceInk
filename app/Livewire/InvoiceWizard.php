@@ -6,9 +6,11 @@ use Akaunting\Money\Money;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\InvoiceNumberingSeries;
 use App\Models\Location;
 use App\Models\Organization;
 use App\Services\InvoiceCalculator;
+use App\Services\InvoiceNumberingService;
 use App\Services\PdfService;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Rule;
@@ -41,6 +43,9 @@ class InvoiceWizard extends Component
 
     #[Rule('nullable|date')]
     public ?string $due_at = null;
+
+    #[Rule('nullable|exists:invoice_numbering_series,id')]
+    public ?int $invoice_numbering_series_id = null;
 
     // Items
     public array $items = [];
@@ -194,13 +199,32 @@ class InvoiceWizard extends Component
             // Delete existing items and recreate
             $invoice->items()->delete();
         } else {
+            // Generate invoice number using new numbering service for invoices only
+            $invoiceNumberData = null;
+            if ($this->type === 'invoice') {
+                $organization = Organization::find($this->organization_id);
+                $location = Location::find($this->organization_location_id);
+                $numberingService = new InvoiceNumberingService();
+                
+                // Use specific series if selected, otherwise let the service choose
+                if ($this->invoice_numbering_series_id) {
+                    $series = InvoiceNumberingSeries::find($this->invoice_numbering_series_id);
+                    if ($series) {
+                        $invoiceNumberData = $numberingService->generateInvoiceNumber($organization, $location, $series->name);
+                    }
+                } else {
+                    $invoiceNumberData = $numberingService->generateInvoiceNumber($organization, $location);
+                }
+            }
+            
             $invoice = Invoice::create([
                 'type' => $this->type,
                 'organization_id' => $this->organization_id,
                 'customer_id' => $this->customer_id,
                 'organization_location_id' => $this->organization_location_id,
                 'customer_location_id' => $this->customer_location_id,
-                'invoice_number' => $this->generateInvoiceNumber(),
+                'invoice_number' => $invoiceNumberData ? $invoiceNumberData['invoice_number'] : $this->generateInvoiceNumber(),
+                'invoice_numbering_series_id' => $invoiceNumberData ? $invoiceNumberData['series_id'] : null,
                 'status' => 'draft',
                 'issued_at' => $this->issued_at ? now()->parse($this->issued_at) : null,
                 'due_at' => $this->due_at ? now()->parse($this->due_at) : null,
@@ -268,6 +292,7 @@ class InvoiceWizard extends Component
         $this->customer_id = null;
         $this->organization_location_id = null;
         $this->customer_location_id = null;
+        $this->invoice_numbering_series_id = null;
         $this->issued_at = now()->format('Y-m-d');
         $this->due_at = now()->addDays(30)->format('Y-m-d');
         $this->items = [];
@@ -362,6 +387,38 @@ class InvoiceWizard extends Component
         $currency = $this->currentCurrency;
 
         return Money::{$currency}(0)->getCurrency()->getSymbol();
+    }
+
+    #[Computed]
+    public function availableNumberingSeries()
+    {
+        if (!$this->organization_id) {
+            return collect();
+        }
+
+        $organization = Organization::find($this->organization_id);
+        if (!$organization) {
+            return collect();
+        }
+
+        $numberingService = new InvoiceNumberingService();
+        return $numberingService->getSeriesForOrganization($organization);
+    }
+
+    #[Computed]
+    public function selectedSeriesPreview(): string
+    {
+        if (!$this->invoice_numbering_series_id) {
+            return '';
+        }
+
+        $series = InvoiceNumberingSeries::find($this->invoice_numbering_series_id);
+        if (!$series) {
+            return '';
+        }
+
+        $numberingService = new InvoiceNumberingService();
+        return $numberingService->previewNextNumber($series);
     }
 
     /**

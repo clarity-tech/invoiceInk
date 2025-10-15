@@ -109,6 +109,14 @@ class Organization extends JetstreamTeam
     }
 
     /**
+     * Get all invoice numbering series for this organization.
+     */
+    public function numberingSeries(): HasMany
+    {
+        return $this->hasMany(InvoiceNumberingSeries::class);
+    }
+
+    /**
      * Get all locations for this organization.
      */
     public function locations()

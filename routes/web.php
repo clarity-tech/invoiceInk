@@ -3,6 +3,7 @@
 use App\Http\Controllers\PublicViewController;
 use App\Livewire\CustomerManager;
 use App\Livewire\InvoiceWizard;
+use App\Livewire\NumberingSeriesManager;
 use App\Livewire\OrganizationManager;
 use Illuminate\Support\Facades\Route;
 
@@ -34,5 +35,6 @@ Route::middleware([
     Route::get('/organizations', OrganizationManager::class)->name('organizations.index');
     Route::get('/customers', CustomerManager::class)->name('customers.index');
     Route::get('/invoices', InvoiceWizard::class)->name('invoices.index');
+    Route::get('/numbering-series', NumberingSeriesManager::class)->name('numbering-series.index');
 });
 

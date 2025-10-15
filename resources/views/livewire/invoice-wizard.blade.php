@@ -189,6 +189,32 @@
                                     </div>
                                 @endif
 
+                                @if($type === 'invoice' && $organization_id && $this->availableNumberingSeries->count() > 0)
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Numbering Series (Optional)</label>
+                                        <select wire:model.live="invoice_numbering_series_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="">Auto-select best series</option>
+                                            @foreach($this->availableNumberingSeries as $series)
+                                                <option value="{{ $series->id }}">
+                                                    {{ $series->name }}
+                                                    @if($series->location)
+                                                        ({{ $series->location->name }})
+                                                    @else
+                                                        (Organization-wide)
+                                                    @endif
+                                                    - {{ $series->format_pattern }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('invoice_numbering_series_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                        @if($this->selectedSeriesPreview)
+                                            <p class="mt-1 text-sm text-gray-600">
+                                                Next invoice number: <span class="font-mono text-indigo-600">{{ $this->selectedSeriesPreview }}</span>
+                                            </p>
+                                        @endif
+                                    </div>
+                                @endif
+
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Issue Date</label>
                                     <input wire:model="issued_at" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
