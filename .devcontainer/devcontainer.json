@@ -15,9 +15,18 @@
 				"heybourn.headwind",
 				"saoudrizwan.claude-dev",
 				"mikestead.dotenv",
-				"ms-ossdata.vscode-pgsql"
+				"ms-ossdata.vscode-pgsql",
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode",
+				"eamodio.gitlen"
 			],
-			"settings": {}
+			"settings": {
+				"editor.formatOnSave": true,
+				"editor.defaultFormatter": "esbenp.prettier-vscode",
+				"editor.codeActionsOnSave": {
+					"source.fixAll.eslint": "explicit"
+				}
+			}
 		}
 	},
 	"remoteUser": "sail",
