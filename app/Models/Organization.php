@@ -4,6 +4,9 @@ namespace App\Models;
 
 use App\Casts\EmailCollectionCast;
 use App\Currency;
+use App\Enums\Country;
+use App\Enums\FinancialYearType;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -51,6 +54,10 @@ class Organization extends JetstreamTeam
         'notes',
         'primary_location_id',
         'custom_domain',
+        'country_code',
+        'financial_year_type',
+        'financial_year_start_month',
+        'financial_year_start_day',
     ];
 
     /**
@@ -65,6 +72,11 @@ class Organization extends JetstreamTeam
     ];
 
     /**
+     * The model's default attribute values.
+     */
+    protected $attributes = [];
+
+    /**
      * Get the attributes that should be cast.
      */
     protected function casts(): array
@@ -73,6 +85,10 @@ class Organization extends JetstreamTeam
             'personal_team' => 'boolean',
             'emails' => EmailCollectionCast::class,
             'currency' => \App\Currency::class,
+            'country_code' => Country::class,
+            'financial_year_type' => FinancialYearType::class,
+            'financial_year_start_month' => 'integer',
+            'financial_year_start_day' => 'integer',
         ];
     }
 
@@ -195,5 +211,122 @@ class Organization extends JetstreamTeam
     public function teamInvitations()
     {
         return $this->hasMany(\Laravel\Jetstream\Jetstream::teamInvitationModel(), 'team_id');
+    }
+
+    /**
+     * Get the current financial year for this organization.
+     */
+    public function getCurrentFinancialYear(?Carbon $date = null): string
+    {
+        $financialYearType = $this->financial_year_type ?? FinancialYearType::APRIL_MARCH;
+
+        return $financialYearType->getCurrentFinancialYear($date);
+    }
+
+    /**
+     * Get the financial year label for this organization.
+     */
+    public function getFinancialYearLabel(?Carbon $date = null): string
+    {
+        $financialYearType = $this->financial_year_type ?? FinancialYearType::APRIL_MARCH;
+
+        return $financialYearType->getFinancialYearLabel($date);
+    }
+
+    /**
+     * Get the financial year start date for this organization.
+     */
+    public function getFinancialYearStartDate(?int $year = null): Carbon
+    {
+        $financialYearType = $this->financial_year_type ?? FinancialYearType::APRIL_MARCH;
+
+        return $financialYearType->getFinancialYearStartDate($year);
+    }
+
+    /**
+     * Get the financial year end date for this organization.
+     */
+    public function getFinancialYearEndDate(?int $year = null): Carbon
+    {
+        $financialYearType = $this->financial_year_type ?? FinancialYearType::APRIL_MARCH;
+
+        return $financialYearType->getFinancialYearEndDate($year);
+    }
+
+    /**
+     * Get the next financial year reset date for this organization.
+     */
+    public function getNextFinancialYearResetDate(): Carbon
+    {
+        $currentFYStart = $this->getFinancialYearStartDate();
+        $currentFYEnd = $this->getFinancialYearEndDate();
+
+        // If we're past the current financial year end, return next year's start
+        if (now()->gt($currentFYEnd)) {
+            return $this->getFinancialYearStartDate(now()->year + 1);
+        }
+
+        // If we're before the current financial year start, return current year's start
+        if (now()->lt($currentFYStart)) {
+            return $currentFYStart;
+        }
+
+        // We're in the current financial year, so return next year's start
+        return $this->getFinancialYearStartDate($currentFYStart->year + 1);
+    }
+
+    /**
+     * Check if the financial year has changed since the last reset.
+     */
+    public function hasFinancialYearChanged(Carbon $lastResetDate, ?Carbon $currentDate = null): bool
+    {
+        $financialYearType = $this->financial_year_type ?? FinancialYearType::APRIL_MARCH;
+
+        return $financialYearType->hasFinancialYearChanged($lastResetDate, $currentDate);
+    }
+
+    /**
+     * Get the country information for this organization.
+     */
+    public function getCountryAttribute(): ?Country
+    {
+        return $this->country_code;
+    }
+
+    /**
+     * Get setup recommendations for this organization based on its country.
+     */
+    public function getSetupRecommendations(): array
+    {
+        if (! $this->country_code) {
+            return [];
+        }
+
+        $country = $this->country_code;
+        $taxInfo = $country->getTaxSystemInfo();
+        $fyOptions = $country->getFinancialYearOptions();
+        $defaultFY = $country->getDefaultFinancialYearType();
+
+        return [
+            'currency' => $country->getDefaultCurrency(),
+            'financial_year_type' => $defaultFY,
+            'recommended_numbering_format' => $country->getRecommendedNumberingFormat(),
+            'tax_system' => $taxInfo['name'],
+            'common_tax_rates' => $taxInfo['rates'],
+            'financial_year_options' => $fyOptions,
+            'default_financial_year_option' => $fyOptions[$defaultFY->value] ?? null,
+        ];
+    }
+
+    /**
+     * Get the tax system information for this organization's country.
+     */
+    public function getTaxSystemInfo(): array
+    {
+        if (! $this->country_code) {
+            return [];
+        }
+
+        return $this->country_code->getTaxSystemInfo();
     }
 }

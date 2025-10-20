@@ -23,19 +23,22 @@ class InvoiceNumberingService
         return DB::transaction(function () use ($organization, $location, $seriesName) {
             // Find the appropriate numbering series
             $series = $this->getNumberingSeries($organization, $location, $seriesName);
-            
+
+            // Validate financial year setup for FY-based series
+            $this->validateFinancialYearSetup($series, $organization);
+
             // Get the next number
             $sequenceNumber = $this->getNextNumber($series);
-            
+
             // Generate the formatted invoice number
             $invoiceNumber = $this->formatInvoiceNumber($series, $sequenceNumber);
-            
+
             // Validate uniqueness within organization
             $this->validateNumberUniqueness($invoiceNumber, $organization);
-            
+
             // Update the series counter
             $series->incrementAndSave();
-            
+
             return [
                 'invoice_number' => $invoiceNumber,
                 'series_id' => $series->id,
@@ -59,21 +62,30 @@ class InvoiceNumberingService
     {
         // Check if default series already exists
         $existingDefault = InvoiceNumberingSeries::forOrganization($organization->id)
-                                                 ->default()
-                                                 ->first();
-        
+            ->default()
+            ->first();
+
         if ($existingDefault) {
             return $existingDefault;
         }
-        
+
+        // Choose format pattern and reset frequency based on organization's financial year setup
+        $formatPattern = '{PREFIX}-{YEAR}-{MONTH}-{SEQUENCE:4}';
+        $resetFrequency = ResetFrequency::YEARLY;
+
+        if ($organization->financial_year_type && $organization->country_code) {
+            $formatPattern = '{PREFIX}-{FY}-{SEQUENCE:4}';
+            $resetFrequency = ResetFrequency::FINANCIAL_YEAR;
+        }
+
         return InvoiceNumberingSeries::create([
             'organization_id' => $organization->id,
             'location_id' => null, // Organization-wide default
             'name' => 'Default Invoice Series',
             'prefix' => 'INV',
-            'format_pattern' => '{PREFIX}-{YEAR}-{MONTH}-{SEQUENCE:4}',
+            'format_pattern' => $formatPattern,
             'current_number' => 0,
-            'reset_frequency' => ResetFrequency::YEARLY,
+            'reset_frequency' => $resetFrequency,
             'is_active' => true,
             'is_default' => true,
         ]);
@@ -103,14 +115,46 @@ class InvoiceNumberingService
     }
 
     /**
+     * Validate financial year setup for series that require it.
+     */
+    public function validateFinancialYearSetup(InvoiceNumberingSeries $series, Organization $organization): bool
+    {
+        // Check if series uses financial year reset frequency
+        if ($series->reset_frequency === ResetFrequency::FINANCIAL_YEAR) {
+            if (! $organization->financial_year_type) {
+                throw new InvalidArgumentException(
+                    "Organization must have financial year configuration to use financial year-based numbering series '{$series->name}'."
+                );
+            }
+
+            if (! $organization->country_code) {
+                throw new InvalidArgumentException(
+                    "Organization must have country configuration to use financial year-based numbering series '{$series->name}'."
+                );
+            }
+        }
+
+        // Check if series format pattern uses FY tokens
+        if (str_contains($series->format_pattern, '{FY')) {
+            if (! $organization->financial_year_type) {
+                throw new InvalidArgumentException(
+                    "Organization must have financial year configuration to use FY tokens in numbering series '{$series->name}'."
+                );
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Validate that the invoice number is unique within the organization.
      */
     public function validateNumberUniqueness(string $invoiceNumber, Organization $organization): bool
     {
         $exists = Invoice::where('organization_id', $organization->id)
-                        ->where('invoice_number', $invoiceNumber)
-                        ->where('type', 'invoice') // Only check invoices, not estimates
-                        ->exists();
+            ->where('invoice_number', $invoiceNumber)
+            ->where('type', 'invoice') // Only check invoices, not estimates
+            ->exists();
 
         if ($exists) {
             throw new InvalidArgumentException("Invoice number '{$invoiceNumber}' already exists for this organization.");
@@ -128,14 +172,15 @@ class InvoiceNumberingService
         ?string $seriesName = null
     ): InvoiceNumberingSeries {
         $query = InvoiceNumberingSeries::forOrganization($organization->id)
-                                      ->active();
+            ->active();
 
         // If a specific series name is requested
         if ($seriesName) {
             $series = $query->where('name', $seriesName)->first();
-            if (!$series) {
+            if (! $series) {
                 throw new InvalidArgumentException("Numbering series '{$seriesName}' not found for organization.");
             }
+
             return $series;
         }
 
@@ -165,6 +210,29 @@ class InvoiceNumberingService
         $pattern = $series->format_pattern;
         $now = now();
 
+        // Get financial year information if organization has financial year setup
+        $financialYearReplacements = [];
+        if ($series->organization && $series->organization->financial_year_type) {
+            $fyType = $series->organization->financial_year_type;
+            $currentFY = $fyType->getCurrentFinancialYear($now);
+            $fyStartDate = $fyType->getFinancialYearStartDate($now->year);
+            $fyEndDate = $fyType->getFinancialYearEndDate($now->year);
+
+            // If we're before the FY start date, adjust to previous year
+            if ($now->lt($fyStartDate)) {
+                $fyStartDate = $fyStartDate->subYear();
+                $fyEndDate = $fyType->getFinancialYearEndDate($fyStartDate->year);
+                $currentFY = $fyType->getCurrentFinancialYear($fyStartDate);
+            }
+
+            $financialYearReplacements = [
+                '{FY}' => $currentFY,                           // e.g., "2024-25"
+                '{FY_START}' => $fyStartDate->format('Y'),      // e.g., "2024"
+                '{FY_END}' => $fyEndDate->format('Y'),          // e.g., "2025"
+                '{FY_FULL}' => $fyType->getFinancialYearLabel($now), // e.g., "2024-2025"
+            ];
+        }
+
         // Replace pattern tokens
         $replacements = [
             '{PREFIX}' => $series->prefix,
@@ -175,11 +243,15 @@ class InvoiceNumberingService
             '{DAY}' => $now->format('d'),
         ];
 
+        // Merge financial year replacements
+        $replacements = array_merge($replacements, $financialYearReplacements);
+
         // Handle sequence number with padding
         $pattern = preg_replace_callback(
             '/\{SEQUENCE:(\d+)\}/',
             function ($matches) use ($sequenceNumber) {
                 $padding = (int) $matches[1];
+
                 return str_pad($sequenceNumber, $padding, '0', STR_PAD_LEFT);
             },
             $pattern
@@ -198,10 +270,10 @@ class InvoiceNumberingService
     public function getSeriesForOrganization(Organization $organization): \Illuminate\Database\Eloquent\Collection
     {
         return InvoiceNumberingSeries::forOrganization($organization->id)
-                                    ->active()
-                                    ->orderBy('is_default', 'desc')
-                                    ->orderBy('name')
-                                    ->get();
+            ->active()
+            ->orderBy('is_default', 'desc')
+            ->orderBy('name')
+            ->get();
     }
 
     /**
@@ -210,6 +282,7 @@ class InvoiceNumberingService
     public function previewNextNumber(InvoiceNumberingSeries $series): string
     {
         $nextSequenceNumber = $series->getNextSequenceNumber();
+
         return $this->formatInvoiceNumber($series, $nextSequenceNumber);
     }
 }

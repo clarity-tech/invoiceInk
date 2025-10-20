@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class InvoiceNumberingSeries extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'organization_id',
         'location_id',
@@ -88,13 +89,14 @@ class InvoiceNumberingSeries extends Model
             return false;
         }
 
-        if (!$this->last_reset_at) {
+        if (! $this->last_reset_at) {
             return true;
         }
 
         return match ($this->reset_frequency) {
             ResetFrequency::YEARLY => now()->year > $this->last_reset_at->year,
             ResetFrequency::MONTHLY => now()->startOfMonth()->gt($this->last_reset_at->startOfMonth()),
+            ResetFrequency::FINANCIAL_YEAR => $this->organization?->hasFinancialYearChanged($this->last_reset_at) ?? false,
             default => false,
         };
     }
@@ -111,7 +113,7 @@ class InvoiceNumberingSeries extends Model
     public function incrementAndSave(): void
     {
         $this->increment('current_number');
-        
+
         if ($this->shouldReset()) {
             $this->update(['last_reset_at' => now()]);
         }
