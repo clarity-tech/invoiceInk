@@ -20,7 +20,7 @@ return new class extends Migration
             $table->text('address_line_2')->nullable();
             $table->string('city');
             $table->string('state');
-            $table->string('country');
+            $table->string('country', 3); // ISO country code
             $table->string('postal_code');
             $table->timestamps();
         });

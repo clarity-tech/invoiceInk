@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Country;
 use App\Models\Location;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -24,7 +25,7 @@ class LocationFactory extends Factory
             'address_line_2' => fake()->optional(0.3)->secondaryAddress(),
             'city' => fake()->city(),
             'state' => fake()->state(),
-            'country' => fake()->country(),
+            'country' => fake()->randomElement(Country::cases())->value,
             'postal_code' => fake()->postcode(),
             'locatable_type' => \App\Models\Organization::class, // Default to Organization
             'locatable_id' => 1, // Default value, will be overridden by relationships
@@ -62,7 +63,7 @@ class LocationFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'gstin' => fake()->bothify('##???#####?#?#'),
-            'country' => 'India',
+            'country' => 'IN',
             'state' => fake()->randomElement([
                 'Maharashtra', 'Delhi', 'Karnataka', 'Tamil Nadu',
                 'Gujarat', 'Rajasthan', 'West Bengal', 'Uttar Pradesh',

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Country;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -27,9 +28,27 @@ class OrganizationFactory extends Factory
             'emails' => [$this->faker->companyEmail()],
             'phone' => $this->faker->phoneNumber(),
             'website' => $this->faker->url(),
-            'currency' => $this->faker->randomElement(['USD', 'EUR', 'GBP', 'INR']),
+            'currency' => 'INR',
             'notes' => $this->faker->optional()->sentence(),
         ];
+    }
+
+    /**
+     * Create an organization with financial year setup.
+     */
+    public function withFinancialYear(?Country $country = null): static
+    {
+        $country = $country ?? $this->faker->randomElement(Country::cases());
+        $currency = $country->getDefaultCurrency();
+        $financialYearType = $country->getDefaultFinancialYearType();
+
+        return $this->state([
+            'country_code' => $country,
+            'financial_year_type' => $financialYearType,
+            'financial_year_start_month' => $financialYearType->getStartMonth(),
+            'financial_year_start_day' => $financialYearType->getStartDay(),
+            'currency' => $currency,
+        ]);
     }
 
     /**
@@ -43,7 +62,7 @@ class OrganizationFactory extends Factory
                 'address_line_1' => $this->faker->streetAddress,
                 'city' => $this->faker->city,
                 'state' => $this->faker->state,
-                'country' => 'India',
+                'country' => 'IN',
                 'postal_code' => $this->faker->postcode,
                 'locatable_type' => get_class($organization),
                 'locatable_id' => $organization->id,

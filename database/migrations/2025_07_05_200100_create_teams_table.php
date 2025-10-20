@@ -27,6 +27,12 @@ return new class extends Migration
             $table->char('currency', 3);
             $table->text('notes')->nullable();
 
+            // Country and financial year configuration
+            $table->string('country_code', 3)->nullable();
+            $table->string('financial_year_type', 20)->nullable();
+            $table->smallInteger('financial_year_start_month')->nullable();
+            $table->smallInteger('financial_year_start_day')->nullable();
+
             // Location relationship
             $table->foreignId('primary_location_id')->nullable()->constrained('locations')->onDelete('set null');
 
