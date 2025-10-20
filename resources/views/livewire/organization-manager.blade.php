@@ -25,7 +25,7 @@
                 
                 <form wire:submit="save" class="p-6 space-y-6">
                     <!-- Organization Information -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Organization Name *</label>
                             <input wire:model="name" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -37,17 +37,97 @@
                             <input wire:model="phone" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             @error('phone') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
+                    </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Currency *</label>
-                            <select wire:model="currency" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">Select Currency</option>
-                                @foreach(\App\Currency::options() as $value => $label)
-                                    <option value="{{ $value }}">{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            @error('currency') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    <!-- Country and Business Configuration -->
+                    <div class="border-t pt-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Business Configuration</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Country *</label>
+                                <select wire:model.live="country_code" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select Country</option>
+                                    @foreach($this->availableCountries as $country)
+                                        <option value="{{ $country['value'] }}">{{ $country['label'] }}</option>
+                                    @endforeach
+                                </select>
+                                @error('country_code') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                
+                                @if($this->selectedCountryInfo)
+                                    <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                        <div class="text-sm text-blue-800">
+                                            <div class="font-medium">{{ $this->selectedCountryInfo['tax_system']['name'] ?? 'Tax System' }}</div>
+                                            @if(isset($this->selectedCountryInfo['tax_system']['rates']))
+                                                <div class="text-xs mt-1">Common rates: {{ implode(', ', array_map(fn($rate) => $rate.'%', $this->selectedCountryInfo['tax_system']['rates'])) }}</div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Currency *</label>
+                                <select wire:model="currency" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select Currency</option>
+                                    @foreach(\App\Currency::options() as $value => $label)
+                                        <option value="{{ $value }}">{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                @error('currency') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                
+                                @if($country_code && $this->selectedCountryInfo)
+                                    <div class="mt-1 text-xs text-gray-500">
+                                        Recommended: {{ $this->selectedCountryInfo['default_currency'] }}
+                                    </div>
+                                @endif
+                            </div>
                         </div>
+
+                        @if($country_code && $this->selectedCountryInfo)
+                            <!-- Financial Year Configuration -->
+                            <div class="mt-6 border-t pt-6">
+                                <h4 class="text-md font-medium text-gray-900 mb-3">Financial Year Configuration</h4>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Financial Year Type</label>
+                                        <select wire:model="financial_year_type" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="">Select Financial Year</option>
+                                            @foreach($this->selectedCountryInfo['financial_year_options'] as $value => $label)
+                                                <option value="{{ $value }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('financial_year_type') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Start Month</label>
+                                        <select wire:model="financial_year_start_month" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            @for($month = 1; $month <= 12; $month++)
+                                                <option value="{{ $month }}">{{ date('F', mktime(0, 0, 0, $month, 1)) }}</option>
+                                            @endfor
+                                        </select>
+                                        @error('financial_year_start_month') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Start Day</label>
+                                        <input wire:model="financial_year_start_day" type="number" min="1" max="31" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        @error('financial_year_start_day') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+
+                                @if($this->selectedCountryInfo['recommended_numbering'])
+                                    <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                                        <div class="text-sm text-green-800">
+                                            <div class="font-medium">Invoice Numbering Recommendation</div>
+                                            <div class="text-xs mt-1">{{ $this->selectedCountryInfo['recommended_numbering'] }}</div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Email Management -->
@@ -114,8 +194,13 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Country *</label>
-                                <input wire:model="country" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Country (Location) *</label>
+                                <select wire:model="country" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select Country</option>
+                                    @foreach($this->availableCountries as $country)
+                                        <option value="{{ $country['value'] }}">{{ $country['label'] }}</option>
+                                    @endforeach
+                                </select>
                                 @error('country') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
 
