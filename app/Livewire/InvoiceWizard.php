@@ -12,6 +12,7 @@ use App\Models\Organization;
 use App\Services\InvoiceCalculator;
 use App\Services\InvoiceNumberingService;
 use App\Services\PdfService;
+use InvalidArgumentException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
@@ -204,19 +205,25 @@ class InvoiceWizard extends Component
             if ($this->type === 'invoice') {
                 $organization = Organization::find($this->organization_id);
                 $location = Location::find($this->organization_location_id);
-                $numberingService = new InvoiceNumberingService();
-                
-                // Use specific series if selected, otherwise let the service choose
-                if ($this->invoice_numbering_series_id) {
-                    $series = InvoiceNumberingSeries::find($this->invoice_numbering_series_id);
-                    if ($series) {
-                        $invoiceNumberData = $numberingService->generateInvoiceNumber($organization, $location, $series->name);
+                $numberingService = new InvoiceNumberingService;
+
+                try {
+                    // Use specific series if selected, otherwise let the service choose
+                    if ($this->invoice_numbering_series_id) {
+                        $series = InvoiceNumberingSeries::find($this->invoice_numbering_series_id);
+                        if ($series) {
+                            $invoiceNumberData = $numberingService->generateInvoiceNumber($organization, $location, $series->name);
+                        }
+                    } else {
+                        $invoiceNumberData = $numberingService->generateInvoiceNumber($organization, $location);
                     }
-                } else {
-                    $invoiceNumberData = $numberingService->generateInvoiceNumber($organization, $location);
+                } catch (InvalidArgumentException $e) {
+                    $this->addError('invoice_numbering_series_id', $e->getMessage());
+
+                    return;
                 }
             }
-            
+
             $invoice = Invoice::create([
                 'type' => $this->type,
                 'organization_id' => $this->organization_id,
@@ -392,32 +399,34 @@ class InvoiceWizard extends Component
     #[Computed]
     public function availableNumberingSeries()
     {
-        if (!$this->organization_id) {
+        if (! $this->organization_id) {
             return collect();
         }
 
         $organization = Organization::find($this->organization_id);
-        if (!$organization) {
+        if (! $organization) {
             return collect();
         }
 
-        $numberingService = new InvoiceNumberingService();
+        $numberingService = new InvoiceNumberingService;
+
         return $numberingService->getSeriesForOrganization($organization);
     }
 
     #[Computed]
     public function selectedSeriesPreview(): string
     {
-        if (!$this->invoice_numbering_series_id) {
+        if (! $this->invoice_numbering_series_id) {
             return '';
         }
 
         $series = InvoiceNumberingSeries::find($this->invoice_numbering_series_id);
-        if (!$series) {
+        if (! $series) {
             return '';
         }
 
-        $numberingService = new InvoiceNumberingService();
+        $numberingService = new InvoiceNumberingService;
+
         return $numberingService->previewNextNumber($series);
     }
 
