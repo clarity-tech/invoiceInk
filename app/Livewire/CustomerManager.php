@@ -2,9 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Enums\Country;
 use App\Models\Customer;
 use App\Models\Location;
 use App\ValueObjects\EmailCollection;
+use Illuminate\Validation\Rule as ValidationRule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
@@ -40,7 +42,7 @@ class CustomerManager extends Component
     #[Rule('required|string|max:100')]
     public string $state = '';
 
-    #[Rule('required|string|max:100')]
+    #[Rule('required|string|max:3')]
     public string $country = '';
 
     #[Rule('required|string|max:20')]
@@ -103,7 +105,7 @@ class CustomerManager extends Component
             'address_line_2' => 'nullable|string|max:500',
             'city' => 'required|string|max:100',
             'state' => 'required|string|max:100',
-            'country' => 'required|string|max:100',
+            'country' => ['required', 'string', ValidationRule::enum(Country::class)],
             'postal_code' => 'required|string|max:20',
             'emails' => 'required|array|min:1',
             'emails.*' => 'nullable|email',
@@ -213,8 +215,15 @@ class CustomerManager extends Component
     #[Computed]
     public function customers()
     {
-        return Customer::with('primaryLocation')
-            ->latest()
+        $query = Customer::with('primaryLocation');
+
+        // Scope to current organization if user is authenticated
+        if (auth()->check() && auth()->user()->currentTeam) {
+            $query->where('organization_id', auth()->user()->currentTeam->id);
+        }
+
+        return $query->latest()
+            ->orderBy('id') // Secondary sort for deterministic ordering
             ->paginate(10);
     }
 
