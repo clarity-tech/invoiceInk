@@ -14,22 +14,22 @@ $GLOBALS['test_counter'] = $GLOBALS['test_counter'] ?? 0;
 
 function getUniqueTestId(): int
 {
-    return ++$GLOBALS['test_counter'] . rand(1, 9999999);
+    return ++$GLOBALS['test_counter'].rand(1, 9999999);
 }
 
 function makeUniqueInvoiceNumber(string $baseNumber): string
 {
     // With database cleanup, just add a simple counter for uniqueness within test run
     $counter = getUniqueTestId();
-    return $baseNumber . '-T' . $counter;
-}
 
+    return $baseNumber.'-T'.$counter;
+}
 
 function createUserWithTeam(array $userAttributes = [], array $teamAttributes = []): User
 {
     $defaultUserAttributes = [
         'name' => 'Test User',
-        'email' => 'user' . uniqid() . rand(1, 99999999) . '@example.test',
+        'email' => 'user'.uniqid().rand(1, 99999999).'@example.test',
         'email_verified_at' => now(),
         'password' => 'password', // Laravel will hash this automatically via User model cast
     ];
@@ -66,7 +66,7 @@ function createOrganizationWithLocation(array $orgAttributes = [], array $locati
         'address_line_1' => '123 Business Street',
         'city' => 'Business City',
         'state' => 'Business State',
-        'country' => 'Test Country',
+        'country' => 'IN',
         'postal_code' => '12345',
         'locatable_type' => Organization::class,
         'locatable_id' => 1, // Temporary
@@ -78,12 +78,16 @@ function createOrganizationWithLocation(array $orgAttributes = [], array $locati
         'name' => 'Test Organization',
         'personal_team' => false,
         'company_name' => 'Test Organization Inc.',
-        'tax_number' => 'TX-' . getUniqueTestId(),
-        'registration_number' => 'REG-' . getUniqueTestId(),
-        'emails' => new EmailCollection(['org' . getUniqueTestId() . '@example.test']),
+        'tax_number' => 'TX-'.getUniqueTestId(),
+        'registration_number' => 'REG-'.getUniqueTestId(),
+        'emails' => new EmailCollection(['org'.getUniqueTestId().'@example.test']),
         'phone' => '+1-555-0123',
         'website' => 'https://testorg.com',
         'currency' => 'INR',
+        'country_code' => 'IN',
+        'financial_year_type' => 'april_march',
+        'financial_year_start_month' => 4,
+        'financial_year_start_day' => 1,
         'primary_location_id' => $location->id,
     ];
 
@@ -108,7 +112,7 @@ function createCustomerWithLocation(array $customerAttributes = [], array $locat
         'address_line_1' => '456 Customer Avenue',
         'city' => 'Customer City',
         'state' => 'Customer State',
-        'country' => 'Test Country',
+        'country' => 'IN',
         'postal_code' => '54321',
         'locatable_type' => Customer::class,
         'locatable_id' => 1, // Temporary
@@ -118,7 +122,7 @@ function createCustomerWithLocation(array $customerAttributes = [], array $locat
 
     $defaultCustomerAttributes = [
         'name' => 'Test Customer',
-        'emails' => new EmailCollection(['customer' . getUniqueTestId() . '@example.test']),
+        'emails' => new EmailCollection(['customer'.getUniqueTestId().'@example.test']),
         'primary_location_id' => $location->id,
         'organization_id' => $organization->id,
     ];
@@ -151,7 +155,7 @@ function createInvoiceWithItems(
         'organization_location_id' => $organization->primary_location_id,
         'customer_id' => $customer->id,
         'customer_location_id' => $customer->primary_location_id,
-        'invoice_number' => 'INV-' . fake()->unique()->numerify('########'),
+        'invoice_number' => 'INV-'.fake()->unique()->numerify('########'),
         'status' => 'draft',
         'currency' => $organization->currency ?? 'INR',
         'exchange_rate' => 1.000000,
@@ -163,9 +167,9 @@ function createInvoiceWithItems(
 
     // Merge attributes, only make auto-generated invoice numbers unique
     $mergedAttributes = array_merge($defaultInvoiceAttributes, $invoiceAttributes);
-    
+
     // Only apply uniqueness suffix if invoice_number wasn't explicitly provided in test
-    if (!isset($invoiceAttributes['invoice_number']) && isset($mergedAttributes['invoice_number'])) {
+    if (! isset($invoiceAttributes['invoice_number']) && isset($mergedAttributes['invoice_number'])) {
         $mergedAttributes['invoice_number'] = makeUniqueInvoiceNumber($mergedAttributes['invoice_number']);
     }
 
@@ -206,7 +210,7 @@ function createLocation(string $locatableType, int $locatableId, array $attribut
         'address_line_1' => '123 Default Street',
         'city' => 'Default City',
         'state' => 'Default State',
-        'country' => 'Default Country',
+        'country' => 'IN',
         'postal_code' => '12345',
         'locatable_type' => $locatableType,
         'locatable_id' => $locatableId,
@@ -218,10 +222,10 @@ function createLocation(string $locatableType, int $locatableId, array $attribut
 function loginUserInBrowser($browser, ?User $user = null): User
 {
     // Use seeded test user (created by BrowserTestSeeder)
-    if (!$user) {
+    if (! $user) {
         $user = User::where('email', 'browser@example.test')->first();
 
-        if (!$user) {
+        if (! $user) {
             throw new \Exception('Browser test user not found. Please run: sail artisan migrate:fresh --env=testing --seed');
         }
     }
