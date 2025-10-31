@@ -91,7 +91,7 @@ test('can create customer with valid data', function () {
         ->set('address_line_1', '456 Customer Ave')
         ->set('city', 'Customer City')
         ->set('state', 'Customer State')
-        ->set('country', 'Test Country')
+        ->set('country', 'IN')
         ->set('postal_code', '54321')
         ->call('save');
 

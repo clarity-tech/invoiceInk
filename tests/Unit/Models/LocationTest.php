@@ -12,7 +12,7 @@ test('can create location with all fields', function () {
         'address_line_2' => 'Suite 100',
         'city' => 'Test City',
         'state' => 'Test State',
-        'country' => 'Test Country',
+        'country' => 'IN',
         'postal_code' => '12345',
         'locatable_type' => Organization::class,
         'locatable_id' => 1,
@@ -24,7 +24,7 @@ test('can create location with all fields', function () {
     expect($location->address_line_2)->toBe('Suite 100');
     expect($location->city)->toBe('Test City');
     expect($location->state)->toBe('Test State');
-    expect($location->country)->toBe('Test Country');
+    expect($location->country)->toBe('IN');
     expect($location->postal_code)->toBe('12345');
     expect($location->locatable_type)->toBe(Organization::class);
     expect($location->locatable_id)->toBe(1);
@@ -36,7 +36,7 @@ test('can create location with minimal required fields', function () {
         'address_line_1' => '456 Minimal St',
         'city' => 'Minimal City',
         'state' => 'Minimal State',
-        'country' => 'Minimal Country',
+        'country' => 'IN',
         'postal_code' => '67890',
         'locatable_type' => Customer::class,
         'locatable_id' => 1,
@@ -58,7 +58,7 @@ test('location belongs to organization through polymorphic relationship', functi
         'address_line_1' => '123 Organization St',
         'city' => 'Organization City',
         'state' => 'Organization State',
-        'country' => 'Test Country',
+        'country' => 'IN',
         'postal_code' => '12345',
         'locatable_type' => Organization::class,
         'locatable_id' => $organization->id,
@@ -79,7 +79,7 @@ test('location belongs to customer through polymorphic relationship', function (
         'address_line_1' => '789 Customer Ave',
         'city' => 'Customer City',
         'state' => 'Customer State',
-        'country' => 'Test Country',
+        'country' => 'IN',
         'postal_code' => '54321',
         'locatable_type' => Customer::class,
         'locatable_id' => $customer->id,
@@ -97,7 +97,7 @@ test('location fillable attributes work correctly', function () {
         'address_line_2' => 'Floor 2',
         'city' => 'Test City',
         'state' => 'Test State',
-        'country' => 'Test Country',
+        'country' => 'IN',
         'postal_code' => '12345',
         'locatable_type' => Organization::class,
         'locatable_id' => 1,
@@ -125,7 +125,7 @@ test('location polymorphic relationship works with different models', function (
         'address_line_1' => '123 Business St',
         'city' => 'Business City',
         'state' => 'Business State',
-        'country' => 'Test Country',
+        'country' => 'IN',
         'postal_code' => '11111',
         'locatable_type' => Organization::class,
         'locatable_id' => $organization->id,
@@ -142,7 +142,7 @@ test('location polymorphic relationship works with different models', function (
         'address_line_1' => '456 Client Ave',
         'city' => 'Client City',
         'state' => 'Client State',
-        'country' => 'Test Country',
+        'country' => 'IN',
         'postal_code' => '22222',
         'locatable_type' => Customer::class,
         'locatable_id' => $customer->id,

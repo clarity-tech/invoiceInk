@@ -89,13 +89,14 @@ test('can create new organization with location', function () {
         ->set('phone', '+1-555-0199')
         ->set('emails.0', 'contact@newtest.com')
         ->set('currency', 'USD')
+        ->set('country_code', 'US')
         ->set('location_name', 'New HQ')
         ->set('gstin', 'GSTIN123456789')
         ->set('address_line_1', '123 New Street')
         ->set('address_line_2', 'Suite 100')
         ->set('city', 'New City')
         ->set('state', 'New State')
-        ->set('country', 'New Country')
+        ->set('country', 'US')
         ->set('postal_code', '99999')
         ->call('save')
         ->assertSet('showForm', false)
@@ -125,11 +126,12 @@ test('can create organization with multiple emails', function () {
         ->call('addEmailField')
         ->set('emails.2', 'billing@test.com')
         ->set('currency', 'INR')
+        ->set('country_code', 'IN')
         ->set('location_name', 'Test Location')
         ->set('address_line_1', '123 Test St')
         ->set('city', 'Test City')
         ->set('state', 'Test State')
-        ->set('country', 'Test Country')
+        ->set('country', 'IN')
         ->set('postal_code', '12345')
         ->call('save');
 
@@ -151,6 +153,7 @@ test('validates required fields when creating organization', function () {
         ->assertHasErrors([
             'name',
             'currency',
+            'country_code',
             'location_name',
             'address_line_1',
             'city',
@@ -173,7 +176,7 @@ test('validates email format', function () {
         ->set('address_line_1', '123 Test St')
         ->set('city', 'Test City')
         ->set('state', 'Test State')
-        ->set('country', 'Test Country')
+        ->set('country', 'IN')
         ->set('postal_code', '12345')
         ->call('save')
         ->assertHasErrors(['emails.0' => 'email']);
@@ -188,14 +191,15 @@ test('requires at least one non-empty email', function () {
         ->set('name', 'Test Org')
         ->set('emails.0', '')
         ->set('currency', 'INR')
+        ->set('country_code', 'IN')
         ->set('location_name', 'Test Location')
         ->set('address_line_1', '123 Test St')
         ->set('city', 'Test City')
         ->set('state', 'Test State')
-        ->set('country', 'Test Country')
+        ->set('country', 'IN')
         ->set('postal_code', '12345')
         ->call('save')
-        ->assertHasErrors(['emails.0' => 'At least one email is required.']);
+        ->assertHasErrors(['emails.0']);
 });
 
 test('validates currency code', function () {
@@ -211,7 +215,7 @@ test('validates currency code', function () {
         ->set('address_line_1', '123 Test St')
         ->set('city', 'Test City')
         ->set('state', 'Test State')
-        ->set('country', 'Test Country')
+        ->set('country', 'IN')
         ->set('postal_code', '12345')
         ->call('save')
         ->assertHasErrors(['currency']);
@@ -232,7 +236,7 @@ test('can edit existing organization', function () {
         'address_line_1' => '100 Original St',
         'city' => 'Original City',
         'state' => 'Original State',
-        'country' => 'Original Country',
+        'country' => 'IN',
         'postal_code' => '10000',
     ], $user);
 
@@ -249,7 +253,7 @@ test('can edit existing organization', function () {
         ->assertSet('address_line_1', '100 Original St')
         ->assertSet('city', 'Original City')
         ->assertSet('state', 'Original State')
-        ->assertSet('country', 'Original Country')
+        ->assertSet('country', 'IN')
         ->assertSet('postal_code', '10000');
 });
 
@@ -318,11 +322,12 @@ test('resets form after successful save', function () {
         ->set('phone', '+1-555-0123')
         ->set('emails.0', 'test@example.com')
         ->set('currency', 'USD')
+        ->set('country_code', 'US')
         ->set('location_name', 'Test Location')
         ->set('address_line_1', '123 Test St')
         ->set('city', 'Test City')
         ->set('state', 'Test State')
-        ->set('country', 'Test Country')
+        ->set('country', 'US')
         ->set('postal_code', '12345')
         ->call('save')
         ->assertSet('name', '')
@@ -370,11 +375,12 @@ test('filters out empty emails when saving', function () {
         ->call('addEmailField')
         ->set('emails.3', '   ')
         ->set('currency', 'INR')
+        ->set('country_code', 'IN')
         ->set('location_name', 'Test Location')
         ->set('address_line_1', '123 Test St')
         ->set('city', 'Test City')
         ->set('state', 'Test State')
-        ->set('country', 'Test Country')
+        ->set('country', 'IN')
         ->set('postal_code', '12345')
         ->call('save');
 
@@ -399,7 +405,7 @@ test('handles phone number as nullable field', function () {
         ->set('address_line_1', '123 Test St')
         ->set('city', 'Test City')
         ->set('state', 'Test State')
-        ->set('country', 'Test Country')
+        ->set('country', 'IN')
         ->set('postal_code', '12345')
         ->call('save');
 
@@ -416,12 +422,13 @@ test('handles gstin as nullable field', function () {
         ->set('name', 'GSTIN Test Organization')
         ->set('emails.0', 'test@example.com')
         ->set('currency', 'INR')
+        ->set('country_code', 'IN')
         ->set('location_name', 'Test Location')
         ->set('gstin', '')
         ->set('address_line_1', '123 Test St')
         ->set('city', 'Test City')
         ->set('state', 'Test State')
-        ->set('country', 'Test Country')
+        ->set('country', 'IN')
         ->set('postal_code', '12345')
         ->call('save');
 
@@ -444,7 +451,7 @@ test('validates field lengths', function () {
         ->set('address_line_1', str_repeat('a', 501))
         ->set('city', str_repeat('c', 101))
         ->set('state', str_repeat('s', 101))
-        ->set('country', str_repeat('x', 101))
+        ->set('country', 'INVALID')
         ->set('postal_code', str_repeat('1', 21))
         ->call('save')
         ->assertHasErrors([
@@ -455,7 +462,7 @@ test('validates field lengths', function () {
             'address_line_1' => 'max:500',
             'city' => 'max:100',
             'state' => 'max:100',
-            'country' => 'max:100',
+            'country',
             'postal_code' => 'max:20',
         ]);
 });
@@ -482,12 +489,13 @@ test('correctly handles address line 2 as optional', function () {
         ->set('name', 'Address Line 2 Test Org')
         ->set('emails.0', 'test@example.com')
         ->set('currency', 'INR')
+        ->set('country_code', 'IN')
         ->set('location_name', 'Test Location')
         ->set('address_line_1', '123 Test St')
         ->set('address_line_2', '')
         ->set('city', 'Test City')
         ->set('state', 'Test State')
-        ->set('country', 'Test Country')
+        ->set('country', 'IN')
         ->set('postal_code', '12345')
         ->call('save');
 

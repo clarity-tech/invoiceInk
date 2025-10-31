@@ -6,9 +6,6 @@ use App\Models\Invoice;
 use App\Models\Organization;
 use App\Models\User;
 
-
-
-
 test('can create invoice with required fields', function () {
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
@@ -61,7 +58,7 @@ test('invoice has organization location relationship', function () {
         'address_line_1' => '123 Business St',
         'city' => 'Business City',
         'state' => 'Business State',
-        'country' => 'Test Country',
+        'country' => 'IN',
         'postal_code' => '12345',
     ]);
 
@@ -90,7 +87,7 @@ test('invoice has customer location relationship', function () {
         'address_line_1' => '456 Client Ave',
         'city' => 'Client City',
         'state' => 'Client State',
-        'country' => 'Test Country',
+        'country' => 'IN',
         'postal_code' => '54321',
     ], $organization);
 

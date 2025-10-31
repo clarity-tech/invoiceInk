@@ -21,7 +21,7 @@ beforeEach(function () {
         'address_line_2' => 'Suite 100',
         'city' => 'Mumbai',
         'state' => 'Maharashtra',
-        'country' => 'India',
+        'country' => 'IN',
         'postal_code' => '400001',
     ]);
 
@@ -38,7 +38,7 @@ beforeEach(function () {
         'address_line_1' => '456 Client Avenue',
         'city' => 'Bangalore',
         'state' => 'Karnataka',
-        'country' => 'India',
+        'country' => 'IN',
         'postal_code' => '560001',
     ], $this->organization);
 

@@ -7,29 +7,55 @@ use App\ValueObjects\EmailCollection;
 use Livewire\Livewire;
 
 test('can render customer manager component', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
     Livewire::test(CustomerManager::class)
         ->assertStatus(200)
         ->assertSee('Customers');
 });
 
 test('can load customers with pagination', function () {
-    // Create test customers
+    // Create a test organization with location for proper isolation
+    $organization = createOrganizationWithLocation();
+
+    // Create test customers in this specific organization
     $customers = collect();
     for ($i = 1; $i <= 12; $i++) {
         $customers->push(createCustomerWithLocation([
-            'name' => "Customer {$i}",
-            'emails' => new EmailCollection(["customer{$i}@test.com"]),
-        ]));
+            'name' => "TestCustomer_{$i}_".uniqid(), // Unique names to avoid conflicts
+            'emails' => new EmailCollection(["testcustomer{$i}@example.test"]),
+        ], [], $organization));
     }
 
-    Livewire::test(CustomerManager::class)
-        ->assertSee('Customer 1')
-        ->assertSee('Customer 10')
-        ->assertDontSee('Customer 11') // Should be on page 2
-        ->assertSee('Next');
+    // Authenticate as the organization owner to test scoping
+    $this->actingAs($organization->owner);
+
+    $component = Livewire::test(CustomerManager::class);
+
+    // Verify we have the expected total customers in the organization
+    expect(Customer::where('organization_id', $organization->id)->count())->toBe(12);
+
+    // Test pagination behavior
+    $component
+        ->assertSee('TestCustomer_1_') // Should see first customer (latest first)
+        ->assertSee('TestCustomer_10_') // Should see 10th customer on first page
+        ->assertDontSee('TestCustomer_11_') // Should NOT see 11th customer (on page 2)
+        ->assertDontSee('TestCustomer_12_') // Should NOT see 12th customer (on page 2)
+        ->assertSee('Next'); // Should have next page button
+
+    // Verify pagination structure
+    $pagination = $component->get('customers');
+    expect($pagination->total())->toBe(12);
+    expect($pagination->perPage())->toBe(10);
+    expect($pagination->currentPage())->toBe(1);
+    expect($pagination->hasPages())->toBeTrue();
 });
 
 test('can show create form', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
     Livewire::test(CustomerManager::class)
         ->call('create')
         ->assertSet('showForm', true)
@@ -39,6 +65,9 @@ test('can show create form', function () {
 });
 
 test('can add and remove email fields', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
     Livewire::test(CustomerManager::class)
         ->call('create')
         ->assertCount('emails', 1)
@@ -51,6 +80,9 @@ test('can add and remove email fields', function () {
 });
 
 test('cannot remove last email field', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
     Livewire::test(CustomerManager::class)
         ->call('create')
         ->assertCount('emails', 1)
@@ -73,7 +105,7 @@ test('can create new customer with location', function () {
         ->set('address_line_2', 'Floor 2')
         ->set('city', 'Bangalore')
         ->set('state', 'Karnataka')
-        ->set('country', 'India')
+        ->set('country', 'IN')
         ->set('postal_code', '560001')
         ->call('save')
         ->assertSet('showForm', false)
@@ -90,7 +122,7 @@ test('can create new customer with location', function () {
         'address_line_1' => '456 Customer Ave',
         'city' => 'Bangalore',
         'state' => 'Karnataka',
-        'country' => 'India',
+        'country' => 'IN',
         'postal_code' => '560001',
         'locatable_type' => Customer::class,
     ]);
@@ -112,7 +144,7 @@ test('can create customer with multiple emails', function () {
         ->set('address_line_1', '789 Customer St')
         ->set('city', 'Customer City')
         ->set('state', 'Customer State')
-        ->set('country', 'Test Country')
+        ->set('country', 'IN')
         ->set('postal_code', '54321')
         ->call('save')
         ->assertSee('Customer created successfully!');
@@ -126,6 +158,9 @@ test('can create customer with multiple emails', function () {
 });
 
 test('validates required fields when creating customer', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
     Livewire::test(CustomerManager::class)
         ->call('create')
         ->call('save')
@@ -141,6 +176,9 @@ test('validates required fields when creating customer', function () {
 });
 
 test('validates email format', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
     Livewire::test(CustomerManager::class)
         ->call('create')
         ->set('emails.0', 'invalid-email')
@@ -149,6 +187,9 @@ test('validates email format', function () {
 });
 
 test('requires at least one non-empty email', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
     Livewire::test(CustomerManager::class)
         ->call('create')
         ->set('name', 'Test Customer')
@@ -157,13 +198,14 @@ test('requires at least one non-empty email', function () {
         ->set('address_line_1', '123 Test St')
         ->set('city', 'Test City')
         ->set('state', 'Test State')
-        ->set('country', 'Test Country')
+        ->set('country', 'IN')
         ->set('postal_code', '12345')
         ->call('save')
         ->assertHasErrors(['emails.0' => 'At least one email is required.']);
 });
 
 test('can edit existing customer', function () {
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation([
         'name' => 'Original Customer',
         'phone' => '+2222222222',
@@ -174,9 +216,11 @@ test('can edit existing customer', function () {
         'address_line_1' => '789 Original Ave',
         'city' => 'Original City',
         'state' => 'Original State',
-        'country' => 'Original Country',
+        'country' => 'IN',
         'postal_code' => '54321',
-    ]);
+    ], $organization);
+
+    $this->actingAs($organization->owner);
 
     Livewire::test(CustomerManager::class)
         ->call('edit', $customer)
@@ -192,10 +236,13 @@ test('can edit existing customer', function () {
 });
 
 test('can update existing customer', function () {
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation([
         'name' => 'Original Customer',
         'emails' => new EmailCollection(['original@customer.com']),
-    ]);
+    ], [], $organization);
+
+    $this->actingAs($organization->owner);
 
     Livewire::test(CustomerManager::class)
         ->call('edit', $customer)
@@ -214,10 +261,13 @@ test('can update existing customer', function () {
 });
 
 test('can delete customer', function () {
+    $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation([
         'name' => 'Customer to Delete',
         'emails' => new EmailCollection(['delete@customer.com']),
-    ]);
+    ], [], $organization);
+
+    $this->actingAs($organization->owner);
 
     Livewire::test(CustomerManager::class)
         ->call('delete', $customer)
@@ -228,6 +278,9 @@ test('can delete customer', function () {
 });
 
 test('can cancel form', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
     Livewire::test(CustomerManager::class)
         ->call('create')
         ->set('name', 'Test Customer')
@@ -250,7 +303,7 @@ test('resets form after successful save', function () {
         ->set('address_line_1', '123 Test St')
         ->set('city', 'Test City')
         ->set('state', 'Test State')
-        ->set('country', 'Test Country')
+        ->set('country', 'IN')
         ->set('postal_code', '12345')
         ->call('save')
         ->assertSet('name', '')
@@ -268,7 +321,7 @@ test('handles customer without primary location when editing', function () {
         'address_line_1' => '123 Test St',
         'city' => 'Test City',
         'state' => 'Test State',
-        'country' => 'Test Country',
+        'country' => 'IN',
         'postal_code' => '12345',
         'locatable_type' => Customer::class,
         'locatable_id' => 0,

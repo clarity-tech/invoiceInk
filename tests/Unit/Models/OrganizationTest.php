@@ -8,9 +8,6 @@ use App\Models\TaxTemplate;
 use App\Models\User;
 use App\ValueObjects\EmailCollection;
 
-
-
-
 test('can create organization with required fields', function () {
     $user = User::factory()->create();
 
@@ -110,7 +107,7 @@ test('organization can have primary location relationship', function () {
         'address_line_1' => '123 Business St',
         'city' => 'Business City',
         'state' => 'Business State',
-        'country' => 'Business Country',
+        'country' => 'IN',
         'postal_code' => '12345',
         'locatable_type' => Organization::class,
         'locatable_id' => 1,
@@ -164,8 +161,8 @@ test('organization can have multiple invoices', function () {
     expect($organization->invoices)->toHaveCount(2);
     // Check that the invoice numbers start with expected prefixes (they'll have unique suffixes)
     $invoiceNumbers = $organization->invoices->pluck('invoice_number')->toArray();
-    expect(collect($invoiceNumbers)->filter(fn($num) => str_starts_with($num, 'INV-001')))->toHaveCount(1);
-    expect(collect($invoiceNumbers)->filter(fn($num) => str_starts_with($num, 'INV-002')))->toHaveCount(1);
+    expect(collect($invoiceNumbers)->filter(fn ($num) => str_starts_with($num, 'INV-001')))->toHaveCount(1);
+    expect(collect($invoiceNumbers)->filter(fn ($num) => str_starts_with($num, 'INV-002')))->toHaveCount(1);
 });
 
 test('organization can have multiple tax templates', function () {
