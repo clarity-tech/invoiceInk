@@ -267,11 +267,19 @@ test('converter generates sequential invoice numbers for same month', function (
 test('converter generates first invoice number when none exist', function () {
     $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
 
+    // Create organization without financial year configuration to test basic format
+    $organization = createOrganizationWithLocation([
+        'country_code' => null,
+        'financial_year_type' => null,
+        'financial_year_start_month' => null,
+        'financial_year_start_day' => null,
+    ]);
+
     $estimate = createInvoiceWithItems([
         'type' => 'estimate',
         'invoice_number' => 'EST-FIRST',
         'status' => 'sent',
-    ]);
+    ], null, $organization);
 
     $invoice = $converter->convert($estimate);
 

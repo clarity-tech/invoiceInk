@@ -341,7 +341,13 @@ test('resets form after successful save', function () {
 });
 
 test('generates correct invoice number format', function () {
-    $organization = createOrganizationWithLocation();
+    // Create organization without financial year configuration to test basic format
+    $organization = createOrganizationWithLocation([
+        'country_code' => null,
+        'financial_year_type' => null,
+        'financial_year_start_month' => null,
+        'financial_year_start_day' => null,
+    ]);
     $customer = createCustomerWithLocation();
 
     Livewire::test(InvoiceWizard::class)
