@@ -221,17 +221,23 @@ function createLocation(string $locatableType, int $locatableId, array $attribut
 
 function loginUserInBrowser($browser, ?User $user = null): User
 {
-    // Use seeded test user (created by BrowserTestSeeder)
+    // Create user inline if not provided - this ensures fresh user for each test
     if (! $user) {
-        $user = User::where('email', 'browser@example.test')->first();
-
-        if (! $user) {
-            throw new \Exception('Browser test user not found. Please run: sail artisan migrate:fresh --env=testing --seed');
-        }
+        $user = User::factory()->withPersonalTeam()->create([
+            'name' => 'Browser Test User',
+            'email' => 'browser'.uniqid().'@example.test',
+            'password' => 'password',
+            'email_verified_at' => now(),
+        ]);
     }
 
-    // Use Laravel Dusk's built-in loginAs method with seeded user
-    $browser->loginAs($user, 'web');
+    // Manual login instead of loginAs to avoid Jetstream compatibility issues
+    $browser->visit('/login')
+        ->waitForText('Email', 10)
+        ->type('email', $user->email)
+        ->type('password', 'password')
+        ->press('Log in')
+        ->waitForLocation('/dashboard', 15); // Wait for redirect to dashboard
 
     return $user;
 }
