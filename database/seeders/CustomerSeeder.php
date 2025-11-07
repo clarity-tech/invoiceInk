@@ -11,9 +11,9 @@ class CustomerSeeder extends ProductionSafeSeeder
 {
     protected function seed(): void
     {
-        $this->info('Seeding customers with locations...');
+        $this->info('Seeding customers using factory states...');
 
-        $organizations = Organization::all();
+        $organizations = Organization::with('primaryLocation')->get();
 
         foreach ($organizations as $organization) {
             $this->createCustomersForOrganization($organization);
@@ -24,565 +24,168 @@ class CustomerSeeder extends ProductionSafeSeeder
 
     private function createCustomersForOrganization(Organization $organization): void
     {
-        $customerData = $this->getCustomerDataForOrganization($organization);
-
-        foreach ($customerData as $data) {
-            $this->createCustomerWithLocation($organization, $data);
+        // Skip personal teams (only create customers for business organizations)
+        if ($organization->personal_team) {
+            return;
         }
 
-        $count = count($customerData);
-        $this->info("Created {$count} customers for {$organization->name}");
+        $customerCount = 0;
+        
+        // Create domestic customers
+        $domesticFactory = $this->getCustomerFactoryForOrganization($organization);
+        $domesticCount = $this->getDomesticCustomerCount($organization);
+        
+        $domesticFactory
+            ->count($domesticCount)
+            ->for($organization)
+            ->create();
+        $customerCount += $domesticCount;
+        
+        // Create foreign customers for Indian organizations
+        $foreignCustomers = $this->createForeignCustomersForOrganization($organization);
+        $customerCount += count($foreignCustomers);
+
+        $this->info("✓ Created {$customerCount} customers for {$organization->name}");
     }
 
-    private function getCustomerDataForOrganization(Organization $organization): array
+    private function getDomesticCustomerCount(Organization $organization): int
     {
-        switch ($organization->name) {
-            case 'ACME Manufacturing Corp':
-                return $this->getACMECustomers();
-
-            case 'TechStart Innovation Hub':
-                return $this->getTechStartCustomers();
-
-            case 'EuroConsult GmbH':
-                return $this->getEuroConsultCustomers();
-
-            case 'Demo Company Ltd':
-                return $this->getDemoCompanyCustomers();
-
-            case 'Dubai Trading LLC':
-                return $this->getDubaiTradingCustomers();
-
-            case 'GlobalCorp Holdings Inc':
-                return $this->getGlobalCorpHoldingsCustomers();
-
-            case 'GlobalCorp Tech Solutions':
-                return $this->getGlobalCorpTechCustomers();
-
-            case 'GlobalCorp Business Services Ltd':
-                return $this->getGlobalCorpServicesCustomers();
-
-            default:
-                return [];
-        }
+        return match (true) {
+            str_contains($organization->name, 'Manufacturing') => 5,
+            str_contains($organization->name, 'TechStart') => 5,
+            str_contains($organization->name, 'EuroConsult') => 6,
+            str_contains($organization->name, 'Demo Company') => 3, // Reduced to make room for foreign customers
+            str_contains($organization->name, 'Dubai Trading') => 2,
+            str_contains($organization->name, 'GlobalCorp Holdings') => 2, // Reduced for foreign customers 
+            str_contains($organization->name, 'GlobalCorp Tech') => 2, // Reduced for foreign customers
+            str_contains($organization->name, 'GlobalCorp Business') => 3,
+            default => 2,
+        };
     }
 
-    private function getACMECustomers(): array
+    private function getCustomerFactoryForOrganization(Organization $organization): \Illuminate\Database\Eloquent\Factories\Factory
     {
-        return [
-            [
-                'name' => 'Detroit Auto Parts Inc',
-                'emails' => ['purchasing@detroitautoparts.com', 'accounting@detroitautoparts.com'],
-                'phone' => '+1-313-555-0145',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Detroit Auto Parts HQ',
-                    'address_line_1' => '789 Motor City Blvd',
-                    'city' => 'Detroit',
-                    'state' => 'Michigan',
-                    'country' => 'US',
-                    'postal_code' => '48226',
-                ],
-            ],
-            [
-                'name' => 'Midwest Industrial Supply',
-                'emails' => ['orders@midwestindustrial.com'],
-                'phone' => '+1-414-555-0167',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Midwest Industrial Warehouse',
-                    'address_line_1' => '1234 Industrial Park Drive',
-                    'address_line_2' => 'Building C',
-                    'city' => 'Milwaukee',
-                    'state' => 'Wisconsin',
-                    'country' => 'US',
-                    'postal_code' => '53202',
-                ],
-            ],
-            [
-                'name' => 'Great Lakes Manufacturing',
-                'emails' => ['procurement@greatlakesmfg.com', 'finance@greatlakesmfg.com'],
-                'phone' => '+1-216-555-0189',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Great Lakes Manufacturing Plant',
-                    'address_line_1' => '4567 Lakefront Avenue',
-                    'city' => 'Cleveland',
-                    'state' => 'Ohio',
-                    'country' => 'US',
-                    'postal_code' => '44114',
-                ],
-            ],
-            [
-                'name' => 'American Steel Works',
-                'emails' => ['purchasing@americansteel.com'],
-                'phone' => '+1-412-555-0123',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'American Steel HQ',
-                    'address_line_1' => '999 Steel Mill Road',
-                    'city' => 'Pittsburgh',
-                    'state' => 'Pennsylvania',
-                    'country' => 'US',
-                    'postal_code' => '15222',
-                ],
-            ],
-            [
-                'name' => 'Precision Tools Corp',
-                'emails' => ['orders@precisiontools.com'],
-                'phone' => '+1-248-555-0145',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Precision Tools Factory',
-                    'address_line_1' => '567 Precision Way',
-                    'city' => 'Warren',
-                    'state' => 'Michigan',
-                    'country' => 'US',
-                    'postal_code' => '48088',
-                ],
-            ],
-        ];
+        return match (true) {
+            str_contains($organization->name, 'Manufacturing') => 
+                Customer::factory()->usManufacturingEstablished(),
+            
+            str_contains($organization->name, 'TechStart') => 
+                Customer::factory()->techCustomer()->usCustomer()->establishedCustomer(),
+            
+            str_contains($organization->name, 'EuroConsult') => 
+                Customer::factory()->germanConsultingHighValue(),
+            
+            str_contains($organization->name, 'Demo Company') => 
+                Customer::factory()->indianRetailNew(),
+            
+            str_contains($organization->name, 'Dubai Trading') => 
+                Customer::factory()->uaeTechEstablished(),
+            
+            str_contains($organization->name, 'GlobalCorp Holdings') => 
+                Customer::factory()->highValueCustomer()->usCustomer(),
+            
+            str_contains($organization->name, 'GlobalCorp Tech') => 
+                Customer::factory()->techCustomer()->indianCustomer()->establishedCustomer(),
+            
+            str_contains($organization->name, 'GlobalCorp Business') => 
+                Customer::factory()->consultingCustomer()->internationalCustomer(),
+            
+            default => 
+                Customer::factory()->withLocation(), // Default fallback
+        };
     }
-
-    private function getTechStartCustomers(): array
+    
+    private function createForeignCustomersForOrganization(Organization $organization): array
     {
-        return [
-            [
-                'name' => 'Innovate Digital Agency',
-                'emails' => ['billing@innovatedigital.com', 'accounts@innovatedigital.com'],
-                'phone' => '+1-415-555-0299',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Innovate Digital HQ',
-                    'address_line_1' => '123 SOMA Street',
-                    'address_line_2' => 'Suite 200',
-                    'city' => 'San Francisco',
-                    'state' => 'California',
-                    'country' => 'US',
-                    'postal_code' => '94103',
-                ],
-            ],
-            [
-                'name' => 'CloudFirst Enterprises',
-                'emails' => ['finance@cloudfirst.com'],
-                'phone' => '+1-650-555-0234',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'CloudFirst Campus',
-                    'address_line_1' => '456 Tech Drive',
-                    'city' => 'Palo Alto',
-                    'state' => 'California',
-                    'country' => 'US',
-                    'postal_code' => '94301',
-                ],
-            ],
-            [
-                'name' => 'NextGen Startups Inc',
-                'emails' => ['admin@nextgenstartups.com'],
-                'phone' => '+1-408-555-0167',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'NextGen Office',
-                    'address_line_1' => '789 Innovation Blvd',
-                    'city' => 'San Jose',
-                    'state' => 'California',
-                    'country' => 'US',
-                    'postal_code' => '95113',
-                ],
-            ],
-            [
-                'name' => 'Mobile App Solutions',
-                'emails' => ['billing@mobileappsolutions.com'],
-                'phone' => '+1-415-555-0345',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Mobile App Solutions Office',
-                    'address_line_1' => '321 Mission Street',
-                    'address_line_2' => 'Floor 8',
-                    'city' => 'San Francisco',
-                    'state' => 'California',
-                    'country' => 'US',
-                    'postal_code' => '94105',
-                ],
-            ],
-            [
-                'name' => 'E-commerce Pioneers',
-                'emails' => ['finance@ecommercepioneers.com', 'accounting@ecommercepioneers.com'],
-                'phone' => '+1-510-555-0456',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'E-commerce Pioneers HQ',
-                    'address_line_1' => '654 Bay Area Blvd',
-                    'city' => 'Oakland',
-                    'state' => 'California',
-                    'country' => 'US',
-                    'postal_code' => '94607',
-                ],
-            ],
-        ];
-    }
-
-    private function getEuroConsultCustomers(): array
-    {
-        return [
-            [
-                'name' => 'Deutsche Bank AG',
-                'emails' => ['procurement@db.com', 'supplier.management@db.com'],
-                'phone' => '+49-69-910-00',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Deutsche Bank Twin Towers',
-                    'address_line_1' => 'Taunusanlage 12',
-                    'city' => 'Frankfurt am Main',
-                    'state' => 'Hessen',
-                    'country' => 'DE',
-                    'postal_code' => '60325',
-                ],
-            ],
-            [
-                'name' => 'BMW Group',
-                'emails' => ['consulting.services@bmw.de'],
-                'phone' => '+49-89-382-0',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'BMW Group HQ',
-                    'address_line_1' => 'Petuelring 130',
-                    'city' => 'Munich',
-                    'state' => 'Bavaria',
-                    'country' => 'DE',
-                    'postal_code' => '80788',
-                ],
-            ],
-            [
-                'name' => 'Siemens AG',
-                'emails' => ['external.services@siemens.com'],
-                'phone' => '+49-89-636-00',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Siemens HQ',
-                    'address_line_1' => 'Werner-von-Siemens-Straße 1',
-                    'city' => 'Munich',
-                    'state' => 'Bavaria',
-                    'country' => 'DE',
-                    'postal_code' => '80333',
-                ],
-            ],
-            [
-                'name' => 'SAP SE',
-                'emails' => ['consulting@sap.com'],
-                'phone' => '+49-6227-7-47474',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'SAP Campus',
-                    'address_line_1' => 'Dietmar-Hopp-Allee 16',
-                    'city' => 'Walldorf',
-                    'state' => 'Baden-Württemberg',
-                    'country' => 'DE',
-                    'postal_code' => '69190',
-                ],
-            ],
-            [
-                'name' => 'Volkswagen AG',
-                'emails' => ['consulting.services@volkswagen.de'],
-                'phone' => '+49-5361-9-0',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Volkswagen HQ',
-                    'address_line_1' => 'Berliner Ring 2',
-                    'city' => 'Wolfsburg',
-                    'state' => 'Lower Saxony',
-                    'country' => 'DE',
-                    'postal_code' => '38440',
-                ],
-            ],
-            [
-                'name' => 'BASF SE',
-                'emails' => ['services@basf.com'],
-                'phone' => '+49-621-60-0',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'BASF HQ',
-                    'address_line_1' => 'Carl-Bosch-Straße 38',
-                    'city' => 'Ludwigshafen',
-                    'state' => 'Rhineland-Palatinate',
-                    'country' => 'DE',
-                    'postal_code' => '67056',
-                ],
-            ],
-        ];
-    }
-
-    private function getDemoCompanyCustomers(): array
-    {
-        return [
-            [
-                'name' => 'Retail Chain India Pvt Ltd',
-                'emails' => ['procurement@retailchain.in'],
-                'phone' => '+91-11-12345678',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Retail Chain HQ',
-                    'address_line_1' => 'Connaught Place',
-                    'address_line_2' => 'Block A, Suite 123',
-                    'city' => 'New Delhi',
-                    'state' => 'Delhi',
-                    'country' => 'IN',
-                    'postal_code' => '110001',
-                ],
-            ],
-            [
-                'name' => 'Mumbai Textiles Exports',
-                'emails' => ['orders@mumbaitextiles.com', 'finance@mumbaitextiles.com'],
-                'phone' => '+91-22-87654321',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Mumbai Textiles Factory',
-                    'address_line_1' => 'Industrial Estate, Andheri',
-                    'city' => 'Mumbai',
-                    'state' => 'Maharashtra',
-                    'country' => 'IN',
-                    'postal_code' => '400069',
-                ],
-            ],
-            [
-                'name' => 'Tech Solutions Bangalore',
-                'emails' => ['billing@techsolutionsblr.com'],
-                'phone' => '+91-80-23456789',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Tech Solutions Office',
-                    'address_line_1' => 'Electronic City Phase 2',
-                    'city' => 'Bangalore',
-                    'state' => 'Karnataka',
-                    'country' => 'IN',
-                    'postal_code' => '560100',
-                ],
-            ],
-            [
-                'name' => 'Chennai Auto Components',
-                'emails' => ['purchase@chennaiauto.com'],
-                'phone' => '+91-44-34567890',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Chennai Auto Plant',
-                    'address_line_1' => 'SIPCOT Industrial Park',
-                    'city' => 'Chennai',
-                    'state' => 'Tamil Nadu',
-                    'country' => 'IN',
-                    'postal_code' => '603103',
-                ],
-            ],
-        ];
-    }
-
-    private function getDubaiTradingCustomers(): array
-    {
-        return [
-            [
-                'name' => 'Sandline LLC',
-                'emails' => ['billing@sandline.test', 'finance@sandline.test'],
-                'phone' => '+971-4-2345678',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Sandline Healthcare HQ',
-                    'address_line_1' => 'Dubai Healthcare City',
-                    'address_line_2' => 'Building 64, Office 4001',
-                    'city' => 'Dubai',
-                    'state' => 'Dubai',
-                    'country' => 'AE',
-                    'postal_code' => '00000',
-                ],
-            ],
-            [
-                'name' => 'Corniche Labs',
-                'emails' => ['priya@Corniche Labs.com', 'consult@Corniche Labs.com'],
-                'phone' => '+971-4-3456789',
-                'type' => 'B2B',
-                'location' => [
+        $foreignCustomers = [];
+        
+        // Add foreign customers for Indian organizations
+        if (str_contains($organization->name, 'Demo Company')) {
+            // Add Sandline LLC as UAE customer
+            $sandline = Customer::factory()
+                ->for($organization)
+                ->create([
+                    'name' => 'Sandline LLC',
+                    'emails' => new EmailCollection(['billing@sandline.test', 'finance@sandline.test']),
+                    'phone' => '+971-4-1234567',
+                ]);
+            
+            // Create Dubai location for Sandline
+            $location = Location::create([
+                'name' => 'Sandline Healthcare HQ',
+                'address_line_1' => 'Dubai Healthcare City',
+                'address_line_2' => 'Building 64, Office 4001',
+                'city' => 'Dubai',
+                'state' => 'Dubai',
+                'country' => 'AE',
+                'postal_code' => '00000',
+                'locatable_type' => Customer::class,
+                'locatable_id' => $sandline->id,
+            ]);
+            
+            $sandline->update(['primary_location_id' => $location->id]);
+            $foreignCustomers[] = $sandline;
+            
+            // Add Corniche Labs as another UAE customer
+            $corniche = Customer::factory()
+                ->for($organization)
+                ->create([
                     'name' => 'Corniche Labs',
-                    'address_line_1' => 'Al Warsan Towers, 305',
-                    'address_line_2' => 'Barsha Heights',
-                    'city' => 'Dubai',
-                    'state' => 'Dubai',
-                    'country' => 'AE',
-                    'postal_code' => '00000',
-                ],
-            ],
-        ];
+                    'emails' => new EmailCollection(['priya@cornichelabs.test', 'consult@cornichelabs.test']),
+                    'phone' => '+971-4-7654321',
+                ]);
+            
+            $cornicheLocation = Location::create([
+                'name' => 'Corniche Labs Office',
+                'address_line_1' => 'Al Warsan Towers, 305',
+                'address_line_2' => 'Barsha Heights',
+                'city' => 'Dubai',
+                'state' => 'Dubai', 
+                'country' => 'AE',
+                'postal_code' => '00000',
+                'locatable_type' => Customer::class,
+                'locatable_id' => $corniche->id,
+            ]);
+            
+            $corniche->update(['primary_location_id' => $cornicheLocation->id]);
+            $foreignCustomers[] = $corniche;
+        }
+        
+        if (str_contains($organization->name, 'GlobalCorp Holdings')) {
+            // Add US customer
+            $usCustomer = Customer::factory()
+                ->usCustomer()
+                ->highValueCustomer()
+                ->for($organization)
+                ->create([
+                    'name' => 'Fortune 500 Enterprise Corp',
+                ]);
+            $foreignCustomers[] = $usCustomer;
+            
+            // Add European customer
+            $eurCustomer = Customer::factory()
+                ->germanCustomer()
+                ->consultingCustomer()
+                ->for($organization)
+                ->create([
+                    'name' => 'European Consulting GmbH',
+                ]);
+            $foreignCustomers[] = $eurCustomer;
+        }
+        
+        if (str_contains($organization->name, 'GlobalCorp Tech')) {
+            // Add US tech customer
+            $usTechCustomer = Customer::factory()
+                ->usCustomer()
+                ->techCustomer()
+                ->for($organization)
+                ->create([
+                    'name' => 'Silicon Valley Tech Inc',
+                ]);
+            $foreignCustomers[] = $usTechCustomer;
+        }
+        
+        return $foreignCustomers;
     }
 
-    private function getGlobalCorpHoldingsCustomers(): array
-    {
-        return [
-            [
-                'name' => 'Fortune 500 Corp',
-                'emails' => ['procurement@fortune500corp.com'],
-                'phone' => '+1-212-555-9999',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Fortune 500 Corp HQ',
-                    'address_line_1' => '100 Wall Street',
-                    'address_line_2' => 'Suite 5000',
-                    'city' => 'New York',
-                    'state' => 'New York',
-                    'country' => 'US',
-                    'postal_code' => '10005',
-                ],
-            ],
-            [
-                'name' => 'Enterprise Solutions Ltd',
-                'emails' => ['contracts@enterprisesolutions.com'],
-                'phone' => '+1-617-555-8888',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Enterprise Solutions Office',
-                    'address_line_1' => '200 Clarendon Street',
-                    'city' => 'Boston',
-                    'state' => 'Massachusetts',
-                    'country' => 'US',
-                    'postal_code' => '02116',
-                ],
-            ],
-            [
-                'name' => 'Investment Bank Partners',
-                'emails' => ['services@investmentbankpartners.com'],
-                'phone' => '+1-312-555-7777',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Investment Bank Partners Tower',
-                    'address_line_1' => '300 North LaSalle',
-                    'city' => 'Chicago',
-                    'state' => 'Illinois',
-                    'country' => 'US',
-                    'postal_code' => '60654',
-                ],
-            ],
-        ];
-    }
-
-    private function getGlobalCorpTechCustomers(): array
-    {
-        return [
-            [
-                'name' => 'Infosys Limited',
-                'emails' => ['partnerships@infosys.com'],
-                'phone' => '+91-80-28520261',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Infosys Campus',
-                    'address_line_1' => 'Electronics City, Hosur Road',
-                    'city' => 'Bangalore',
-                    'state' => 'Karnataka',
-                    'country' => 'IN',
-                    'postal_code' => '560100',
-                ],
-            ],
-            [
-                'name' => 'Wipro Technologies',
-                'emails' => ['vendor.management@wipro.com'],
-                'phone' => '+91-80-28440011',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Wipro HQ',
-                    'address_line_1' => 'Doddakannelli, Sarjapur Road',
-                    'city' => 'Bangalore',
-                    'state' => 'Karnataka',
-                    'country' => 'IN',
-                    'postal_code' => '560035',
-                ],
-            ],
-            [
-                'name' => 'HCL Technologies',
-                'emails' => ['procurement@hcltech.com'],
-                'phone' => '+91-120-4688000',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'HCL Campus',
-                    'address_line_1' => 'Sector 126, NOIDA',
-                    'city' => 'Noida',
-                    'state' => 'Uttar Pradesh',
-                    'country' => 'IN',
-                    'postal_code' => '201303',
-                ],
-            ],
-        ];
-    }
-
-    private function getGlobalCorpServicesCustomers(): array
-    {
-        return [
-            [
-                'name' => 'British Petroleum plc',
-                'emails' => ['procurement@bp.com'],
-                'phone' => '+44-20-7496-4000',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'BP HQ',
-                    'address_line_1' => '1 St James\'s Square',
-                    'city' => 'London',
-                    'state' => 'England',
-                    'country' => 'GB',
-                    'postal_code' => 'SW1Y 4PD',
-                ],
-            ],
-            [
-                'name' => 'HSBC Holdings plc',
-                'emails' => ['supplier.services@hsbc.com'],
-                'phone' => '+44-20-7991-8888',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'HSBC Tower',
-                    'address_line_1' => '8 Canada Square',
-                    'city' => 'London',
-                    'state' => 'England',
-                    'country' => 'GB',
-                    'postal_code' => 'E14 5HQ',
-                ],
-            ],
-            [
-                'name' => 'Rolls-Royce Holdings',
-                'emails' => ['procurement@rolls-royce.com'],
-                'phone' => '+44-20-7222-9020',
-                'type' => 'B2B',
-                'location' => [
-                    'name' => 'Rolls-Royce HQ',
-                    'address_line_1' => '62 Buckingham Gate',
-                    'city' => 'London',
-                    'state' => 'England',
-                    'country' => 'GB',
-                    'postal_code' => 'SW1E 6AT',
-                ],
-            ],
-        ];
-    }
-
-    private function createCustomerWithLocation(Organization $organization, array $customerData): Customer
-    {
-        // Create the location first
-        $locationData = $customerData['location'];
-        $location = Location::create([
-            'name' => $locationData['name'],
-            'address_line_1' => $locationData['address_line_1'],
-            'address_line_2' => $locationData['address_line_2'] ?? null,
-            'city' => $locationData['city'],
-            'state' => $locationData['state'],
-            'country' => $locationData['country'],
-            'postal_code' => $locationData['postal_code'],
-            'locatable_type' => Customer::class,
-            'locatable_id' => 1, // Temporary, will be updated
-        ]);
-
-        // Create the customer
-        $customer = Customer::create([
-            'name' => $customerData['name'],
-            'emails' => new EmailCollection($customerData['emails']),
-            'phone' => $customerData['phone'] ?? null,
-            'primary_location_id' => $location->id,
-            'organization_id' => $organization->id,
-        ]);
-
-        // Update location with correct customer ID
-        $location->update(['locatable_id' => $customer->id]);
-
-        return $customer->fresh(['primaryLocation']);
-    }
 }

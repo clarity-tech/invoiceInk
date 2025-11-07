@@ -28,8 +28,8 @@ class CustomerFactory extends Factory
             ]),
             'phone' => fake()->optional(0.8)->phoneNumber(),
             'emails' => new EmailCollection(array_filter([
-                fake()->unique()->safeEmail(),
-                fake()->randomFloat() < 0.4 ? fake()->unique()->safeEmail() : null,
+                fake()->unique()->userName().'@'.fake()->domainName(1).'.test',
+                fake()->randomFloat() < 0.4 ? fake()->unique()->userName().'@'.fake()->domainName(1).'.test' : null,
             ])),
             'organization_id' => \App\Models\Organization::factory(),
             'primary_location_id' => null, // Will be set after location creation
@@ -88,9 +88,9 @@ class CustomerFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'emails' => new EmailCollection([
-                fake()->unique()->safeEmail(),
-                fake()->unique()->safeEmail(),
-                fake()->unique()->safeEmail(),
+                fake()->unique()->userName().'@'.fake()->domainName(1).'.test',
+                fake()->unique()->userName().'@'.fake()->domainName(1).'.test',
+                fake()->unique()->userName().'@'.fake()->domainName(1).'.test',
             ]),
         ]);
     }
@@ -102,7 +102,7 @@ class CustomerFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'name' => fake()->name(),
-            'emails' => new EmailCollection([fake()->unique()->safeEmail()]),
+            'emails' => new EmailCollection([fake()->unique()->userName().'@'.fake()->domainName(1).'.test']),
         ]);
     }
 
@@ -123,7 +123,333 @@ class CustomerFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'phone' => null,
-            'emails' => new EmailCollection([fake()->unique()->safeEmail()]),
+            'emails' => new EmailCollection([fake()->unique()->userName().'@'.fake()->domainName(1).'.test']),
         ]);
+    }
+
+    // =====================================================================
+    // INDUSTRY-SPECIFIC CUSTOMER TYPES
+    // =====================================================================
+
+    /**
+     * Manufacturing industry customer (B2B manufacturing)
+     */
+    public function manufacturingCustomer(): static
+    {
+        return $this->state([
+            'name' => fake()->randomElement([
+                'Detroit Auto Parts Inc',
+                'Midwest Industrial Supply',
+                'Great Lakes Manufacturing',
+                'American Steel Works',
+                'Precision Tools Corp',
+                'Industrial Components Ltd',
+                'Manufacturing Solutions Inc',
+                'Heavy Industry Partners',
+            ]),
+            'emails' => new EmailCollection([
+                'purchasing@'.fake()->lexify('????????').'.test',
+                'accounting@'.fake()->lexify('????????').'.test',
+            ]),
+            'phone' => '+1-'.fake()->numerify('###').'-'.fake()->numerify('###').'-'.fake()->numerify('####'),
+        ]);
+    }
+
+    /**
+     * Technology customer (Tech startups, software companies)
+     */
+    public function techCustomer(): static
+    {
+        return $this->state([
+            'name' => fake()->randomElement([
+                'CloudFirst Enterprises',
+                'Innovate Digital Agency',
+                'NextGen Startups Inc',
+                'Mobile App Solutions',
+                'E-commerce Pioneers',
+                'Digital Innovation Labs',
+                'Tech Solutions Hub',
+                'Software Development Inc',
+            ]),
+            'emails' => new EmailCollection([
+                'billing@'.fake()->lexify('????????').'.test',
+                'finance@'.fake()->lexify('????????').'.test',
+            ]),
+            'phone' => '+1-'.fake()->numerify('###').'-'.fake()->numerify('###').'-'.fake()->numerify('####'),
+        ]);
+    }
+
+    /**
+     * Consulting customer (Enterprise consulting clients)
+     */
+    public function consultingCustomer(): static
+    {
+        return $this->state([
+            'name' => fake()->randomElement([
+                'Deutsche Bank AG',
+                'BMW Group',
+                'Siemens AG',
+                'SAP SE',
+                'Volkswagen AG',
+                'BASF SE',
+                'Fortune 500 Corp',
+                'Enterprise Solutions Ltd',
+                'Investment Bank Partners',
+            ]),
+            'emails' => new EmailCollection([
+                'procurement@'.fake()->lexify('????????').'.test',
+                'supplier.management@'.fake()->lexify('????????').'.test',
+            ]),
+            'phone' => '+49-'.fake()->numerify('##').'-'.fake()->numerify('########'),
+        ]);
+    }
+
+    /**
+     * Retail customer (Retail chains, commerce)
+     */
+    public function retailCustomer(): static
+    {
+        return $this->state([
+            'name' => fake()->randomElement([
+                'Retail Chain India Pvt Ltd',
+                'Mumbai Textiles Exports',
+                'Chennai Auto Components',
+                'Bangalore Electronics Ltd',
+                'Delhi Fashion House',
+                'Commercial Trading Corp',
+                'Wholesale Distributors',
+                'Retail Solutions Ltd',
+            ]),
+            'emails' => new EmailCollection([
+                'procurement@'.fake()->lexify('????????').'.test',
+                'orders@'.fake()->lexify('????????').'.test',
+            ]),
+            'phone' => '+91-'.fake()->numerify('##').'-'.fake()->numerify('########'),
+        ]);
+    }
+
+    // =====================================================================
+    // GEOGRAPHIC CUSTOMER STATES
+    // =====================================================================
+
+    /**
+     * US-based customer
+     */
+    public function usCustomer(): static
+    {
+        return $this->afterCreating(function (Customer $customer) {
+            $location = Location::factory()
+                ->forCustomer($customer->id)
+                ->create([
+                    'country' => 'US',
+                    'state' => fake()->randomElement(['California', 'New York', 'Texas', 'Florida', 'Illinois']),
+                    'city' => fake()->city(),
+                    'postal_code' => fake()->postcode(),
+                ]);
+
+            $customer->update(['primary_location_id' => $location->id]);
+        })->state([
+            'phone' => '+1-'.fake()->numerify('###').'-'.fake()->numerify('###').'-'.fake()->numerify('####'),
+        ]);
+    }
+
+    /**
+     * Indian customer
+     */
+    public function indianCustomer(): static
+    {
+        return $this->afterCreating(function (Customer $customer) {
+            $location = Location::factory()
+                ->forCustomer($customer->id)
+                ->create([
+                    'country' => 'IN',
+                    'state' => fake()->randomElement(['Maharashtra', 'Karnataka', 'Tamil Nadu', 'Delhi', 'Gujarat']),
+                    'city' => fake()->randomElement(['Mumbai', 'Bangalore', 'Chennai', 'Delhi', 'Pune']),
+                    'postal_code' => fake()->numerify('######'),
+                ]);
+
+            $customer->update(['primary_location_id' => $location->id]);
+        })->state([
+            'phone' => '+91-'.fake()->numerify('##').'-'.fake()->numerify('########'),
+        ]);
+    }
+
+    /**
+     * German customer  
+     */
+    public function germanCustomer(): static
+    {
+        return $this->afterCreating(function (Customer $customer) {
+            $location = Location::factory()
+                ->forCustomer($customer->id)
+                ->create([
+                    'country' => 'DE',
+                    'state' => fake()->randomElement(['Bavaria', 'Berlin', 'Hessen', 'Baden-Württemberg']),
+                    'city' => fake()->randomElement(['Berlin', 'Munich', 'Frankfurt', 'Hamburg', 'Stuttgart']),
+                    'postal_code' => fake()->numerify('#####'),
+                ]);
+
+            $customer->update(['primary_location_id' => $location->id]);
+        })->state([
+            'phone' => '+49-'.fake()->numerify('##').'-'.fake()->numerify('########'),
+        ]);
+    }
+
+    /**
+     * UAE customer (Sandline, Corniche Labs style)
+     */
+    public function uaeCustomer(): static
+    {
+        return $this->state([
+            'name' => fake()->randomElement([
+                'Sandline LLC',
+                'Corniche Labs',
+                'Emirates Trading Co',
+                'Dubai Business Solutions',
+                'Abu Dhabi Enterprises',
+                'Gulf Commercial Ltd',
+            ]),
+            'emails' => new EmailCollection(fake()->randomElement([
+                ['billing@sandline.test', 'finance@sandline.test'],
+                ['priya@cornichelabs.test', 'consult@cornichelabs.test'],
+                ['info@'.fake()->lexify('????????').'.test'],
+            ])),
+            'phone' => '+971-4-'.fake()->numerify('#######'),
+        ])->afterCreating(function (Customer $customer) {
+            $location = Location::factory()
+                ->forCustomer($customer->id)
+                ->create([
+                    'name' => $customer->name === 'Sandline LLC' ? 'Sandline Healthcare HQ' : $customer->name,
+                    'address_line_1' => fake()->randomElement([
+                        'Dubai Healthcare City',
+                        'Al Warsan Towers, 305',
+                        'Business Bay Tower',
+                        'DIFC Gate Village',
+                    ]),
+                    'address_line_2' => fake()->randomElement([
+                        'Building 64, Office 4001',
+                        'Barsha Heights',
+                        'Suite 1205',
+                        null,
+                    ]),
+                    'city' => 'Dubai',
+                    'state' => 'Dubai',
+                    'country' => 'AE',
+                    'postal_code' => '00000',
+                ]);
+
+            $customer->update(['primary_location_id' => $location->id]);
+        });
+    }
+
+    // =====================================================================
+    // BUSINESS RELATIONSHIP STATES
+    // =====================================================================
+
+    /**
+     * New customer (recently added, minimal history)
+     */
+    public function newCustomer(): static
+    {
+        return $this->state([
+            'created_at' => fake()->dateTimeBetween('-1 month', 'now'),
+        ]);
+    }
+
+    /**
+     * Established customer (long relationship, many transactions)
+     */
+    public function establishedCustomer(): static
+    {
+        return $this->state([
+            'created_at' => fake()->dateTimeBetween('-3 years', '-6 months'),
+        ]);
+    }
+
+    /**
+     * High-value customer (large transaction volumes)
+     */
+    public function highValueCustomer(): static
+    {
+        return $this->state([
+            'name' => fake()->randomElement([
+                'Enterprise Solutions Corp',
+                'Global Manufacturing Ltd',
+                'Fortune 500 Company',
+                'International Conglomerate',
+                'Multi-National Corporation',
+                'Strategic Partners Inc',
+            ]),
+            'emails' => new EmailCollection([
+                'procurement@'.fake()->lexify('????????').'.test',
+                'finance@'.fake()->lexify('????????').'.test', 
+                'legal@'.fake()->lexify('????????').'.test',
+            ]),
+            'created_at' => fake()->dateTimeBetween('-5 years', '-1 year'),
+        ]);
+    }
+
+    /**
+     * International customer (multi-currency transactions)
+     */
+    public function internationalCustomer(): static
+    {
+        return $this->state([
+            'name' => fake()->randomElement([
+                'International Business Corp',
+                'Global Trading Partners',
+                'Worldwide Commerce Ltd',
+                'Cross-Border Solutions',
+                'Multi-Currency Enterprise',
+                'International Holdings Inc',
+            ]),
+            'emails' => new EmailCollection([
+                'international@'.fake()->lexify('????????').'.test',
+                'global.billing@'.fake()->lexify('??????').'.test',
+            ]),
+        ]);
+    }
+
+    // =====================================================================
+    // COMBINED CONVENIENCE STATES
+    // =====================================================================
+
+    /**
+     * US Manufacturing customer with established relationship
+     */
+    public function usManufacturingEstablished(): static
+    {
+        return $this->manufacturingCustomer()
+            ->usCustomer()
+            ->establishedCustomer();
+    }
+
+    /**
+     * German consulting customer (high value)
+     */
+    public function germanConsultingHighValue(): static
+    {
+        return $this->consultingCustomer()
+            ->germanCustomer()
+            ->highValueCustomer();
+    }
+
+    /**
+     * Indian retail customer (new relationship)
+     */
+    public function indianRetailNew(): static
+    {
+        return $this->retailCustomer()
+            ->indianCustomer()
+            ->newCustomer();
+    }
+
+    /**
+     * UAE tech customer (established)
+     */
+    public function uaeTechEstablished(): static
+    {
+        return $this->uaeCustomer()
+            ->establishedCustomer();
     }
 }

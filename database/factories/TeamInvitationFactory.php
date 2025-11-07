@@ -27,7 +27,7 @@ class TeamInvitationFactory extends Factory
     {
         return [
             'team_id' => Organization::factory(),
-            'email' => $this->faker->unique()->safeEmail(),
+            'email' => $this->faker->unique()->userName().'@'.fake()->domainName(1).'.test',
             'role' => $this->faker->randomElement(['admin', 'editor', 'member']),
         ];
     }

@@ -206,4 +206,323 @@ class InvoiceFactory extends Factory
             ];
         });
     }
+
+    // =====================================================================
+    // INDUSTRY-SPECIFIC INVOICE TYPES
+    // =====================================================================
+
+    /**
+     * Manufacturing industry invoice (B2B manufacturing items)
+     */
+    public function manufacturingInvoice(): static
+    {
+        return $this->state(function (array $attributes) {
+            $subtotal = fake()->numberBetween(500000, 2000000); // $5,000 to $20,000
+            $tax = intval($subtotal * 18 / 100);
+
+            return [
+                'type' => 'invoice',
+                'subtotal' => $subtotal,
+                'tax' => $tax,
+                'total' => $subtotal + $tax,
+                'currency' => 'USD',
+                'notes' => 'Industrial manufacturing components and services.',
+                'terms' => 'Payment due within 30 days. Late payment fees may apply.',
+            ];
+        });
+    }
+
+    /**
+     * Auto parts industry invoice
+     */
+    public function autoPartsInvoice(): static
+    {
+        return $this->state(function (array $attributes) {
+            $subtotal = fake()->numberBetween(250000, 1000000); // $2,500 to $10,000
+            $tax = intval($subtotal * 8.25 / 100); // US state sales tax
+
+            return [
+                'type' => 'invoice',
+                'subtotal' => $subtotal,
+                'tax' => $tax,
+                'total' => $subtotal + $tax,
+                'currency' => 'USD',
+                'notes' => 'Automotive parts and components.',
+                'terms' => 'Payment due within 45 days.',
+            ];
+        });
+    }
+
+    /**
+     * Tech services invoice (Software development, IT services)
+     */
+    public function techServicesInvoice(): static
+    {
+        return $this->state(function (array $attributes) {
+            $subtotal = fake()->numberBetween(150000, 800000); // $1,500 to $8,000
+            $tax = intval($subtotal * 0 / 100); // Many tech services are tax-exempt
+
+            return [
+                'type' => 'invoice',
+                'subtotal' => $subtotal,
+                'tax' => $tax,
+                'total' => $subtotal + $tax,
+                'currency' => 'USD',
+                'notes' => 'Software development and technical consulting services.',
+                'terms' => 'Payment due within 15 days. Project milestone payment.',
+            ];
+        });
+    }
+
+    /**
+     * Professional consulting invoice
+     */
+    public function consultingInvoice(): static
+    {
+        return $this->state(function (array $attributes) {
+            $subtotal = fake()->numberBetween(300000, 1500000); // $3,000 to $15,000
+            $tax = intval($subtotal * 19 / 100); // German VAT
+
+            return [
+                'type' => 'invoice',
+                'subtotal' => $subtotal,
+                'tax' => $tax,
+                'total' => $subtotal + $tax,
+                'currency' => 'EUR',
+                'notes' => 'Professional business consulting and advisory services.',
+                'terms' => 'Payment due within 30 days. Consulting retainer.',
+            ];
+        });
+    }
+
+    /**
+     * Digital marketing invoice
+     */
+    public function digitalMarketingInvoice(): static
+    {
+        return $this->state(function (array $attributes) {
+            $subtotal = fake()->numberBetween(100000, 500000); // $1,000 to $5,000
+            $tax = intval($subtotal * 18 / 100); // GST
+
+            return [
+                'type' => 'invoice',
+                'subtotal' => $subtotal,
+                'tax' => $tax,
+                'total' => $subtotal + $tax,
+                'currency' => 'INR',
+                'notes' => 'Digital marketing campaigns and social media management.',
+                'terms' => 'Payment due within 30 days. Monthly service fee.',
+            ];
+        });
+    }
+
+    // =====================================================================
+    // MULTI-CURRENCY INVOICE STATES
+    // =====================================================================
+
+    /**
+     * USD invoice configuration
+     */
+    public function usdInvoice(): static
+    {
+        return $this->state(function (array $attributes) {
+            $subtotal = $attributes['subtotal'] ?? fake()->numberBetween(100000, 1000000);
+            $taxRate = fake()->randomElement([0, 4, 6, 8.25]); // US tax rates
+            $tax = intval($subtotal * $taxRate / 100);
+
+            return [
+                'currency' => 'USD',
+                'subtotal' => $subtotal,
+                'tax' => $tax,
+                'total' => $subtotal + $tax,
+            ];
+        });
+    }
+
+    /**
+     * EUR invoice configuration
+     */
+    public function eurInvoice(): static
+    {
+        return $this->state(function (array $attributes) {
+            $subtotal = $attributes['subtotal'] ?? fake()->numberBetween(100000, 1000000);
+            $taxRate = fake()->randomElement([0, 7, 19]); // German VAT rates
+            $tax = intval($subtotal * $taxRate / 100);
+
+            return [
+                'currency' => 'EUR',
+                'subtotal' => $subtotal,
+                'tax' => $tax,
+                'total' => $subtotal + $tax,
+            ];
+        });
+    }
+
+    /**
+     * INR invoice configuration
+     */
+    public function inrInvoice(): static
+    {
+        return $this->state(function (array $attributes) {
+            $subtotal = $attributes['subtotal'] ?? fake()->numberBetween(100000, 1000000);
+            $taxRate = fake()->randomElement([0, 5, 12, 18, 28]); // GST rates
+            $tax = intval($subtotal * $taxRate / 100);
+
+            return [
+                'currency' => 'INR',
+                'subtotal' => $subtotal,
+                'tax' => $tax,
+                'total' => $subtotal + $tax,
+            ];
+        });
+    }
+
+    /**
+     * AED invoice configuration  
+     */
+    public function aedInvoice(): static
+    {
+        return $this->state(function (array $attributes) {
+            $subtotal = $attributes['subtotal'] ?? fake()->numberBetween(100000, 1000000);
+            $taxRate = fake()->randomElement([0, 5]); // UAE VAT rates
+            $tax = intval($subtotal * $taxRate / 100);
+
+            return [
+                'currency' => 'AED',
+                'subtotal' => $subtotal,
+                'tax' => $tax,
+                'total' => $subtotal + $tax,
+            ];
+        });
+    }
+
+    // =====================================================================
+    // ENHANCED WORKFLOW STATES
+    // =====================================================================
+
+    /**
+     * Recent draft invoice (just created)
+     */
+    public function recentDraft(): static
+    {
+        return $this->state([
+            'status' => 'draft',
+            'type' => 'invoice',
+            'issued_at' => null,
+            'due_at' => null,
+            'created_at' => fake()->dateTimeBetween('-3 days', 'now'),
+        ]);
+    }
+
+    /**
+     * Overdue invoice (past due date)
+     */
+    public function overdueInvoice(): static
+    {
+        return $this->state([
+            'type' => 'invoice',
+            'status' => 'sent',
+            'issued_at' => fake()->dateTimeBetween('-3 months', '-2 months'),
+            'due_at' => fake()->dateTimeBetween('-2 months', '-1 week'),
+        ]);
+    }
+
+    /**
+     * Recently paid invoice
+     */
+    public function recentlyPaid(): static
+    {
+        return $this->state([
+            'type' => 'invoice',
+            'status' => 'paid',
+            'issued_at' => fake()->dateTimeBetween('-2 months', '-1 month'),
+            'due_at' => fake()->dateTimeBetween('-1 month', '-2 weeks'),
+        ]);
+    }
+
+    /**
+     * Approved estimate (client accepted)
+     */
+    public function approvedEstimate(): static
+    {
+        return $this->state([
+            'type' => 'estimate',
+            'status' => 'sent', // Would need new status 'approved' in enum
+            'issued_at' => fake()->dateTimeBetween('-1 month', '-1 week'),
+            'due_at' => fake()->dateTimeBetween('now', '+2 weeks'),
+            'notes' => 'Estimate approved by client. Ready for project initiation.',
+        ]);
+    }
+
+    /**
+     * Rejected estimate
+     */
+    public function rejectedEstimate(): static
+    {
+        return $this->state([
+            'type' => 'estimate',
+            'status' => 'void',
+            'issued_at' => fake()->dateTimeBetween('-2 months', '-1 month'),
+            'due_at' => fake()->dateTimeBetween('-1 month', 'now'),
+            'notes' => 'Estimate declined by client.',
+        ]);
+    }
+
+    // =====================================================================
+    // AMOUNT RANGE STATES
+    // =====================================================================
+
+    /**
+     * Small invoice (under $1,000)
+     */
+    public function smallAmount(): static
+    {
+        return $this->state(function (array $attributes) {
+            $subtotal = fake()->numberBetween(10000, 100000); // $100 to $1,000
+            $taxRate = 18;
+            $tax = intval($subtotal * $taxRate / 100);
+
+            return [
+                'subtotal' => $subtotal,
+                'tax' => $tax,
+                'total' => $subtotal + $tax,
+            ];
+        });
+    }
+
+    /**
+     * Medium invoice ($1,000 to $10,000)
+     */
+    public function mediumAmount(): static
+    {
+        return $this->state(function (array $attributes) {
+            $subtotal = fake()->numberBetween(100000, 1000000); // $1,000 to $10,000
+            $taxRate = 18;
+            $tax = intval($subtotal * $taxRate / 100);
+
+            return [
+                'subtotal' => $subtotal,
+                'tax' => $tax,
+                'total' => $subtotal + $tax,
+            ];
+        });
+    }
+
+    /**
+     * Enterprise invoice (over $10,000)
+     */
+    public function enterpriseAmount(): static
+    {
+        return $this->state(function (array $attributes) {
+            $subtotal = fake()->numberBetween(1000000, 5000000); // $10,000 to $50,000
+            $taxRate = 18;
+            $tax = intval($subtotal * $taxRate / 100);
+
+            return [
+                'subtotal' => $subtotal,
+                'tax' => $tax,
+                'total' => $subtotal + $tax,
+            ];
+        });
+    }
 }
