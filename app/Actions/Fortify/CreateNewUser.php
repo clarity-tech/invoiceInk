@@ -45,11 +45,16 @@ class CreateNewUser implements CreatesNewUsers
      */
     protected function createTeam(User $user): void
     {
+        // Generate meaningful organization name from user input
+        $firstName = explode(' ', trim($user->name), 2)[0];
+        $organizationName = $firstName ? $firstName."'s Organization" : $user->name."'s Organization";
+
         $user->ownedTeams()->save(Organization::forceCreate([
             'user_id' => $user->id,
-            'name' => explode(' ', $user->name, 2)[0]."'s Team",
+            'name' => $organizationName,
             'personal_team' => true,
             'currency' => Currency::default(),
+            'setup_completed_at' => null, // Explicitly set as incomplete for new registrations
         ]));
     }
 }

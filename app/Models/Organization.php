@@ -58,6 +58,7 @@ class Organization extends JetstreamTeam
         'financial_year_type',
         'financial_year_start_month',
         'financial_year_start_day',
+        'setup_completed_at',
     ];
 
     /**
@@ -89,6 +90,7 @@ class Organization extends JetstreamTeam
             'financial_year_type' => FinancialYearType::class,
             'financial_year_start_month' => 'integer',
             'financial_year_start_day' => 'integer',
+            'setup_completed_at' => 'datetime',
         ];
     }
 
@@ -328,5 +330,98 @@ class Organization extends JetstreamTeam
         }
 
         return $this->country_code->getTaxSystemInfo();
+    }
+
+    /**
+     * Check if the organization setup is complete.
+     */
+    public function isSetupComplete(): bool
+    {
+        return ! is_null($this->setup_completed_at);
+    }
+
+    /**
+     * Mark the organization setup as complete.
+     */
+    public function markSetupComplete(): void
+    {
+        $this->update([
+            'setup_completed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Check if the organization needs setup completion.
+     */
+    public function needsSetup(): bool
+    {
+        // Personal teams typically don't need full setup
+        if ($this->personal_team) {
+            return false;
+        }
+
+        return is_null($this->setup_completed_at);
+    }
+
+    /**
+     * Get the setup completion percentage.
+     */
+    public function getSetupCompletionPercentage(): int
+    {
+        if ($this->isSetupComplete()) {
+            return 100;
+        }
+
+        $requiredFields = [
+            'company_name' => ! empty($this->company_name),
+            'emails' => $this->emails && $this->emails->count() > 0,
+            'primary_location' => $this->primary_location_id && $this->primaryLocation,
+            'currency' => ! empty($this->currency),
+            'country_code' => ! empty($this->country_code),
+            'financial_year_type' => ! empty($this->financial_year_type),
+        ];
+
+        $completedCount = count(array_filter($requiredFields));
+        $totalCount = count($requiredFields);
+
+        return (int) round(($completedCount / $totalCount) * 100);
+    }
+
+    /**
+     * Get missing setup fields.
+     */
+    public function getMissingSetupFields(): array
+    {
+        if ($this->isSetupComplete()) {
+            return [];
+        }
+
+        $missingFields = [];
+
+        if (empty($this->company_name)) {
+            $missingFields[] = 'Company Information';
+        }
+
+        if (! $this->emails || $this->emails->count() === 0) {
+            $missingFields[] = 'Contact Emails';
+        }
+
+        if (! $this->primary_location_id || ! $this->primaryLocation) {
+            $missingFields[] = 'Primary Location';
+        }
+
+        if (empty($this->currency)) {
+            $missingFields[] = 'Currency';
+        }
+
+        if (empty($this->country_code)) {
+            $missingFields[] = 'Country';
+        }
+
+        if (empty($this->financial_year_type)) {
+            $missingFields[] = 'Financial Year Configuration';
+        }
+
+        return $missingFields;
     }
 }
