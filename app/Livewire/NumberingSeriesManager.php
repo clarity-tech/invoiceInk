@@ -17,6 +17,7 @@ class NumberingSeriesManager extends Component
     use WithPagination;
 
     public bool $showCreateForm = false;
+
     public ?int $editingId = null;
 
     // Form fields
@@ -69,6 +70,11 @@ class NumberingSeriesManager extends Component
 
     public function edit(InvoiceNumberingSeries $series): void
     {
+        // Security check: Ensure user has access to this series' organization
+        if (! auth()->user()->allTeams()->contains('id', $series->organization_id)) {
+            abort(403, 'Unauthorized access to numbering series.');
+        }
+
         $this->editingId = $series->id;
         $this->organization_id = $series->organization_id;
         $this->location_id = $series->location_id;
@@ -115,9 +121,15 @@ class NumberingSeriesManager extends Component
 
     public function delete(InvoiceNumberingSeries $series): void
     {
+        // Security check: Ensure user has access to this series' organization
+        if (! auth()->user()->allTeams()->contains('id', $series->organization_id)) {
+            abort(403, 'Unauthorized access to numbering series.');
+        }
+
         // Prevent deletion if series has invoices
         if ($series->invoices()->exists()) {
             session()->flash('error', 'Cannot delete numbering series that has associated invoices.');
+
             return;
         }
 
@@ -128,13 +140,23 @@ class NumberingSeriesManager extends Component
 
     public function toggleActive(InvoiceNumberingSeries $series): void
     {
-        $series->update(['is_active' => !$series->is_active]);
+        // Security check: Ensure user has access to this series' organization
+        if (! auth()->user()->allTeams()->contains('id', $series->organization_id)) {
+            abort(403, 'Unauthorized access to numbering series.');
+        }
+
+        $series->update(['is_active' => ! $series->is_active]);
         $status = $series->is_active ? 'activated' : 'deactivated';
         session()->flash('message', "Numbering series {$status} successfully!");
     }
 
     public function setAsDefault(InvoiceNumberingSeries $series): void
     {
+        // Security check: Ensure user has access to this series' organization
+        if (! auth()->user()->allTeams()->contains('id', $series->organization_id)) {
+            abort(403, 'Unauthorized access to numbering series.');
+        }
+
         // Remove default status from other series in the same organization
         InvoiceNumberingSeries::where('organization_id', $series->organization_id)
             ->update(['is_default' => false]);
@@ -169,13 +191,23 @@ class NumberingSeriesManager extends Component
     #[Computed]
     public function organizations()
     {
-        return Organization::with('primaryLocation')->get();
+        // Only show organizations that the user has access to (their teams)
+        if (! auth()->check()) {
+            return collect();
+        }
+
+        // Get all teams the user is a member of or owns
+        $userTeamIds = auth()->user()->allTeams()->pluck('id');
+
+        return Organization::with('primaryLocation')
+            ->whereIn('id', $userTeamIds)
+            ->get();
     }
 
     #[Computed]
     public function organizationLocations()
     {
-        if (!$this->organization_id) {
+        if (! $this->organization_id) {
             return collect();
         }
 
@@ -187,7 +219,16 @@ class NumberingSeriesManager extends Component
     #[Computed]
     public function series()
     {
+        // Only show numbering series for organizations the user has access to
+        if (! auth()->check()) {
+            return collect();
+        }
+
+        // Get all teams the user is a member of or owns
+        $userTeamIds = auth()->user()->allTeams()->pluck('id');
+
         return InvoiceNumberingSeries::with(['organization', 'location'])
+            ->whereIn('organization_id', $userTeamIds)
             ->orderBy('is_default', 'desc')
             ->orderBy('organization_id')
             ->orderBy('name')
@@ -203,7 +244,7 @@ class NumberingSeriesManager extends Component
     #[Computed]
     public function nextNumberPreview(): string
     {
-        if (!$this->organization_id || !$this->prefix || !$this->format_pattern) {
+        if (! $this->organization_id || ! $this->prefix || ! $this->format_pattern) {
             return '';
         }
 

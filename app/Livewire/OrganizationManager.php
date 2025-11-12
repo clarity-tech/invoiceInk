@@ -27,7 +27,7 @@ class OrganizationManager extends Component
 
     public array $emails = [''];
 
-    #[Rule('required|string|max:255')]
+    #[Rule('nullable|string|max:255')]
     public string $location_name = '';
 
     #[Rule('nullable|string|max:50')]
@@ -76,21 +76,20 @@ class OrganizationManager extends Component
             try {
                 $country = Country::from($this->country_code);
 
-                // Auto-set currency based on country if not already set
-                if (empty($this->currency)) {
-                    $this->currency = $country->getDefaultCurrency()->value;
-                }
+                // Always set currency to country's default when country changes
+                // This ensures currency is always aligned with the selected country
+                $this->currency = $country->getDefaultCurrency()->value;
 
-                // Auto-set financial year type based on country if not already set
-                if (empty($this->financial_year_type)) {
-                    $defaultFYType = $country->getDefaultFinancialYearType();
-                    $this->financial_year_type = $defaultFYType->value;
+                // Auto-set location country to match organization country
+                $this->country = $this->country_code;
 
-                    // Set the start month and day based on the financial year type
-                    $startDate = $defaultFYType->getFinancialYearStartDate();
-                    $this->financial_year_start_month = $startDate->month;
-                    $this->financial_year_start_day = $startDate->day;
-                }
+                // Always reset financial year type based on country (regardless of previous selection)
+                $defaultFYType = $country->getDefaultFinancialYearType();
+                $this->financial_year_type = $defaultFYType->value;
+
+                // Always reset the start month and day based on the financial year type
+                $this->financial_year_start_month = $defaultFYType->getStartMonth();
+                $this->financial_year_start_day = $defaultFYType->getStartDay();
             } catch (\ValueError $e) {
                 // Invalid country code, ignore
             }
@@ -113,6 +112,11 @@ class OrganizationManager extends Component
 
     public function edit(Organization $organization): void
     {
+        // Security check: Ensure user has access to this organization
+        if (! auth()->user()->allTeams()->contains('id', $organization->id)) {
+            abort(403, 'Unauthorized access to organization.');
+        }
+
         $organization->load('primaryLocation');
 
         $this->editingId = $organization->id;
@@ -141,6 +145,11 @@ class OrganizationManager extends Component
 
     public function save(): void
     {
+        // Ensure location country matches organization country
+        if ($this->country_code) {
+            $this->country = $this->country_code;
+        }
+
         $this->validate([
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
@@ -149,7 +158,7 @@ class OrganizationManager extends Component
             'financial_year_type' => ['nullable', 'string', ValidationRule::enum(FinancialYearType::class)],
             'financial_year_start_month' => ['nullable', 'integer', 'min:1', 'max:12'],
             'financial_year_start_day' => ['nullable', 'integer', 'min:1', 'max:31'],
-            'location_name' => 'required|string|max:255',
+            'location_name' => 'nullable|string|max:255',
             'gstin' => 'nullable|string|max:50',
             'address_line_1' => 'required|string|max:500',
             'address_line_2' => 'nullable|string|max:500',
@@ -160,6 +169,22 @@ class OrganizationManager extends Component
             'emails' => 'required|array|min:1',
             'emails.*' => 'nullable|email',
         ]);
+
+        // Additional validation: ensure currency is supported by the selected country
+        if ($this->country_code && $this->currency) {
+            try {
+                $country = Country::from($this->country_code);
+                $supportedCurrencies = collect($country->getSupportedCurrencies())->pluck('value')->toArray();
+
+                if (! in_array($this->currency, $supportedCurrencies)) {
+                    $this->addError('currency', 'The selected currency is not supported by '.$country->name().'. Supported currencies: '.implode(', ', $supportedCurrencies));
+
+                    return;
+                }
+            } catch (\ValueError $e) {
+                // Invalid country code, but this will be caught by country_code validation above
+            }
+        }
 
         $filteredEmails = array_filter($this->emails, fn ($email) => ! empty(trim($email)));
 
@@ -186,7 +211,7 @@ class OrganizationManager extends Component
 
             if ($organization->primaryLocation) {
                 $organization->primaryLocation->update([
-                    'name' => $this->location_name,
+                    'name' => $this->location_name ?: ($this->name ?: 'Main Office'),
                     'gstin' => $this->gstin ?: null,
                     'address_line_1' => $this->address_line_1,
                     'address_line_2' => $this->address_line_2 ?: null,
@@ -198,7 +223,7 @@ class OrganizationManager extends Component
             }
         } else {
             $location = Location::create([
-                'name' => $this->location_name,
+                'name' => $this->location_name ?: ($this->name ?: 'Main Office'),
                 'gstin' => $this->gstin ?: null,
                 'address_line_1' => $this->address_line_1,
                 'address_line_2' => $this->address_line_2 ?: null,
@@ -243,6 +268,11 @@ class OrganizationManager extends Component
 
     public function delete(Organization $organization): void
     {
+        // Security check: Ensure user has access to this organization
+        if (! auth()->user()->allTeams()->contains('id', $organization->id)) {
+            abort(403, 'Unauthorized access to organization.');
+        }
+
         // Handle foreign key constraint by setting primary_location_id to null first
         $organization->primary_location_id = null;
         $organization->save();
@@ -286,7 +316,16 @@ class OrganizationManager extends Component
     #[Computed]
     public function organizations()
     {
+        // Only show organizations that the user has access to (their teams)
+        if (! auth()->check()) {
+            return collect();
+        }
+
+        // Get all teams the user is a member of or owns
+        $userTeamIds = auth()->user()->allTeams()->pluck('id');
+
         return Organization::with('primaryLocation')
+            ->whereIn('id', $userTeamIds)
             ->latest()
             ->paginate(10);
     }
@@ -323,6 +362,29 @@ class OrganizationManager extends Component
             ];
         } catch (\ValueError $e) {
             return null;
+        }
+    }
+
+    #[Computed]
+    public function availableCurrencies()
+    {
+        if (! $this->country_code) {
+            // If no country selected, show all currencies
+            return \App\Currency::options();
+        }
+
+        try {
+            $country = Country::from($this->country_code);
+            $supportedCurrencies = $country->getSupportedCurrencies();
+
+            return collect($supportedCurrencies)
+                ->mapWithKeys(fn ($currency) => [
+                    $currency->value => $currency->name().' ('.$currency->symbol().')',
+                ])
+                ->toArray();
+        } catch (\ValueError $e) {
+            // Invalid country code, fallback to all currencies
+            return \App\Currency::options();
         }
     }
 

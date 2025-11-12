@@ -68,9 +68,9 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Currency *</label>
-                                <select wire:model="currency" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <select wire:model="currency" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" @if($country_code) disabled @endif>
                                     <option value="">Select Currency</option>
-                                    @foreach(\App\Currency::options() as $value => $label)
+                                    @foreach($this->availableCurrencies as $value => $label)
                                         <option value="{{ $value }}">{{ $label }}</option>
                                     @endforeach
                                 </select>
@@ -158,8 +158,8 @@
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Location Name *</label>
-                                <input wire:model="location_name" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Location Name</label>
+                                <input wire:model="location_name" type="text" placeholder="Optional - defaults to organization name" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 @error('location_name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
 
@@ -193,16 +193,22 @@
                                 @error('state') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Country (Location) *</label>
-                                <select wire:model="country" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">Select Country</option>
-                                    @foreach($this->availableCountries as $country)
-                                        <option value="{{ $country['value'] }}">{{ $country['label'] }}</option>
-                                    @endforeach
-                                </select>
-                                @error('country') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                            </div>
+                            @if($country_code)
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Location Country</label>
+                                    <div class="w-full border border-gray-200 rounded-md px-3 py-2 bg-gray-50 text-gray-700">
+                                        @foreach($this->availableCountries as $countryData)
+                                            @if($countryData['value'] === $country_code)
+                                                {{ $countryData['label'] }}
+                                                <span class="text-xs text-gray-500 ml-2">(Inherited from organization)</span>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                    <div class="mt-1 text-xs text-gray-600">
+                                        Location will use the same country as the organization. Change the organization country above to update this.
+                                    </div>
+                                </div>
+                            @endif
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Postal Code *</label>

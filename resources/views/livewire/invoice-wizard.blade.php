@@ -142,14 +142,18 @@
                                 <div></div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Organization *</label>
-                                    <select wire:model.live="organization_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        <option value="">Select Organization</option>
-                                        @foreach($this->organizations as $organization)
-                                            <option value="{{ $organization->id }}">{{ $organization->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('organization_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Organization</label>
+                                    <div class="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2">
+                                        @if(auth()->check() && auth()->user()->currentTeam)
+                                            <span class="text-gray-900 font-medium">{{ auth()->user()->currentTeam->name }}</span>
+                                            @if(auth()->user()->currentTeam->company_name && auth()->user()->currentTeam->company_name !== auth()->user()->currentTeam->name)
+                                                <span class="text-gray-500 text-sm"> ({{ auth()->user()->currentTeam->company_name }})</span>
+                                            @endif
+                                        @else
+                                            <span class="text-gray-500">No organization selected</span>
+                                        @endif
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Use the team switcher in the navigation to change organizations</p>
                                 </div>
 
                                 <div>
@@ -163,30 +167,76 @@
                                     @error('customer_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                 </div>
 
-                                @if($organization_id && $this->organizationLocations->count() > 0)
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Organization Location *</label>
-                                        <select wire:model="organization_location_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                            <option value="">Select Location</option>
-                                            @foreach($this->organizationLocations as $location)
-                                                <option value="{{ $location->id }}">{{ $location->name }} - {{ $location->city }}</option>
-                                            @endforeach
-                                        </select>
+                                @if($organization_id)
+                                    @if($this->organizationLocations->count() > 0)
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Organization Location *</label>
+                                            <select wire:model="organization_location_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                <option value="">Select Location</option>
+                                                @foreach($this->organizationLocations as $location)
+                                                    <option value="{{ $location->id }}">{{ $location->name }} - {{ $location->city }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('organization_location_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                        </div>
+                                    @else
+                                        <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                                            <div class="flex">
+                                                <div class="flex-shrink-0">
+                                                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <div class="ml-3">
+                                                    <h3 class="text-sm font-medium text-yellow-800">Organization Location Required</h3>
+                                                    <div class="mt-2 text-sm text-yellow-700">
+                                                        <p>The selected organization needs at least one location. 
+                                                           <a href="/organizations" class="font-medium underline hover:text-yellow-600" target="_blank">
+                                                               Manage locations →
+                                                           </a>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                         @error('organization_location_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                    </div>
+                                    @endif
                                 @endif
 
-                                @if($customer_id && $this->customerLocations->count() > 0)
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Customer Location *</label>
-                                        <select wire:model="customer_location_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                            <option value="">Select Location</option>
-                                            @foreach($this->customerLocations as $location)
-                                                <option value="{{ $location->id }}">{{ $location->name }} - {{ $location->city }}</option>
-                                            @endforeach
-                                        </select>
+                                @if($customer_id)
+                                    @if($this->customerLocations->count() > 0)
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Customer Location *</label>
+                                            <select wire:model="customer_location_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                <option value="">Select Location</option>
+                                                @foreach($this->customerLocations as $location)
+                                                    <option value="{{ $location->id }}">{{ $location->name }} - {{ $location->city }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('customer_location_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                        </div>
+                                    @else
+                                        <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                                            <div class="flex">
+                                                <div class="flex-shrink-0">
+                                                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.30 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <div class="ml-3">
+                                                    <h3 class="text-sm font-medium text-yellow-800">Customer Location Required</h3>
+                                                    <div class="mt-2 text-sm text-yellow-700">
+                                                        <p>The selected customer needs at least one location. 
+                                                           <a href="/customers" class="font-medium underline hover:text-yellow-600" target="_blank">
+                                                               Manage locations →
+                                                           </a>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                         @error('customer_location_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                    </div>
+                                    @endif
                                 @endif
 
                                 @if($type === 'invoice' && $organization_id && $this->availableNumberingSeries->count() > 0)

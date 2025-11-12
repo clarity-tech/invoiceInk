@@ -19,8 +19,18 @@ class OrganizationScope implements Scope
             return;
         }
 
-        // For now, we'll implement a basic organization scope
-        // In a full multi-tenant setup, this would check the current user's selected organization
-        // For Phase 3, we can implement organization-level filtering if needed
+        // Get the current user's team (organization) context
+        $currentTeam = auth()->user()->currentTeam;
+
+        if (! $currentTeam) {
+            // If no current team, user shouldn't see any organization-scoped data
+            $builder->whereNull('organization_id');
+
+            return;
+        }
+
+        // Apply organization filtering based on the model's organization_id column
+        // This will restrict data to only the current user's active organization
+        $builder->where('organization_id', $currentTeam->id);
     }
 }

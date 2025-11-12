@@ -24,7 +24,7 @@ class CustomerManager extends Component
 
     public array $emails = [''];
 
-    #[Rule('required|string|max:255')]
+    #[Rule('nullable|string|max:255')]
     public string $location_name = '';
 
     #[Rule('nullable|string|max:50')]
@@ -96,10 +96,16 @@ class CustomerManager extends Component
 
     public function save(): void
     {
+        // Auto-set country from current organization
+        $currentOrganization = auth()->user()?->currentTeam;
+        if ($currentOrganization && $currentOrganization->country_code) {
+            $this->country = $currentOrganization->country_code->value;
+        }
+
         $this->validate([
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
-            'location_name' => 'required|string|max:255',
+            'location_name' => 'nullable|string|max:255',
             'gstin' => 'nullable|string|max:50',
             'address_line_1' => 'required|string|max:500',
             'address_line_2' => 'nullable|string|max:500',
@@ -131,7 +137,7 @@ class CustomerManager extends Component
 
             if ($customer->primaryLocation) {
                 $customer->primaryLocation->update([
-                    'name' => $this->location_name,
+                    'name' => $this->location_name ?: ($this->name ? $this->name.' Office' : 'Main Office'),
                     'gstin' => $this->gstin ?: null,
                     'address_line_1' => $this->address_line_1,
                     'address_line_2' => $this->address_line_2 ?: null,
@@ -143,7 +149,7 @@ class CustomerManager extends Component
             }
         } else {
             $location = Location::create([
-                'name' => $this->location_name,
+                'name' => $this->location_name ?: ($this->name ? $this->name.' Office' : 'Main Office'),
                 'gstin' => $this->gstin ?: null,
                 'address_line_1' => $this->address_line_1,
                 'address_line_2' => $this->address_line_2 ?: null,
@@ -225,6 +231,12 @@ class CustomerManager extends Component
         return $query->latest()
             ->orderBy('id') // Secondary sort for deterministic ordering
             ->paginate(10);
+    }
+
+    #[Computed]
+    public function currentOrganization()
+    {
+        return auth()->user()?->currentTeam;
     }
 
     public function render()

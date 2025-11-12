@@ -64,6 +64,11 @@ class InvoiceWizard extends Component
 
     public function mount(): void
     {
+        // Auto-set organization to current team if user is authenticated
+        if (auth()->check()) {
+            $this->organization_id = auth()->user()->currentTeam?->id;
+        }
+
         $this->addItem();
         $this->issued_at = now()->format('Y-m-d');
         $this->due_at = now()->addDays(30)->format('Y-m-d');
@@ -114,12 +119,47 @@ class InvoiceWizard extends Component
     public function nextStep(): void
     {
         if ($this->currentStep === 1) {
-            $this->validate([
+            // Basic required fields
+            $rules = [
                 'organization_id' => 'required|exists:teams,id',
                 'customer_id' => 'required|exists:customers,id',
-                'organization_location_id' => 'required|exists:locations,id',
-                'customer_location_id' => 'required|exists:locations,id',
-            ]);
+            ];
+
+            // Check if organizations and customers have locations
+            $orgLocations = $this->organizationLocations;
+            $custLocations = $this->customerLocations;
+
+            // Add location validation only if locations exist
+            if ($orgLocations->count() > 0) {
+                $rules['organization_location_id'] = 'required|exists:locations,id';
+            } else {
+                // Clear any previously set location if no locations exist
+                $this->organization_location_id = null;
+            }
+
+            if ($custLocations->count() > 0) {
+                $rules['customer_location_id'] = 'required|exists:locations,id';
+            } else {
+                // Clear any previously set location if no locations exist
+                $this->customer_location_id = null;
+            }
+
+            $this->validate($rules);
+
+            // Additional checks for missing locations with helpful messages
+            if ($this->organization_id && $orgLocations->count() === 0) {
+                $orgName = Organization::find($this->organization_id)?->name ?? 'the selected organization';
+                $this->addError('organization_location_id', "Please create at least one location for {$orgName} before proceeding. You can manage locations in the Organizations section.");
+
+                return;
+            }
+
+            if ($this->customer_id && $custLocations->count() === 0) {
+                $custName = Customer::find($this->customer_id)?->name ?? 'the selected customer';
+                $this->addError('customer_location_id', "Please create at least one location for {$custName} before proceeding. You can manage locations in the Customers section.");
+
+                return;
+            }
         }
 
         if ($this->currentStep < 3) {
@@ -143,6 +183,11 @@ class InvoiceWizard extends Component
 
     public function edit(Invoice $invoice): void
     {
+        // Security check: Ensure user has access to this invoice's organization
+        if (! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
+            abort(403, 'Unauthorized access to invoice.');
+        }
+
         $invoice->load(['items', 'organizationLocation', 'customerLocation']);
 
         $this->editingId = $invoice->id;
@@ -266,6 +311,11 @@ class InvoiceWizard extends Component
 
     public function delete(Invoice $invoice): void
     {
+        // Security check: Ensure user has access to this invoice's organization
+        if (! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
+            abort(403, 'Unauthorized access to invoice.');
+        }
+
         $invoice->items()->delete();
         $invoice->delete();
 
@@ -275,6 +325,11 @@ class InvoiceWizard extends Component
 
     public function downloadPdf(Invoice $invoice)
     {
+        // Security check: Ensure user has access to this invoice's organization
+        if (! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
+            abort(403, 'Unauthorized access to invoice.');
+        }
+
         $pdfService = new PdfService;
 
         if ($invoice->type === 'invoice') {
@@ -335,13 +390,25 @@ class InvoiceWizard extends Component
     #[Computed]
     public function organizations()
     {
-        return Organization::with('primaryLocation')->get();
+        // Return only organizations/teams the user has access to
+        if (! auth()->check()) {
+            return collect();
+        }
+
+        return auth()->user()->allTeams()->load('primaryLocation');
     }
 
     #[Computed]
     public function customers()
     {
-        return Customer::with('primaryLocation')->get();
+        // Return only customers belonging to the current organization
+        if (! $this->organization_id) {
+            return collect();
+        }
+
+        return Customer::where('organization_id', $this->organization_id)
+            ->with('primaryLocation')
+            ->get();
     }
 
     #[Computed]
@@ -371,6 +438,7 @@ class InvoiceWizard extends Component
     #[Computed]
     public function invoices()
     {
+        // OrganizationScope automatically filters by current user's team
         return Invoice::with(['organizationLocation', 'customerLocation'])
             ->latest()
             ->paginate(10);

@@ -23,11 +23,10 @@ class JetstreamServiceProvider extends ServiceProvider
     {
         $this->configurePermissions();
 
-        // Teams feature disabled - using organization-centric architecture
-        // Use Organization model for teams (only for existing relationships)
+        // Use Organization model for teams (organization-centric architecture)
         Jetstream::useTeamModel(\App\Models\Organization::class);
 
-        // Only keep user deletion since account deletion is still enabled
+        // Configure user deletion
         Jetstream::deleteUsersUsing(DeleteUser::class);
     }
 
