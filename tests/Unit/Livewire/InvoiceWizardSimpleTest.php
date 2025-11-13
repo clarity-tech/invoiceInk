@@ -50,10 +50,11 @@ test('loads invoices through computed property', function () {
 });
 
 test('loads companies and customers', function () {
+    $user = createUserWithTeam();
     $organization = createOrganizationWithLocation();
-    $customer = createCustomerWithLocation();
+    $customer = createCustomerWithLocation(['organization_id' => $user->currentTeam->id]);
 
-    $component = Livewire::test(InvoiceWizard::class);
+    $component = Livewire::actingAs($user)->test(InvoiceWizard::class);
 
     $organizations = $component->instance()->organizations;
     $customers = $component->instance()->customers;
@@ -80,10 +81,12 @@ test('can navigate wizard steps', function () {
 });
 
 test('validates step 1 requirements', function () {
+    // Test basic validation without locations - should only require organization_id and customer_id
     Livewire::test(InvoiceWizard::class)
         ->call('create')
         ->call('nextStep')
-        ->assertHasErrors(['organization_id', 'customer_id', 'organization_location_id', 'customer_location_id']);
+        ->assertHasErrors(['organization_id', 'customer_id'])
+        ->assertHasNoErrors(['organization_location_id', 'customer_location_id']); // Location IDs are not required when no locations exist
 });
 
 test('calculates totals correctly', function () {
@@ -100,6 +103,9 @@ test('calculates totals correctly', function () {
 });
 
 test('can populate form for editing', function () {
+    $user = createUserWithTeam();
+    $organization = createOrganizationWithLocation([], [], $user);
+    $customer = createCustomerWithLocation([], [], $organization);
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
         'invoice_number' => 'INV-EDIT',
@@ -112,7 +118,9 @@ test('can populate form for editing', function () {
             'unit_price' => 5000,
             'tax_rate' => 1800, // 18% in basis points
         ],
-    ]);
+    ], $organization, $customer);
+
+    $this->actingAs($user);
 
     Livewire::test(InvoiceWizard::class)
         ->call('edit', $invoice)
@@ -170,12 +178,17 @@ test('can create estimate', function () {
 });
 
 test('can delete invoice', function () {
+    $user = createUserWithTeam();
+    $organization = createOrganizationWithLocation([], [], $user);
+    $customer = createCustomerWithLocation([], [], $organization);
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
         'invoice_number' => 'INV-DELETE',
-    ]);
+    ], null, $organization, $customer);
 
     $initialCount = Invoice::count();
+
+    $this->actingAs($user);
 
     Livewire::test(InvoiceWizard::class)
         ->call('delete', $invoice);

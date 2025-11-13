@@ -599,18 +599,21 @@ test('invoice has organization scope applied', function () {
         'invoice_number' => 'INV-ORG2-001',
     ], null, $org2, $customer2);
 
-    // Act as user from org1
+    // Act as user from org1 - make user a member of org1 first
     $user1 = User::factory()->create();
+    if (! $org1->users()->where('user_id', $user1->id)->exists()) {
+        $org1->users()->attach($user1, ['role' => 'admin']);
+    }
     $user1->switchTeam($org1);
     $this->actingAs($user1);
 
-    // Currently OrganizationScope is not fully implemented, so all invoices are visible
-    // This test documents the current behavior - in future this should filter by organization
+    // OrganizationScope is now implemented and working correctly
+    // User should only see invoices from their current organization (org1)
     $invoices = Invoice::all();
 
-    expect($invoices)->toHaveCount(2);
+    expect($invoices)->toHaveCount(1);
     expect($invoices->contains('id', $invoice1->id))->toBeTrue();
-    expect($invoices->contains('id', $invoice2->id))->toBeTrue();
+    expect($invoices->contains('id', $invoice2->id))->toBeFalse();
 });
 
 test('invoice can handle empty arrays for json fields', function () {

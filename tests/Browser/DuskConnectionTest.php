@@ -8,9 +8,7 @@ use Tests\Browser\Pages\Dashboard;
 
 test('dusk can connect to selenium and access homepage', function () {
     $this->browse(function (Browser $browser) {
-        $browser->visit('/')
-            ->pause(2000)
-            ->screenshot('dusk_connection_test');
+        $browser->visit('/');
     });
 });
 
@@ -18,23 +16,21 @@ test('dusk can login user successfully', function () {
     // Create test user inline for authentication test
     $user = User::factory()->withPersonalTeam()->create([
         'name' => 'Dusk Connection Test User',
-        'email' => 'dusktest@example.test', // Using .test TLD
+        'email' => 'dusktest'.uniqid().'@example.test', // Unique email with .test TLD
         'password' => 'password',
         'email_verified_at' => now(),
     ]);
-    
+
     $this->browse(function (Browser $browser) use ($user) {
         // Test authentication using inline-created user
         loginUserInBrowser($browser, $user);
-        
+
         // Use Dashboard page object for clean verification
-        $dashboardPage = new Dashboard();
-        $browser->visit($dashboardPage)
-            ->pause(2000)
-            ->screenshot('dashboard_after_login');
-        
+        $dashboardPage = new Dashboard;
+        $browser->visit($dashboardPage);
+
         $currentUrl = $browser->driver->getCurrentURL();
-        
+
         if (str_contains($currentUrl, 'login')) {
             $browser->screenshot('inline_login_failed');
             expect(false)->toBeTrue("Inline user login failed: $currentUrl");

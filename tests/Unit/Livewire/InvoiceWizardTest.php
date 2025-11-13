@@ -112,15 +112,45 @@ test('can navigate between wizard steps', function () {
 });
 
 test('validates step 1 when moving to next step', function () {
+    // Test basic validation - only organization_id and customer_id should be required
+    // Location validation is conditional based on whether locations exist
     Livewire::test(InvoiceWizard::class)
         ->call('create')
         ->call('nextStep')
         ->assertHasErrors([
             'organization_id' => 'required',
             'customer_id' => 'required',
-            'organization_location_id' => 'required',
-            'customer_location_id' => 'required',
-        ]);
+        ])
+        ->assertHasNoErrors(['organization_location_id', 'customer_location_id']); // Location IDs conditional
+});
+
+test('validates location selection when locations exist', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation();
+
+    // When organizations and customers have locations, location selection should be required
+    Livewire::test(InvoiceWizard::class)
+        ->call('create')
+        ->set('organization_id', $organization->id)
+        ->set('customer_id', $customer->id)
+        ->call('nextStep')
+        ->assertHasErrors(['organization_location_id', 'customer_location_id']);
+});
+
+test('advances step when valid organization and customer are selected', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation();
+
+    // When valid organization and customer with locations are selected, should advance to step 2
+    Livewire::test(InvoiceWizard::class)
+        ->call('create')
+        ->set('organization_id', $organization->id)
+        ->set('customer_id', $customer->id)
+        ->set('organization_location_id', $organization->primaryLocation->id)
+        ->set('customer_location_id', $customer->primaryLocation->id)
+        ->call('nextStep')
+        ->assertHasNoErrors()
+        ->assertSet('currentStep', 2);
 });
 
 test('cannot go beyond step 3 or below step 1', function () {
@@ -227,6 +257,9 @@ test('validates all fields when saving', function () {
 });
 
 test('can edit existing invoice', function () {
+    $user = createUserWithTeam();
+    $organization = createOrganizationWithLocation([], [], $user);
+    $customer = createCustomerWithLocation([], [], $organization);
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
         'invoice_number' => 'INV-EDIT',
@@ -239,7 +272,9 @@ test('can edit existing invoice', function () {
             'unit_price' => 5000,
             'tax_rate' => 1800, // 18% in basis points
         ],
-    ]);
+    ], $organization, $customer);
+
+    $this->actingAs($user);
 
     Livewire::test(InvoiceWizard::class)
         ->call('edit', $invoice)
@@ -258,6 +293,9 @@ test('can edit existing invoice', function () {
 });
 
 test('can update existing invoice', function () {
+    $user = createUserWithTeam();
+    $organization = createOrganizationWithLocation([], [], $user);
+    $customer = createCustomerWithLocation([], [], $organization);
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
         'invoice_number' => 'INV-UPDATE',
@@ -268,7 +306,9 @@ test('can update existing invoice', function () {
             'unit_price' => 5000,
             'tax_rate' => 1800, // 18% in basis points
         ],
-    ]);
+    ], $organization, $customer);
+
+    $this->actingAs($user);
 
     Livewire::test(InvoiceWizard::class)
         ->call('edit', $invoice)
@@ -283,10 +323,15 @@ test('can update existing invoice', function () {
 });
 
 test('can delete invoice', function () {
+    $user = createUserWithTeam();
+    $organization = createOrganizationWithLocation([], [], $user);
+    $customer = createCustomerWithLocation([], [], $organization);
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
         'invoice_number' => 'INV-DELETE',
-    ]);
+    ], null, $organization, $customer);
+
+    $this->actingAs($user);
 
     Livewire::test(InvoiceWizard::class)
         ->call('delete', $invoice)
@@ -296,10 +341,15 @@ test('can delete invoice', function () {
 });
 
 test('can delete estimate', function () {
+    $user = createUserWithTeam();
+    $organization = createOrganizationWithLocation([], [], $user);
+    $customer = createCustomerWithLocation([], [], $organization);
     $estimate = createInvoiceWithItems([
         'type' => 'estimate',
         'invoice_number' => 'EST-DELETE',
-    ]);
+    ], null, $organization, $customer);
+
+    $this->actingAs($user);
 
     Livewire::test(InvoiceWizard::class)
         ->call('delete', $estimate)

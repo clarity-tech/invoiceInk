@@ -154,7 +154,6 @@ test('validates required fields when creating organization', function () {
             'name',
             'currency',
             'country_code',
-            'location_name',
             'address_line_1',
             'city',
             'state',
@@ -273,7 +272,7 @@ test('can update existing organization', function () {
         ->set('name', 'Updated Name')
         ->set('phone', '+1-555-0200')
         ->set('emails.0', 'updated@test.com')
-        ->set('currency', 'EUR')
+        ->set('currency', 'INR')
         ->call('save')
         ->assertSet('showForm', false);
 
@@ -281,7 +280,7 @@ test('can update existing organization', function () {
     expect($organization->name)->toBe('Updated Name');
     expect($organization->phone)->toBe('+1-555-0200');
     expect($organization->emails->first())->toBe('updated@test.com');
-    expect($organization->currency->value)->toBe('EUR');
+    expect($organization->currency->value)->toBe('INR');
 });
 
 test('can delete organization', function () {
@@ -501,4 +500,54 @@ test('correctly handles address line 2 as optional', function () {
 
     $organization = Organization::where('name', 'Address Line 2 Test Org')->first();
     expect($organization->primaryLocation->address_line_2)->toBeNull();
+});
+
+test('uses organization name as default when location name is empty', function () {
+    $user = createUserWithTeam();
+    $this->actingAs($user);
+
+    Livewire::test(OrganizationManager::class)
+        ->call('create')
+        ->set('name', 'ACME Corporation')
+        ->set('emails.0', 'info@acme.com')
+        ->set('currency', 'USD')
+        ->set('country_code', 'US')
+        // Note: location_name is intentionally left empty
+        ->set('address_line_1', '456 Business Blvd')
+        ->set('city', 'Corporate City')
+        ->set('state', 'Business State')
+        ->set('country', 'US')
+        ->set('postal_code', '67890')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSet('showForm', false);
+
+    $organization = Organization::where('name', 'ACME Corporation')->first();
+    expect($organization->primaryLocation->name)->toBe('ACME Corporation');
+});
+
+test('always resets financial year when country changes', function () {
+    $user = createUserWithTeam();
+    $this->actingAs($user);
+
+    $component = Livewire::test(OrganizationManager::class)
+        ->call('create')
+        ->set('name', 'Test Company')
+        ->set('emails.0', 'test@example.com')
+        ->set('country_code', 'IN') // India: April-March FY
+        ->assertSet('financial_year_type', 'april_march')
+        ->assertSet('financial_year_start_month', 4)
+        ->assertSet('financial_year_start_day', 1);
+
+    // Change to US (January-December FY) - should reset regardless of previous selection
+    $component->set('country_code', 'US')
+        ->assertSet('financial_year_type', 'january_december')
+        ->assertSet('financial_year_start_month', 1)
+        ->assertSet('financial_year_start_day', 1);
+
+    // Change to Australia (July-June FY) - should reset again
+    $component->set('country_code', 'AU')
+        ->assertSet('financial_year_type', 'july_june')
+        ->assertSet('financial_year_start_month', 7)
+        ->assertSet('financial_year_start_day', 1);
 });

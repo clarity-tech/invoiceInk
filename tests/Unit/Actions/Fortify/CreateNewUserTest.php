@@ -2,11 +2,8 @@
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Models\User;
-
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-
-
 
 beforeEach(function () {
     $this->action = new CreateNewUser;
@@ -58,9 +55,10 @@ it('creates a personal team for the user', function () {
 
     expect($user->ownedTeams)
         ->toHaveCount(1)
-        ->first()->name->toBe("John's Team")
+        ->first()->name->toBe("John's Organization")
         ->first()->personal_team->toBeTrue()
-        ->first()->user_id->toBe($user->id);
+        ->first()->user_id->toBe($user->id)
+        ->first()->setup_completed_at->toBeNull(); // Ensure setup is incomplete
 });
 
 it('validates name is required', function () {
@@ -193,7 +191,7 @@ it('creates team with first name when user has multiple names', function () {
 
     $user = $this->action->create($input);
 
-    expect($user->ownedTeams->first()->name)->toBe("John's Team");
+    expect($user->ownedTeams->first()->name)->toBe("John's Organization");
 });
 
 it('creates team with full name when user has single name', function () {
@@ -207,7 +205,7 @@ it('creates team with full name when user has single name', function () {
 
     $user = $this->action->create($input);
 
-    expect($user->ownedTeams->first()->name)->toBe("John's Team");
+    expect($user->ownedTeams->first()->name)->toBe("John's Organization");
 });
 
 it('hashes password before storing', function () {

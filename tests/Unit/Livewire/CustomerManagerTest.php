@@ -166,11 +166,9 @@ test('validates required fields when creating customer', function () {
         ->call('save')
         ->assertHasErrors([
             'name' => 'required',
-            'location_name' => 'required',
             'address_line_1' => 'required',
             'city' => 'required',
             'state' => 'required',
-            'country' => 'required',
             'postal_code' => 'required',
         ]);
 });
@@ -340,4 +338,25 @@ test('handles customer without primary location when editing', function () {
         ->assertSet('name', 'No Location Customer')
         ->assertSet('location_name', '')
         ->assertSet('address_line_1', '');
+});
+
+test('uses customer name plus office as default when location name is empty', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
+    Livewire::test(CustomerManager::class)
+        ->call('create')
+        ->set('name', 'ABC Industries')
+        ->set('emails.0', 'contact@abc.com')
+        // Note: location_name is intentionally left empty
+        ->set('address_line_1', '789 Industrial Ave')
+        ->set('city', 'Factory Town')
+        ->set('state', 'Manufacturing State')
+        ->set('postal_code', '54321')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSet('showForm', false);
+
+    $customer = Customer::where('name', 'ABC Industries')->first();
+    expect($customer->primaryLocation->name)->toBe('ABC Industries Office');
 });

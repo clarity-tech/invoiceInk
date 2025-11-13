@@ -4,14 +4,12 @@ use App\Models\Customer;
 use App\Models\Organization;
 use Laravel\Dusk\Browser;
 
-
 test('user can view the dashboard', function () {
     $this->browse(function (Browser $browser) {
         loginUserInBrowser($browser);
 
         $browser->assertAuthenticated()
             ->visit('/dashboard')
-            ->screenshot('dashboard_view')
             ->assertSee('Dashboard'); // Check for actual dashboard content
     });
 });
@@ -46,7 +44,6 @@ test('user can create a new organization', function () {
             ->type('[wire\\:model="gstin"]', '27ABCDE1234F1Z5')
             ->screenshot('organization_creation_form')
             ->click('button[type="submit"]')
-            ->pause(2000)
             ->screenshot('organization_created_success');
     });
 });

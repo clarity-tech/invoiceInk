@@ -58,16 +58,14 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
-     * Handle database setup with hybrid approach for performance.
-     * First test: Full migration + seeding
-     * Subsequent tests: Smart truncation + selective reseeding
+     * Handle database setup without refreshing.
+     * Tests will create their own data inline using factories.
      */
     protected function setupDatabaseForBrowserTests(): void
     {
-        // Skip database setup for now to avoid hanging issues
-        // Tests will create their own data inline using factories
+        // Database migrations already run for testing environment
+        // Tests create data inline using factories - no refresh needed
         if (! static::$databaseSetupComplete) {
-            // Mark as complete without actually running setup
             static::$databaseSetupComplete = true;
         }
     }
@@ -167,9 +165,20 @@ abstract class DuskTestCase extends BaseTestCase
             '--disable-search-engine-choice-screen',
             '--disable-smooth-scrolling',
             '--disable-dev-shm-usage',
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor',
             '--no-sandbox',
-            '--timeout=30000', // 30 second timeout
-            '--page-load-timeout=30000', // 30 second page load timeout
+            '--no-first-run',
+            '--disable-background-timer-throttling',
+            '--disable-renderer-backgrounding',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-extensions',
+            '--disable-plugins',
+            '--disable-default-apps',
+            '--disable-sync',
+            '--no-default-browser-check',
+            '--no-pings',
+            '--aggressive-cache-discard',
         ])->unless($this->hasHeadlessDisabled(), function (Collection $items) {
             return $items->merge([
                 '--disable-gpu',
@@ -184,10 +193,10 @@ abstract class DuskTestCase extends BaseTestCase
             )
         );
 
-        // Set browser timeouts to prevent hanging
-        $driver->manage()->timeouts()->implicitlyWait(10); // 10 seconds for elements
-        $driver->manage()->timeouts()->pageLoadTimeout(30); // 30 seconds for page loads
-        $driver->manage()->timeouts()->setScriptTimeout(30); // 30 seconds for scripts
+        // Set balanced timeouts for speed with reliability
+        $driver->manage()->timeouts()->implicitlyWait(3); // 3 seconds for elements
+        $driver->manage()->timeouts()->pageLoadTimeout(8); // 8 seconds for page loads
+        $driver->manage()->timeouts()->setScriptTimeout(6); // 6 seconds for scripts
 
         return $driver;
     }
@@ -212,6 +221,15 @@ abstract class DuskTestCase extends BaseTestCase
     protected function hasPassed(): bool
     {
         return ! $this->testHasFailed;
+    }
+
+    /**
+     * Get the base URL for browser tests.
+     * Override to use correct URL for selenium container connectivity.
+     */
+    protected function baseUrl()
+    {
+        return 'http://laravel.test';
     }
 
     /**

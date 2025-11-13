@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Organization;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Organization;
 use Laravel\Dusk\Browser;
 use Tests\Browser\Pages\PublicInvoice;
 
@@ -24,11 +24,11 @@ test('simple public route test', function () {
         'company_name' => 'Simple Test Company Ltd.',
         'currency' => 'INR',
     ]);
-    
+
     $customer = Customer::factory()->withLocation()->for($organization)->create([
         'name' => 'Simple Test Customer',
     ]);
-    
+
     $invoice = Invoice::factory()
         ->invoice()
         ->sent()
@@ -41,7 +41,7 @@ test('simple public route test', function () {
             'tax' => 18000,       // ₹180 (18%)
             'total' => 118000,    // ₹1180
         ]);
-    
+
     // Add invoice item
     InvoiceItem::factory()->for($invoice)->create([
         'description' => 'Web Development Services',
@@ -57,10 +57,8 @@ test('simple public route test', function () {
     $this->browse(function (Browser $browser) use ($invoice) {
         // Use PublicInvoice page object for clean navigation
         $publicInvoicePage = new PublicInvoice($invoice->ulid);
-        
+
         $browser->visit($publicInvoicePage)
-            ->pause(2000) // Wait for page to load
-            ->screenshot('simple_public_invoice')
             ->assertSee($invoice->invoice_number)
             ->assertSee('Web Development Services');
     });

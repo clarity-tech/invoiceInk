@@ -4,9 +4,6 @@ use App\Models\Organization;
 use App\Models\TaxTemplate;
 use App\Models\User;
 
-
-
-
 test('can create tax template with required fields', function () {
     $organization = createOrganizationWithLocation();
 
@@ -509,18 +506,21 @@ test('tax template has organization scope applied globally', function () {
         'country_code' => 'IN',
     ]);
 
-    // Act as user from org1
+    // Act as user from org1 - make user a member of org1 first
     $user1 = User::factory()->create();
+    if (! $org1->users()->where('user_id', $user1->id)->exists()) {
+        $org1->users()->attach($user1, ['role' => 'admin']);
+    }
     $user1->switchTeam($org1);
     $this->actingAs($user1);
 
-    // Currently OrganizationScope is not fully implemented, so all templates are visible
-    // This test documents the current behavior - in future this should filter by organization
+    // OrganizationScope is now implemented and working correctly
+    // User should only see tax templates from their current organization (org1)
     $templates = TaxTemplate::all();
 
-    expect($templates)->toHaveCount(2);
+    expect($templates)->toHaveCount(1);
     expect($templates->contains('id', $tax1->id))->toBeTrue();
-    expect($templates->contains('id', $tax2->id))->toBeTrue();
+    expect($templates->contains('id', $tax2->id))->toBeFalse();
 });
 
 test('tax template relationship is correctly configured', function () {

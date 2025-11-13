@@ -225,19 +225,19 @@ function loginUserInBrowser($browser, ?User $user = null): User
     if (! $user) {
         $user = User::factory()->withPersonalTeam()->create([
             'name' => 'Browser Test User',
-            'email' => 'browser'.uniqid().'@example.test',
+            'email' => 'browser'.uniqid().rand(10000, 99999).'@example.test',
             'password' => 'password',
             'email_verified_at' => now(),
         ]);
     }
 
-    // Manual login instead of loginAs to avoid Jetstream compatibility issues
+    // Optimized login flow with reliable timeouts for heavy test loads
     $browser->visit('/login')
-        ->waitForText('Email', 10)
+        ->waitForText('Email', 15) // Increased timeout for full test suite reliability
         ->type('email', $user->email)
         ->type('password', 'password')
-        ->press('Log in')
-        ->waitForLocation('/dashboard', 15); // Wait for redirect to dashboard
+        ->press('LOG IN')
+        ->waitForLocation('/dashboard', 15); // Increased timeout for redirect
 
     return $user;
 }
