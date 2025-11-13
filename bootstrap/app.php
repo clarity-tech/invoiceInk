@@ -12,7 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Register organization setup middleware
+        $middleware->alias([
+            'organization.setup' => \App\Http\Middleware\EnsureOrganizationSetup::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
