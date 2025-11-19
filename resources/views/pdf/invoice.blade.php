@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice {{ $invoice->invoice_number }}</title>
+    <title>{{ __('documents.headers.invoice') }} {{ $invoice->invoice_number }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @page {
@@ -27,11 +27,11 @@
             <div class="bg-blue-600 text-white px-6 py-4 mb-6">
                 <div class="flex justify-between items-start">
                     <div>
-                        <h1 class="text-3xl font-bold">INVOICE</h1>
+                        <h1 class="text-3xl font-bold">{{ __('documents.headers.invoice_upper') }}</h1>
                         <p class="text-blue-100 text-lg">{{ $invoice->invoice_number }}</p>
                     </div>
                     <div class="text-right">
-                        <div class="text-sm text-blue-100">Status</div>
+                        <div class="text-sm text-blue-100">{{ __('documents.fields.status') }}</div>
                         <span class="inline-block px-3 py-1 rounded-full text-sm font-medium
                             {{ $invoice->status === 'paid' ? 'bg-green-500' : 
                                ($invoice->status === 'sent' ? 'bg-yellow-500' : 'bg-gray-500') }}">
@@ -46,7 +46,7 @@
                 <div class="grid grid-cols-2 gap-8">
                     <!-- From -->
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-3">From:</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ __('documents.headers.from') }}</h3>
                         <div class="text-gray-700">
                             <p class="font-medium text-lg">{{ $invoice->organizationLocation->locatable->name }}</p>
                             <p class="text-sm mb-2">{{ $invoice->organizationLocation->name }}</p>
@@ -58,10 +58,10 @@
                                 <p>{{ $invoice->organizationLocation->city }}, {{ $invoice->organizationLocation->state }} {{ $invoice->organizationLocation->postal_code }}</p>
                                 <p>{{ $invoice->organizationLocation->country }}</p>
                                 @if($invoice->organizationLocation->gstin)
-                                    <p class="mt-2"><span class="font-medium">GSTIN:</span> {{ $invoice->organizationLocation->gstin }}</p>
+                                    <p class="mt-2"><span class="font-medium">{{ __('documents.fields.gstin') }}</span> {{ $invoice->organizationLocation->gstin }}</p>
                                 @endif
                                 @if($invoice->organizationLocation->locatable->emails && !$invoice->organizationLocation->locatable->emails->isEmpty())
-                                    <p><span class="font-medium">Email:</span> {{ $invoice->organizationLocation->locatable->emails->first() }}</p>
+                                    <p><span class="font-medium">{{ __('documents.fields.email') }}</span> {{ $invoice->organizationLocation->locatable->emails->first() }}</p>
                                 @endif
                             </div>
                         </div>
@@ -69,7 +69,7 @@
 
                     <!-- To -->
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-3">To:</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ __('documents.headers.to') }}</h3>
                         <div class="text-gray-700">
                             <p class="font-medium text-lg">{{ $invoice->customerLocation->locatable->name }}</p>
                             <p class="text-sm mb-2">{{ $invoice->customerLocation->name }}</p>
@@ -81,10 +81,10 @@
                                 <p>{{ $invoice->customerLocation->city }}, {{ $invoice->customerLocation->state }} {{ $invoice->customerLocation->postal_code }}</p>
                                 <p>{{ $invoice->customerLocation->country }}</p>
                                 @if($invoice->customerLocation->gstin)
-                                    <p class="mt-2"><span class="font-medium">GSTIN:</span> {{ $invoice->customerLocation->gstin }}</p>
+                                    <p class="mt-2"><span class="font-medium">{{ __('documents.fields.gstin') }}</span> {{ $invoice->customerLocation->gstin }}</p>
                                 @endif
                                 @if($invoice->customerLocation->locatable->emails && !$invoice->customerLocation->locatable->emails->isEmpty())
-                                    <p><span class="font-medium">Email:</span> {{ $invoice->customerLocation->locatable->emails->first() }}</p>
+                                    <p><span class="font-medium">{{ __('documents.fields.email') }}</span> {{ $invoice->customerLocation->locatable->emails->first() }}</p>
                                 @endif
                             </div>
                         </div>
@@ -95,18 +95,18 @@
                 <div class="mt-8 grid grid-cols-3 gap-6">
                     @if($invoice->issued_at)
                         <div>
-                            <h4 class="text-sm font-medium text-gray-500 uppercase">Issue Date</h4>
+                            <h4 class="text-sm font-medium text-gray-500 uppercase">{{ __('documents.fields.issue_date') }}</h4>
                             <p class="mt-1 text-sm text-gray-900 font-medium">{{ $invoice->issued_at->format('F j, Y') }}</p>
                         </div>
                     @endif
                     @if($invoice->due_at)
                         <div>
-                            <h4 class="text-sm font-medium text-gray-500 uppercase">Due Date</h4>
+                            <h4 class="text-sm font-medium text-gray-500 uppercase">{{ __('documents.fields.due_date') }}</h4>
                             <p class="mt-1 text-sm text-gray-900 font-medium">{{ $invoice->due_at->format('F j, Y') }}</p>
                         </div>
                     @endif
                     <div>
-                        <h4 class="text-sm font-medium text-gray-500 uppercase">Total Amount</h4>
+                        <h4 class="text-sm font-medium text-gray-500 uppercase">{{ __('documents.financial.total_amount') }}</h4>
                         <p class="mt-1 text-lg font-bold text-gray-900">{{ $invoice->formatted_total }}</p>
                     </div>
                 </div>
@@ -114,15 +114,15 @@
 
             <!-- Items Table -->
             <div class="px-6 mb-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Items</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ __('documents.table.items') }}</h3>
                 <table class="w-full border-collapse border border-gray-300">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="border border-gray-300 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                            <th class="border border-gray-300 px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Qty</th>
-                            <th class="border border-gray-300 px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Unit Price</th>
-                            <th class="border border-gray-300 px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tax %</th>
-                            <th class="border border-gray-300 px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+                            <th class="border border-gray-300 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ __('documents.table.description') }}</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{{ __('documents.table.qty') }}</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{{ __('documents.table.unit_price') }}</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{{ __('documents.table.tax_percent') }}</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{{ __('documents.table.amount') }}</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white">
@@ -143,15 +143,15 @@
                     <div class="w-80">
                         <div class="bg-gray-50 border border-gray-300 p-4">
                             <div class="flex justify-between py-2">
-                                <span class="text-sm text-gray-600">Subtotal:</span>
+                                <span class="text-sm text-gray-600">{{ __('documents.financial.subtotal') }}</span>
                                 <span class="text-sm font-medium text-gray-900">{{ $invoice->formatted_subtotal }}</span>
                             </div>
                             <div class="flex justify-between py-2">
-                                <span class="text-sm text-gray-600">Tax:</span>
+                                <span class="text-sm text-gray-600">{{ __('documents.financial.tax') }}</span>
                                 <span class="text-sm font-medium text-gray-900">{{ $invoice->formatted_tax }}</span>
                             </div>
                             <div class="border-t border-gray-300 pt-2 mt-2 flex justify-between">
-                                <span class="text-lg font-bold text-gray-900">Total:</span>
+                                <span class="text-lg font-bold text-gray-900">{{ __('documents.financial.total') }}</span>
                                 <span class="text-lg font-bold text-gray-900">{{ $invoice->formatted_total }}</span>
                             </div>
                         </div>
@@ -162,8 +162,8 @@
             <!-- Footer -->
             <div class="px-6 py-4 border-t border-gray-200 mt-8">
                 <div class="text-center text-sm text-gray-500">
-                    <p>This is a computer-generated invoice. No signature required.</p>
-                    <p class="mt-1">Generated on {{ now()->format('F j, Y \a\t g:i A') }}</p>
+                    <p>{{ __('messages.footer.computer_generated_invoice') }}</p>
+                    <p class="mt-1">{{ __('messages.footer.generated_on', ['date' => now()->format('F j, Y \a\t g:i A')]) }}</p>
                 </div>
             </div>
         </div>

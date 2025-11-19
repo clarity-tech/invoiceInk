@@ -1,0 +1,132 @@
+<?php
+
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Message Language Lines
+    |--------------------------------------------------------------------------
+    |
+    | The following language lines are used for email templates, notifications,
+    | and system messages throughout the application.
+    |
+    */
+
+    'email' => [
+        'greeting' => 'Dear :email,',
+        'greeting_name' => 'Dear :name,',
+        'invoice_subject' => 'Invoice :number from :organization',
+        'estimate_subject' => 'Estimate :number from :organization',
+        'invoice_message' => 'Please find attached your invoice for :number.',
+        'estimate_message' => 'Please find attached your estimate for :number.',
+        'invoice_details' => 'Invoice Details:',
+        'estimate_details' => 'Estimate Details:',
+        'view_online_invoice' => 'You can view this invoice online at:',
+        'view_online_estimate' => 'You can view this estimate online at:',
+        'view_online' => 'You can view this :type online at:',
+        'thank_you_business' => 'Thank you for your business!',
+        'thank_you_considering' => 'Thank you for considering our services!',
+        'payment_instructions' => 'Payment Instructions:',
+        'payment_due_date' => 'Payment is due by :date',
+        'payment_terms' => 'Payment Terms: :terms',
+        'questions_contact' => 'If you have any questions, please contact us at :email or :phone.',
+        'regards' => 'Best regards,',
+        'team_signature' => 'The :organization Team',
+        'do_not_reply' => 'This is an automated email. Please do not reply to this message.',
+        'email_footer' => 'This email was sent by :organization (:website)',
+    ],
+
+    'notifications' => [
+        'invoice_created' => 'Invoice :number has been created successfully.',
+        'estimate_created' => 'Estimate :number has been created successfully.',
+        'invoice_updated' => 'Invoice :number has been updated.',
+        'estimate_updated' => 'Estimate :number has been updated.',
+        'invoice_sent' => 'Invoice :number has been sent to :email.',
+        'estimate_sent' => 'Estimate :number has been sent to :email.',
+        'invoice_paid' => 'Invoice :number has been marked as paid.',
+        'estimate_approved' => 'Estimate :number has been approved.',
+        'invoice_overdue' => 'Invoice :number is now overdue.',
+        'document_deleted' => ':type :number has been deleted.',
+        'document_archived' => ':type :number has been archived.',
+        'document_restored' => ':type :number has been restored.',
+        'save_successful' => 'Changes saved successfully.',
+        'save_error' => 'Error saving changes. Please try again.',
+        'send_successful' => 'Document sent successfully.',
+        'send_error' => 'Error sending document. Please try again.',
+        'delete_successful' => 'Item deleted successfully.',
+        'delete_error' => 'Error deleting item. Please try again.',
+        'export_successful' => 'Export completed successfully.',
+        'export_error' => 'Error during export. Please try again.',
+        'import_successful' => 'Import completed successfully.',
+        'import_error' => 'Error during import. Please check your file and try again.',
+    ],
+
+    'system' => [
+        'loading' => 'Loading...',
+        'processing' => 'Processing...',
+        'saving' => 'Saving...',
+        'sending' => 'Sending...',
+        'deleting' => 'Deleting...',
+        'please_wait' => 'Please wait...',
+        'operation_in_progress' => 'Operation in progress...',
+        'connection_error' => 'Connection error. Please check your internet connection.',
+        'server_error' => 'Server error. Please try again later.',
+        'unauthorized' => 'You are not authorized to perform this action.',
+        'forbidden' => 'Access denied.',
+        'not_found' => 'The requested resource was not found.',
+        'validation_failed' => 'Please correct the errors below and try again.',
+        'session_expired' => 'Your session has expired. Please log in again.',
+        'maintenance_mode' => 'The application is currently under maintenance. Please try again later.',
+    ],
+
+    'footer' => [
+        'computer_generated_invoice' => 'This is a computer-generated invoice. No signature required.',
+        'computer_generated_estimate' => 'This is a computer-generated estimate. Valid until the specified date.',
+        'computer_generated_document' => 'This is a computer-generated document.',
+        'generated_on' => 'Generated on :date',
+        'generated_at' => 'Generated at :time on :date',
+        'page_number' => 'Page :current of :total',
+        'confidential' => 'This document contains confidential information.',
+        'copyright' => '© :year :organization. All rights reserved.',
+        'terms_conditions' => 'Terms and conditions apply.',
+        'privacy_policy' => 'Privacy policy available at :url',
+    ],
+
+    'status_messages' => [
+        'draft_info' => 'This document is in draft mode and has not been sent yet.',
+        'sent_info' => 'This document has been sent to the customer.',
+        'viewed_info' => 'This document has been viewed by the customer.',
+        'paid_info' => 'This invoice has been paid in full.',
+        'overdue_info' => 'This invoice is overdue. Payment is required immediately.',
+        'cancelled_info' => 'This document has been cancelled.',
+        'approved_info' => 'This estimate has been approved by the customer.',
+        'rejected_info' => 'This estimate has been rejected by the customer.',
+        'expired_info' => 'This estimate has expired and is no longer valid.',
+    ],
+
+    'empty_states' => [
+        'no_invoices' => 'No invoices found.',
+        'no_estimates' => 'No estimates found.',
+        'no_customers' => 'No customers found.',
+        'no_items' => 'No items found.',
+        'no_results' => 'No results found.',
+        'no_data' => 'No data available.',
+        'create_first_invoice' => 'Create your first invoice to get started.',
+        'create_first_estimate' => 'Create your first estimate to get started.',
+        'add_first_customer' => 'Add your first customer to get started.',
+        'add_items_to_continue' => 'Add items to continue.',
+        'search_no_results' => 'No results found for your search.',
+        'filter_no_results' => 'No items match your current filters.',
+    ],
+
+    'help' => [
+        'need_help' => 'Need help?',
+        'contact_support' => 'Contact support',
+        'view_documentation' => 'View documentation',
+        'keyboard_shortcuts' => 'Keyboard shortcuts',
+        'tips_and_tricks' => 'Tips and tricks',
+        'frequently_asked_questions' => 'Frequently Asked Questions',
+        'getting_started' => 'Getting started guide',
+        'video_tutorials' => 'Video tutorials',
+        'community_forum' => 'Community forum',
+    ],
+];

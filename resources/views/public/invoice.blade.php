@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice {{ $invoice->invoice_number }}</title>
+    <title>{{ __('documents.headers.invoice') }} {{ $invoice->invoice_number }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
@@ -16,10 +16,10 @@
         <!-- Action Buttons -->
         <div class="mb-6 no-print flex space-x-3">
             <button onclick="window.print()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                Print Invoice
+                {{ __('actions.buttons.print_invoice') }}
             </button>
             <a href="{{ route('invoices.pdf', $invoice->ulid) }}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-block">
-                Download PDF
+                {{ __('actions.buttons.download_pdf') }}
             </a>
         </div>
 
@@ -29,11 +29,11 @@
             <div class="bg-blue-600 text-white px-6 py-4">
                 <div class="flex justify-between items-start">
                     <div>
-                        <h1 class="text-2xl font-bold">INVOICE</h1>
+                        <h1 class="text-2xl font-bold">{{ __('documents.headers.invoice_upper') }}</h1>
                         <p class="text-blue-100">{{ $invoice->invoice_number }}</p>
                     </div>
                     <div class="text-right">
-                        <div class="text-sm text-blue-100">Status</div>
+                        <div class="text-sm text-blue-100">{{ __('documents.fields.status') }}</div>
                         <span class="inline-block px-3 py-1 rounded-full text-sm font-medium
                             {{ $invoice->status === 'paid' ? 'bg-green-500' : 
                                ($invoice->status === 'sent' ? 'bg-yellow-500' : 'bg-gray-500') }}">
@@ -48,7 +48,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <!-- From -->
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-3">From:</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ __('documents.headers.from') }}</h3>
                         <div class="text-gray-700">
                             <p class="font-medium">{{ $invoice->organizationLocation->locatable->company_name }}</p>
                             <p class="text-sm">{{ $invoice->organizationLocation->name }}</p>
@@ -73,7 +73,7 @@
 
                     <!-- To -->
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-3">To:</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ __('documents.headers.to') }}</h3>
                         <div class="text-gray-700">
                             <p class="font-medium">{{ $invoice->customerLocation->locatable->name }}</p>
                             <p class="text-sm">{{ $invoice->customerLocation->name }}</p>
@@ -101,18 +101,18 @@
                 <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                     @if($invoice->issued_at)
                         <div>
-                            <h4 class="text-sm font-medium text-gray-500 uppercase">Issue Date</h4>
+                            <h4 class="text-sm font-medium text-gray-500 uppercase">{{ __('documents.fields.issue_date') }}</h4>
                             <p class="mt-1 text-sm text-gray-900">{{ $invoice->issued_at->format('F j, Y') }}</p>
                         </div>
                     @endif
                     @if($invoice->due_at)
                         <div>
-                            <h4 class="text-sm font-medium text-gray-500 uppercase">Due Date</h4>
+                            <h4 class="text-sm font-medium text-gray-500 uppercase">{{ __('documents.fields.due_date') }}</h4>
                             <p class="mt-1 text-sm text-gray-900">{{ $invoice->due_at->format('F j, Y') }}</p>
                         </div>
                     @endif
                     <div>
-                        <h4 class="text-sm font-medium text-gray-500 uppercase">Total Amount</h4>
+                        <h4 class="text-sm font-medium text-gray-500 uppercase">{{ __('documents.financial.total_amount') }}</h4>
                         <p class="mt-1 text-lg font-semibold text-gray-900">{{ $invoice->formatted_total }}</p>
                     </div>
                 </div>

@@ -3,13 +3,13 @@
         @if ($showInvoices)
             <!-- Header -->
             <div class="mb-6 flex justify-between items-center">
-                <h1 class="text-3xl font-bold text-gray-900">Invoices & Estimates</h1>
+                <h1 class="text-3xl font-bold text-gray-900">{{ __('actions.navigation.invoices') }} & {{ __('actions.navigation.estimates') }}</h1>
                 <div class="space-x-2">
                     <button wire:click="create; type = 'estimate'" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                        Create Estimate
+                        {{ __('actions.buttons.create_estimate') }}
                     </button>
                     <button wire:click="create; type = 'invoice'" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Create Invoice
+                        {{ __('actions.buttons.create_invoice') }}
                     </button>
                 </div>
             </div>
@@ -25,11 +25,11 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization → Customer</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('documents.fields.document_type') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('documents.fields.organization') }} → {{ __('documents.fields.customer') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('documents.table.amount') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('documents.fields.status') }}</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('actions.table_actions.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -157,9 +157,9 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Customer *</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.customer_required') }}</label>
                                     <select wire:model.live="customer_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        <option value="">Select Customer</option>
+                                        <option value="">{{ __('forms.labels.select_customer') }}</option>
                                         @foreach($this->customers as $customer)
                                             <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                                         @endforeach
@@ -170,7 +170,7 @@
                                 @if($organization_id)
                                     @if($this->organizationLocations->count() > 0)
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Organization Location *</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.organization_location') }} *</label>
                                             <select wire:model="organization_location_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                                 <option value="">Select Location</option>
                                                 @foreach($this->organizationLocations as $location)
@@ -206,7 +206,7 @@
                                 @if($customer_id)
                                     @if($this->customerLocations->count() > 0)
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Customer Location *</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.customer_location') }} *</label>
                                             <select wire:model="customer_location_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                                 <option value="">Select Location</option>
                                                 @foreach($this->customerLocations as $location)
@@ -266,13 +266,13 @@
                                 @endif
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Issue Date</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('documents.fields.issue_date') }}</label>
                                     <input wire:model="issued_at" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     @error('issued_at') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('documents.fields.due_date') }}</label>
                                     <input wire:model="due_at" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     @error('due_at') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                 </div>

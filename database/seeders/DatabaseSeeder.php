@@ -7,15 +7,48 @@ use Illuminate\Database\Seeder;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database with comprehensive demo data.
+     * Seed the application's database.
+     * Supports both demo data (local environment) and production data (production/staging).
      * Note: Browser tests now use inline data creation, no longer need seeders.
      */
     public function run(): void
     {
+        // Check for production mode argument
+        if ($this->command->option('production')) {
+            $this->runProductionSeeding();
+            return;
+        }
+
+        // Default to demo seeding (local environment only)
+        $this->runDemoSeeding();
+    }
+
+    /**
+     * Run production seeding for real business data.
+     */
+    private function runProductionSeeding(): void
+    {
+        if (!app()->environment(['production', 'staging', 'testing'])) {
+            $this->command->error('Production seeders can only be run in production, staging, or testing environments.');
+            $this->command->error('Current environment: ' . app()->environment());
+            $this->command->error('Use --production flag only in production/staging/testing environments.');
+            return;
+        }
+
+        $this->command->info('Running production seeders...');
+        $this->call(ProductionSeeder::class);
+    }
+
+    /**
+     * Run demo seeding for development data.
+     */
+    private function runDemoSeeding(): void
+    {
         if (! app()->environment('local')) {
-            $this->command->error('Seeders can only be run in the local environment for safety.');
+            $this->command->error('Demo seeders can only be run in the local environment for safety.');
             $this->command->error('Current environment: '.app()->environment());
-            $this->command->error('To run seeders, set APP_ENV=local in your .env file.');
+            $this->command->error('To run demo seeders, set APP_ENV=local in your .env file.');
+            $this->command->error('To run production seeders, use: sail artisan db:seed --production');
 
             return;
         }

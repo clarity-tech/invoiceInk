@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estimate {{ $estimate->invoice_number }}</title>
+    <title>{{ __('documents.headers.estimate') }} {{ $estimate->invoice_number }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
@@ -16,10 +16,10 @@
         <!-- Action Buttons -->
         <div class="mb-6 no-print flex space-x-3">
             <button onclick="window.print()" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                Print Estimate
+                {{ __('actions.buttons.print_estimate') }}
             </button>
             <a href="{{ route('estimates.pdf', $estimate->ulid) }}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-block">
-                Download PDF
+                {{ __('actions.buttons.download_pdf') }}
             </a>
         </div>
 
@@ -29,11 +29,11 @@
             <div class="bg-green-600 text-white px-6 py-4">
                 <div class="flex justify-between items-start">
                     <div>
-                        <h1 class="text-2xl font-bold">ESTIMATE</h1>
+                        <h1 class="text-2xl font-bold">{{ __('documents.headers.estimate_upper') }}</h1>
                         <p class="text-green-100">{{ $estimate->invoice_number }}</p>
                     </div>
                     <div class="text-right">
-                        <div class="text-sm text-green-100">Status</div>
+                        <div class="text-sm text-green-100">{{ __('documents.fields.status') }}</div>
                         <span class="inline-block px-3 py-1 rounded-full text-sm font-medium
                             {{ $estimate->status === 'accepted' ? 'bg-blue-500' : 
                                ($estimate->status === 'sent' ? 'bg-yellow-500' : 'bg-gray-500') }}">
@@ -48,7 +48,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <!-- From -->
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-3">From:</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ __('documents.headers.from') }}</h3>
                         <div class="text-gray-700">
                             <p class="font-medium">{{ $estimate->organizationLocation->locatable->company_name }}</p>
                             <p class="text-sm">{{ $estimate->organizationLocation->name }}</p>
@@ -60,12 +60,12 @@
                                 <p>{{ $estimate->organizationLocation->city }}, {{ $estimate->organizationLocation->state }} {{ $estimate->organizationLocation->postal_code }}</p>
                                 <p>{{ $estimate->organizationLocation->country }}</p>
                                 @if($estimate->organizationLocation->gstin)
-                                    <p class="mt-1"><span class="font-medium">GSTIN:</span> {{ $estimate->organizationLocation->gstin }}</p>
+                                    <p class="mt-1"><span class="font-medium">{{ __('documents.fields.gstin') }}</span> {{ $estimate->organizationLocation->gstin }}</p>
                                 @endif
                             </div>
                             @if($estimate->organizationLocation->locatable->emails && !$estimate->organizationLocation->locatable->emails->isEmpty())
                                 <div class="mt-2 text-sm">
-                                    <p><span class="font-medium">Email:</span> {{ $estimate->organizationLocation->locatable->emails->first() }}</p>
+                                    <p><span class="font-medium">{{ __('documents.fields.email') }}</span> {{ $estimate->organizationLocation->locatable->emails->first() }}</p>
                                 </div>
                             @endif
                         </div>
@@ -73,7 +73,7 @@
 
                     <!-- To -->
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-3">To:</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ __('documents.headers.to') }}</h3>
                         <div class="text-gray-700">
                             <p class="font-medium">{{ $estimate->customerLocation->locatable->name }}</p>
                             <p class="text-sm">{{ $estimate->customerLocation->name }}</p>
@@ -85,12 +85,12 @@
                                 <p>{{ $estimate->customerLocation->city }}, {{ $estimate->customerLocation->state }} {{ $estimate->customerLocation->postal_code }}</p>
                                 <p>{{ $estimate->customerLocation->country }}</p>
                                 @if($estimate->customerLocation->gstin)
-                                    <p class="mt-1"><span class="font-medium">GSTIN:</span> {{ $estimate->customerLocation->gstin }}</p>
+                                    <p class="mt-1"><span class="font-medium">{{ __('documents.fields.gstin') }}</span> {{ $estimate->customerLocation->gstin }}</p>
                                 @endif
                             </div>
                             @if($estimate->customerLocation->locatable->emails && !$estimate->customerLocation->locatable->emails->isEmpty())
                                 <div class="mt-2 text-sm">
-                                    <p><span class="font-medium">Email:</span> {{ $estimate->customerLocation->locatable->emails->first() }}</p>
+                                    <p><span class="font-medium">{{ __('documents.fields.email') }}</span> {{ $estimate->customerLocation->locatable->emails->first() }}</p>
                                 </div>
                             @endif
                         </div>
@@ -101,18 +101,18 @@
                 <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                     @if($estimate->issued_at)
                         <div>
-                            <h4 class="text-sm font-medium text-gray-500 uppercase">Issue Date</h4>
+                            <h4 class="text-sm font-medium text-gray-500 uppercase">{{ __('documents.fields.issue_date') }}</h4>
                             <p class="mt-1 text-sm text-gray-900">{{ $estimate->issued_at->format('F j, Y') }}</p>
                         </div>
                     @endif
                     @if($estimate->due_at)
                         <div>
-                            <h4 class="text-sm font-medium text-gray-500 uppercase">Valid Until</h4>
+                            <h4 class="text-sm font-medium text-gray-500 uppercase">{{ __('documents.fields.due_date') }}</h4>
                             <p class="mt-1 text-sm text-gray-900">{{ $estimate->due_at->format('F j, Y') }}</p>
                         </div>
                     @endif
                     <div>
-                        <h4 class="text-sm font-medium text-gray-500 uppercase">Estimated Total</h4>
+                        <h4 class="text-sm font-medium text-gray-500 uppercase">{{ __('documents.financial.estimated_total') }}</h4>
                         <p class="mt-1 text-lg font-semibold text-gray-900">{{ $estimate->formatted_total }}</p>
                     </div>
                 </div>
