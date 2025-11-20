@@ -7,36 +7,13 @@ use Illuminate\Database\Seeder;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
-     * Supports both demo data (local environment) and production data (production/staging).
+     * Seed the application's database with comprehensive demo data.
      * Note: Browser tests now use inline data creation, no longer need seeders.
+     * For production seeding, use: sail php artisan db:seed --class=ProductionSeeder
      */
     public function run(): void
     {
-        // Check for production mode argument
-        if ($this->command->option('production')) {
-            $this->runProductionSeeding();
-            return;
-        }
-
-        // Default to demo seeding (local environment only)
         $this->runDemoSeeding();
-    }
-
-    /**
-     * Run production seeding for real business data.
-     */
-    private function runProductionSeeding(): void
-    {
-        if (!app()->environment(['production', 'staging', 'testing'])) {
-            $this->command->error('Production seeders can only be run in production, staging, or testing environments.');
-            $this->command->error('Current environment: ' . app()->environment());
-            $this->command->error('Use --production flag only in production/staging/testing environments.');
-            return;
-        }
-
-        $this->command->info('Running production seeders...');
-        $this->call(ProductionSeeder::class);
     }
 
     /**
@@ -48,7 +25,7 @@ class DatabaseSeeder extends Seeder
             $this->command->error('Demo seeders can only be run in the local environment for safety.');
             $this->command->error('Current environment: '.app()->environment());
             $this->command->error('To run demo seeders, set APP_ENV=local in your .env file.');
-            $this->command->error('To run production seeders, use: sail artisan db:seed --production');
+            $this->command->error('To run production seeders, use: sail php artisan db:seed --class=ProductionSeeder');
 
             return;
         }
