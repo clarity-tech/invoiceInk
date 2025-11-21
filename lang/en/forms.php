@@ -77,6 +77,22 @@ return [
         'inactive' => 'Inactive',
     ],
 
+    'numbering_series' => [
+        'auto_creation_title' => 'Automatic Series Creation',
+        'auto_creation_explanation' => 'Don\'t worry about creating numbering series manually. When you create your first invoice, the system will automatically create a smart default series based on your organization\'s settings.',
+        'auto_creation_when_needed' => 'A default numbering series will be created automatically when you generate your first invoice.',
+        'manual_creation_benefits' => 'Create custom series only if you need:',
+        'benefit_custom_prefixes' => 'Custom prefixes (EST for estimates, DXB-INV for Dubai location)',
+        'benefit_different_formats' => 'Different format patterns (simpler or more complex)',
+        'benefit_location_specific' => 'Location-specific numbering (different series per branch)',
+        'benefit_multiple_series' => 'Multiple active series for different purposes',
+        'automatic_preview_title' => 'Automatic Default Preview',
+        'automatic_preview_subtitle' => 'This is what your automatic default series will look like:',
+        'no_series_empty_title' => 'Numbering Series Management',
+        'no_series_empty_subtitle' => 'Automatic numbering series will be created when you generate your first invoice.',
+        'create_custom_series' => 'Create custom series for advanced numbering requirements.',
+    ],
+
     'placeholders' => [
         'enter_description' => 'Enter item description...',
         'enter_quantity' => 'Enter quantity...',

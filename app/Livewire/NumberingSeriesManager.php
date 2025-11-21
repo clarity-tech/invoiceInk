@@ -217,6 +217,57 @@ class NumberingSeriesManager extends Component
     }
 
     #[Computed]
+    public function automaticSeriesPreview()
+    {
+        if (! auth()->check() || ! auth()->user()->currentTeam) {
+            return null;
+        }
+
+        $organization = auth()->user()->currentTeam;
+        $numberingService = new InvoiceNumberingService;
+
+        // Create a temporary series object to show what would be auto-created
+        $tempSeries = new InvoiceNumberingSeries([
+            'organization_id' => $organization->id,
+            'location_id' => null,
+            'name' => 'Default Invoice Series',
+            'prefix' => 'INV',
+            'current_number' => 0,
+            'reset_frequency' => ResetFrequency::YEARLY,
+            'is_active' => true,
+            'is_default' => true,
+        ]);
+
+        // Set format pattern based on organization's financial year setup
+        if ($organization->financial_year_type && $organization->country_code) {
+            $tempSeries->format_pattern = '{PREFIX}-{FY}-{SEQUENCE:4}';
+            $tempSeries->reset_frequency = ResetFrequency::FINANCIAL_YEAR;
+        } else {
+            $tempSeries->format_pattern = '{PREFIX}-{YEAR}-{MONTH}-{SEQUENCE:4}';
+            $tempSeries->reset_frequency = ResetFrequency::YEARLY;
+        }
+
+        // Set organization relationship for preview
+        $tempSeries->setRelation('organization', $organization);
+
+        return [
+            'series' => $tempSeries,
+            'preview_number' => $numberingService->previewNextNumber($tempSeries),
+        ];
+    }
+
+    #[Computed]
+    public function hasAnySeriesForCurrentOrg()
+    {
+        if (! auth()->check() || ! auth()->user()->currentTeam) {
+            return false;
+        }
+
+        return InvoiceNumberingSeries::where('organization_id', auth()->user()->currentTeam->id)
+            ->exists();
+    }
+
+    #[Computed]
     public function series()
     {
         // Only show numbering series for organizations the user has access to

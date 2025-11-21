@@ -161,6 +161,55 @@
                 </div>
             @endif
 
+            <!-- Informational Banner -->
+            <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-blue-800">{{ __('forms.numbering_series.auto_creation_title') }}</h3>
+                        <div class="mt-2 text-sm text-blue-700">
+                            <p>{{ __('forms.numbering_series.auto_creation_explanation') }}</p>
+                            
+                            @if(!$this->hasAnySeriesForCurrentOrg && $this->automaticSeriesPreview)
+                                <div class="mt-4 p-3 bg-blue-100 rounded-md">
+                                    <h4 class="text-sm font-medium text-blue-800 mb-2">{{ __('forms.numbering_series.automatic_preview_title') }}</h4>
+                                    <div class="text-xs text-blue-700">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <span class="font-medium">Series Name:</span> {{ $this->automaticSeriesPreview['series']->name }}
+                                            </div>
+                                            <div>
+                                                <span class="font-medium">Format:</span> <code class="bg-blue-200 px-1 rounded">{{ $this->automaticSeriesPreview['series']->format_pattern }}</code>
+                                            </div>
+                                            <div>
+                                                <span class="font-medium">Reset:</span> {{ $this->automaticSeriesPreview['series']->reset_frequency->label() }}
+                                            </div>
+                                            <div>
+                                                <span class="font-medium">Next Number:</span> <code class="bg-blue-200 px-1 rounded">{{ $this->automaticSeriesPreview['preview_number'] }}</code>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                            
+                            <div class="mt-3">
+                                <p class="font-medium">{{ __('forms.numbering_series.manual_creation_benefits') }}</p>
+                                <ul class="mt-1 list-disc list-inside space-y-1">
+                                    <li>{{ __('forms.numbering_series.benefit_custom_prefixes') }}</li>
+                                    <li>{{ __('forms.numbering_series.benefit_different_formats') }}</li>
+                                    <li>{{ __('forms.numbering_series.benefit_location_specific') }}</li>
+                                    <li>{{ __('forms.numbering_series.benefit_multiple_series') }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Series List -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
@@ -256,8 +305,26 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">
-                                            No numbering series found. Create your first series to get started.
+                                        <td colspan="7" class="px-6 py-12">
+                                            <div class="text-center">
+                                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                <h3 class="mt-2 text-sm font-medium text-gray-900">{{ __('forms.numbering_series.no_series_empty_title') }}</h3>
+                                                <p class="mt-1 text-sm text-gray-500">{{ __('forms.numbering_series.no_series_empty_subtitle') }}</p>
+                                                <div class="mt-4">
+                                                    <p class="text-sm text-gray-600 mb-2">{{ __('forms.numbering_series.create_custom_series') }}</p>
+                                                    @if (!$showCreateForm)
+                                                        <button wire:click="create" 
+                                                                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                            <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                                                            </svg>
+                                                            Create Custom Series
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforelse
