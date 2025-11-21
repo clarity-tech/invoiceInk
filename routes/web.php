@@ -2,7 +2,8 @@
 
 use App\Http\Controllers\PublicViewController;
 use App\Livewire\CustomerManager;
-use App\Livewire\InvoiceWizard;
+use App\Livewire\InvoiceForm;
+use App\Livewire\InvoiceList;
 use App\Livewire\NumberingSeriesManager;
 use App\Livewire\OrganizationManager;
 use App\Livewire\OrganizationSetup;
@@ -39,8 +40,15 @@ Route::middleware([
 
         // Main application routes (protected)
         Route::get('/organizations', OrganizationManager::class)->name('organizations.index');
+        Route::get('/organization/edit', OrganizationManager::class)->name('organization.edit');
         Route::get('/customers', CustomerManager::class)->name('customers.index');
-        Route::get('/invoices', InvoiceWizard::class)->name('invoices.index');
+        
+        // Invoice management routes
+        Route::get('/invoices', InvoiceList::class)->name('invoices.index');
+        Route::get('/invoices/create', InvoiceForm::class)->name('invoices.create');
+        Route::get('/invoices/{invoice}/edit', InvoiceForm::class)->name('invoices.edit');
+        Route::get('/estimates/create', InvoiceForm::class)->name('estimates.create');
+        
         Route::get('/numbering-series', NumberingSeriesManager::class)->name('numbering-series.index');
     });
 });

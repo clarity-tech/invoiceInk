@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Casts\EmailCollectionCast;
+use App\Casts\ContactCollectionCast;
 use App\Currency;
 use App\Enums\Country;
 use App\Enums\FinancialYearType;
@@ -84,7 +84,7 @@ class Organization extends JetstreamTeam
     {
         return [
             'personal_team' => 'boolean',
-            'emails' => EmailCollectionCast::class,
+            'emails' => ContactCollectionCast::class,
             'currency' => \App\Currency::class,
             'country_code' => Country::class,
             'financial_year_type' => FinancialYearType::class,

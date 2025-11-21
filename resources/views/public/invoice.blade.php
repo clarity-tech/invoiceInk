@@ -65,7 +65,11 @@
                             </div>
                             @if($invoice->organizationLocation->locatable->emails && !$invoice->organizationLocation->locatable->emails->isEmpty())
                                 <div class="mt-2 text-sm">
-                                    <p><span class="font-medium">Email:</span> {{ $invoice->organizationLocation->locatable->emails->first() }}</p>
+                                    @php
+                                        $orgEmails = $invoice->organizationLocation->locatable->emails;
+                                        $firstOrgEmail = method_exists($orgEmails, 'getFirstEmail') ? $orgEmails->getFirstEmail() : $orgEmails->first();
+                                    @endphp
+                                    <p><span class="font-medium">Email:</span> {{ $firstOrgEmail }}</p>
                                 </div>
                             @endif
                         </div>
@@ -90,7 +94,11 @@
                             </div>
                             @if($invoice->customerLocation->locatable->emails && !$invoice->customerLocation->locatable->emails->isEmpty())
                                 <div class="mt-2 text-sm">
-                                    <p><span class="font-medium">Email:</span> {{ $invoice->customerLocation->locatable->emails->first() }}</p>
+                                    @php
+                                        $custEmails = $invoice->customerLocation->locatable->emails;
+                                        $firstCustEmail = method_exists($custEmails, 'getFirstEmail') ? $custEmails->getFirstEmail() : $custEmails->first();
+                                    @endphp
+                                    <p><span class="font-medium">Email:</span> {{ $firstCustEmail }}</p>
                                 </div>
                             @endif
                         </div>

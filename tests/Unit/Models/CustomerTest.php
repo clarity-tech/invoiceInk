@@ -2,36 +2,40 @@
 
 use App\Models\Customer;
 use App\Models\Location;
-use App\ValueObjects\EmailCollection;
+use App\ValueObjects\ContactCollection;
 
-test('can create customer with emails', function () {
-    $emails = new EmailCollection(['customer@test.com', 'billing@test.com']);
+test('can create customer with contacts', function () {
+    $contacts = new ContactCollection([
+        ['name' => 'John Doe', 'email' => 'customer@test.com'],
+        ['name' => 'Jane Smith', 'email' => 'billing@test.com']
+    ]);
 
     $customer = createCustomerWithLocation([
         'name' => 'Test Customer',
         'phone' => '+1234567890',
-        'emails' => $emails,
+        'emails' => $contacts,
     ]);
 
     expect($customer->name)->toBe('Test Customer');
     expect($customer->phone)->toBe('+1234567890');
-    expect($customer->emails)->toBeInstanceOf(EmailCollection::class);
-    expect($customer->emails->toArray())->toBe(['customer@test.com', 'billing@test.com']);
+    expect($customer->emails)->toBeInstanceOf(ContactCollection::class);
+    expect($customer->emails->getEmails())->toBe(['customer@test.com', 'billing@test.com']);
+    expect($customer->emails->getNames())->toBe(['John Doe', 'Jane Smith']);
 });
 
-test('customer emails are cast to EmailCollection', function () {
+test('customer emails are cast to ContactCollection', function () {
     $customer = new Customer([
         'name' => 'Test Customer',
-        'emails' => ['customer@test.com'],
+        'emails' => [['name' => 'John Doe', 'email' => 'customer@test.com']],
     ]);
 
-    expect($customer->emails)->toBeInstanceOf(EmailCollection::class);
+    expect($customer->emails)->toBeInstanceOf(ContactCollection::class);
 });
 
 test('customer can have primary location relationship', function () {
     $customer = createCustomerWithLocation([
         'name' => 'Test Customer',
-        'emails' => new EmailCollection(['customer@test.com']),
+        'emails' => new ContactCollection([['name' => 'John Doe', 'email' => 'customer@test.com']]),
     ], [
         'name' => 'Customer Office',
         'address_line_1' => '789 Customer St',
@@ -60,7 +64,7 @@ test('customer fillable attributes work correctly', function () {
     $data = [
         'name' => 'Test Customer',
         'phone' => '+1234567890',
-        'emails' => new EmailCollection(['customer@test.com']),
+        'emails' => new ContactCollection([['name' => 'John Doe', 'email' => 'customer@test.com']]),
         'primary_location_id' => 1,
     ];
 
@@ -68,23 +72,23 @@ test('customer fillable attributes work correctly', function () {
 
     expect($customer->name)->toBe('Test Customer');
     expect($customer->phone)->toBe('+1234567890');
-    expect($customer->emails)->toBeInstanceOf(EmailCollection::class);
+    expect($customer->emails)->toBeInstanceOf(ContactCollection::class);
     expect($customer->primary_location_id)->toBe(1);
 });
 
 test('customer can be created without phone', function () {
     $customer = createCustomerWithLocation([
         'name' => 'Test Customer',
-        'emails' => new EmailCollection(['customer@test.com']),
+        'emails' => new ContactCollection([['name' => 'John Doe', 'email' => 'customer@test.com']]),
     ]);
 
     expect($customer->phone)->toBeNull();
 });
 
-test('customer emails field uses EmailCollectionCast', function () {
+test('customer emails field uses ContactCollectionCast', function () {
     $casts = (new Customer)->getCasts();
 
-    expect($casts['emails'])->toBe(\App\Casts\EmailCollectionCast::class);
+    expect($casts['emails'])->toBe(\App\Casts\ContactCollectionCast::class);
 });
 
 test('customer has organization relationship', function () {
@@ -153,7 +157,7 @@ test('customer can be created with all fillable attributes', function () {
     $data = [
         'name' => 'Full Customer',
         'phone' => '+1234567890',
-        'emails' => new EmailCollection(['full@customer.com']),
+        'emails' => new ContactCollection([['name' => 'John Doe', 'email' => 'full@customer.com']]),
         'primary_location_id' => 1,
         'organization_id' => 1,
     ];
@@ -162,48 +166,53 @@ test('customer can be created with all fillable attributes', function () {
 
     expect($customer->name)->toBe('Full Customer');
     expect($customer->phone)->toBe('+1234567890');
-    expect($customer->emails)->toBeInstanceOf(EmailCollection::class);
+    expect($customer->emails)->toBeInstanceOf(ContactCollection::class);
     expect($customer->primary_location_id)->toBe(1);
     expect($customer->organization_id)->toBe(1);
 });
 
-test('customer handles empty emails collection', function () {
+test('customer handles empty contacts collection', function () {
     $customer = createCustomerWithLocation([
         'name' => 'No Email Customer',
-        'emails' => new EmailCollection([]),
+        'emails' => new ContactCollection([]),
     ]);
 
-    expect($customer->emails)->toBeInstanceOf(EmailCollection::class);
+    expect($customer->emails)->toBeInstanceOf(ContactCollection::class);
     expect($customer->emails->toArray())->toBeEmpty();
 });
 
-test('customer emails cast handles array input', function () {
+test('customer contacts cast handles array input', function () {
     $customer = new Customer([
-        'name' => 'Array Email Customer',
-        'emails' => ['array@customer.com', 'test@customer.com'],
+        'name' => 'Array Contact Customer',
+        'emails' => [
+            ['name' => 'John Doe', 'email' => 'array@customer.com'],
+            ['name' => 'Jane Smith', 'email' => 'test@customer.com']
+        ],
     ]);
 
-    expect($customer->emails)->toBeInstanceOf(EmailCollection::class);
-    expect($customer->emails->toArray())->toBe(['array@customer.com', 'test@customer.com']);
+    expect($customer->emails)->toBeInstanceOf(ContactCollection::class);
+    expect($customer->emails->getEmails())->toBe(['array@customer.com', 'test@customer.com']);
+    expect($customer->emails->getNames())->toBe(['John Doe', 'Jane Smith']);
 });
 
-test('customer emails cast handles string input', function () {
+test('customer contacts cast handles backward compatibility with email arrays', function () {
     $customer = new Customer([
-        'name' => 'String Email Customer',
-        'emails' => 'single@customer.com',
+        'name' => 'Backward Compatible Customer',
+        'emails' => ['single@customer.com', 'test@customer.com'],
     ]);
 
-    expect($customer->emails)->toBeInstanceOf(EmailCollection::class);
-    expect($customer->emails->toArray())->toBe(['single@customer.com']);
+    expect($customer->emails)->toBeInstanceOf(ContactCollection::class);
+    expect($customer->emails->getEmails())->toBe(['single@customer.com', 'test@customer.com']);
+    expect($customer->emails->getNames())->toBe(['', '']); // Empty names for backward compatibility
 });
 
-test('customer emails cast handles null input', function () {
+test('customer contacts cast handles null input', function () {
     $customer = new Customer([
-        'name' => 'Null Email Customer',
+        'name' => 'Null Contact Customer',
         'emails' => null,
     ]);
 
-    expect($customer->emails)->toBeInstanceOf(EmailCollection::class);
+    expect($customer->emails)->toBeInstanceOf(ContactCollection::class);
     expect($customer->emails->toArray())->toBeEmpty();
 });
 
@@ -212,7 +221,7 @@ test('customer casts method returns correct array', function () {
 
     expect($casts)->toBeArray();
     expect($casts)->toHaveKey('emails');
-    expect($casts['emails'])->toBe(\App\Casts\EmailCollectionCast::class);
+    expect($casts['emails'])->toBe(\App\Casts\ContactCollectionCast::class);
 });
 
 test('customer locations polymorphic relationship is configured correctly', function () {

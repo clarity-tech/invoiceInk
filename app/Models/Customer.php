@@ -23,7 +23,7 @@ class Customer extends Model
     protected function casts(): array
     {
         return [
-            'emails' => \App\Casts\EmailCollectionCast::class,
+            'emails' => \App\Casts\ContactCollectionCast::class,
         ];
     }
 

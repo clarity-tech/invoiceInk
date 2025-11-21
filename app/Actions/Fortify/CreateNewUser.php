@@ -49,12 +49,20 @@ class CreateNewUser implements CreatesNewUsers
         $firstName = explode(' ', trim($user->name), 2)[0];
         $organizationName = $firstName ? $firstName."'s Organization" : $user->name."'s Organization";
 
-        $user->ownedTeams()->save(Organization::forceCreate([
+        $organization = Organization::forceCreate([
             'user_id' => $user->id,
             'name' => $organizationName,
             'personal_team' => true,
             'currency' => Currency::default(),
             'setup_completed_at' => null, // Explicitly set as incomplete for new registrations
-        ]));
+        ]);
+
+        // CRITICAL FIX: Set the user's current team to the newly created personal team
+        // This ensures proper team assignment from registration
+        $user->current_team_id = $organization->id;
+        $user->save();
+
+        // Associate the organization with the user through the pivot table
+        $user->ownedTeams()->save($organization);
     }
 }

@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Customer;
 use App\Models\Location;
-use App\ValueObjects\EmailCollection;
+use App\ValueObjects\ContactCollection;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -27,9 +27,9 @@ class CustomerFactory extends Factory
                 fake()->firstName().' Solutions',
             ]),
             'phone' => fake()->optional(0.8)->phoneNumber(),
-            'emails' => new EmailCollection(array_filter([
-                fake()->unique()->userName().'@'.fake()->domainName(1).'.test',
-                fake()->randomFloat() < 0.4 ? fake()->unique()->userName().'@'.fake()->domainName(1).'.test' : null,
+            'emails' => new ContactCollection(array_filter([
+                ['name' => fake()->name(), 'email' => fake()->unique()->userName().'@'.fake()->domainName(1).'.test'],
+                fake()->randomFloat() < 0.4 ? ['name' => fake()->name(), 'email' => fake()->unique()->userName().'@'.fake()->domainName(1).'.test'] : null,
             ])),
             'organization_id' => \App\Models\Organization::factory(),
             'primary_location_id' => null, // Will be set after location creation
@@ -87,10 +87,10 @@ class CustomerFactory extends Factory
     public function withMultipleEmails(): static
     {
         return $this->state(fn (array $attributes) => [
-            'emails' => new EmailCollection([
-                fake()->unique()->userName().'@'.fake()->domainName(1).'.test',
-                fake()->unique()->userName().'@'.fake()->domainName(1).'.test',
-                fake()->unique()->userName().'@'.fake()->domainName(1).'.test',
+            'emails' => new ContactCollection([
+                ['name' => fake()->name(), 'email' => fake()->unique()->userName().'@'.fake()->domainName(1).'.test'],
+                ['name' => fake()->name(), 'email' => fake()->unique()->userName().'@'.fake()->domainName(1).'.test'],
+                ['name' => fake()->name(), 'email' => fake()->unique()->userName().'@'.fake()->domainName(1).'.test'],
             ]),
         ]);
     }
@@ -102,7 +102,7 @@ class CustomerFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'name' => fake()->name(),
-            'emails' => new EmailCollection([fake()->unique()->userName().'@'.fake()->domainName(1).'.test']),
+            'emails' => new ContactCollection([['name' => fake()->name(), 'email' => fake()->unique()->userName().'@'.fake()->domainName(1).'.test']]),
         ]);
     }
 
@@ -123,7 +123,7 @@ class CustomerFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'phone' => null,
-            'emails' => new EmailCollection([fake()->unique()->userName().'@'.fake()->domainName(1).'.test']),
+            'emails' => new ContactCollection([['name' => fake()->name(), 'email' => fake()->unique()->userName().'@'.fake()->domainName(1).'.test']]),
         ]);
     }
 
@@ -147,9 +147,9 @@ class CustomerFactory extends Factory
                 'Manufacturing Solutions Inc',
                 'Heavy Industry Partners',
             ]),
-            'emails' => new EmailCollection([
-                'purchasing@'.fake()->lexify('????????').'.test',
-                'accounting@'.fake()->lexify('????????').'.test',
+            'emails' => new ContactCollection([
+                ['name' => 'Purchasing Department', 'email' => 'purchasing@'.fake()->lexify('????????').'.test'],
+                ['name' => 'Accounting Department', 'email' => 'accounting@'.fake()->lexify('????????').'.test'],
             ]),
             'phone' => '+1-'.fake()->numerify('###').'-'.fake()->numerify('###').'-'.fake()->numerify('####'),
         ]);
@@ -171,9 +171,9 @@ class CustomerFactory extends Factory
                 'Tech Solutions Hub',
                 'Software Development Inc',
             ]),
-            'emails' => new EmailCollection([
-                'billing@'.fake()->lexify('????????').'.test',
-                'finance@'.fake()->lexify('????????').'.test',
+            'emails' => new ContactCollection([
+                ['name' => 'Billing Department', 'email' => 'billing@'.fake()->lexify('????????').'.test'],
+                ['name' => 'Finance Department', 'email' => 'finance@'.fake()->lexify('????????').'.test'],
             ]),
             'phone' => '+1-'.fake()->numerify('###').'-'.fake()->numerify('###').'-'.fake()->numerify('####'),
         ]);
@@ -196,9 +196,9 @@ class CustomerFactory extends Factory
                 'Enterprise Solutions Ltd',
                 'Investment Bank Partners',
             ]),
-            'emails' => new EmailCollection([
-                'procurement@'.fake()->lexify('????????').'.test',
-                'supplier.management@'.fake()->lexify('????????').'.test',
+            'emails' => new ContactCollection([
+                ['name' => 'Procurement', 'email' => 'procurement@'.fake()->lexify('????????').'.test'],
+                ['name' => 'Supplier Management', 'email' => 'supplier.management@'.fake()->lexify('????????').'.test'],
             ]),
             'phone' => '+49-'.fake()->numerify('##').'-'.fake()->numerify('########'),
         ]);
@@ -220,9 +220,9 @@ class CustomerFactory extends Factory
                 'Wholesale Distributors',
                 'Retail Solutions Ltd',
             ]),
-            'emails' => new EmailCollection([
-                'procurement@'.fake()->lexify('????????').'.test',
-                'orders@'.fake()->lexify('????????').'.test',
+            'emails' => new ContactCollection([
+                ['name' => 'Procurement', 'email' => 'procurement@'.fake()->lexify('????????').'.test'],
+                ['name' => 'Orders Department', 'email' => 'orders@'.fake()->lexify('????????').'.test'],
             ]),
             'phone' => '+91-'.fake()->numerify('##').'-'.fake()->numerify('########'),
         ]);
@@ -309,10 +309,10 @@ class CustomerFactory extends Factory
                 'Abu Dhabi Enterprises',
                 'Gulf Commercial Ltd',
             ]),
-            'emails' => new EmailCollection(fake()->randomElement([
-                ['billing@sandline.test', 'finance@sandline.test'],
-                ['priya@cornichelabs.test', 'consult@cornichelabs.test'],
-                ['info@'.fake()->lexify('????????').'.test'],
+            'emails' => new ContactCollection(fake()->randomElement([
+                [['name' => 'Billing', 'email' => 'billing@sandline.test'], ['name' => 'Finance', 'email' => 'finance@sandline.test']],
+                [['name' => 'Priya', 'email' => 'priya@cornichelabs.test'], ['name' => 'Consultant', 'email' => 'consult@cornichelabs.test']],
+                [['name' => 'Info', 'email' => 'info@'.fake()->lexify('????????').'.test']],
             ])),
             'phone' => '+971-4-'.fake()->numerify('#######'),
         ])->afterCreating(function (Customer $customer) {
@@ -380,10 +380,10 @@ class CustomerFactory extends Factory
                 'Multi-National Corporation',
                 'Strategic Partners Inc',
             ]),
-            'emails' => new EmailCollection([
-                'procurement@'.fake()->lexify('????????').'.test',
-                'finance@'.fake()->lexify('????????').'.test', 
-                'legal@'.fake()->lexify('????????').'.test',
+            'emails' => new ContactCollection([
+                ['name' => 'Procurement', 'email' => 'procurement@'.fake()->lexify('????????').'.test'],
+                ['name' => 'Finance', 'email' => 'finance@'.fake()->lexify('????????').'.test'], 
+                ['name' => 'Legal', 'email' => 'legal@'.fake()->lexify('????????').'.test'],
             ]),
             'created_at' => fake()->dateTimeBetween('-5 years', '-1 year'),
         ]);
@@ -403,9 +403,9 @@ class CustomerFactory extends Factory
                 'Multi-Currency Enterprise',
                 'International Holdings Inc',
             ]),
-            'emails' => new EmailCollection([
-                'international@'.fake()->lexify('????????').'.test',
-                'global.billing@'.fake()->lexify('??????').'.test',
+            'emails' => new ContactCollection([
+                ['name' => 'International', 'email' => 'international@'.fake()->lexify('????????').'.test'],
+                ['name' => 'Global Billing', 'email' => 'global.billing@'.fake()->lexify('??????').'.test'],
             ]),
         ]);
     }

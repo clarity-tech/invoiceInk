@@ -8,7 +8,7 @@ use App\Enums\FinancialYearType;
 use App\Models\Location;
 use App\Models\Organization;
 use App\Rules\CurrencyCode;
-use App\ValueObjects\EmailCollection;
+use App\ValueObjects\ContactCollection;
 use Illuminate\Validation\Rule as ValidationRule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Rule;
@@ -103,7 +103,7 @@ class OrganizationSetup extends Component
             $this->website = $this->organization->website ?? '';
             $this->notes = $this->organization->notes ?? '';
             $this->phone = $this->organization->phone ?? '';
-            $this->emails = $this->organization->emails ? $this->organization->emails->toArray() : [''];
+            $this->emails = $this->organization->emails ? $this->organization->emails->getEmails() : [''];
             $this->currency = $this->organization->currency?->value ?? Currency::default()->value;
             $this->country_code = $this->organization->country_code?->value ?? null;
             $this->financial_year_type = $this->organization->financial_year_type?->value ?? null;
@@ -258,7 +258,9 @@ class OrganizationSetup extends Component
             return;
         }
 
-        $emailCollection = new EmailCollection($filteredEmails);
+        // Convert simple emails to ContactCollection format (email with empty name)
+        $contactData = array_map(fn($email) => ['name' => '', 'email' => $email], $filteredEmails);
+        $contactCollection = new ContactCollection($contactData);
 
         // Create or update location
         if ($this->organization->primaryLocation) {
@@ -303,7 +305,7 @@ class OrganizationSetup extends Component
             'registration_number' => $this->registration_number ?: null,
             'website' => $this->website ?: null,
             'notes' => $this->notes ?: null,
-            'emails' => $emailCollection,
+            'emails' => $contactCollection,
             'phone' => $this->phone ?: null,
             'currency' => $defaultCurrency,
             'country_code' => $this->country_code,

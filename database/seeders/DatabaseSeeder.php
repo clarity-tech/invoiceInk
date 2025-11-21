@@ -93,8 +93,8 @@ class DatabaseSeeder extends Seeder
         $this->command->info('');
 
         $this->command->info('🔑 Demo Login Credentials:');
-        $this->command->info('   Admin: admin@invoicing.claritytech.io (password: password)');
-        $this->command->info('   Demo User: demo@invoicing.claritytech.io (password: password)');
+        $this->command->info('   Admin: admin@invoicing.claritytech.test (password: password)');
+        $this->command->info('   Demo User: demo@invoicing.claritytech.test (password: password)');
         $this->command->info('   Business Users: john@acmecorp.com, sarah@techstartup.test, maria@euroconsult.test');
         $this->command->info('   All passwords: password');
         $this->command->info('');

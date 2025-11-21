@@ -5,7 +5,7 @@ namespace App\Livewire;
 use App\Enums\Country;
 use App\Models\Customer;
 use App\Models\Location;
-use App\ValueObjects\EmailCollection;
+use App\ValueObjects\ContactCollection;
 use Illuminate\Validation\Rule as ValidationRule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Rule;
@@ -22,7 +22,7 @@ class CustomerManager extends Component
     #[Rule('nullable|string|max:20')]
     public string $phone = '';
 
-    public array $emails = [''];
+    public array $contacts = [['name' => '', 'email' => '']];
 
     #[Rule('nullable|string|max:255')]
     public string $location_name = '';
@@ -52,16 +52,16 @@ class CustomerManager extends Component
 
     public ?int $editingId = null;
 
-    public function addEmailField(): void
+    public function addContactField(): void
     {
-        $this->emails[] = '';
+        $this->contacts[] = ['name' => '', 'email' => ''];
     }
 
-    public function removeEmailField(int $index): void
+    public function removeContactField(int $index): void
     {
-        if (count($this->emails) > 1) {
-            unset($this->emails[$index]);
-            $this->emails = array_values($this->emails);
+        if (count($this->contacts) > 1) {
+            unset($this->contacts[$index]);
+            $this->contacts = array_values($this->contacts);
         }
     }
 
@@ -78,7 +78,7 @@ class CustomerManager extends Component
         $this->editingId = $customer->id;
         $this->name = $customer->name;
         $this->phone = $customer->phone ?? '';
-        $this->emails = $customer->emails->toArray() ?: [''];
+        $this->contacts = $customer->emails->toArray() ?: [['name' => '', 'email' => '']];
 
         if ($customer->primaryLocation) {
             $this->location_name = $customer->primaryLocation->name;
@@ -113,26 +113,27 @@ class CustomerManager extends Component
             'state' => 'required|string|max:100',
             'country' => ['required', 'string', ValidationRule::enum(Country::class)],
             'postal_code' => 'required|string|max:20',
-            'emails' => 'required|array|min:1',
-            'emails.*' => 'nullable|email',
+            'contacts' => 'required|array|min:1',
+            'contacts.*.name' => 'nullable|string|max:255',
+            'contacts.*.email' => 'required|email|max:255',
         ]);
 
-        $filteredEmails = array_filter($this->emails, fn ($email) => ! empty(trim($email)));
+        $filteredContacts = array_filter($this->contacts, fn ($contact) => ! empty(trim($contact['email'])));
 
-        if (empty($filteredEmails)) {
-            $this->addError('emails.0', 'At least one email is required.');
+        if (empty($filteredContacts)) {
+            $this->addError('contacts.0.email', 'At least one contact with email is required.');
 
             return;
         }
 
-        $emailCollection = new EmailCollection($filteredEmails);
+        $contactCollection = new ContactCollection($filteredContacts);
 
         if ($this->editingId) {
             $customer = Customer::findOrFail($this->editingId);
             $customer->update([
                 'name' => $this->name,
                 'phone' => $this->phone ?: null,
-                'emails' => $emailCollection,
+                'emails' => $contactCollection,
             ]);
 
             if ($customer->primaryLocation) {
@@ -164,7 +165,7 @@ class CustomerManager extends Component
             $customer = Customer::create([
                 'name' => $this->name,
                 'phone' => $this->phone ?: null,
-                'emails' => $emailCollection,
+                'emails' => $contactCollection,
                 'primary_location_id' => $location->id,
                 'organization_id' => auth()->user()?->currentTeam?->id,
             ]);
@@ -206,7 +207,7 @@ class CustomerManager extends Component
         $this->editingId = null;
         $this->name = '';
         $this->phone = '';
-        $this->emails = [''];
+        $this->contacts = [['name' => '', 'email' => '']];
         $this->location_name = '';
         $this->gstin = '';
         $this->address_line_1 = '';

@@ -61,7 +61,11 @@
                                     <p class="mt-2"><span class="font-medium">{{ __('documents.fields.gstin') }}</span> {{ $invoice->organizationLocation->gstin }}</p>
                                 @endif
                                 @if($invoice->organizationLocation->locatable->emails && !$invoice->organizationLocation->locatable->emails->isEmpty())
-                                    <p><span class="font-medium">{{ __('documents.fields.email') }}</span> {{ $invoice->organizationLocation->locatable->emails->first() }}</p>
+                                    @php
+                                        $orgEmails = $invoice->organizationLocation->locatable->emails;
+                                        $firstOrgEmail = method_exists($orgEmails, 'getFirstEmail') ? $orgEmails->getFirstEmail() : $orgEmails->first();
+                                    @endphp
+                                    <p><span class="font-medium">{{ __('documents.fields.email') }}</span> {{ $firstOrgEmail }}</p>
                                 @endif
                             </div>
                         </div>
@@ -84,7 +88,11 @@
                                     <p class="mt-2"><span class="font-medium">{{ __('documents.fields.gstin') }}</span> {{ $invoice->customerLocation->gstin }}</p>
                                 @endif
                                 @if($invoice->customerLocation->locatable->emails && !$invoice->customerLocation->locatable->emails->isEmpty())
-                                    <p><span class="font-medium">{{ __('documents.fields.email') }}</span> {{ $invoice->customerLocation->locatable->emails->first() }}</p>
+                                    @php
+                                        $custEmails = $invoice->customerLocation->locatable->emails;
+                                        $firstCustEmail = method_exists($custEmails, 'getFirstEmail') ? $custEmails->getFirstEmail() : $custEmails->first();
+                                    @endphp
+                                    <p><span class="font-medium">{{ __('documents.fields.email') }}</span> {{ $firstCustEmail }}</p>
                                 @endif
                             </div>
                         </div>

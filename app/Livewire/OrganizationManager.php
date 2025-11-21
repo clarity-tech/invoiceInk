@@ -8,7 +8,7 @@ use App\Enums\FinancialYearType;
 use App\Models\Location;
 use App\Models\Organization;
 use App\Rules\CurrencyCode;
-use App\ValueObjects\EmailCollection;
+use App\ValueObjects\ContactCollection;
 use Illuminate\Validation\Rule as ValidationRule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Rule;
@@ -65,6 +65,23 @@ class OrganizationManager extends Component
 
     public ?int $editingId = null;
 
+    public bool $autoEdit = false;
+
+    public function mount(): void
+    {
+        // Check if we should auto-edit the current organization
+        // This is used when accessed via /organization/edit route
+        if (request()->routeIs('organization.edit')) {
+            $this->autoEdit = true;
+            $currentTeam = auth()->user()->currentTeam;
+
+            if ($currentTeam) {
+                // Automatically start editing the current organization
+                $this->edit($currentTeam);
+            }
+        }
+    }
+
     public function addEmailField(): void
     {
         $this->emails[] = '';
@@ -112,63 +129,106 @@ class OrganizationManager extends Component
 
     public function edit(Organization $organization): void
     {
-        // Security check: Ensure user has access to this organization
-        if (! auth()->user()->allTeams()->contains('id', $organization->id)) {
-            abort(403, 'Unauthorized access to organization.');
+        try {
+            $user = auth()->user();
+            $userTeams = $user->allTeams();
+            $userTeamIds = $userTeams->pluck('id')->toArray();
+            $ownedTeamIds = $user->ownedTeams()->pluck('id')->toArray();
+            $memberTeamIds = $user->teams()->pluck('id')->toArray();
+            $hasAccess = $userTeams->contains('id', $organization->id);
+
+
+            // Security check: Ensure user has access to this organization
+            if (! $hasAccess) {
+                // Instead of aborting, show a user-friendly error
+                $this->addError('name', 'You do not have permission to edit this organization.');
+
+                return;
+            }
+
+            $organization->load('primaryLocation');
+        } catch (\Exception $e) {
+            $this->addError('name', 'Failed to load organization for editing: '.$e->getMessage());
+
+            return;
         }
 
-        $organization->load('primaryLocation');
+        try {
+            $this->editingId = $organization->id;
+            $this->name = $organization->name;
+            $this->phone = $organization->phone ?? '';
+            // Convert ContactCollection back to simple email array for the UI
+            $this->emails = $organization->emails->getEmails() ?: [''];
+            $this->currency = $organization->currency?->value ?? Currency::default()->value;
+            $this->country_code = $organization->country_code?->value ?? null;
+            $this->financial_year_type = $organization->financial_year_type?->value ?? null;
+            $this->financial_year_start_month = $organization->financial_year_start_month ?? 4;
+            $this->financial_year_start_day = $organization->financial_year_start_day ?? 1;
 
-        $this->editingId = $organization->id;
-        $this->name = $organization->name;
-        $this->phone = $organization->phone ?? '';
-        $this->emails = $organization->emails->toArray() ?: [''];
-        $this->currency = $organization->currency?->value ?? Currency::default()->value;
-        $this->country_code = $organization->country_code?->value ?? null;
-        $this->financial_year_type = $organization->financial_year_type?->value ?? null;
-        $this->financial_year_start_month = $organization->financial_year_start_month ?? 4;
-        $this->financial_year_start_day = $organization->financial_year_start_day ?? 1;
 
-        if ($organization->primaryLocation) {
-            $this->location_name = $organization->primaryLocation->name;
-            $this->gstin = $organization->primaryLocation->gstin ?? '';
-            $this->address_line_1 = $organization->primaryLocation->address_line_1;
-            $this->address_line_2 = $organization->primaryLocation->address_line_2 ?? '';
-            $this->city = $organization->primaryLocation->city;
-            $this->state = $organization->primaryLocation->state;
-            $this->country = $organization->primaryLocation->country;
-            $this->postal_code = $organization->primaryLocation->postal_code;
+            if ($organization->primaryLocation) {
+                $this->location_name = $organization->primaryLocation->name;
+                $this->gstin = $organization->primaryLocation->gstin ?? '';
+                $this->address_line_1 = $organization->primaryLocation->address_line_1;
+                $this->address_line_2 = $organization->primaryLocation->address_line_2 ?? '';
+                $this->city = $organization->primaryLocation->city;
+                $this->state = $organization->primaryLocation->state;
+                $this->country = $organization->primaryLocation->country;
+                $this->postal_code = $organization->primaryLocation->postal_code;
+
+            } else {
+                // Reset location fields if no primary location
+                $this->location_name = '';
+                $this->gstin = '';
+                $this->address_line_1 = '';
+                $this->address_line_2 = '';
+                $this->city = '';
+                $this->state = '';
+                $this->country = '';
+                $this->postal_code = '';
+            }
+
+            $this->showForm = true;
+
+        } catch (\Exception $e) {
+            $this->addError('name', 'Failed to load organization data: '.$e->getMessage());
+
+            return;
         }
-
-        $this->showForm = true;
     }
 
     public function save(): void
     {
-        // Ensure location country matches organization country
-        if ($this->country_code) {
-            $this->country = $this->country_code;
-        }
+        try {
+            // Ensure location country matches organization country
+            if ($this->country_code) {
+                $this->country = $this->country_code;
+            }
 
-        $this->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'currency' => ['required', 'string', new CurrencyCode],
-            'country_code' => ['required', 'string', ValidationRule::enum(Country::class)],
-            'financial_year_type' => ['nullable', 'string', ValidationRule::enum(FinancialYearType::class)],
-            'financial_year_start_month' => ['nullable', 'integer', 'min:1', 'max:12'],
-            'financial_year_start_day' => ['nullable', 'integer', 'min:1', 'max:31'],
-            'location_name' => 'nullable|string|max:255',
-            'gstin' => 'nullable|string|max:50',
-            'address_line_1' => 'required|string|max:500',
-            'address_line_2' => 'nullable|string|max:500',
-            'city' => 'required|string|max:100',
-            'state' => 'required|string|max:100',
-            'country' => ['required', 'string', ValidationRule::enum(Country::class)],
-            'postal_code' => 'required|string|max:20',
-            'emails' => 'required|array|min:1',
-            'emails.*' => 'nullable|email',
-        ]);
+
+            $this->validate([
+                'name' => 'required|string|max:255',
+                'phone' => 'nullable|string|max:20',
+                'currency' => ['required', 'string', new CurrencyCode],
+                'country_code' => ['required', 'string', ValidationRule::enum(Country::class)],
+                'financial_year_type' => ['nullable', 'string', ValidationRule::enum(FinancialYearType::class)],
+                'financial_year_start_month' => ['nullable', 'integer', 'min:1', 'max:12'],
+                'financial_year_start_day' => ['nullable', 'integer', 'min:1', 'max:31'],
+                'location_name' => 'nullable|string|max:255',
+                'gstin' => 'nullable|string|max:50',
+                'address_line_1' => 'required|string|max:500',
+                'address_line_2' => 'nullable|string|max:500',
+                'city' => 'required|string|max:100',
+                'state' => 'required|string|max:100',
+                'country' => ['required', 'string', ValidationRule::enum(Country::class)],
+                'postal_code' => 'required|string|max:20',
+                'emails' => 'required|array|min:1',
+                'emails.*' => 'nullable|email',
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        }
 
         // Additional validation: ensure currency is supported by the selected country
         if ($this->country_code && $this->currency) {
@@ -177,7 +237,9 @@ class OrganizationManager extends Component
                 $supportedCurrencies = collect($country->getSupportedCurrencies())->pluck('value')->toArray();
 
                 if (! in_array($this->currency, $supportedCurrencies)) {
-                    $this->addError('currency', 'The selected currency is not supported by '.$country->name().'. Supported currencies: '.implode(', ', $supportedCurrencies));
+                    $errorMessage = 'The selected currency is not supported by '.$country->name().'. Supported currencies: '.implode(', ', $supportedCurrencies);
+
+                    $this->addError('currency', $errorMessage);
 
                     return;
                 }
@@ -194,76 +256,150 @@ class OrganizationManager extends Component
             return;
         }
 
-        $emailCollection = new EmailCollection($filteredEmails);
+        // Convert simple emails to ContactCollection format (email with empty name)
+        $contactData = array_map(fn($email) => ['name' => '', 'email' => trim($email)], $filteredEmails);
+
+        try {
+            $contactCollection = new ContactCollection($contactData);
+        } catch (\Exception $e) {
+            $this->addError('emails.0', 'Failed to process email addresses: '.$e->getMessage());
+
+            return;
+        }
 
         if ($this->editingId) {
-            $organization = Organization::findOrFail($this->editingId);
-            $organization->update([
-                'name' => $this->name,
-                'phone' => $this->phone ?: null,
-                'emails' => $emailCollection,
-                'currency' => $this->currency,
-                'country_code' => $this->country_code,
-                'financial_year_type' => $this->financial_year_type,
-                'financial_year_start_month' => $this->financial_year_start_month,
-                'financial_year_start_day' => $this->financial_year_start_day,
-            ]);
+            try {
+                $organization = Organization::findOrFail($this->editingId);
+                $user = auth()->user();
+                $userTeams = $user->allTeams();
+                $hasAccess = $userTeams->contains('id', $organization->id);
 
-            if ($organization->primaryLocation) {
-                $organization->primaryLocation->update([
-                    'name' => $this->location_name ?: ($this->name ?: 'Main Office'),
-                    'gstin' => $this->gstin ?: null,
-                    'address_line_1' => $this->address_line_1,
-                    'address_line_2' => $this->address_line_2 ?: null,
-                    'city' => $this->city,
-                    'state' => $this->state,
-                    'country' => $this->country,
-                    'postal_code' => $this->postal_code,
-                ]);
+
+                // Security check: Ensure user has access to this organization
+                if (! $hasAccess) {
+                    $this->addError('name', 'You do not have permission to update this organization.');
+
+                    return;
+                }
+
+                // Use database transaction to ensure data consistency
+                \DB::transaction(function () use ($organization, $contactCollection) {
+                    $updateData = [
+                        'name' => $this->name,
+                        'phone' => $this->phone ?: null,
+                        'emails' => $contactCollection,
+                        'currency' => $this->currency,
+                        'country_code' => $this->country_code,
+                        'financial_year_type' => $this->financial_year_type,
+                        'financial_year_start_month' => $this->financial_year_start_month,
+                        'financial_year_start_day' => $this->financial_year_start_day,
+                    ];
+
+                    $organization->update($updateData);
+
+                    if ($organization->primaryLocation) {
+                        $locationUpdateData = [
+                            'name' => $this->location_name ?: ($this->name ?: 'Main Office'),
+                            'gstin' => $this->gstin ?: null,
+                            'address_line_1' => $this->address_line_1,
+                            'address_line_2' => $this->address_line_2 ?: null,
+                            'city' => $this->city,
+                            'state' => $this->state,
+                            'country' => $this->country,
+                            'postal_code' => $this->postal_code,
+                        ];
+
+                        $organization->primaryLocation->update($locationUpdateData);
+                    } else {
+                        // Create new location if organization doesn't have one
+
+                        $locationData = [
+                            'name' => $this->location_name ?: ($this->name ?: 'Main Office'),
+                            'gstin' => $this->gstin ?: null,
+                            'address_line_1' => $this->address_line_1,
+                            'address_line_2' => $this->address_line_2 ?: null,
+                            'city' => $this->city,
+                            'state' => $this->state,
+                            'country' => $this->country,
+                            'postal_code' => $this->postal_code,
+                            'locatable_type' => Organization::class,
+                            'locatable_id' => $organization->id,
+                        ];
+
+                        $location = Location::create($locationData);
+                        $organization->update(['primary_location_id' => $location->id]);
+                    }
+                });
+
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                $this->addError('name', 'Organization not found. It may have been deleted.');
+
+                return;
+            } catch (\Exception $e) {
+                $this->addError('name', 'Failed to update organization: '.$e->getMessage());
+
+                return;
             }
         } else {
-            $location = Location::create([
-                'name' => $this->location_name ?: ($this->name ?: 'Main Office'),
-                'gstin' => $this->gstin ?: null,
-                'address_line_1' => $this->address_line_1,
-                'address_line_2' => $this->address_line_2 ?: null,
-                'city' => $this->city,
-                'state' => $this->state,
-                'country' => $this->country,
-                'postal_code' => $this->postal_code,
-                'locatable_type' => Organization::class,
-                'locatable_id' => 0,
-            ]);
+            try {
+                // Use database transaction to ensure data consistency
+                $organization = \DB::transaction(function () use ($contactCollection) {
+                    $locationData = [
+                        'name' => $this->location_name ?: ($this->name ?: 'Main Office'),
+                        'gstin' => $this->gstin ?: null,
+                        'address_line_1' => $this->address_line_1,
+                        'address_line_2' => $this->address_line_2 ?: null,
+                        'city' => $this->city,
+                        'state' => $this->state,
+                        'country' => $this->country,
+                        'postal_code' => $this->postal_code,
+                        'locatable_type' => Organization::class,
+                        'locatable_id' => 0,
+                    ];
 
-            // Get smart defaults based on country
-            $country = Country::from($this->country_code);
-            $defaultFinancialYearType = $this->financial_year_type ?: $country->getDefaultFinancialYearType()->value;
-            $defaultCurrency = $this->currency ?: $country->getDefaultCurrency()->value;
+                    $location = Location::create($locationData);
 
-            $organization = Organization::create([
-                'name' => $this->name,
-                'user_id' => auth()->id(),
-                'personal_team' => false,
-                'phone' => $this->phone ?: null,
-                'emails' => $emailCollection,
-                'primary_location_id' => $location->id,
-                'currency' => $defaultCurrency,
-                'country_code' => $this->country_code,
-                'financial_year_type' => $defaultFinancialYearType,
-                'financial_year_start_month' => $this->financial_year_start_month,
-                'financial_year_start_day' => $this->financial_year_start_day,
-            ]);
+                    // Get smart defaults based on country
+                    $country = Country::from($this->country_code);
+                    $defaultFinancialYearType = $this->financial_year_type ?: $country->getDefaultFinancialYearType()->value;
+                    $defaultCurrency = $this->currency ?: $country->getDefaultCurrency()->value;
 
-            $location->update([
-                'locatable_id' => $organization->id,
-            ]);
+                    $organizationData = [
+                        'name' => $this->name,
+                        'user_id' => auth()->id(),
+                        'personal_team' => false,
+                        'phone' => $this->phone ?: null,
+                        'emails' => $contactCollection,
+                        'primary_location_id' => $location->id,
+                        'currency' => $defaultCurrency,
+                        'country_code' => $this->country_code,
+                        'financial_year_type' => $defaultFinancialYearType,
+                        'financial_year_start_month' => $this->financial_year_start_month,
+                        'financial_year_start_day' => $this->financial_year_start_day,
+                    ];
+
+                    $organization = Organization::create($organizationData);
+
+                    $location->update([
+                        'locatable_id' => $organization->id,
+                    ]);
+
+                    return $organization;
+                });
+
+            } catch (\Exception $e) {
+                $this->addError('name', 'Failed to create organization: '.$e->getMessage());
+
+                return;
+            }
         }
 
         $this->resetForm();
         $this->showForm = false;
         $this->resetPage();
 
-        session()->flash('message', $this->editingId ? 'Organization updated successfully!' : 'Organization created successfully!');
+        $successMessage = $this->editingId ? 'Organization updated successfully!' : 'Organization created successfully!';
+        session()->flash('message', $successMessage);
     }
 
     public function delete(Organization $organization): void
@@ -390,7 +526,9 @@ class OrganizationManager extends Component
 
     public function render()
     {
+        $title = $this->autoEdit ? 'Manage Your Business' : 'Organizations';
+
         return view('livewire.organization-manager')
-            ->layout('layouts.app', ['title' => 'Organizations']);
+            ->layout('layouts.app', ['title' => $title]);
     }
 }

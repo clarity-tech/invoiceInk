@@ -78,7 +78,7 @@ The Clarity Invoicing Application is a comprehensive Laravel-based invoicing sys
 - **Customer Management**: Customer entities with polymorphic location relationships
 - **Invoice System**: Unified invoice/estimate model with flexible tax handling
 - **Location System**: Polymorphic location model serving organizations and customers
-- **Value Objects**: EmailCollection, InvoiceTotals for robust data handling
+- **Value Objects**: ContactCollection, InvoiceTotals for robust data handling
 - **Service Layer**: InvoiceCalculator, PdfService, EstimateToInvoiceConverter
 
 ## License  

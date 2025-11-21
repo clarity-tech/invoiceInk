@@ -1,0 +1,360 @@
+<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+        <!-- Header with Navigation -->
+        <div class="mb-6 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <a href="{{ route('invoices.index') }}" class="text-blue-600 hover:text-blue-900">
+                    ← Back to Invoices
+                </a>
+                <h1 class="text-3xl font-bold text-gray-900">{{ $this->pageTitle }}</h1>
+            </div>
+            @if($mode === 'edit' && $invoice && $invoice->ulid)
+                <div class="flex space-x-2">
+                    <a href="{{ route($invoice->type === 'invoice' ? 'invoices.public' : 'estimates.public', $invoice->ulid) }}" 
+                       target="_blank" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                        View Public
+                    </a>
+                    <button wire:click="downloadPdf" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                        Download PDF
+                    </button>
+                </div>
+            @endif
+        </div>
+
+        @if (session()->has('message'))
+            <div class="mb-4 p-4 text-green-700 bg-green-100 border border-green-300 rounded">
+                {{ session('message') }}
+            </div>
+        @endif
+
+
+        <!-- Wizard Form -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        {{ $mode === 'edit' ? 'Edit' : 'Create' }} {{ ucfirst($type) }}
+                    </h2>
+                    
+                    <!-- Step Indicator -->
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center">
+                            <div class="flex items-center text-sm">
+                                <span class="w-8 h-8 rounded-full {{ $currentStep >= 1 ? 'bg-blue-500 text-white' : 'bg-gray-300' }} flex items-center justify-center">1</span>
+                                <span class="ml-2 {{ $currentStep >= 1 ? 'text-blue-600' : 'text-gray-500' }}">Details</span>
+                            </div>
+                            <div class="w-8 border-t-2 {{ $currentStep >= 2 ? 'border-blue-500' : 'border-gray-300' }} mx-2"></div>
+                            <div class="flex items-center text-sm">
+                                <span class="w-8 h-8 rounded-full {{ $currentStep >= 2 ? 'bg-blue-500 text-white' : 'bg-gray-300' }} flex items-center justify-center">2</span>
+                                <span class="ml-2 {{ $currentStep >= 2 ? 'text-blue-600' : 'text-gray-500' }}">Items</span>
+                            </div>
+                            <div class="w-8 border-t-2 {{ $currentStep >= 3 ? 'border-blue-500' : 'border-gray-300' }} mx-2"></div>
+                            <div class="flex items-center text-sm">
+                                <span class="w-8 h-8 rounded-full {{ $currentStep >= 3 ? 'bg-blue-500 text-white' : 'bg-gray-300' }} flex items-center justify-center">3</span>
+                                <span class="ml-2 {{ $currentStep >= 3 ? 'text-blue-600' : 'text-gray-500' }}">Review</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form wire:submit="save" class="p-6">
+                @if ($currentStep === 1)
+                    <!-- Step 1: Basic Details -->
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
+                                <select wire:model="type" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" {{ $mode === 'edit' ? 'disabled' : '' }}>
+                                    <option value="invoice">Invoice</option>
+                                    <option value="estimate">Estimate</option>
+                                </select>
+                            </div>
+
+                            <div></div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Organization</label>
+                                <div class="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2">
+                                    @if(auth()->check() && auth()->user()->currentTeam)
+                                        <span class="text-gray-900 font-medium">{{ auth()->user()->currentTeam->name }}</span>
+                                        @if(auth()->user()->currentTeam->company_name && auth()->user()->currentTeam->company_name !== auth()->user()->currentTeam->name)
+                                            <span class="text-gray-500 text-sm"> ({{ auth()->user()->currentTeam->company_name }})</span>
+                                        @endif
+                                    @else
+                                        <span class="text-gray-500">No organization selected</span>
+                                    @endif
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Use the team switcher in the navigation to change organizations</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.customer_required') }}</label>
+                                <select wire:model.live="customer_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">{{ __('forms.labels.select_customer') }}</option>
+                                    @foreach($this->customers as $customer)
+                                        <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('customer_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                
+                                @if($this->customers->count() === 0)
+                                    <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                        <p class="text-sm text-blue-700">
+                                            No customers found. 
+                                            <a href="{{ route('customers.index') }}" class="font-medium underline hover:text-blue-600" target="_blank">
+                                                Create your first customer →
+                                            </a>
+                                        </p>
+                                    </div>
+                                @endif
+                            </div>
+
+                            @if($organization_id)
+                                @if($this->organizationLocations->count() > 0)
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.organization_location') }} *</label>
+                                        <select wire:model="organization_location_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="">Select Location</option>
+                                            @foreach($this->organizationLocations as $location)
+                                                <option value="{{ $location->id }}">{{ $location->name }} - {{ $location->city }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('organization_location_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+                                @else
+                                    <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <div class="ml-3">
+                                                <h3 class="text-sm font-medium text-yellow-800">Organization Location Required</h3>
+                                                <div class="mt-2 text-sm text-yellow-700">
+                                                    <p>The selected organization needs at least one location. 
+                                                       <a href="/organizations" class="font-medium underline hover:text-yellow-600" target="_blank">
+                                                           Manage locations →
+                                                       </a>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @error('organization_location_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                @endif
+                            @endif
+
+                            @if($customer_id)
+                                @if($this->customerLocations->count() > 0)
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.customer_location') }} *</label>
+                                        <select wire:model="customer_location_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="">Select Location</option>
+                                            @foreach($this->customerLocations as $location)
+                                                <option value="{{ $location->id }}">{{ $location->name }} - {{ $location->city }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('customer_location_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+                                @else
+                                    <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.30 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <div class="ml-3">
+                                                <h3 class="text-sm font-medium text-yellow-800">Customer Location Required</h3>
+                                                <div class="mt-2 text-sm text-yellow-700">
+                                                    <p>The selected customer needs at least one location. 
+                                                       <a href="/customers" class="font-medium underline hover:text-yellow-600" target="_blank">
+                                                           Manage locations →
+                                                       </a>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @error('customer_location_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                @endif
+                            @endif
+
+                            @if($type === 'invoice' && $organization_id && $this->availableNumberingSeries->count() > 0)
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Numbering Series (Optional)</label>
+                                    <select wire:model.live="invoice_numbering_series_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="">Auto-select best series</option>
+                                        @foreach($this->availableNumberingSeries as $series)
+                                            <option value="{{ $series->id }}">
+                                                {{ $series->name }}
+                                                @if($series->location)
+                                                    ({{ $series->location->name }})
+                                                @else
+                                                    (Organization-wide)
+                                                @endif
+                                                - {{ $series->format_pattern }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('invoice_numbering_series_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    @if($this->selectedSeriesPreview)
+                                        <p class="mt-1 text-sm text-gray-600">
+                                            Next invoice number: <span class="font-mono text-indigo-600">{{ $this->selectedSeriesPreview }}</span>
+                                        </p>
+                                    @endif
+                                </div>
+                            @endif
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('documents.fields.issue_date') }}</label>
+                                <input wire:model="issued_at" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                @error('issued_at') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('documents.fields.due_date') }}</label>
+                                <input wire:model="due_at" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                @error('due_at') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                @elseif ($currentStep === 2)
+                    <!-- Step 2: Items -->
+                    <div class="space-y-6">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-medium text-gray-900">Line Items</h3>
+                            <button type="button" wire:click="addItem" class="text-blue-500 hover:text-blue-700 text-sm">+ Add Item</button>
+                        </div>
+
+                        <div class="space-y-4">
+                            @foreach($items as $index => $item)
+                                <div class="grid grid-cols-12 gap-4 items-end border border-gray-200 rounded-lg p-4">
+                                    <div class="col-span-5">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                                        <input wire:model.live="items.{{ $index }}.description" type="text" 
+                                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        @error("items.{$index}.description") <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div class="col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Qty *</label>
+                                        <input wire:model.live="items.{{ $index }}.quantity" type="number" min="1" 
+                                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        @error("items.{$index}.quantity") <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div class="col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Price ({{ $this->currencySymbol }}) *</label>
+                                        <input wire:model.live="items.{{ $index }}.unit_price" type="number" step="0.01" min="0" 
+                                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        @error("items.{$index}.unit_price") <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div class="col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Tax %</label>
+                                        <input wire:model.live="items.{{ $index }}.tax_rate" type="number" min="0" max="100" 
+                                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        @error("items.{$index}.tax_rate") <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div class="col-span-1">
+                                        @if(count($items) > 1)
+                                            <button type="button" wire:click="removeItem({{ $index }})" 
+                                                    class="text-red-500 hover:text-red-700 p-2">×</button>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <!-- Totals Summary -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Subtotal:</span>
+                                <span class="text-sm font-medium">{{ $this->formatAmount($subtotal) }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Tax:</span>
+                                <span class="text-sm font-medium">{{ $this->formatAmount($tax) }}</span>
+                            </div>
+                            <div class="border-t pt-2 mt-2 flex justify-between">
+                                <span class="text-lg font-bold">Total:</span>
+                                <span class="text-lg font-bold">{{ $this->formatAmount($total) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                @elseif ($currentStep === 3)
+                    <!-- Step 3: Review -->
+                    <div class="space-y-6">
+                        <h3 class="text-lg font-medium text-gray-900">Review {{ ucfirst($type) }}</h3>
+                        
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <h4 class="font-medium text-gray-900 mb-2">From:</h4>
+                                    @if($organization_id && $this->organizations->where('id', $organization_id)->first())
+                                        <p class="text-sm text-gray-600">{{ $this->organizations->where('id', $organization_id)->first()->name }}</p>
+                                    @endif
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900 mb-2">To:</h4>
+                                    @if($customer_id && $this->customers->where('id', $customer_id)->first())
+                                        <p class="text-sm text-gray-600">{{ $this->customers->where('id', $customer_id)->first()->name }}</p>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div class="mt-6">
+                                <h4 class="font-medium text-gray-900 mb-2">Items:</h4>
+                                <div class="space-y-2">
+                                    @foreach($items as $item)
+                                        <div class="flex justify-between text-sm">
+                                            <span>{{ $item['description'] }} ({{ $item['quantity'] }}x)</span>
+                                            <span>{{ $this->formatAmount($item['quantity'] * $item['unit_price'] * 100) }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <div class="mt-6 pt-4 border-t">
+                                <div class="flex justify-between font-bold">
+                                    <span>Total:</span>
+                                    <span>{{ $this->formatAmount($total) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Navigation Buttons -->
+                <div class="flex justify-between pt-6 border-t mt-6">
+                    <div>
+                        @if ($currentStep > 1)
+                            <button type="button" wire:click="previousStep" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                                Previous
+                            </button>
+                        @endif
+                        <button type="button" wire:click="cancel" class="ml-2 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                    </div>
+
+                    <div>
+                        @if ($currentStep < 3)
+                            <button type="button" wire:click="nextStep" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                                Next
+                            </button>
+                        @else
+                            <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+                                {{ $mode === 'edit' ? 'Update' : 'Create' }} {{ ucfirst($type) }}
+                            </button>
+                        @endif
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

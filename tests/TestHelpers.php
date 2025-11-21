@@ -6,7 +6,7 @@ use App\Models\InvoiceItem;
 use App\Models\Location;
 use App\Models\Organization;
 use App\Models\User;
-use App\ValueObjects\EmailCollection;
+use App\ValueObjects\ContactCollection;
 use Illuminate\Support\Facades\Hash;
 
 // Global test counter to ensure unique values
@@ -80,7 +80,7 @@ function createOrganizationWithLocation(array $orgAttributes = [], array $locati
         'company_name' => 'Test Organization Inc.',
         'tax_number' => 'TX-'.getUniqueTestId(),
         'registration_number' => 'REG-'.getUniqueTestId(),
-        'emails' => new EmailCollection(['org'.getUniqueTestId().'@example.test']),
+        'emails' => new ContactCollection([['name' => 'Test Org Contact', 'email' => 'org'.getUniqueTestId().'@example.test']]),
         'phone' => '+1-555-0123',
         'website' => 'https://testorg.com',
         'currency' => 'INR',
@@ -89,6 +89,7 @@ function createOrganizationWithLocation(array $orgAttributes = [], array $locati
         'financial_year_start_month' => 4,
         'financial_year_start_day' => 1,
         'primary_location_id' => $location->id,
+        'setup_completed_at' => now(), // Mark setup as complete for tests
     ];
 
     $organization = $user->currentTeam;
@@ -122,7 +123,7 @@ function createCustomerWithLocation(array $customerAttributes = [], array $locat
 
     $defaultCustomerAttributes = [
         'name' => 'Test Customer',
-        'emails' => new EmailCollection(['customer'.getUniqueTestId().'@example.test']),
+        'emails' => new ContactCollection([['name' => 'Test Customer Contact', 'email' => 'customer'.getUniqueTestId().'@example.test']]),
         'primary_location_id' => $location->id,
         'organization_id' => $organization->id,
     ];

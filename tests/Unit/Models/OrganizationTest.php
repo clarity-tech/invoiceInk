@@ -6,7 +6,7 @@ use App\Models\Location;
 use App\Models\Organization;
 use App\Models\TaxTemplate;
 use App\Models\User;
-use App\ValueObjects\EmailCollection;
+use App\ValueObjects\ContactCollection;
 
 test('can create organization with required fields', function () {
     $user = User::factory()->create();
@@ -60,19 +60,19 @@ test('organization has correct fillable attributes', function () {
     }
 });
 
-test('organization emails are cast to EmailCollection', function () {
+test('organization emails are cast to ContactCollection', function () {
     $user = User::factory()->create();
-    $emails = ['test1@example.com', 'test2@example.com'];
+    $contacts = new ContactCollection([['name' => 'Test 1', 'email' => 'test1@example.com'], ['name' => 'Test 2', 'email' => 'test2@example.com']]);
     $organization = Organization::create([
         'name' => 'Test Organization',
         'user_id' => $user->id,
         'personal_team' => false,
-        'emails' => $emails,
+        'emails' => $contacts,
         'currency' => 'INR',
     ]);
 
-    expect($organization->emails)->toBeInstanceOf(EmailCollection::class);
-    expect($organization->emails->toArray())->toBe($emails);
+    expect($organization->emails)->toBeInstanceOf(ContactCollection::class);
+    expect($organization->emails->getEmails())->toBe(['test1@example.com', 'test2@example.com']);
 });
 
 test('organization currency is cast to Currency enum', function () {
@@ -131,13 +131,13 @@ test('organization can have multiple customers', function () {
 
     $customer1 = Customer::create([
         'name' => 'Customer 1',
-        'emails' => new EmailCollection(['customer1@test.com']),
+        'emails' => new ContactCollection([['name' => 'Customer 1', 'email' => 'customer1@test.com']]),
         'organization_id' => $organization->id,
     ]);
 
     $customer2 = Customer::create([
         'name' => 'Customer 2',
-        'emails' => new EmailCollection(['customer2@test.com']),
+        'emails' => new ContactCollection([['name' => 'Customer 2', 'email' => 'customer2@test.com']]),
         'organization_id' => $organization->id,
     ]);
 
@@ -301,7 +301,7 @@ test('organization getCurrencySymbolAttribute returns correct symbols', function
 
 test('organization can be created with all fillable attributes', function () {
     $user = User::factory()->create();
-    $emails = new EmailCollection(['test@example.com', 'info@example.com']);
+    $contacts = new ContactCollection([['name' => 'Test', 'email' => 'test@example.com'], ['name' => 'Info', 'email' => 'info@example.com']]);
 
     $organization = Organization::create([
         'name' => 'Complete Organization',
@@ -310,7 +310,7 @@ test('organization can be created with all fillable attributes', function () {
         'company_name' => 'Complete Corp.',
         'tax_number' => 'TAX123456789',
         'registration_number' => 'REG987654321',
-        'emails' => $emails,
+        'emails' => $contacts,
         'phone' => '+1-555-0123',
         'website' => 'https://example.com',
         'currency' => 'EUR',
@@ -323,7 +323,7 @@ test('organization can be created with all fillable attributes', function () {
     expect($organization->company_name)->toBe('Complete Corp.');
     expect($organization->tax_number)->toBe('TAX123456789');
     expect($organization->registration_number)->toBe('REG987654321');
-    expect($organization->emails)->toBeInstanceOf(EmailCollection::class);
+    expect($organization->emails)->toBeInstanceOf(ContactCollection::class);
     expect($organization->emails->count())->toBe(2);
     expect($organization->phone)->toBe('+1-555-0123');
     expect($organization->website)->toBe('https://example.com');
@@ -338,11 +338,11 @@ test('organization handles empty emails collection', function () {
         'name' => 'Test Organization',
         'user_id' => $user->id,
         'personal_team' => false,
-        'emails' => new EmailCollection([]),
+        'emails' => new ContactCollection([]),
         'currency' => 'INR',
     ]);
 
-    expect($organization->emails)->toBeInstanceOf(EmailCollection::class);
+    expect($organization->emails)->toBeInstanceOf(ContactCollection::class);
     expect($organization->emails->isEmpty())->toBeTrue();
 });
 
@@ -356,7 +356,7 @@ test('organization emails cast handles array input', function () {
         'currency' => 'INR',
     ]);
 
-    expect($organization->emails)->toBeInstanceOf(EmailCollection::class);
+    expect($organization->emails)->toBeInstanceOf(ContactCollection::class);
     expect($organization->emails->count())->toBe(2);
 });
 
@@ -370,9 +370,9 @@ test('organization emails cast handles string input', function () {
         'currency' => 'INR',
     ]);
 
-    expect($organization->emails)->toBeInstanceOf(EmailCollection::class);
+    expect($organization->emails)->toBeInstanceOf(ContactCollection::class);
     expect($organization->emails->count())->toBe(1);
-    expect($organization->emails->first())->toBe('single@example.com');
+    expect($organization->emails->first()['email'])->toBe('single@example.com');
 });
 
 test('organization emails cast handles null input', function () {
@@ -385,7 +385,7 @@ test('organization emails cast handles null input', function () {
         'currency' => 'INR',
     ]);
 
-    expect($organization->emails)->toBeInstanceOf(EmailCollection::class);
+    expect($organization->emails)->toBeInstanceOf(ContactCollection::class);
     expect($organization->emails->isEmpty())->toBeTrue();
 });
 
@@ -394,7 +394,7 @@ test('organization casts method returns correct array', function () {
     $casts = $organization->getCasts();
 
     expect($casts['personal_team'])->toBe('boolean');
-    expect($casts['emails'])->toBe(\App\Casts\EmailCollectionCast::class);
+    expect($casts['emails'])->toBe(\App\Casts\ContactCollectionCast::class);
     expect($casts['currency'])->toBe(\App\Currency::class);
 });
 

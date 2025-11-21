@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Traits;
 
 use Akaunting\Money\Money;
 use App\Models\Customer;
@@ -11,19 +11,13 @@ use App\Models\Location;
 use App\Models\Organization;
 use App\Services\InvoiceCalculator;
 use App\Services\InvoiceNumberingService;
-use App\Services\PdfService;
 use InvalidArgumentException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Rule;
-use Livewire\Component;
-use Livewire\WithPagination;
 
-class InvoiceWizard extends Component
+trait InvoiceFormLogic
 {
-    use WithPagination;
-
     public string $type = 'invoice'; // 'invoice' or 'estimate'
-
     public int $currentStep = 1;
 
     // Basic Details
@@ -53,16 +47,10 @@ class InvoiceWizard extends Component
 
     // Totals (computed)
     public int $subtotal = 0;
-
     public int $tax = 0;
-
     public int $total = 0;
 
-    public bool $showInvoices = true;
-
-    public ?int $editingId = null;
-
-    public function mount(): void
+    protected function initializeFormDefaults(): void
     {
         // Auto-set organization to current team if user is authenticated
         if (auth()->check()) {
@@ -72,6 +60,35 @@ class InvoiceWizard extends Component
         $this->addItem();
         $this->issued_at = now()->format('Y-m-d');
         $this->due_at = now()->addDays(30)->format('Y-m-d');
+    }
+
+    public function loadExistingInvoice(Invoice $invoice): void
+    {
+        // Security check: Ensure user has access to this invoice's organization
+        if (auth()->check() && ! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
+            abort(403, 'Unauthorized access to invoice.');
+        }
+
+        $invoice->load(['items', 'organizationLocation', 'customerLocation']);
+
+        $this->type = $invoice->type ?? 'invoice';
+        $this->organization_id = $invoice->organizationLocation->locatable_id;
+        $this->customer_id = $invoice->customerLocation->locatable_id;
+        $this->organization_location_id = $invoice->organization_location_id;
+        $this->customer_location_id = $invoice->customer_location_id;
+        $this->issued_at = $invoice->issued_at?->format('Y-m-d');
+        $this->due_at = $invoice->due_at?->format('Y-m-d');
+
+        $this->items = $invoice->items->map(function ($item) {
+            return [
+                'description' => $item->description,
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price / 100, // Convert from cents
+                'tax_rate' => $item->tax_rate / 100, // Convert from basis points to percentage
+            ];
+        })->toArray();
+
+        $this->calculateTotals();
     }
 
     public function addItem(): void
@@ -174,46 +191,7 @@ class InvoiceWizard extends Component
         }
     }
 
-    public function create(): void
-    {
-        $this->resetForm();
-        $this->showInvoices = false;
-        $this->currentStep = 1;
-    }
-
-    public function edit(Invoice $invoice): void
-    {
-        // Security check: Ensure user has access to this invoice's organization
-        if (! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
-            abort(403, 'Unauthorized access to invoice.');
-        }
-
-        $invoice->load(['items', 'organizationLocation', 'customerLocation']);
-
-        $this->editingId = $invoice->id;
-        $this->type = $invoice->type;
-        $this->organization_id = $invoice->organizationLocation->locatable_id;
-        $this->customer_id = $invoice->customerLocation->locatable_id;
-        $this->organization_location_id = $invoice->organization_location_id;
-        $this->customer_location_id = $invoice->customer_location_id;
-        $this->issued_at = $invoice->issued_at?->format('Y-m-d');
-        $this->due_at = $invoice->due_at?->format('Y-m-d');
-
-        $this->items = $invoice->items->map(function ($item) {
-            return [
-                'description' => $item->description,
-                'quantity' => $item->quantity,
-                'unit_price' => $item->unit_price / 100, // Convert from cents
-                'tax_rate' => $item->tax_rate / 100, // Convert from basis points to percentage
-            ];
-        })->toArray();
-
-        $this->calculateTotals();
-        $this->showInvoices = false;
-        $this->currentStep = 1;
-    }
-
-    public function save(): void
+    public function saveInvoice(?Invoice $existingInvoice = null): void
     {
         $this->validate([
             'organization_id' => 'required|exists:teams,id',
@@ -226,9 +204,8 @@ class InvoiceWizard extends Component
             'items.*.tax_rate' => 'nullable|numeric|min:0|max:100',
         ]);
 
-        if ($this->editingId) {
-            $invoice = Invoice::findOrFail($this->editingId);
-            $invoice->update([
+        if ($existingInvoice) {
+            $existingInvoice->update([
                 'type' => $this->type,
                 'organization_id' => $this->organization_id,
                 'customer_id' => $this->customer_id,
@@ -243,7 +220,8 @@ class InvoiceWizard extends Component
             ]);
 
             // Delete existing items and recreate
-            $invoice->items()->delete();
+            $existingInvoice->items()->delete();
+            $invoice = $existingInvoice;
         } else {
             // Generate invoice number using new numbering service for invoices only
             $invoiceNumberData = null;
@@ -298,71 +276,11 @@ class InvoiceWizard extends Component
             ]);
         }
 
-        $this->resetForm();
-        $this->showInvoices = true;
-        $this->resetPage();
-
         $documentType = ucfirst($this->type);
-        session()->flash('message', $this->editingId ?
+        session()->flash('message', $existingInvoice ?
             "{$documentType} updated successfully!" :
             "{$documentType} created successfully!"
         );
-    }
-
-    public function delete(Invoice $invoice): void
-    {
-        // Security check: Ensure user has access to this invoice's organization
-        if (! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
-            abort(403, 'Unauthorized access to invoice.');
-        }
-
-        $invoice->items()->delete();
-        $invoice->delete();
-
-        $this->resetPage();
-        session()->flash('message', ucfirst($invoice->type).' deleted successfully!');
-    }
-
-    public function downloadPdf(Invoice $invoice)
-    {
-        // Security check: Ensure user has access to this invoice's organization
-        if (! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
-            abort(403, 'Unauthorized access to invoice.');
-        }
-
-        $pdfService = new PdfService;
-
-        if ($invoice->type === 'invoice') {
-            return $pdfService->downloadInvoicePdf($invoice);
-        } else {
-            return $pdfService->downloadEstimatePdf($invoice);
-        }
-    }
-
-    public function cancel(): void
-    {
-        $this->resetForm();
-        $this->showInvoices = true;
-    }
-
-    private function resetForm(): void
-    {
-        $this->editingId = null;
-        $this->type = 'invoice';
-        $this->currentStep = 1;
-        $this->organization_id = null;
-        $this->customer_id = null;
-        $this->organization_location_id = null;
-        $this->customer_location_id = null;
-        $this->invoice_numbering_series_id = null;
-        $this->issued_at = now()->format('Y-m-d');
-        $this->due_at = now()->addDays(30)->format('Y-m-d');
-        $this->items = [];
-        $this->addItem();
-        $this->subtotal = 0;
-        $this->tax = 0;
-        $this->total = 0;
-        $this->resetValidation();
     }
 
     private function generateInvoiceNumber(): string
@@ -436,15 +354,6 @@ class InvoiceWizard extends Component
     }
 
     #[Computed]
-    public function invoices()
-    {
-        // OrganizationScope automatically filters by current user's team
-        return Invoice::with(['organizationLocation', 'customerLocation'])
-            ->latest()
-            ->paginate(10);
-    }
-
-    #[Computed]
     public function currentCurrency(): string
     {
         if ($this->organization_id) {
@@ -506,11 +415,5 @@ class InvoiceWizard extends Component
         $currency = $this->currentCurrency;
 
         return Money::{$currency}($amount)->format();
-    }
-
-    public function render()
-    {
-        return view('livewire.invoice-wizard')
-            ->layout('layouts.app', ['title' => 'Invoices & Estimates']);
     }
 }

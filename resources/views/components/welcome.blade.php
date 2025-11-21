@@ -25,7 +25,7 @@ $currentTeam = auth()->user()->currentTeam;
     <!-- Quick Actions Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Create Invoice -->
-        <a href="{{ route('invoices.index') }}" 
+        <a href="{{ route('invoices.create') }}" 
            class="bg-blue-50 hover:bg-blue-100 transition-colors duration-200 rounded-lg p-6 group">
             <div class="flex items-center">
                 <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,19 +60,19 @@ $currentTeam = auth()->user()->currentTeam;
             </div>
         </a>
 
-        <!-- Organizations -->
-        <a href="{{ route('organizations.index') }}" 
+        <!-- Manage Your Business -->
+        <a href="{{ route('organization.edit') }}" 
            class="bg-purple-50 hover:bg-purple-100 transition-colors duration-200 rounded-lg p-6 group">
             <div class="flex items-center">
                 <svg class="h-8 w-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 <div class="ml-4">
                     <h3 class="text-lg font-semibold text-purple-900 group-hover:text-purple-700">
-                        Organizations
+                        Manage Your Business
                     </h3>
                     <p class="text-sm text-purple-600">
-                        Manage your businesses
+                        Edit current organization
                     </p>
                 </div>
             </div>
@@ -101,7 +101,16 @@ $currentTeam = auth()->user()->currentTeam;
     @if($currentTeam)
         <!-- Organization Info -->
         <div class="mt-8 bg-gray-50 rounded-lg p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Current Organization</h3>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Current Organization</h3>
+                <a href="{{ route('organization.edit') }}" 
+                   class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-md transition-colors duration-200">
+                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Manage Business
+                </a>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white rounded-lg p-4">
                     <div class="text-sm text-gray-600">Organization</div>

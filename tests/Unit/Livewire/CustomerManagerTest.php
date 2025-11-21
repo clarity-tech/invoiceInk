@@ -3,7 +3,7 @@
 use App\Livewire\CustomerManager;
 use App\Models\Customer;
 use App\Models\Location;
-use App\ValueObjects\EmailCollection;
+use App\ValueObjects\ContactCollection;
 use Livewire\Livewire;
 
 test('can render customer manager component', function () {
@@ -24,7 +24,7 @@ test('can load customers with pagination', function () {
     for ($i = 1; $i <= 12; $i++) {
         $customers->push(createCustomerWithLocation([
             'name' => "TestCustomer_{$i}_".uniqid(), // Unique names to avoid conflicts
-            'emails' => new EmailCollection(["testcustomer{$i}@example.test"]),
+            'emails' => new ContactCollection([["name" => "Contact {$i}", "email" => "testcustomer{$i}@example.test"]]),
         ], [], $organization));
     }
 
@@ -64,30 +64,30 @@ test('can show create form', function () {
         ->assertSee('Location Name');
 });
 
-test('can add and remove email fields', function () {
+test('can add and remove contact fields', function () {
     $organization = createOrganizationWithLocation();
     $this->actingAs($organization->owner);
 
     Livewire::test(CustomerManager::class)
         ->call('create')
-        ->assertCount('emails', 1)
-        ->call('addEmailField')
-        ->assertCount('emails', 2)
-        ->call('addEmailField')
-        ->assertCount('emails', 3)
-        ->call('removeEmailField', 1)
-        ->assertCount('emails', 2);
+        ->assertCount('contacts', 1)
+        ->call('addContactField')
+        ->assertCount('contacts', 2)
+        ->call('addContactField')
+        ->assertCount('contacts', 3)
+        ->call('removeContactField', 1)
+        ->assertCount('contacts', 2);
 });
 
-test('cannot remove last email field', function () {
+test('cannot remove last contact field', function () {
     $organization = createOrganizationWithLocation();
     $this->actingAs($organization->owner);
 
     Livewire::test(CustomerManager::class)
         ->call('create')
-        ->assertCount('emails', 1)
-        ->call('removeEmailField', 0)
-        ->assertCount('emails', 1); // Should still have 1
+        ->assertCount('contacts', 1)
+        ->call('removeContactField', 0)
+        ->assertCount('contacts', 1); // Should still have 1
 });
 
 test('can create new customer with location', function () {
@@ -98,7 +98,8 @@ test('can create new customer with location', function () {
         ->call('create')
         ->set('name', 'Test Customer Corp')
         ->set('phone', '+1234567890')
-        ->set('emails.0', 'customer@test.com')
+        ->set('contacts.0.name', 'John Doe')
+        ->set('contacts.0.email', 'customer@test.com')
         ->set('location_name', 'Main Office')
         ->set('gstin', '29BBBBB1111B2Z6')
         ->set('address_line_1', '456 Customer Ave')
@@ -128,18 +129,21 @@ test('can create new customer with location', function () {
     ]);
 });
 
-test('can create customer with multiple emails', function () {
+test('can create customer with multiple contacts', function () {
     $user = createUserWithTeam();
     $this->actingAs($user);
 
     Livewire::test(CustomerManager::class)
         ->call('create')
-        ->set('name', 'Multi Email Customer')
-        ->set('emails.0', 'primary@customer.com')
-        ->call('addEmailField')
-        ->set('emails.1', 'billing@customer.com')
-        ->call('addEmailField')
-        ->set('emails.2', 'support@customer.com')
+        ->set('name', 'Multi Contact Customer')
+        ->set('contacts.0.name', 'John Doe')
+        ->set('contacts.0.email', 'primary@customer.com')
+        ->call('addContactField')
+        ->set('contacts.1.name', 'Jane Smith')
+        ->set('contacts.1.email', 'billing@customer.com')
+        ->call('addContactField')
+        ->set('contacts.2.name', 'Bob Johnson')
+        ->set('contacts.2.email', 'support@customer.com')
         ->set('location_name', 'Customer Office')
         ->set('address_line_1', '789 Customer St')
         ->set('city', 'Customer City')
@@ -149,11 +153,16 @@ test('can create customer with multiple emails', function () {
         ->call('save')
         ->assertSee('Customer created successfully!');
 
-    $customer = Customer::where('name', 'Multi Email Customer')->first();
-    expect($customer->emails->toArray())->toBe([
+    $customer = Customer::where('name', 'Multi Contact Customer')->first();
+    expect($customer->emails->getEmails())->toBe([
         'primary@customer.com',
         'billing@customer.com',
         'support@customer.com',
+    ]);
+    expect($customer->emails->getNames())->toBe([
+        'John Doe',
+        'Jane Smith',
+        'Bob Johnson',
     ]);
 });
 
@@ -179,19 +188,19 @@ test('validates email format', function () {
 
     Livewire::test(CustomerManager::class)
         ->call('create')
-        ->set('emails.0', 'invalid-email')
+        ->set('contacts.0.email', 'invalid-email')
         ->call('save')
-        ->assertHasErrors(['emails.0' => 'email']);
+        ->assertHasErrors(['contacts.0.email' => 'email']);
 });
 
-test('requires at least one non-empty email', function () {
+test('requires at least one non-empty contact email', function () {
     $organization = createOrganizationWithLocation();
     $this->actingAs($organization->owner);
 
     Livewire::test(CustomerManager::class)
         ->call('create')
         ->set('name', 'Test Customer')
-        ->set('emails.0', '')
+        ->set('contacts.0.email', '')
         ->set('location_name', 'Office')
         ->set('address_line_1', '123 Test St')
         ->set('city', 'Test City')
@@ -199,7 +208,7 @@ test('requires at least one non-empty email', function () {
         ->set('country', 'IN')
         ->set('postal_code', '12345')
         ->call('save')
-        ->assertHasErrors(['emails.0' => 'At least one email is required.']);
+        ->assertHasErrors(['contacts.0.email']);
 });
 
 test('can edit existing customer', function () {
@@ -207,7 +216,7 @@ test('can edit existing customer', function () {
     $customer = createCustomerWithLocation([
         'name' => 'Original Customer',
         'phone' => '+2222222222',
-        'emails' => new EmailCollection(['original@customer.com']),
+        'emails' => new ContactCollection([['name' => 'Original Contact', 'email' => 'original@customer.com']]),
     ], [
         'name' => 'Original Customer Office',
         'gstin' => '29BBBBB1111B2Z6',
@@ -226,7 +235,8 @@ test('can edit existing customer', function () {
         ->assertSet('editingId', $customer->id)
         ->assertSet('name', 'Original Customer')
         ->assertSet('phone', '+2222222222')
-        ->assertSet('emails.0', 'original@customer.com')
+        ->assertSet('contacts.0.name', 'Original Contact')
+        ->assertSet('contacts.0.email', 'original@customer.com')
         ->assertSet('location_name', 'Original Customer Office')
         ->assertSet('gstin', '29BBBBB1111B2Z6')
         ->assertSet('address_line_1', '789 Original Ave')
@@ -237,7 +247,7 @@ test('can update existing customer', function () {
     $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation([
         'name' => 'Original Customer',
-        'emails' => new EmailCollection(['original@customer.com']),
+        'emails' => new ContactCollection([['name' => 'Original Contact', 'email' => 'original@customer.com']]),
     ], [], $organization);
 
     $this->actingAs($organization->owner);
@@ -246,7 +256,8 @@ test('can update existing customer', function () {
         ->call('edit', $customer)
         ->set('name', 'Updated Customer')
         ->set('phone', '+8888888888')
-        ->set('emails.0', 'updated@customer.com')
+        ->set('contacts.0.name', 'Updated Contact')
+        ->set('contacts.0.email', 'updated@customer.com')
         ->set('location_name', 'Updated Customer Office')
         ->call('save')
         ->assertSet('showForm', false);
@@ -254,7 +265,8 @@ test('can update existing customer', function () {
     $customer->refresh();
     expect($customer->name)->toBe('Updated Customer');
     expect($customer->phone)->toBe('+8888888888');
-    expect($customer->emails->toArray())->toBe(['updated@customer.com']);
+    expect($customer->emails->getEmails())->toBe(['updated@customer.com']);
+    expect($customer->emails->getNames())->toBe(['Updated Contact']);
     expect($customer->primaryLocation->name)->toBe('Updated Customer Office');
 });
 
@@ -262,7 +274,7 @@ test('can delete customer', function () {
     $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation([
         'name' => 'Customer to Delete',
-        'emails' => new EmailCollection(['delete@customer.com']),
+        'emails' => new ContactCollection([['name' => 'Delete Contact', 'email' => 'delete@customer.com']]),
     ], [], $organization);
 
     $this->actingAs($organization->owner);
@@ -296,7 +308,8 @@ test('resets form after successful save', function () {
     Livewire::test(CustomerManager::class)
         ->call('create')
         ->set('name', 'Test Customer')
-        ->set('emails.0', 'test@customer.com')
+        ->set('contacts.0.name', 'Test Contact')
+        ->set('contacts.0.email', 'test@customer.com')
         ->set('location_name', 'Test Office')
         ->set('address_line_1', '123 Test St')
         ->set('city', 'Test City')
@@ -305,7 +318,7 @@ test('resets form after successful save', function () {
         ->set('postal_code', '12345')
         ->call('save')
         ->assertSet('name', '')
-        ->assertSet('emails', [''])
+        ->assertSet('contacts', [['name' => '', 'email' => '']])
         ->assertSet('location_name', '')
         ->assertSet('editingId', null);
 });
@@ -327,7 +340,7 @@ test('handles customer without primary location when editing', function () {
 
     $customer = Customer::create([
         'name' => 'No Location Customer',
-        'emails' => new EmailCollection(['test@customer.com']),
+        'emails' => new ContactCollection([['name' => 'Test Contact', 'email' => 'test@customer.com']]),
         'primary_location_id' => null,
         'organization_id' => $user->currentTeam->id,
     ]);
@@ -347,7 +360,8 @@ test('uses customer name plus office as default when location name is empty', fu
     Livewire::test(CustomerManager::class)
         ->call('create')
         ->set('name', 'ABC Industries')
-        ->set('emails.0', 'contact@abc.com')
+        ->set('contacts.0.name', 'ABC Contact')
+        ->set('contacts.0.email', 'contact@abc.com')
         // Note: location_name is intentionally left empty
         ->set('address_line_1', '789 Industrial Ave')
         ->set('city', 'Factory Town')

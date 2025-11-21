@@ -1,7 +1,7 @@
 <?php
 
 use App\Mail\DocumentMailer;
-use App\ValueObjects\EmailCollection;
+use App\ValueObjects\ContactCollection;
 
 test('can create document mailer for invoice', function () {
     $invoice = createInvoiceWithItems([
@@ -13,7 +13,7 @@ test('can create document mailer for invoice', function () {
         'total' => 11800,
     ]);
 
-    $recipients = new EmailCollection(['recipient@test.com']);
+    $recipients = new ContactCollection([['name' => 'Recipient', 'email' => 'recipient@test.com']]);
 
     $mailer = new DocumentMailer($invoice, $recipients);
 
@@ -29,7 +29,7 @@ test('document mailer builds correctly for invoice', function () {
         'total' => 5900,
     ]);
 
-    $recipients = new EmailCollection(['test@example.com']);
+    $recipients = new ContactCollection([['name' => 'Test', 'email' => 'test@example.com']]);
 
     $mailer = new DocumentMailer($invoice, $recipients);
     $envelope = $mailer->envelope();
@@ -46,7 +46,7 @@ test('document mailer has correct subject for invoice', function () {
         'total' => 8850,
     ]);
 
-    $mailer = new DocumentMailer($invoice, new EmailCollection(['test@example.com']));
+    $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'Test', 'email' => 'test@example.com']]));
     $envelope = $mailer->envelope();
 
     expect($envelope->subject)->toBe('Invoice #INV-003');
@@ -62,7 +62,7 @@ test('document mailer has correct subject for estimate', function () {
         'total' => 3540,
     ]);
 
-    $mailer = new DocumentMailer($estimate, new EmailCollection(['test@example.com']));
+    $mailer = new DocumentMailer($estimate, new ContactCollection([['name' => 'Test', 'email' => 'test@example.com']]));
     $envelope = $mailer->envelope();
 
     expect($envelope->subject)->toBe('Estimate #EST-001');
@@ -77,7 +77,7 @@ test('document mailer implements ShouldQueue', function () {
         'total' => 2360,
     ]);
 
-    $mailer = new DocumentMailer($invoice, new EmailCollection(['test@example.com']));
+    $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'Test', 'email' => 'test@example.com']]));
 
     expect($mailer)->toBeInstanceOf(\Illuminate\Contracts\Queue\ShouldQueue::class);
 });
@@ -91,7 +91,7 @@ test('document mailer uses correct view for invoice', function () {
         'total' => 4720,
     ]);
 
-    $mailer = new DocumentMailer($invoice, new EmailCollection(['test@example.com']));
+    $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'Test', 'email' => 'test@example.com']]));
     $content = $mailer->content();
 
     expect($content->view)->toBe('emails.invoice');
@@ -107,7 +107,7 @@ test('document mailer uses correct view for estimate', function () {
         'total' => 7080,
     ]);
 
-    $mailer = new DocumentMailer($estimate, new EmailCollection(['test@example.com']));
+    $mailer = new DocumentMailer($estimate, new ContactCollection([['name' => 'Test', 'email' => 'test@example.com']]));
     $content = $mailer->content();
 
     expect($content->view)->toBe('emails.estimate');
@@ -122,7 +122,7 @@ test('document mailer passes correct data to view', function () {
         'total' => 9440,
     ]);
 
-    $mailer = new DocumentMailer($invoice, new EmailCollection(['recipient@test.com']));
+    $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'Recipient', 'email' => 'recipient@test.com']]));
     $content = $mailer->content();
 
     expect($content->with)->toHaveKey('invoice');
@@ -147,7 +147,7 @@ test('document mailer handles different recipient emails', function () {
     ];
 
     foreach ($emails as $email) {
-        $recipients = new EmailCollection([$email]);
+        $recipients = new ContactCollection([['name' => 'Test User', 'email' => $email]]);
         $mailer = new DocumentMailer($invoice, $recipients);
         $envelope = $mailer->envelope();
 

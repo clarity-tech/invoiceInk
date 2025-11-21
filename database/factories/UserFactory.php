@@ -35,7 +35,8 @@ class UserFactory extends Factory
             'two_factor_recovery_codes' => null,
             'remember_token' => Str::random(10),
             'profile_photo_path' => null,
-            'current_team_id' => null,
+            // Don't set current_team_id here - let it be set during team creation
+            // Setting to null here would override proper team assignment
         ];
     }
 
@@ -67,7 +68,17 @@ class UserFactory extends Factory
                 ])
                 ->when(is_callable($callback), $callback),
             'ownedTeams'
-        );
+        )
+            ->afterCreating(function (User $user) {
+                // Set current_team_id to the personal team after creation
+                if ($user->ownedTeams->count() > 0) {
+                    $personalTeam = $user->ownedTeams->where('personal_team', true)->first();
+                    if ($personalTeam) {
+                        $user->current_team_id = $personalTeam->id;
+                        $user->save();
+                    }
+                }
+            });
     }
 
     /**
@@ -90,7 +101,17 @@ class UserFactory extends Factory
                 ])
                 ->when(is_callable($callback), $callback),
             'ownedTeams'
-        );
+        )
+            ->afterCreating(function (User $user) {
+                // Set current_team_id to the business organization after creation
+                if ($user->ownedTeams->count() > 0) {
+                    $businessOrganization = $user->ownedTeams->where('personal_team', false)->first();
+                    if ($businessOrganization) {
+                        $user->current_team_id = $businessOrganization->id;
+                        $user->save();
+                    }
+                }
+            });
     }
 
     // =====================================================================

@@ -3,7 +3,7 @@
 use App\Currency;
 use App\Livewire\OrganizationManager;
 use App\Models\Organization;
-use App\ValueObjects\EmailCollection;
+use App\ValueObjects\ContactCollection;
 use Livewire\Livewire;
 
 test('can render organization manager component', function () {
@@ -107,7 +107,7 @@ test('can create new organization with location', function () {
     $organization = Organization::where('name', 'New Test Organization')->first();
     expect($organization->name)->toBe('New Test Organization');
     expect($organization->phone)->toBe('+1-555-0199');
-    expect($organization->emails->first())->toBe('contact@newtest.com');
+    expect($organization->emails->getFirstEmail())->toBe('contact@newtest.com');
     expect($organization->currency->value)->toBe('USD');
     expect($organization->primaryLocation->name)->toBe('New HQ');
     expect($organization->primaryLocation->gstin)->toBe('GSTIN123456789');
@@ -137,9 +137,9 @@ test('can create organization with multiple emails', function () {
 
     $organization = Organization::where('name', 'Multi Email Org')->first();
     expect($organization->emails->count())->toBe(3);
-    expect($organization->emails->toArray())->toContain('primary@test.com');
-    expect($organization->emails->toArray())->toContain('secondary@test.com');
-    expect($organization->emails->toArray())->toContain('billing@test.com');
+    expect($organization->emails->getEmails())->toContain('primary@test.com');
+    expect($organization->emails->getEmails())->toContain('secondary@test.com');
+    expect($organization->emails->getEmails())->toContain('billing@test.com');
 });
 
 test('validates required fields when creating organization', function () {
@@ -227,7 +227,7 @@ test('can edit existing organization', function () {
     $organization = createOrganizationWithLocation([
         'name' => 'Original Name',
         'phone' => '+1-555-0100',
-        'emails' => new EmailCollection(['original@test.com']),
+        'emails' => new ContactCollection([['name' => '', 'email' => 'original@test.com']]),
         'currency' => 'USD',
     ], [
         'name' => 'Original Location',
@@ -263,7 +263,7 @@ test('can update existing organization', function () {
     $organization = createOrganizationWithLocation([
         'name' => 'Original Name',
         'phone' => '+1-555-0100',
-        'emails' => new EmailCollection(['original@test.com']),
+        'emails' => new ContactCollection([['name' => '', 'email' => 'original@test.com']]),
         'currency' => 'USD',
     ], [], $user);
 
@@ -279,7 +279,7 @@ test('can update existing organization', function () {
     $organization->refresh();
     expect($organization->name)->toBe('Updated Name');
     expect($organization->phone)->toBe('+1-555-0200');
-    expect($organization->emails->first())->toBe('updated@test.com');
+    expect($organization->emails->getFirstEmail())->toBe('updated@test.com');
     expect($organization->currency->value)->toBe('INR');
 });
 
@@ -385,9 +385,9 @@ test('filters out empty emails when saving', function () {
 
     $organization = Organization::where('name', 'Email Filter Test Org')->first();
     expect($organization->emails->count())->toBe(2);
-    expect($organization->emails->toArray())->toContain('valid@test.com');
-    expect($organization->emails->toArray())->toContain('another@test.com');
-    expect($organization->emails->toArray())->not->toContain('');
+    expect($organization->emails->getEmails())->toContain('valid@test.com');
+    expect($organization->emails->getEmails())->toContain('another@test.com');
+    expect($organization->emails->getEmails())->not->toContain('');
 });
 
 test('handles phone number as nullable field', function () {

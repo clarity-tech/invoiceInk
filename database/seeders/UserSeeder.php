@@ -2,11 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Location;
 use App\Models\Organization;
 use App\Models\TeamInvitation;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends ProductionSafeSeeder
 {
@@ -24,6 +22,9 @@ class UserSeeder extends ProductionSafeSeeder
         $demoUser = User::factory()->demoUser()->create();
         $uaeUser = User::factory()->ahmedDubaiTrader()->create();
 
+        // Fix current team assignments for users created with teams
+        $this->fixCurrentTeamAssignments($admin, $johnUser, $sarahUser, $mariaUser, $demoUser, $uaeUser);
+
         // Create multi-organization owner
         $globalCorpOwner = User::factory()->robertGlobalCorp()->create();
 
@@ -38,7 +39,6 @@ class UserSeeder extends ProductionSafeSeeder
         $this->info('✓ Multi-org Owner: robert@globalcorp.com');
         $this->info('All passwords: password');
     }
-
 
     private function createTeamMembersAndInvitations(
         User $johnUser,
@@ -94,5 +94,19 @@ class UserSeeder extends ProductionSafeSeeder
         }
 
         $this->info('Team relationships and invitations created successfully!');
+    }
+
+    /**
+     * Fix current team assignments for users who should have a current team.
+     */
+    private function fixCurrentTeamAssignments(User ...$users): void
+    {
+        foreach ($users as $user) {
+            if (is_null($user->current_team_id) && $user->ownedTeams()->count() > 0) {
+                $firstTeam = $user->ownedTeams()->first();
+                $user->update(['current_team_id' => $firstTeam->id]);
+                $this->info("✓ Set current team for {$user->email} to: {$firstTeam->name}");
+            }
+        }
     }
 }

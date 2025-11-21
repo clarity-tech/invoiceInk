@@ -5,7 +5,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Location;
 use App\Models\Organization;
-use App\ValueObjects\EmailCollection;
+use App\ValueObjects\ContactCollection;
 
 beforeEach(function () {
     // Create test organization with location
@@ -13,7 +13,7 @@ beforeEach(function () {
         'name' => 'Test Organization Ltd',
         'company_name' => 'Test Company Ltd',
         'phone' => '+1234567890',
-        'emails' => new EmailCollection(['company@test.com']),
+        'emails' => new ContactCollection([['name' => 'Company Contact', 'email' => 'company@test.com']]),
     ], [
         'name' => 'Company HQ',
         'gstin' => '27AAAAA0000A1Z5',
@@ -31,7 +31,7 @@ beforeEach(function () {
     $this->customer = createCustomerWithLocation([
         'name' => 'Test Customer Corp',
         'phone' => '+9876543210',
-        'emails' => new EmailCollection(['customer@test.com']),
+        'emails' => new ContactCollection([['name' => 'Customer Contact', 'email' => 'customer@test.com']]),
     ], [
         'name' => 'Customer Office',
         'gstin' => '29BBBBB1111B2Z6',

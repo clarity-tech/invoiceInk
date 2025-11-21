@@ -3,7 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Invoice;
-use App\ValueObjects\EmailCollection;
+use App\ValueObjects\ContactCollection;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -17,7 +17,7 @@ class DocumentMailer extends Mailable implements ShouldQueue
 
     public function __construct(
         public Invoice $invoice,
-        public EmailCollection $recipients
+        public ContactCollection $recipients
     ) {}
 
     public function envelope(): Envelope
@@ -25,7 +25,7 @@ class DocumentMailer extends Mailable implements ShouldQueue
         $type = $this->invoice->isInvoice() ? 'Invoice' : 'Estimate';
 
         return new Envelope(
-            to: $this->recipients->toArray(),
+            to: $this->recipients->getEmails(),
             subject: "{$type} #{$this->invoice->invoice_number}",
         );
     }

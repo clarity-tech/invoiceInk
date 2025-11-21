@@ -39,26 +39,40 @@
                         </div>
                     </div>
 
-                    <!-- Email Management -->
+                    <!-- Contact Management -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Addresses *</label>
-                        <div class="space-y-2">
-                            @foreach($emails as $index => $email)
-                                <div class="flex items-center space-x-2">
-                                    <input wire:model="emails.{{ $index }}" type="email" placeholder="email@example.com" 
-                                           class="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    @if(count($emails) > 1)
-                                        <button type="button" wire:click="removeEmailField({{ $index }})" 
-                                                class="text-red-500 hover:text-red-700 font-bold text-lg">×</button>
-                                    @endif
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Contact Information *</label>
+                        <div class="space-y-3">
+                            @foreach($contacts as $index => $contact)
+                                <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-gray-600">Contact {{ $index + 1 }}</span>
+                                        @if(count($contacts) > 1)
+                                            <button type="button" wire:click="removeContactField({{ $index }})" 
+                                                    class="text-red-500 hover:text-red-700 font-bold text-lg">×</button>
+                                        @endif
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-600 mb-1">Contact Name</label>
+                                            <input wire:model="contacts.{{ $index }}.name" type="text" placeholder="John Doe" 
+                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                                            @error("contacts.{$index}.name") <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-600 mb-1">Email Address *</label>
+                                            <input wire:model="contacts.{{ $index }}.email" type="email" placeholder="john@example.com" 
+                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                                            @error("contacts.{$index}.email") <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
                                 </div>
-                                @error("emails.{$index}") <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             @endforeach
                         </div>
-                        <button type="button" wire:click="addEmailField" class="mt-2 text-blue-500 hover:text-blue-700 text-sm">
-                            + Add another email
+                        <button type="button" wire:click="addContactField" class="mt-3 text-blue-500 hover:text-blue-700 text-sm font-medium">
+                            + Add another contact
                         </button>
-                        @error('emails') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        @error('contacts') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                     </div>
 
                     <!-- Location Information -->
@@ -168,9 +182,19 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">
                                         @if($customer->emails && !$customer->emails->isEmpty())
-                                            {{ $customer->emails->first() }}
+                                            @php
+                                                $firstContact = $customer->emails->first();
+                                                $contactName = $firstContact['name'] ?? '';
+                                                $contactEmail = $firstContact['email'] ?? '';
+                                            @endphp
+                                            @if($contactName)
+                                                {{ $contactName }}
+                                                <div class="text-xs text-gray-500">{{ $contactEmail }}</div>
+                                            @else
+                                                {{ $contactEmail }}
+                                            @endif
                                             @if($customer->emails->count() > 1)
-                                                <span class="text-gray-500">(+{{ $customer->emails->count() - 1 }} more)</span>
+                                                <span class="text-gray-500 text-xs">(+{{ $customer->emails->count() - 1 }} more)</span>
                                             @endif
                                         @endif
                                     </div>
