@@ -1,0 +1,198 @@
+# Standalone Binary Docker Compose configuration for Laravel Invoicing
+# Uses FrankenPHP static binary for ultimate performance and minimal resource usage
+
+version: '3.8'
+
+services:
+  # Main application as standalone binary
+  app:
+    build:
+      context: ../..
+      dockerfile: docker/production/Dockerfile.standalone
+      target: runtime  # or standalone-alpine for even smaller image
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    image: ghcr.io/clarity-tech/invoicing-standalone:latest
+    container_name: invoicing-standalone
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      # Laravel Configuration
+      - APP_NAME=${APP_NAME:-Clarity Invoicing}
+      - APP_ENV=production
+      - APP_KEY=${APP_KEY}
+      - APP_DEBUG=false
+      - APP_URL=${APP_URL:-https://invoicing.claritytech.io}
+      - APP_TIMEZONE=${APP_TIMEZONE:-UTC}
+
+      # Database Configuration (External services recommended for production)
+      - DB_CONNECTION=pgsql
+      - DB_HOST=${DB_HOST:-postgres.external.com}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_DATABASE=${DB_DATABASE:-invoicing}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+
+      # Redis Configuration (External services recommended)
+      - REDIS_HOST=${REDIS_HOST:-redis.external.com}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+
+      # Session and Cache
+      - SESSION_DRIVER=database
+      - SESSION_LIFETIME=120
+      - CACHE_DRIVER=database
+      - QUEUE_CONNECTION=database
+
+      # Mail Configuration
+      - MAIL_MAILER=${MAIL_MAILER:-smtp}
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT:-587}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_ENCRYPTION=${MAIL_ENCRYPTION:-tls}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS}
+      - MAIL_FROM_NAME="${MAIL_FROM_NAME:-Clarity Invoicing}"
+
+      # File Storage
+      - FILESYSTEM_DISK=${FILESYSTEM_DISK:-s3}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      - AWS_BUCKET=${AWS_BUCKET}
+      - AWS_ENDPOINT=${AWS_ENDPOINT}
+
+      # Storage path for FrankenPHP
+      - LARAVEL_STORAGE_PATH=/app/storage
+
+      # Logging
+      - LOG_CHANNEL=stderr
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+
+    # Note: For standalone binaries, external storage is recommended
+    # since the container is immutable
+    volumes:
+      - app-storage:/app/storage/logs  # Only for logs, everything else should be external
+    networks:
+      - invoicing-network
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/frankenphp-app", "php", "-r", "echo 'OK';"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      replicas: 3  # Easy horizontal scaling with standalone binaries
+      resources:
+        limits:
+          memory: 128M  # Standalone binaries are very memory efficient
+        reservations:
+          memory: 64M
+
+  # Load balancer for multiple app instances
+  nginx:
+    image: nginx:alpine
+    container_name: invoicing-lb
+    restart: unless-stopped
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx-lb.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - invoicing-network
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Queue worker using the same standalone binary
+  queue-worker:
+    build:
+      context: ../..
+      dockerfile: docker/production/Dockerfile.standalone
+      target: runtime
+    image: ghcr.io/clarity-tech/invoicing-standalone:latest
+    container_name: invoicing-queue
+    restart: unless-stopped
+    environment:
+      # Same environment as main app
+      - APP_NAME=${APP_NAME:-Clarity Invoicing}
+      - APP_ENV=production
+      - APP_KEY=${APP_KEY}
+      - APP_DEBUG=false
+      - DB_CONNECTION=pgsql
+      - DB_HOST=${DB_HOST:-postgres.external.com}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_DATABASE=${DB_DATABASE:-invoicing}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST:-redis.external.com}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - QUEUE_CONNECTION=database
+      - LOG_CHANNEL=stderr
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    command: ["/usr/local/bin/frankenphp-app", "php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--max-time=3600"]
+    networks:
+      - invoicing-network
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 96M
+        reservations:
+          memory: 48M
+
+  # Optional: Schedule runner
+  scheduler:
+    build:
+      context: ../..
+      dockerfile: docker/production/Dockerfile.standalone
+      target: runtime
+    image: ghcr.io/clarity-tech/invoicing-standalone:latest
+    container_name: invoicing-scheduler
+    restart: unless-stopped
+    environment:
+      # Same environment as main app
+      - APP_NAME=${APP_NAME:-Clarity Invoicing}
+      - APP_ENV=production
+      - APP_KEY=${APP_KEY}
+      - APP_DEBUG=false
+      - DB_CONNECTION=pgsql
+      - DB_HOST=${DB_HOST:-postgres.external.com}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_DATABASE=${DB_DATABASE:-invoicing}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - LOG_CHANNEL=stderr
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    command: >
+      sh -c 'while true; do
+        /usr/local/bin/frankenphp-app php artisan schedule:run
+        sleep 60
+      done'
+    networks:
+      - invoicing-network
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+        reservations:
+          memory: 32M
+
+volumes:
+  app-storage:
+    driver: local
+
+networks:
+  invoicing-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

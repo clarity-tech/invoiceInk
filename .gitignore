@@ -34,3 +34,6 @@ Thumbs.db
 # Dusk Browser Testing
 /tests/Browser/console
 /tests/Browser/screenshots
+**/caddy
+frankenphp
+frankenphp-worker.php

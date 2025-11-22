@@ -5,7 +5,7 @@ A modern Laravel-based invoicing system with organization-centric architecture, 
 
 ## Getting Started
 
-**Installation via Laravel Sail:**
+### Development Environment (Laravel Sail)
 
 1. Clone the repository and install dependencies:
 ```shell
@@ -17,11 +17,35 @@ docker run --rm \
     composer install --ignore-platform-reqs
 ```
 
-2. Start the application:
+2. Start the development environment:
 ```bash
 sail up -d
 sail artisan migrate:fresh --seed
 ```
+
+### Production Deployment
+
+The application includes comprehensive **production Docker configurations** with multiple deployment options:
+
+#### Quick Production Deployment
+```bash
+# FrankenPHP + Laravel Octane (Recommended)
+docker-compose -f docker/production/docker-compose.prod.yml up -d
+
+# Traditional Nginx + PHP-FPM
+docker build -f docker/production/Dockerfile.nginx-fpm -t invoicing-nginx:latest .
+docker run -d -p 80:80 -e APP_KEY=your-key invoicing-nginx:latest
+```
+
+#### Available Production Variants
+- **🚀 FrankenPHP + Octane**: High-performance with HTTP/2/3 support (`Dockerfile.frankenphp`)
+- **🔧 Nginx + PHP-FPM**: Traditional architecture with H5BP optimizations (`Dockerfile.nginx-fpm`)  
+- **📦 Standalone Binary**: Ultra-minimal deployment (`Dockerfile.standalone`)
+
+**📚 Production Guides:**
+- [Production README](docker/production/README.md) - Complete deployment guide
+- [H5BP Quick Start](docker/production/QUICK-START-H5BP.md) - H5BP nginx configuration
+- [Test Results](docker/production/test-results/) - Comprehensive validation reports
 
 
 ## Database Management with pgweb
@@ -56,7 +80,10 @@ The Clarity Invoicing Application is a comprehensive Laravel-based invoicing sys
 - **Public Document Sharing**: ULID-based public URLs for invoices and estimates
 - **Livewire Components**: Modern reactive UI components for seamless user experience
 - **Comprehensive Testing**: 94.7% test coverage with Unit, Feature, and Browser tests
-- **Docker Development**: Pre-configured Laravel Sail for containerized development  
+- **Production Ready**: Multi-variant Docker deployments with H5BP nginx optimizations
+- **High Performance**: Laravel Octane + FrankenPHP with HTTP/2/3 support
+- **Security Hardened**: HTML5 Boilerplate security headers and rate limiting
+- **Auto-Updating**: Automated H5BP configuration sync with monthly update checks  
 
 ## Development Standards  
 - **Coding Standards:** Follow PSR-12 and Laravel coding conventions
@@ -66,20 +93,60 @@ The Clarity Invoicing Application is a comprehensive Laravel-based invoicing sys
 - **Code Quality:** Run `sail pint --dirty` before all commits to maintain code formatting
 
 ## Technology Stack
-- **Backend:** Laravel 11.19.3 with PHP 8.4.8
-- **Database:** PostgreSQL with comprehensive migrations
+- **Backend:** Laravel 12.19.3 with PHP 8.4.8 + Laravel Octane
+- **Database:** PostgreSQL 17 with comprehensive migrations and seeding
 - **Frontend:** Livewire 3.6.3 + luvi-ui/laravel-luvi (shadcn for Livewire)
-- **Testing:** Pest framework with Laravel Dusk for browser testing
+- **Testing:** Pest framework with Laravel Dusk for browser testing (544 tests, 94.7% coverage)
 - **PDF Generation:** Spatie Browsershot with headless Chrome
-- **Containerization:** Laravel Sail with Docker Compose
+- **Web Server:** FrankenPHP with HTTP/2/3 support OR Nginx with H5BP optimizations
+- **Performance:** Laravel Octane for high-performance request handling
+- **Security:** HTML5 Boilerplate (H5BP) security headers and configurations
+- **Containerization:** Laravel Sail (development) + Production Docker variants
+- **CI/CD:** GitHub Actions with automated testing and H5BP sync
 
 ## Architecture Overview
+
+### Application Architecture
 - **Organization Model**: Unified business entity management (replaces Team/Company)
 - **Customer Management**: Customer entities with polymorphic location relationships
 - **Invoice System**: Unified invoice/estimate model with flexible tax handling
 - **Location System**: Polymorphic location model serving organizations and customers
 - **Value Objects**: ContactCollection, InvoiceTotals for robust data handling
 - **Service Layer**: InvoiceCalculator, PdfService, EstimateToInvoiceConverter
+
+### Production Deployment Architecture
+
+#### Container Variants
+1. **🚀 FrankenPHP + Octane** (Recommended)
+   - Laravel Octane with FrankenPHP driver for maximum performance
+   - HTTP/2 and HTTP/3 support via Caddy
+   - Supervisor for background processes (queues, scheduler)
+   - Image size: ~1.23GB | Test duration: ~48s
+
+2. **🔧 Nginx + PHP-FPM** (Traditional)
+   - Production-hardened Nginx with HTML5 Boilerplate optimizations
+   - Enhanced security headers and rate limiting
+   - File-type specific caching and compression
+   - Image size: ~1.14GB | Test duration: ~41s
+
+3. **📦 Standalone Binary** (Minimal)
+   - Single binary containing entire Laravel application
+   - Ultra-minimal deployment for edge/serverless environments
+   - FrankenPHP static compilation
+   - Estimated size: ~200MB
+
+#### H5BP Nginx Integration
+- **Security**: 6+ comprehensive headers including CSP and Permissions Policy
+- **Performance**: File-type specific caching (CSS/JS: 1yr, images: 1mo)
+- **Compression**: Advanced gzip for 15+ MIME types (60-80% bandwidth reduction)
+- **Rate Limiting**: Authentication (10/min) and API (60/min) protection
+- **Auto-Updates**: Monthly H5BP sync with automated PR creation
+
+#### CI/CD & Automation
+- **GitHub Actions**: Automated Docker builds with multi-platform support
+- **H5BP Sync**: Monthly checks for configuration updates
+- **Testing Pipeline**: 544 tests with comprehensive validation
+- **Security Scanning**: Automated vulnerability detection
 
 ## License  
 This application is intellectual property of CLARITY Technologies.

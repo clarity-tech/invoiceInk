@@ -1,0 +1,113 @@
+{
+    # Global options
+    auto_https off
+    admin off
+    persist_config off
+    
+    # FrankenPHP specific options
+    frankenphp {
+        # Number of workers (auto-detected based on CPU cores)
+        num_threads {$OCTANE_WORKERS:auto}
+        
+        # Worker mode for better performance (per official docs)
+        worker ./public/index.php
+        
+        # Enable HTTP/2 and HTTP/3
+        protocols h1 h2 h3
+    }
+    
+    # Logging
+    log {
+        output stderr
+        format json
+        level INFO
+    }
+    
+    # Error handling
+    handle_errors {
+        respond "Internal Server Error" 500
+    }
+}
+
+# Main server block
+:8000 {
+    # Document root
+    root * /app/public
+    
+    # Enable compression
+    encode gzip zstd
+    
+    # Set security headers
+    header {
+        # Security headers
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        
+        # Remove server information
+        -Server
+        -X-Powered-By
+        
+        # Cache control for static assets
+        @static {
+            path *.css *.js *.png *.jpg *.jpeg *.gif *.svg *.ico *.woff *.woff2 *.ttf *.eot
+        }
+        @static Cache-Control "public, max-age=31536000, immutable"
+        
+        # No cache for dynamic content
+        @dynamic {
+            not path *.css *.js *.png *.jpg *.jpeg *.gif *.svg *.ico *.woff *.woff2 *.ttf *.eot
+        }
+        @dynamic Cache-Control "no-cache, no-store, must-revalidate"
+    }
+    
+    # Handle health checks
+    handle /up {
+        respond "OK" 200
+    }
+    
+    # Handle static files with long-term caching
+    @static {
+        path *.css *.js *.png *.jpg *.jpeg *.gif *.svg *.ico *.woff *.woff2 *.ttf *.eot *.map
+    }
+    handle @static {
+        file_server
+    }
+    
+    # Handle Laravel routes with FrankenPHP worker
+    handle {
+        # Try to serve file directly, otherwise pass to Laravel
+        try_files {path} {path}/ /index.php?{query}
+        
+        # FrankenPHP worker mode for Laravel
+        php_server {
+            # Use Octane for high performance
+            resolve_root_symlink false
+            split_path false
+        }
+    }
+    
+    # Custom error pages
+    handle_errors {
+        @404 expression `{err.status_code} == 404`
+        handle @404 {
+            rewrite * /index.php
+            php_server
+        }
+        
+        @5xx expression `{err.status_code} >= 500`
+        handle @5xx {
+            respond "Internal Server Error" {err.status_code}
+        }
+    }
+    
+    # Request logging
+    log {
+        output stderr
+        format json {
+            time_format "2006-01-02T15:04:05Z07:00"
+            message_key "message"
+        }
+    }
+}

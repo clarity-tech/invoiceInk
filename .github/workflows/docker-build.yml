@@ -1,0 +1,243 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    
+    strategy:
+      matrix:
+        target: [frankenphp, nginx-fpm, standalone, standalone-alpine]
+        include:
+          - target: frankenphp
+            dockerfile: docker/production/Dockerfile.frankenphp
+            image-suffix: ''
+            build-target: frankenphp
+          - target: nginx-fpm
+            dockerfile: docker/production/Dockerfile.nginx-fpm
+            image-suffix: '-nginx'
+            build-target: production
+          - target: standalone
+            dockerfile: docker/production/Dockerfile.standalone
+            image-suffix: '-standalone'
+            build-target: runtime
+          - target: standalone-alpine
+            dockerfile: docker/production/Dockerfile.standalone
+            image-suffix: '-standalone-alpine'
+            build-target: standalone-alpine
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: network=host
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.build-target }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results-${{ matrix.target }}.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results-${{ matrix.target }}.sarif'
+
+  test-images:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    strategy:
+      matrix:
+        target: [frankenphp, nginx-fpm, standalone, standalone-alpine]
+        include:
+          - target: frankenphp
+            image-suffix: ''
+            port: 8000
+          - target: nginx-fpm
+            image-suffix: '-nginx'
+            port: 80
+          - target: standalone
+            image-suffix: '-standalone'
+            port: 8000
+          - target: standalone-alpine
+            image-suffix: '-standalone-alpine'
+            port: 8000
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Test Docker image
+        run: |
+          # Create test environment file
+          cat > .env.testing << EOF
+          APP_NAME="Clarity Invoicing Test"
+          APP_ENV=testing
+          APP_KEY=base64:$(openssl rand -base64 32)
+          APP_DEBUG=false
+          APP_URL=http://localhost:${{ matrix.port }}
+          
+          DB_CONNECTION=sqlite
+          DB_DATABASE=:memory:
+          
+          CACHE_DRIVER=array
+          SESSION_DRIVER=array
+          QUEUE_CONNECTION=sync
+          
+          OCTANE_SERVER=frankenphp
+          OCTANE_ENABLED=${{ matrix.target == 'frankenphp' }}
+          OCTANE_HOST=0.0.0.0
+          OCTANE_PORT=8000
+          EOF
+
+          # Start the container
+          docker run -d \
+            --name test-container \
+            --env-file .env.testing \
+            -p ${{ matrix.port }}:${{ matrix.port }} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}:${{ github.sha }}
+
+          # Wait for container to be ready
+          sleep 30
+
+          # Test health endpoint (different for standalone binaries)
+          if [[ "${{ matrix.target }}" == "standalone"* ]]; then
+            # Standalone binaries might need different health check
+            for i in {1..10}; do
+              if docker exec test-container /usr/local/bin/frankenphp-app php -r "echo 'OK';"; then
+                echo "Health check passed for standalone binary"
+                break
+              fi
+              echo "Attempt $i failed, retrying..."
+              sleep 5
+            done
+          else
+            # Regular health check for other variants
+            for i in {1..10}; do
+              if curl -f http://localhost:${{ matrix.port }}/up; then
+                echo "Health check passed"
+                break
+              fi
+              echo "Attempt $i failed, retrying..."
+              sleep 5
+            done
+          fi
+
+          # Test main page (should redirect to login)
+          curl -I http://localhost:${{ matrix.port }}/ | grep -E "(200|302)"
+
+          # Cleanup
+          docker stop test-container
+          docker rm test-container
+
+  deploy-staging:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Add your staging deployment logic here
+          # Example: kubectl, docker-compose, or other deployment tools
+
+  deploy-production:
+    needs: [build-and-push, test-images]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment..."
+          # Add your production deployment logic here
+          # Example: kubectl, docker-compose, or other deployment tools
+
+  notify:
+    needs: [build-and-push, test-images]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Notify on success
+        if: ${{ needs.build-and-push.result == 'success' }}
+        run: |
+          echo "✅ Docker images built and pushed successfully!"
+          echo "Images available at: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+
+      - name: Notify on failure
+        if: ${{ needs.build-and-push.result == 'failure' }}
+        run: |
+          echo "❌ Docker image build failed!"
+          exit 1

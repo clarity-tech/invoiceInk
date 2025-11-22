@@ -1,0 +1,204 @@
+name: H5BP Configuration Update Check
+
+on:
+  schedule:
+    # Check for H5BP updates monthly on the 1st at 09:00 UTC
+    - cron: '0 9 1 * *'
+  workflow_dispatch:
+    # Allow manual triggering
+    inputs:
+      force_update:
+        description: 'Force update H5BP to latest version'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  check-h5bp-updates:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Configure Git
+        run: |
+          git config --global user.name "H5BP Update Bot"
+          git config --global user.email "actions@github.com"
+      
+      - name: Check current H5BP version
+        id: current-version
+        run: |
+          cd docker/production/nginx/h5bp
+          CURRENT_VERSION=$(git describe --tags --always)
+          echo "current-version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current H5BP version: $CURRENT_VERSION"
+      
+      - name: Check for latest H5BP version
+        id: latest-version
+        run: |
+          cd docker/production/nginx/h5bp
+          git fetch origin --tags
+          LATEST_VERSION=$(git tag --sort=-version:refname | head -1)
+          echo "latest-version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "Latest H5BP version: $LATEST_VERSION"
+      
+      - name: Compare versions
+        id: version-check
+        run: |
+          if [ "${{ steps.current-version.outputs.current-version }}" != "${{ steps.latest-version.outputs.latest-version }}" ] || [ "${{ github.event.inputs.force_update }}" = "true" ]; then
+            echo "update-needed=true" >> $GITHUB_OUTPUT
+            echo "H5BP update available: ${{ steps.current-version.outputs.current-version }} → ${{ steps.latest-version.outputs.latest-version }}"
+          else
+            echo "update-needed=false" >> $GITHUB_OUTPUT
+            echo "H5BP is up to date"
+          fi
+      
+      - name: Update H5BP submodule
+        if: steps.version-check.outputs.update-needed == 'true'
+        run: |
+          cd docker/production/nginx/h5bp
+          git checkout ${{ steps.latest-version.outputs.latest-version }}
+          cd ../../../..
+          git add docker/production/nginx/h5bp
+      
+      - name: Run H5BP sync script
+        if: steps.version-check.outputs.update-needed == 'true'
+        run: |
+          chmod +x docker/production/scripts/sync-h5bp.sh
+          ./docker/production/scripts/sync-h5bp.sh
+      
+      - name: Check for configuration changes
+        if: steps.version-check.outputs.update-needed == 'true'
+        id: config-changes
+        run: |
+          git add docker/production/nginx/generated/
+          git add docker/production/nginx/laravel-custom/
+          
+          if git diff --staged --quiet; then
+            echo "changes-detected=false" >> $GITHUB_OUTPUT
+            echo "No configuration changes detected"
+          else
+            echo "changes-detected=true" >> $GITHUB_OUTPUT
+            echo "Configuration changes detected"
+            
+            # Show the changes
+            echo "Configuration changes:"
+            git diff --staged --name-only
+          fi
+      
+      - name: Validate Nginx configuration
+        if: steps.config-changes.outputs.changes-detected == 'true'
+        run: |
+          # Install nginx for configuration validation
+          sudo apt-get update
+          sudo apt-get install -y nginx
+          
+          # Test the generated configuration
+          TEMP_DIR=$(mktemp -d)
+          cp -r docker/production/nginx/h5bp/h5bp $TEMP_DIR/
+          cp -r docker/production/nginx/laravel-custom $TEMP_DIR/
+          cp docker/production/nginx/generated/nginx.conf $TEMP_DIR/
+          
+          # Validate syntax
+          sudo nginx -t -c $TEMP_DIR/nginx.conf -p $TEMP_DIR
+          
+          echo "✅ Nginx configuration validation passed"
+      
+      - name: Build test container
+        if: steps.config-changes.outputs.changes-detected == 'true'
+        run: |
+          echo "Building test container with updated H5BP configurations..."
+          docker build -f docker/production/Dockerfile.nginx-fpm --target production -t test-h5bp-update .
+          echo "✅ Container build successful"
+      
+      - name: Generate changelog
+        if: steps.config-changes.outputs.changes-detected == 'true'
+        id: changelog
+        run: |
+          cd docker/production/nginx/h5bp
+          
+          # Get changelog between versions
+          CHANGELOG=$(git log --oneline ${{ steps.current-version.outputs.current-version }}..${{ steps.latest-version.outputs.latest-version }} | head -20)
+          
+          # Create formatted changelog
+          cat > /tmp/h5bp-changelog.md << EOF
+          ## H5BP Configuration Update
+          
+          **Updated from**: \`${{ steps.current-version.outputs.current-version }}\`  
+          **Updated to**: \`${{ steps.latest-version.outputs.latest-version }}\`
+          
+          ### H5BP Changes:
+          \`\`\`
+          $CHANGELOG
+          \`\`\`
+          
+          ### Files Modified:
+          - Updated H5BP submodule to latest version
+          - Regenerated nginx configuration with new H5BP settings
+          - Updated Laravel-specific customizations if needed
+          
+          ### Validation:
+          - ✅ Nginx configuration syntax validated
+          - ✅ Container build test passed
+          - ⚠️  Manual review recommended for production deployment
+          
+          ### Next Steps:
+          1. Review the configuration changes
+          2. Test in staging environment
+          3. Deploy to production after validation
+          EOF
+      
+      - name: Create Pull Request
+        if: steps.config-changes.outputs.changes-detected == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            feat: update H5BP nginx configurations to ${{ steps.latest-version.outputs.latest-version }}
+            
+            - Updated H5BP submodule from ${{ steps.current-version.outputs.current-version }} to ${{ steps.latest-version.outputs.latest-version }}
+            - Regenerated nginx configurations using sync-h5bp.sh
+            - Validated configuration syntax and container build
+          title: "🔄 Update H5BP nginx configurations to ${{ steps.latest-version.outputs.latest-version }}"
+          body-path: /tmp/h5bp-changelog.md
+          branch: update/h5bp-${{ steps.latest-version.outputs.latest-version }}
+          delete-branch: true
+          labels: |
+            dependencies
+            nginx
+            h5bp
+            security
+            performance
+      
+      - name: Notify if no updates needed
+        if: steps.version-check.outputs.update-needed == 'false'
+        run: |
+          echo "✅ H5BP configurations are up to date (version: ${{ steps.current-version.outputs.current-version }})"
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## H5BP Update Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Current Version**: ${{ steps.current-version.outputs.current-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Latest Version**: ${{ steps.latest-version.outputs.latest-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Update Needed**: ${{ steps.version-check.outputs.update-needed }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.version-check.outputs.update-needed }}" = "true" ]; then
+            echo "- **Changes Detected**: ${{ steps.config-changes.outputs.changes-detected }}" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "${{ steps.config-changes.outputs.changes-detected }}" = "true" ]; then
+              echo "- **Action Taken**: Created pull request with updated configurations" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- **Action Taken**: No configuration changes needed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- **Action Taken**: No update required" >> $GITHUB_STEP_SUMMARY
+          fi
