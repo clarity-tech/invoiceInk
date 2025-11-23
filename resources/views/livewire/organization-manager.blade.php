@@ -255,7 +255,7 @@
                         <button type="submit" 
                                 class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                 wire:loading.attr="disabled"
-                                wire:target="save"
+                                wire:target="save">
                             <span wire:loading.remove wire:target="save">
                                 {{ $editingId ? 'Update' : 'Create' }} Organization
                             </span>
@@ -345,26 +345,22 @@
     <script>
         // Debug logging for Livewire events
         document.addEventListener('livewire:init', () => {
-            console.log('OrganizationManager: Livewire initialized');
-            
             Livewire.on('validation-errors', (errors) => {
-                console.log('OrganizationManager: Validation errors received:', errors);
+                // Handle validation errors if needed
             });
         });
 
         // Form submission debugging
         document.addEventListener('livewire:navigating', () => {
-            console.log('OrganizationManager: Livewire navigating...');
+            // Handle navigation start if needed
         });
 
         document.addEventListener('livewire:navigated', () => {
-            console.log('OrganizationManager: Livewire navigated');
+            // Handle navigation complete if needed
         });
 
         // Error handling for failed requests
         window.addEventListener('livewire:request-error', (event) => {
-            console.error('OrganizationManager: Livewire request error:', event.detail);
-            
             // Show user-friendly error message
             const errorDiv = document.createElement('div');
             errorDiv.className = 'fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50';
