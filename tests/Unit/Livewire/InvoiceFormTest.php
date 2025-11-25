@@ -3,10 +3,15 @@
 use App\Livewire\InvoiceForm;
 use App\Models\Customer;
 use App\Models\Invoice;
-use App\Models\InvoiceItem;
 use App\Models\Location;
 use App\Models\Organization;
+use App\Services\PdfService;
 use Livewire\Livewire;
+use Mockery;
+
+afterEach(function () {
+    Mockery::close();
+});
 
 test('can render invoice form component for creation', function () {
     $organization = createOrganizationWithLocation();
@@ -14,7 +19,7 @@ test('can render invoice form component for creation', function () {
 
     // For creation mode, don't pass invoice parameter
     $component = Livewire::test(InvoiceForm::class, ['type' => 'invoice']);
-    
+
     expect($component->get('mode'))->toBe('create');
     expect($component->get('type'))->toBe('invoice');
     expect($component->get('currentStep'))->toBe(1);
@@ -23,7 +28,7 @@ test('can render invoice form component for creation', function () {
 test('can render invoice form component for editing', function () {
     $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
-    
+
     $invoice = createInvoiceWithItems([
         'organization_location_id' => $organization->primaryLocation->id,
         'customer_location_id' => $customer->primaryLocation->id,
@@ -59,13 +64,13 @@ test('initializes with estimate type for estimate route', function () {
 test('loads existing invoice data for editing', function () {
     $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
-    
+
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
         'organization_location_id' => $organization->primaryLocation->id,
         'customer_location_id' => $customer->primaryLocation->id,
     ], [
-        ['description' => 'Test Item', 'quantity' => 2, 'unit_price' => 1000, 'tax_rate' => 1800]
+        ['description' => 'Test Item', 'quantity' => 2, 'unit_price' => 1000, 'tax_rate' => 1800],
     ]);
 
     Livewire::test(InvoiceForm::class, ['invoice' => $invoice])
@@ -204,7 +209,7 @@ test('can create new invoice with items', function () {
         ->call('save');
 
     expect(Invoice::count())->toBe(1);
-    
+
     $invoice = Invoice::first();
     expect($invoice->type)->toBe('invoice');
     expect($invoice->organization_id)->toBe($organization->id);
@@ -232,7 +237,7 @@ test('can create estimate', function () {
         ->call('save');
 
     expect(Invoice::count())->toBe(1);
-    
+
     $estimate = Invoice::first();
     expect($estimate->type)->toBe('estimate');
 });
@@ -247,14 +252,14 @@ test('validates all fields when saving', function () {
             'customer_id',  // organization_id is auto-set from current team
             'organization_location_id',
             'customer_location_id',
-            'items.0.description'
+            'items.0.description',
         ]);
 });
 
 test('can update existing invoice', function () {
     $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation();
-    
+
     $invoice = createInvoiceWithItems([
         'organization_location_id' => $organization->primaryLocation->id,
         'customer_location_id' => $customer->primaryLocation->id,
@@ -273,7 +278,7 @@ test('can update existing invoice', function () {
 test('loads organization locations based on selected organization', function () {
     $organization = createOrganizationWithLocation();
     $this->actingAs($organization->owner);
-    
+
     // Create additional location for organization
     Location::create([
         'name' => 'Second Office',
@@ -323,7 +328,7 @@ test('returns empty collection when no organization selected', function () {
 
     $component = Livewire::test(InvoiceForm::class)
         ->set('organization_id', null); // Clear the auto-set organization
-    
+
     // Test that when organization is cleared, we handle it gracefully
     expect($component->get('organization_id'))->toBeNull();
 });
@@ -333,7 +338,7 @@ test('returns empty collection when no customer selected', function () {
     $this->actingAs($organization->owner);
 
     $component = Livewire::test(InvoiceForm::class);
-    
+
     // Test that no customer is selected - should not show customer location fields
     expect($component->get('customer_id'))->toBeNull();
 });
@@ -357,7 +362,7 @@ test('returns empty customers collection when no organization selected', functio
 
     $component = Livewire::test(InvoiceForm::class)
         ->set('organization_id', null); // Clear the auto-set organization
-    
+
     // Test that when organization is cleared, customers collection should be empty
     expect($component->get('organization_id'))->toBeNull();
 });
@@ -400,4 +405,327 @@ test('generates correct estimate number format', function () {
 
     $estimate = Invoice::first();
     expect($estimate->invoice_number)->toMatch('/^EST-\d{4}-\d{2}-\d{4}$/');
+});
+
+test('handles mount exceptions gracefully', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
+    // Test with null invoice but create mode - should handle gracefully
+    $component = Livewire::test(InvoiceForm::class, ['invoice' => null, 'type' => 'invoice']);
+
+    expect($component->get('mode'))->toBe('create');
+    expect($component->get('type'))->toBe('invoice');
+    expect($component->get('currentStep'))->toBe(1);
+});
+
+test('handles exception during mount gracefully', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
+    // Create a non-existent invoice (to simulate potential database issues)
+    $nonExistentInvoice = new Invoice(['id' => 99999]);
+
+    // Component should handle exceptions and provide defaults
+    $component = Livewire::test(InvoiceForm::class, ['invoice' => $nonExistentInvoice]);
+
+    // Should default to safe values even with problematic invoice
+    expect($component->get('currentStep'))->toBe(1);
+    expect($component->get('items'))->toHaveCount(1);
+});
+
+test('page title property works correctly for create mode', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
+    $component = Livewire::test(InvoiceForm::class, ['type' => 'invoice']);
+
+    expect($component->get('pageTitle'))->toBe('Create Invoice');
+
+    // Test with estimate
+    $component = Livewire::test(InvoiceForm::class, ['type' => 'estimate']);
+    expect($component->get('pageTitle'))->toBe('Create Estimate');
+});
+
+test('page title property works correctly for edit mode', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation();
+
+    $invoice = createInvoiceWithItems([
+        'type' => 'invoice',
+        'organization_location_id' => $organization->primaryLocation->id,
+        'customer_location_id' => $customer->primaryLocation->id,
+    ]);
+
+    $component = Livewire::test(InvoiceForm::class, ['invoice' => $invoice]);
+
+    expect($component->get('pageTitle'))->toBe('Edit Invoice');
+
+    // Test with estimate
+    $estimate = createInvoiceWithItems([
+        'type' => 'estimate',
+        'organization_location_id' => $organization->primaryLocation->id,
+        'customer_location_id' => $customer->primaryLocation->id,
+    ]);
+
+    $component = Livewire::test(InvoiceForm::class, ['invoice' => $estimate]);
+    expect($component->get('pageTitle'))->toBe('Edit Estimate');
+});
+
+test('cancel method redirects to invoice list', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
+    $component = Livewire::test(InvoiceForm::class);
+    $response = $component->call('cancel');
+
+    // Verify redirect to invoices index
+    $component->assertRedirect(route('invoices.index'));
+});
+
+test('save method redirects to invoice list after successful save', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation();
+    $this->actingAs($organization->owner);
+
+    $component = Livewire::test(InvoiceForm::class)
+        ->set('organization_id', $organization->id)
+        ->set('customer_id', $customer->id)
+        ->set('organization_location_id', $organization->primaryLocation->id)
+        ->set('customer_location_id', $customer->primaryLocation->id)
+        ->set('items.0.description', 'Test Item')
+        ->set('items.0.quantity', 1)
+        ->set('items.0.unit_price', 100.00)
+        ->call('save');
+
+    // Should redirect to invoices list after save
+    $component->assertRedirect(route('invoices.index'));
+});
+
+test('download pdf returns null for create mode', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
+    $component = Livewire::test(InvoiceForm::class); // Create mode
+    $response = $component->call('downloadPdf');
+
+    expect($response)->toBeNull();
+});
+
+test('download pdf returns null when no invoice exists', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
+    $component = Livewire::test(InvoiceForm::class, ['invoice' => null]);
+    $response = $component->call('downloadPdf');
+
+    expect($response)->toBeNull();
+});
+
+test('download pdf security check prevents unauthorized access', function () {
+    $organization1 = createOrganizationWithLocation();
+    $organization2 = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization1);
+
+    $invoice = createInvoiceWithItems([
+        'organization_location_id' => $organization1->primaryLocation->id,
+        'customer_location_id' => $customer->primaryLocation->id,
+    ]);
+
+    // Act as user from different organization
+    $this->actingAs($organization2->owner);
+
+    // Should get 403 when trying to download PDF for invoice from different organization
+    Livewire::test(InvoiceForm::class, ['invoice' => $invoice])
+        ->call('downloadPdf')
+        ->assertStatus(403);
+});
+
+test('download pdf works for invoice type', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation();
+
+    $invoice = createInvoiceWithItems([
+        'type' => 'invoice',
+        'organization_location_id' => $organization->primaryLocation->id,
+        'customer_location_id' => $customer->primaryLocation->id,
+    ]);
+
+    // Act as organization owner
+    $this->actingAs($organization->owner);
+
+    // Mock PdfService
+    $mockPdfService = Mockery::mock(PdfService::class);
+    $mockPdfService->shouldReceive('downloadInvoicePdf')
+        ->with($invoice)
+        ->once()
+        ->andReturn(response('PDF content', 200, ['Content-Type' => 'application/pdf']));
+
+    $this->app->instance(PdfService::class, $mockPdfService);
+
+    $component = Livewire::test(InvoiceForm::class, ['invoice' => $invoice]);
+    $response = $component->call('downloadPdf');
+
+    expect($response)->not->toBeNull();
+});
+
+test('download pdf works for estimate type', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation();
+
+    $estimate = createInvoiceWithItems([
+        'type' => 'estimate',
+        'organization_location_id' => $organization->primaryLocation->id,
+        'customer_location_id' => $customer->primaryLocation->id,
+    ]);
+
+    // Act as organization owner
+    $this->actingAs($organization->owner);
+
+    // Mock PdfService
+    $mockPdfService = Mockery::mock(PdfService::class);
+    $mockPdfService->shouldReceive('downloadEstimatePdf')
+        ->with($estimate)
+        ->once()
+        ->andReturn(response('PDF content', 200, ['Content-Type' => 'application/pdf']));
+
+    $this->app->instance(PdfService::class, $mockPdfService);
+
+    $component = Livewire::test(InvoiceForm::class, ['invoice' => $estimate]);
+    $response = $component->call('downloadPdf');
+
+    expect($response)->not->toBeNull();
+});
+
+test('mode property correctly identifies edit vs create', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation();
+    $this->actingAs($organization->owner);
+
+    // Test create mode
+    $createComponent = Livewire::test(InvoiceForm::class);
+    expect($createComponent->get('mode'))->toBe('create');
+
+    // Test edit mode with existing invoice
+    $invoice = createInvoiceWithItems([
+        'organization_location_id' => $organization->primaryLocation->id,
+        'customer_location_id' => $customer->primaryLocation->id,
+    ]);
+
+    $editComponent = Livewire::test(InvoiceForm::class, ['invoice' => $invoice]);
+    expect($editComponent->get('mode'))->toBe('edit');
+});
+
+test('save method passes correct invoice to saveInvoice for edit mode', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation();
+
+    $invoice = createInvoiceWithItems([
+        'organization_location_id' => $organization->primaryLocation->id,
+        'customer_location_id' => $customer->primaryLocation->id,
+    ]);
+
+    $originalDescription = $invoice->items->first()->description;
+
+    $component = Livewire::test(InvoiceForm::class, ['invoice' => $invoice])
+        ->set('items.0.description', 'Updated Description')
+        ->call('save');
+
+    // Verify the invoice was updated
+    $invoice->refresh();
+    expect($invoice->items->first()->description)->toBe('Updated Description');
+    expect($invoice->items->first()->description)->not->toBe($originalDescription);
+});
+
+test('save method passes null to saveInvoice for create mode', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation();
+    $this->actingAs($organization->owner);
+
+    expect(Invoice::count())->toBe(0);
+
+    Livewire::test(InvoiceForm::class)
+        ->set('organization_id', $organization->id)
+        ->set('customer_id', $customer->id)
+        ->set('organization_location_id', $organization->primaryLocation->id)
+        ->set('customer_location_id', $customer->primaryLocation->id)
+        ->set('items.0.description', 'New Invoice Item')
+        ->set('items.0.quantity', 1)
+        ->set('items.0.unit_price', 100.00)
+        ->call('save');
+
+    // Should create new invoice
+    expect(Invoice::count())->toBe(1);
+    $newInvoice = Invoice::first();
+    expect($newInvoice->items->first()->description)->toBe('New Invoice Item');
+});
+
+test('handles estimate route detection correctly', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
+    // Mock the request to simulate estimates.create route
+    request()->setRouteResolver(function () {
+        $route = new \Illuminate\Routing\Route(['GET'], '/estimates/create', []);
+        $route->name('estimates.create');
+
+        return $route;
+    });
+
+    $component = Livewire::test(InvoiceForm::class, ['type' => 'invoice']);
+
+    // Should detect estimate route and override type
+    expect($component->get('type'))->toBe('estimate');
+});
+
+test('initializes default dates correctly', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
+    $component = Livewire::test(InvoiceForm::class);
+
+    expect($component->get('issued_at'))->toBe(now()->format('Y-m-d'));
+    expect($component->get('due_at'))->toBe(now()->addDays(30)->format('Y-m-d'));
+});
+
+test('handles complex error scenarios during save', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
+    // Try to save with completely invalid data
+    $component = Livewire::test(InvoiceForm::class)
+        ->set('items.0.description', '') // Empty description
+        ->set('items.0.quantity', -1) // Invalid quantity
+        ->set('items.0.unit_price', -100) // Invalid price
+        ->call('save');
+
+    // Should have validation errors
+    $component->assertHasErrors([
+        'customer_id',
+        'organization_location_id',
+        'customer_location_id',
+        'items.0.description',
+        'items.0.quantity',
+        'items.0.unit_price',
+    ]);
+});
+
+test('computed properties handle empty state gracefully', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
+    $component = Livewire::test(InvoiceForm::class);
+
+    // Test with no organization selected
+    $component->set('organization_id', null);
+    $orgLocations = $component->get('organizationLocations');
+    expect($orgLocations)->toBeEmpty();
+
+    // Test with no customer selected
+    $component->set('customer_id', null);
+    $customerLocations = $component->get('customerLocations');
+    expect($customerLocations)->toBeEmpty();
+
+    $customers = $component->get('customers');
+    expect($customers)->toBeEmpty();
 });
