@@ -42,18 +42,35 @@ echo "Setting up file permissions..."
 chmod -R 755 /app
 chmod -R 775 /app/storage /app/bootstrap/cache
 
+# Generate application key FIRST if not set
+if [ -z "$APP_KEY" ]; then
+    echo "Generating application key..."
+    php artisan key:generate --force
+fi
+
+# Run database migrations FIRST (before any cache operations)
+if [ "$RUN_MIGRATIONS" = "true" ]; then
+    echo "Running database migrations..."
+    php artisan migrate --force --no-interaction
+fi
+
 # Run Laravel optimizations
 echo "Running Laravel optimizations..."
+
+# Discover packages first (skipped during build)
+echo "Discovering packages..."
+# php artisan package:discover --ansi
+# composer run-script post-autoload-dump
+
 if [ "$APP_ENV" = "production" ]; then
+    # Clear any existing caches first
+    php artisan optimize:clear
+
     # Cache configurations in production
     php artisan config:cache
     php artisan route:cache
     php artisan view:cache
-    php artisan event:cache
-    
-    # Clear any existing caches first
-    php artisan optimize:clear
-    
+
     # Run optimizations
     php artisan optimize
 else
@@ -62,12 +79,6 @@ else
     php artisan route:clear
     php artisan view:clear
     php artisan event:clear
-fi
-
-# Run database migrations if requested
-if [ "$RUN_MIGRATIONS" = "true" ]; then
-    echo "Running database migrations..."
-    php artisan migrate --force --no-interaction
 fi
 
 # Run database seeding if requested
@@ -82,12 +93,6 @@ if [ "$ENABLE_SUPERVISOR" = "true" ]; then
     supervisord -c /etc/supervisor/conf.d/laravel.conf &
 fi
 
-# Generate application key if not set
-if [ -z "$APP_KEY" ]; then
-    echo "Generating application key..."
-    php artisan key:generate --force
-fi
-
 # Check if we should run Octane or regular FrankenPHP
 if [ "$OCTANE_ENABLED" = "true" ]; then
     echo "Starting Laravel Octane with FrankenPHP server..."
@@ -95,7 +100,6 @@ if [ "$OCTANE_ENABLED" = "true" ]; then
         --host="$OCTANE_HOST" \
         --port="$OCTANE_PORT" \
         --workers="$OCTANE_WORKERS" \
-        --task-workers="$OCTANE_TASK_WORKERS" \
         --max-requests="$OCTANE_MAX_REQUESTS"
 else
     echo "Starting FrankenPHP server (per official docs)..."

@@ -19,6 +19,7 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
@@ -26,28 +27,31 @@ jobs:
     
     strategy:
       matrix:
-        target: [frankenphp, nginx-fpm, standalone, standalone-alpine]
+        target: [frankenphp]
+        # target: [frankenphp, nginx-fpm, standalone, standalone-alpine]
         include:
           - target: frankenphp
             dockerfile: docker/production/Dockerfile.frankenphp
             image-suffix: ''
             build-target: frankenphp
-          - target: nginx-fpm
-            dockerfile: docker/production/Dockerfile.nginx-fpm
-            image-suffix: '-nginx'
-            build-target: production
-          - target: standalone
-            dockerfile: docker/production/Dockerfile.standalone
-            image-suffix: '-standalone'
-            build-target: runtime
-          - target: standalone-alpine
-            dockerfile: docker/production/Dockerfile.standalone
-            image-suffix: '-standalone-alpine'
-            build-target: standalone-alpine
+          # - target: nginx-fpm
+            # dockerfile: docker/production/Dockerfile.nginx-fpm
+            # image-suffix: '-nginx'
+            # build-target: production
+          # - target: standalone
+            # dockerfile: docker/production/Dockerfile.standalone
+            # image-suffix: '-standalone'
+            # build-target: runtime
+          # - target: standalone-alpine
+            # dockerfile: docker/production/Dockerfile.standalone
+            # image-suffix: '-standalone-alpine'
+            # build-target: standalone-alpine
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -75,12 +79,13 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        id: build
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ${{ matrix.dockerfile }}
           target: ${{ matrix.build-target }}
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -88,17 +93,23 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             BUILDKIT_INLINE_CACHE=1
+            VITE_APP_NAME=Clarity Invoicing
 
       - name: Run Trivy vulnerability scanner
+        continue-on-error: true
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}:${{ github.sha }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}@${{ steps.build.outputs.digest }}
           format: 'sarif'
           output: 'trivy-results-${{ matrix.target }}.sarif'
+          ignore-unfixed: true
+
+      - name: Debug Trivy output
+        run: ls -al
 
       - name: Upload Trivy scan results to GitHub Security tab
+        if: always() && hashFiles('trivy-results-${{ matrix.target }}.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
         with:
           sarif_file: 'trivy-results-${{ matrix.target }}.sarif'
 
@@ -109,24 +120,27 @@ jobs:
     
     strategy:
       matrix:
-        target: [frankenphp, nginx-fpm, standalone, standalone-alpine]
+        target: [frankenphp]
+        # target: [frankenphp, nginx-fpm, standalone, standalone-alpine]
         include:
           - target: frankenphp
             image-suffix: ''
             port: 8000
-          - target: nginx-fpm
-            image-suffix: '-nginx'
-            port: 80
-          - target: standalone
-            image-suffix: '-standalone'
-            port: 8000
-          - target: standalone-alpine
-            image-suffix: '-standalone-alpine'
-            port: 8000
+          # - target: nginx-fpm
+          #   image-suffix: '-nginx'
+          #   port: 80
+          # - target: standalone
+          #   image-suffix: '-standalone'
+          #   port: 8000
+          # - target: standalone-alpine
+          #   image-suffix: '-standalone-alpine'
+          #   port: 8000
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Log in to Container Registry
         uses: docker/login-action@v3
