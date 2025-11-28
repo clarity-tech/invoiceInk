@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Akaunting\Money\Money;
 use App\Casts\ExchangeRateCast;
+use App\Enums\InvoiceStatus;
 use App\Models\Scopes\OrganizationScope;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -46,6 +47,7 @@ class Invoice extends Model
             'due_at' => 'datetime',
             'exchange_rate' => ExchangeRateCast::class,
             'currency' => \App\Currency::class,
+            'status' => InvoiceStatus::class,
             'tax_breakdown' => 'json',
             'email_recipients' => 'json',
         ];

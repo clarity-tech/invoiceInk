@@ -14,7 +14,7 @@
     <p>{{ __('messages.email.invoice_details') }}</p>
     <ul>
         <li>{{ __('documents.fields.invoice_number') }}: {{ $document->invoice_number }}</li>
-        <li>{{ __('documents.fields.status') }}: {{ ucfirst($document->status) }}</li>
+        <li>{{ __('documents.fields.status') }}: {{ $document->status->label() }}</li>
         <li>{{ __('documents.financial.total') }} {{ $document->formatted_total }}</li>
         @if($document->due_at)
             <li>{{ __('documents.fields.due_date') }}: {{ $document->due_at->format('F j, Y') }}</li>

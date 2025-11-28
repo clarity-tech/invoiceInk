@@ -3,6 +3,7 @@
 namespace App\Livewire\Traits;
 
 use Akaunting\Money\Money;
+use App\Enums\InvoiceStatus;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -11,6 +12,7 @@ use App\Models\Location;
 use App\Models\Organization;
 use App\Services\InvoiceCalculator;
 use App\Services\InvoiceNumberingService;
+use Illuminate\Validation\Rule as ValidationRule;
 use InvalidArgumentException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Rule;
@@ -18,6 +20,7 @@ use Livewire\Attributes\Rule;
 trait InvoiceFormLogic
 {
     public string $type = 'invoice'; // 'invoice' or 'estimate'
+
     public int $currentStep = 1;
 
     // Basic Details
@@ -42,12 +45,16 @@ trait InvoiceFormLogic
     #[Rule('nullable|exists:invoice_numbering_series,id')]
     public ?int $invoice_numbering_series_id = null;
 
+    public string $status = 'draft';
+
     // Items
     public array $items = [];
 
     // Totals (computed)
     public int $subtotal = 0;
+
     public int $tax = 0;
+
     public int $total = 0;
 
     protected function initializeFormDefaults(): void
@@ -78,6 +85,7 @@ trait InvoiceFormLogic
         $this->customer_location_id = $invoice->customer_location_id;
         $this->issued_at = $invoice->issued_at?->format('Y-m-d');
         $this->due_at = $invoice->due_at?->format('Y-m-d');
+        $this->status = $invoice->status?->value ?? 'draft';
 
         $this->items = $invoice->items->map(function ($item) {
             return [
@@ -191,13 +199,16 @@ trait InvoiceFormLogic
         }
     }
 
-    public function saveInvoice(?Invoice $existingInvoice = null): void
+    public function saveInvoice(?Invoice $existingInvoice = null): ?Invoice
     {
+        logger('-----invoice_numbering_series_id-------- '.$this->invoice_numbering_series_id);
+
         $this->validate([
             'organization_id' => 'required|exists:teams,id',
             'customer_id' => 'required|exists:customers,id',
             'organization_location_id' => 'required|exists:locations,id',
             'customer_location_id' => 'required|exists:locations,id',
+            'status' => ['required', 'string', ValidationRule::enum(InvoiceStatus::class)],
             'items.*.description' => 'required|string|max:500',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
@@ -211,6 +222,7 @@ trait InvoiceFormLogic
                 'customer_id' => $this->customer_id,
                 'organization_location_id' => $this->organization_location_id,
                 'customer_location_id' => $this->customer_location_id,
+                'status' => $this->status,
                 'issued_at' => $this->issued_at ? now()->parse($this->issued_at) : null,
                 'due_at' => $this->due_at ? now()->parse($this->due_at) : null,
                 'subtotal' => $this->subtotal,
@@ -243,7 +255,7 @@ trait InvoiceFormLogic
                 } catch (InvalidArgumentException $e) {
                     $this->addError('invoice_numbering_series_id', $e->getMessage());
 
-                    return;
+                    return null;
                 }
             }
 
@@ -281,6 +293,8 @@ trait InvoiceFormLogic
             "{$documentType} updated successfully!" :
             "{$documentType} created successfully!"
         );
+
+        return $invoice;
     }
 
     private function generateInvoiceNumber(): string

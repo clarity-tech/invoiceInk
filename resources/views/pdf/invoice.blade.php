@@ -32,10 +32,8 @@
                     </div>
                     <div class="text-right">
                         <div class="text-sm text-blue-100">{{ __('documents.fields.status') }}</div>
-                        <span class="inline-block px-3 py-1 rounded-full text-sm font-medium
-                            {{ $invoice->status === 'paid' ? 'bg-green-500' : 
-                               ($invoice->status === 'sent' ? 'bg-yellow-500' : 'bg-gray-500') }}">
-                            {{ ucfirst($invoice->status) }}
+                        <span class="inline-block px-3 py-1 rounded-full text-sm font-medium {{ $invoice->status->color() === 'green' ? 'bg-green-500' : ($invoice->status->color() === 'blue' ? 'bg-yellow-500' : 'bg-gray-500') }}">
+                            {{ $invoice->status->label() }}
                         </span>
                     </div>
                 </div>

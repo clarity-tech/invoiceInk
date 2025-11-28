@@ -50,10 +50,9 @@ class InvoiceForm extends Component
     {
         // Only pass existing invoice if we're in edit mode with a persisted invoice
         $existingInvoice = ($this->mode === 'edit' && $this->invoice && $this->invoice->exists) ? $this->invoice : null;
-        $this->saveInvoice($existingInvoice);
+        $invoice = $this->saveInvoice($existingInvoice);
 
-        // Redirect to invoice list after save
-        return redirect()->route('invoices.index');
+        return redirect()->route('invoices.edit', $invoice->id);
     }
 
     public function cancel()
@@ -84,10 +83,10 @@ class InvoiceForm extends Component
     public function getPageTitleProperty(): string
     {
         if ($this->mode === 'edit') {
-            return "Edit ".ucfirst($this->type);
+            return 'Edit '.ucfirst($this->type);
         }
 
-        return "Create ".ucfirst($this->type);
+        return 'Create '.ucfirst($this->type);
     }
 
     public function render()

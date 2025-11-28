@@ -34,10 +34,8 @@
                     </div>
                     <div class="text-right">
                         <div class="text-sm text-green-100">{{ __('documents.fields.status') }}</div>
-                        <span class="inline-block px-3 py-1 rounded-full text-sm font-medium
-                            {{ $estimate->status === 'accepted' ? 'bg-blue-500' : 
-                               ($estimate->status === 'sent' ? 'bg-yellow-500' : 'bg-gray-500') }}">
-                            {{ ucfirst($estimate->status) }}
+                        <span class="inline-block px-3 py-1 rounded-full text-sm font-medium {{ $estimate->status->color() === 'green' ? 'bg-green-500' : ($estimate->status->color() === 'blue' ? 'bg-blue-500' : 'bg-gray-500') }}">
+                            {{ $estimate->status->label() }}
                         </span>
                     </div>
                 </div>

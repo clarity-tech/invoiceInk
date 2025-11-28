@@ -71,7 +71,15 @@
                                 </select>
                             </div>
 
-                            <div></div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                                <select wire:model="status" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    @foreach(\App\Enums\InvoiceStatus::cases() as $statusOption)
+                                        <option value="{{ $statusOption->value }}">{{ $statusOption->label() }}</option>
+                                    @endforeach
+                                </select>
+                                @error('status') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Organization</label>
