@@ -12,9 +12,10 @@ class InvoiceForm extends Component
     use InvoiceFormLogic;
 
     public string $mode = 'create'; // 'create' or 'edit'
+
     public ?Invoice $invoice = null;
 
-    public function mount(?Invoice $invoice = null, string $type = 'invoice'): void
+    public function mount(?Invoice $invoice, string $type = 'invoice'): void
     {
         try {
             // Determine mode and type from route - check for actual persisted invoice
@@ -62,7 +63,7 @@ class InvoiceForm extends Component
 
     public function downloadPdf(): ?object
     {
-        if ($this->mode !== 'edit' || !$this->invoice) {
+        if ($this->mode !== 'edit' || ! $this->invoice) {
             return null;
         }
 
@@ -83,10 +84,10 @@ class InvoiceForm extends Component
     public function getPageTitleProperty(): string
     {
         if ($this->mode === 'edit') {
-            return "Edit " . ucfirst($this->type);
+            return "Edit ".ucfirst($this->type);
         }
 
-        return "Create " . ucfirst($this->type);
+        return "Create ".ucfirst($this->type);
     }
 
     public function render()

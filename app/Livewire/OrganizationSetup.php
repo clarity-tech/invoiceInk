@@ -78,7 +78,7 @@ class OrganizationSetup extends Component
     #[Rule('nullable|string|max:20')]
     public string $phone = '';
 
-    public function mount(?Organization $organization = null): void
+    public function mount(?Organization $organization): void
     {
         // Get current team as organization or create new one
         $this->organization = $organization ?? auth()->user()->currentTeam;

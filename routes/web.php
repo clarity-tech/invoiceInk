@@ -10,8 +10,8 @@ use App\Livewire\OrganizationSetup;
 use Illuminate\Support\Facades\Route;
 
 // Public view routes for invoices and estimates (no authentication required)
-Route::get('/invoices/{ulid}', [PublicViewController::class, 'showInvoice'])->name('invoices.public');
-Route::get('/estimates/{ulid}', [PublicViewController::class, 'showEstimate'])->name('estimates.public');
+Route::get('/invoices/view/{ulid}', [PublicViewController::class, 'showInvoice'])->name('invoices.public');
+Route::get('/estimates/view/{ulid}', [PublicViewController::class, 'showEstimate'])->name('estimates.public');
 
 // PDF download routes (no authentication required)
 Route::get('/invoices/{ulid}/pdf', [PublicViewController::class, 'downloadInvoicePdf'])->name('invoices.pdf');
@@ -42,13 +42,14 @@ Route::middleware([
         Route::get('/organizations', OrganizationManager::class)->name('organizations.index');
         Route::get('/organization/edit', OrganizationManager::class)->name('organization.edit');
         Route::get('/customers', CustomerManager::class)->name('customers.index');
-        
+
         // Invoice management routes
         Route::get('/invoices', InvoiceList::class)->name('invoices.index');
         Route::get('/invoices/create', InvoiceForm::class)->name('invoices.create');
+
         Route::get('/invoices/{invoice}/edit', InvoiceForm::class)->name('invoices.edit');
         Route::get('/estimates/create', InvoiceForm::class)->name('estimates.create');
-        
+
         Route::get('/numbering-series', NumberingSeriesManager::class)->name('numbering-series.index');
     });
 });
