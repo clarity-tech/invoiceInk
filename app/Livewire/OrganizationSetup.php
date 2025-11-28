@@ -225,8 +225,15 @@ class OrganizationSetup extends Component
         };
     }
 
-    public function completeSetup(): void
+    public function completeSetup()
     {
+        // Get the current organization from the authenticated user
+        $this->organization = auth()->user()->currentTeam;
+
+        if (! $this->organization) {
+            abort(403, 'No organization context available.');
+        }
+
         // Validate all steps
         for ($i = 1; $i <= $this->totalSteps; $i++) {
             $this->validateStep($i);
@@ -259,7 +266,7 @@ class OrganizationSetup extends Component
         }
 
         // Convert simple emails to ContactCollection format (email with empty name)
-        $contactData = array_map(fn($email) => ['name' => '', 'email' => $email], $filteredEmails);
+        $contactData = array_map(fn ($email) => ['name' => '', 'email' => $email], $filteredEmails);
         $contactCollection = new ContactCollection($contactData);
 
         // Create or update location
@@ -421,7 +428,6 @@ class OrganizationSetup extends Component
 
     public function render()
     {
-        // If setup is complete, redirect to dashboard
         if ($this->organization && $this->organization->isSetupComplete()) {
             $this->redirect(route('dashboard'));
 
