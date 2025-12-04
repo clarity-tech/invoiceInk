@@ -2,7 +2,13 @@
 
 namespace App\Providers;
 
+use App\Actions\Jetstream\AddTeamMember;
+use App\Actions\Jetstream\CreateTeam;
+use App\Actions\Jetstream\DeleteTeam;
 use App\Actions\Jetstream\DeleteUser;
+use App\Actions\Jetstream\InviteTeamMember;
+use App\Actions\Jetstream\RemoveTeamMember;
+use App\Actions\Jetstream\UpdateTeamName;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Jetstream\Jetstream;
 
@@ -25,6 +31,14 @@ class JetstreamServiceProvider extends ServiceProvider
 
         // Use Organization model for teams (organization-centric architecture)
         Jetstream::useTeamModel(\App\Models\Organization::class);
+
+        // Configure team/organization actions
+        Jetstream::createTeamsUsing(CreateTeam::class);
+        Jetstream::updateTeamNamesUsing(UpdateTeamName::class);
+        Jetstream::addTeamMembersUsing(AddTeamMember::class);
+        Jetstream::inviteTeamMembersUsing(InviteTeamMember::class);
+        Jetstream::removeTeamMembersUsing(RemoveTeamMember::class);
+        Jetstream::deleteTeamsUsing(DeleteTeam::class);
 
         // Configure user deletion
         Jetstream::deleteUsersUsing(DeleteUser::class);
