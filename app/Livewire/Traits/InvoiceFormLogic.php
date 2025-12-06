@@ -21,8 +21,6 @@ trait InvoiceFormLogic
 {
     public string $type = 'invoice'; // 'invoice' or 'estimate'
 
-    public int $currentStep = 1;
-
     // Basic Details
     #[Rule('required|exists:teams,id')]
     public ?int $organization_id = null;
@@ -46,6 +44,9 @@ trait InvoiceFormLogic
     public ?int $invoice_numbering_series_id = null;
 
     public string $status = 'draft';
+
+    #[Rule('nullable|string|max:5000')]
+    public ?string $notes = null;
 
     // Items
     public array $items = [];
@@ -86,10 +87,12 @@ trait InvoiceFormLogic
         $this->issued_at = $invoice->issued_at?->format('Y-m-d');
         $this->due_at = $invoice->due_at?->format('Y-m-d');
         $this->status = $invoice->status?->value ?? 'draft';
+        $this->notes = $invoice->notes;
 
         $this->items = $invoice->items->map(function ($item) {
             return [
                 'description' => $item->description,
+                'sac_code' => $item->sac_code,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price / 100, // Convert from cents
                 'tax_rate' => $item->tax_rate / 100, // Convert from basis points to percentage
@@ -103,6 +106,7 @@ trait InvoiceFormLogic
     {
         $this->items[] = [
             'description' => '',
+            'sac_code' => '',
             'quantity' => 1,
             'unit_price' => 0,
             'tax_rate' => 0,
@@ -141,64 +145,6 @@ trait InvoiceFormLogic
         $this->calculateTotals();
     }
 
-    public function nextStep(): void
-    {
-        if ($this->currentStep === 1) {
-            // Basic required fields
-            $rules = [
-                'organization_id' => 'required|exists:teams,id',
-                'customer_id' => 'required|exists:customers,id',
-            ];
-
-            // Check if organizations and customers have locations
-            $orgLocations = $this->organizationLocations;
-            $custLocations = $this->customerLocations;
-
-            // Add location validation only if locations exist
-            if ($orgLocations->count() > 0) {
-                $rules['organization_location_id'] = 'required|exists:locations,id';
-            } else {
-                // Clear any previously set location if no locations exist
-                $this->organization_location_id = null;
-            }
-
-            if ($custLocations->count() > 0) {
-                $rules['customer_location_id'] = 'required|exists:locations,id';
-            } else {
-                // Clear any previously set location if no locations exist
-                $this->customer_location_id = null;
-            }
-
-            $this->validate($rules);
-
-            // Additional checks for missing locations with helpful messages
-            if ($this->organization_id && $orgLocations->count() === 0) {
-                $orgName = Organization::find($this->organization_id)?->name ?? 'the selected organization';
-                $this->addError('organization_location_id', "Please create at least one location for {$orgName} before proceeding. You can manage locations in the Organizations section.");
-
-                return;
-            }
-
-            if ($this->customer_id && $custLocations->count() === 0) {
-                $custName = Customer::find($this->customer_id)?->name ?? 'the selected customer';
-                $this->addError('customer_location_id', "Please create at least one location for {$custName} before proceeding. You can manage locations in the Customers section.");
-
-                return;
-            }
-        }
-
-        if ($this->currentStep < 3) {
-            $this->currentStep++;
-        }
-    }
-
-    public function previousStep(): void
-    {
-        if ($this->currentStep > 1) {
-            $this->currentStep--;
-        }
-    }
-
     public function saveInvoice(?Invoice $existingInvoice = null): ?Invoice
     {
         logger('-----invoice_numbering_series_id-------- '.$this->invoice_numbering_series_id);
@@ -228,7 +174,8 @@ trait InvoiceFormLogic
                 'subtotal' => $this->subtotal,
                 'tax' => $this->tax,
                 'total' => $this->total,
-                'currency' => Organization::find($this->organization_id)?->currency?->value,
+                'currency' => Customer::find($this->customer_id)?->currency?->value,
+                'notes' => $this->notes,
             ]);
 
             // Delete existing items and recreate
@@ -273,7 +220,8 @@ trait InvoiceFormLogic
                 'subtotal' => $this->subtotal,
                 'tax' => $this->tax,
                 'total' => $this->total,
-                'currency' => Organization::find($this->organization_id)?->currency?->value,
+                'currency' => Customer::find($this->customer_id)?->currency?->value,
+                'notes' => $this->notes,
             ]);
         }
 
@@ -282,6 +230,7 @@ trait InvoiceFormLogic
             InvoiceItem::create([
                 'invoice_id' => $invoice->id,
                 'description' => $item['description'],
+                'sac_code' => $item['sac_code'] ?? null,
                 'quantity' => (int) $item['quantity'],
                 'unit_price' => (int) ($item['unit_price'] * 100), // Convert to cents
                 'tax_rate' => (int) (($item['tax_rate'] ?: 0) * 100), // Convert percentage to basis points
@@ -370,10 +319,10 @@ trait InvoiceFormLogic
     #[Computed]
     public function currentCurrency(): string
     {
-        if ($this->organization_id) {
-            $organization = Organization::find($this->organization_id);
+        if ($this->customer_id) {
+            $customer = Customer::find($this->customer_id);
 
-            return $organization?->currency?->value ?? 'INR';
+            return $customer?->currency?->value ?? 'INR';
         }
 
         return 'INR';

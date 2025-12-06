@@ -9,3 +9,43 @@
 [x-cloak] {
     display: none;
 }
+
+/* Email preview styling in Trix editor */
+.trix-content > div:first-child strong {
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: 3px;
+}
+
+.trix-content > div:nth-child(3) {
+    background-color: #3b82f6;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    margin: 10px 0;
+}
+
+.trix-content > div:nth-child(3) strong {
+    font-size: 18px;
+    font-weight: 400;
+}
+
+.trix-content blockquote {
+    background-color: #fef9e7;
+    border: 1px solid #f4e5c2 !important;
+    border-left: 4px solid #f4e5c2;
+    padding: 20px;
+    text-align: center;
+}
+
+.trix-content blockquote div:first-child {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.trix-content blockquote div:last-child strong em {
+    font-style: normal;
+    font-size: 28px;
+    display: block;
+    margin-top: 5px;
+}

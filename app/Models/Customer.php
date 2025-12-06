@@ -15,6 +15,7 @@ class Customer extends Model
     protected $fillable = [
         'name',
         'phone',
+        'currency',
         'emails',
         'primary_location_id',
         'organization_id',
@@ -24,6 +25,7 @@ class Customer extends Model
     {
         return [
             'emails' => \App\Casts\ContactCollectionCast::class,
+            'currency' => \App\Currency::class,
         ];
     }
 

@@ -171,6 +171,16 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Customer Notes -->
+                @if($invoice->notes)
+                    <div class="mt-8">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">Notes</h3>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ $invoice->notes }}</p>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 

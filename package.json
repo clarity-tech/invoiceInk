@@ -23,6 +23,7 @@
     "dependencies": {
         "@alpinejs/anchor": "^3.14.9",
         "@alpinejs/collapse": "^3.14.9",
-        "alpinejs": "^3.14.9"
+        "alpinejs": "^3.14.9",
+        "trix": "^2.1.15"
     }
 }

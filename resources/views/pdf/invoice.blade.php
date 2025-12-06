@@ -165,6 +165,16 @@
                 </div>
             </div>
 
+            <!-- Customer Notes -->
+            @if($invoice->notes)
+                <div class="px-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Notes</h3>
+                    <div class="bg-gray-50 border border-gray-300 rounded p-4">
+                        <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ $invoice->notes }}</p>
+                    </div>
+                </div>
+            @endif
+
             <!-- Footer -->
             <div class="px-6 py-4 border-t border-gray-200 mt-8">
                 <div class="text-center text-sm text-gray-500">

@@ -22,6 +22,9 @@ class CustomerManager extends Component
     #[Rule('nullable|string|max:20')]
     public string $phone = '';
 
+    #[Rule('required|string|max:3')]
+    public string $currency = 'INR';
+
     public array $contacts = [['name' => '', 'email' => '']];
 
     #[Rule('nullable|string|max:255')]
@@ -45,7 +48,7 @@ class CustomerManager extends Component
     #[Rule('required|string|max:3')]
     public string $country = '';
 
-    #[Rule('required|string|max:20')]
+    #[Rule('nullable|string|max:20')]
     public string $postal_code = '';
 
     public bool $showForm = false;
@@ -78,6 +81,7 @@ class CustomerManager extends Component
         $this->editingId = $customer->id;
         $this->name = $customer->name;
         $this->phone = $customer->phone ?? '';
+        $this->currency = $customer->currency?->value ?? 'INR';
         $this->contacts = $customer->emails->toArray() ?: [['name' => '', 'email' => '']];
 
         if ($customer->primaryLocation) {
@@ -96,15 +100,10 @@ class CustomerManager extends Component
 
     public function save(): void
     {
-        // Auto-set country from current organization
-        $currentOrganization = auth()->user()?->currentTeam;
-        if ($currentOrganization && $currentOrganization->country_code) {
-            $this->country = $currentOrganization->country_code->value;
-        }
-
         $this->validate([
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
+            'currency' => ['required', 'string', ValidationRule::enum(\App\Currency::class)],
             'location_name' => 'nullable|string|max:255',
             'gstin' => 'nullable|string|max:50',
             'address_line_1' => 'required|string|max:500',
@@ -112,7 +111,7 @@ class CustomerManager extends Component
             'city' => 'required|string|max:100',
             'state' => 'required|string|max:100',
             'country' => ['required', 'string', ValidationRule::enum(Country::class)],
-            'postal_code' => 'required|string|max:20',
+            'postal_code' => 'nullable|string|max:20',
             'contacts' => 'required|array|min:1',
             'contacts.*.name' => 'nullable|string|max:255',
             'contacts.*.email' => 'required|email|max:255',
@@ -133,6 +132,7 @@ class CustomerManager extends Component
             $customer->update([
                 'name' => $this->name,
                 'phone' => $this->phone ?: null,
+                'currency' => $this->currency,
                 'emails' => $contactCollection,
             ]);
 
@@ -145,7 +145,7 @@ class CustomerManager extends Component
                     'city' => $this->city,
                     'state' => $this->state,
                     'country' => $this->country,
-                    'postal_code' => $this->postal_code,
+                    'postal_code' => $this->postal_code ?: null,
                 ]);
             }
         } else {
@@ -157,7 +157,7 @@ class CustomerManager extends Component
                 'city' => $this->city,
                 'state' => $this->state,
                 'country' => $this->country,
-                'postal_code' => $this->postal_code,
+                'postal_code' => $this->postal_code ?: null,
                 'locatable_type' => Customer::class,
                 'locatable_id' => 0,
             ]);
@@ -165,6 +165,7 @@ class CustomerManager extends Component
             $customer = Customer::create([
                 'name' => $this->name,
                 'phone' => $this->phone ?: null,
+                'currency' => $this->currency,
                 'emails' => $contactCollection,
                 'primary_location_id' => $location->id,
                 'organization_id' => auth()->user()?->currentTeam?->id,
@@ -207,6 +208,7 @@ class CustomerManager extends Component
         $this->editingId = null;
         $this->name = '';
         $this->phone = '';
+        $this->currency = 'INR';
         $this->contacts = [['name' => '', 'email' => '']];
         $this->location_name = '';
         $this->gstin = '';

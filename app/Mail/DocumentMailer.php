@@ -17,21 +17,45 @@ class DocumentMailer extends Mailable implements ShouldQueue
 
     public function __construct(
         public Invoice $invoice,
-        public ContactCollection $recipients
+        public ContactCollection $recipients,
+        public ?string $customSubject = null,
+        public array $ccEmails = [],
+        public ?string $customBody = null
     ) {}
 
     public function envelope(): Envelope
     {
         $type = $this->invoice->isInvoice() ? 'Invoice' : 'Estimate';
+        $subject = $this->customSubject ?? "{$type} #{$this->invoice->invoice_number}";
 
-        return new Envelope(
+        $envelope = new Envelope(
             to: $this->recipients->getEmails(),
-            subject: "{$type} #{$this->invoice->invoice_number}",
+            subject: $subject,
         );
+
+        // Add Cc if provided
+        if (! empty($this->ccEmails)) {
+            $envelope->cc($this->ccEmails);
+        }
+
+        return $envelope;
     }
 
     public function content(): Content
     {
+        // If custom body is provided, use a simple text email
+        if ($this->customBody) {
+            return new Content(
+                view: 'emails.custom-document',
+                with: [
+                    'customBody' => $this->customBody,
+                    'invoice' => $this->invoice,
+                    'viewUrl' => $this->getPublicViewUrl(),
+                ],
+            );
+        }
+
+        // Otherwise use the default template
         $view = $this->invoice->isInvoice() ? 'emails.invoice' : 'emails.estimate';
 
         return new Content(
