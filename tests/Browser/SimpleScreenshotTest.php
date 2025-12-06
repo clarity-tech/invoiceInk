@@ -29,7 +29,7 @@ class SimpleScreenshotTest extends DuskTestCase
             // Set incomplete setup
             $user->currentTeam->update([
                 'name' => 'John\'s Organization',
-                'setup_completed_at' => null
+                'setup_completed_at' => null,
             ]);
 
             // 2. Login and see what happens
@@ -49,7 +49,7 @@ class SimpleScreenshotTest extends DuskTestCase
 
             // Let's also capture the page source to debug
             $pageSource = $browser->driver->getPageSource();
-            file_put_contents(__DIR__ . '/../../storage/logs/setup-page-source.html', $pageSource);
+            file_put_contents(__DIR__.'/../../storage/logs/setup-page-source.html', $pageSource);
 
             // 5. Create a user with completed setup to show the difference
             $completedUser = User::factory()->withPersonalTeam()->create([
@@ -106,7 +106,7 @@ class SimpleScreenshotTest extends DuskTestCase
             ]);
 
             // 11. Public invoice view
-            $browser->visit("/invoices/{$invoice->ulid}")
+            $browser->visit("/invoices/view/{$invoice->ulid}")
                 ->pause(4000)
                 ->screenshot('invoice-journey/03-public-invoice-view');
 
@@ -122,7 +122,7 @@ class SimpleScreenshotTest extends DuskTestCase
             ]);
 
             // 13. Public estimate view
-            $browser->visit("/estimates/{$estimate->ulid}")
+            $browser->visit("/estimates/view/{$estimate->ulid}")
                 ->pause(4000)
                 ->screenshot('estimate-journey/01-public-estimate-view');
 
@@ -153,7 +153,7 @@ class SimpleScreenshotTest extends DuskTestCase
             ]);
 
             $user->currentTeam->update([
-                'setup_completed_at' => null
+                'setup_completed_at' => null,
             ]);
 
             $browser->loginAs($user)
@@ -164,8 +164,8 @@ class SimpleScreenshotTest extends DuskTestCase
             // Check what elements are actually available
             $elements = $browser->driver->findElements(\Facebook\WebDriver\WebDriverBy::tagName('input'));
             $inputCount = count($elements);
-            
-            file_put_contents(__DIR__ . '/../../storage/logs/form-debug.txt', "Found {$inputCount} input elements\n");
+
+            file_put_contents(__DIR__.'/../../storage/logs/form-debug.txt', "Found {$inputCount} input elements\n");
 
             // Just try to capture whatever we can see
             $browser->pause(2000)
@@ -192,7 +192,7 @@ class SimpleScreenshotTest extends DuskTestCase
                     } catch (\Exception $e3) {
                         // Just capture the error state
                         $browser->screenshot('user-onboarding/setup-03-form-interaction-failed');
-                        file_put_contents(__DIR__ . '/../../storage/logs/form-debug.txt', "All selectors failed: wire:model, #id, name\n", FILE_APPEND);
+                        file_put_contents(__DIR__.'/../../storage/logs/form-debug.txt', "All selectors failed: wire:model, #id, name\n", FILE_APPEND);
                     }
                 }
             }

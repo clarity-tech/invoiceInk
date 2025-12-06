@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Services\EstimateToInvoiceConverter;
 use App\Services\InvoiceCalculator;
@@ -41,7 +42,7 @@ test('can convert estimate to invoice', function () {
     expect($invoice->subtotal)->toBe($estimate->subtotal);
     expect($invoice->tax)->toBe($estimate->tax);
     expect($invoice->total)->toBe($estimate->total);
-    expect($invoice->status)->toBe('draft');
+    expect($invoice->status)->toBe(InvoiceStatus::DRAFT);
 });
 
 test('converted invoice has all items from estimate', function () {
@@ -385,7 +386,7 @@ test('converter preserves all estimate status transitions', function () {
         $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
         $invoice = $converter->convert($estimate);
 
-        expect($invoice->status)->toBe('draft');
+        expect($invoice->status)->toBe(InvoiceStatus::DRAFT);
     }
 });
 

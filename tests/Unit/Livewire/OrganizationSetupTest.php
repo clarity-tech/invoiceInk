@@ -29,7 +29,8 @@ class OrganizationSetupTest extends TestCase
         $component = Livewire::test(OrganizationSetup::class);
 
         $component->assertOk();
-        $component->assertSee('Step 1 of 4');
+        $component->assertSee('Organization Setup');
+        $component->assertSee('Company Information');
         $component->assertSet('currentStep', 1);
         $component->assertSet('totalSteps', 4);
     }

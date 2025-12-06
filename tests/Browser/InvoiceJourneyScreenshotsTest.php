@@ -9,11 +9,10 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
-use Tests\TestHelpers;
 
 class InvoiceJourneyScreenshotsTest extends DuskTestCase
 {
-    use DatabaseMigrations, TestHelpers;
+    use DatabaseMigrations;
 
     public function test_complete_invoice_creation_journey(): void
     {
@@ -144,7 +143,7 @@ class InvoiceJourneyScreenshotsTest extends DuskTestCase
             // Test public invoice view (if implemented)
             $invoice = \App\Models\Invoice::first();
             if ($invoice) {
-                $browser->visit("/invoices/{$invoice->ulid}")
+                $browser->visit("/invoices/view/{$invoice->ulid}")
                     ->waitFor('.public-invoice')
                     ->screenshot('invoice-journey/14-public-invoice-view');
             }

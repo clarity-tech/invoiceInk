@@ -139,6 +139,12 @@ class OrganizationFactory extends Factory
             'personal_team' => true,
             'setup_completed_at' => null,
             'company_name' => null,
+            'emails' => [],
+            'phone' => null,
+            'tax_number' => null,
+            'registration_number' => null,
+            'website' => null,
+            'notes' => null,
         ]);
     }
 
@@ -155,7 +161,7 @@ class OrganizationFactory extends Factory
     }
 
     // =====================================================================
-    // BUSINESS TYPE STATES  
+    // BUSINESS TYPE STATES
     // =====================================================================
 
     /**
@@ -234,7 +240,6 @@ class OrganizationFactory extends Factory
         ]);
     }
 
-
     // =====================================================================
     // COUNTRY-SPECIFIC SETUPS
     // =====================================================================
@@ -262,7 +267,7 @@ class OrganizationFactory extends Factory
                 'currency' => 'INR',
                 'company_name' => $this->faker->optional(0.8)->randomElement([
                     'Demo Company Private Limited',
-                    'Business Solutions Pvt Ltd', 
+                    'Business Solutions Pvt Ltd',
                     'Indian Enterprises Ltd',
                     'Commercial Services Pvt Ltd',
                     'Tech Solutions India Pvt Ltd',
@@ -342,7 +347,7 @@ class OrganizationFactory extends Factory
     {
         return $this->afterCreating(function ($organization) use ($count) {
             $locations = collect();
-            
+
             for ($i = 0; $i < $count; $i++) {
                 $location = \App\Models\Location::create([
                     'name' => $i === 0 ? 'Head Office' : "Branch Office {$i}",
@@ -354,7 +359,7 @@ class OrganizationFactory extends Factory
                     'locatable_type' => get_class($organization),
                     'locatable_id' => $organization->id,
                 ]);
-                
+
                 $locations->push($location);
             }
 

@@ -29,7 +29,7 @@ class ContactCollectionCastTest extends TestCase
         $result = $this->cast->get($this->model, 'emails', null, []);
 
         $this->assertInstanceOf(ContactCollection::class, $result);
-        $this->assertEmpty($result->getContacts());
+        $this->assertEmpty($result->toArray());
     }
 
     public function test_get_method_handles_valid_json_string(): void
@@ -42,7 +42,7 @@ class ContactCollectionCastTest extends TestCase
         $result = $this->cast->get($this->model, 'emails', $jsonString, []);
 
         $this->assertInstanceOf(ContactCollection::class, $result);
-        $contacts = $result->getContacts();
+        $contacts = $result->toArray();
         $this->assertCount(2, $contacts);
         $this->assertEquals('John Doe', $contacts[0]['name']);
         $this->assertEquals('john@example.test', $contacts[0]['email']);
@@ -57,7 +57,7 @@ class ContactCollectionCastTest extends TestCase
         $result = $this->cast->get($this->model, 'emails', $invalidJson, []);
 
         $this->assertInstanceOf(ContactCollection::class, $result);
-        $this->assertEmpty($result->getContacts());
+        $this->assertEmpty($result->toArray());
     }
 
     public function test_get_method_handles_array_input(): void
@@ -70,7 +70,7 @@ class ContactCollectionCastTest extends TestCase
         $result = $this->cast->get($this->model, 'emails', $arrayInput, []);
 
         $this->assertInstanceOf(ContactCollection::class, $result);
-        $contacts = $result->getContacts();
+        $contacts = $result->toArray();
         $this->assertCount(2, $contacts);
         $this->assertEquals('John Doe', $contacts[0]['name']);
         $this->assertEquals('john@example.test', $contacts[0]['email']);
@@ -85,7 +85,7 @@ class ContactCollectionCastTest extends TestCase
 
         $this->assertInstanceOf(ContactCollection::class, $result);
         // Should return empty collection when array format is invalid
-        $this->assertEmpty($result->getContacts());
+        $this->assertEmpty($result->toArray());
     }
 
     public function test_get_method_handles_unexpected_types(): void
@@ -93,17 +93,17 @@ class ContactCollectionCastTest extends TestCase
         // Test with integer
         $result = $this->cast->get($this->model, 'emails', 123, []);
         $this->assertInstanceOf(ContactCollection::class, $result);
-        $this->assertEmpty($result->getContacts());
+        $this->assertEmpty($result->toArray());
 
         // Test with boolean
         $result = $this->cast->get($this->model, 'emails', true, []);
         $this->assertInstanceOf(ContactCollection::class, $result);
-        $this->assertEmpty($result->getContacts());
+        $this->assertEmpty($result->toArray());
 
         // Test with object
         $result = $this->cast->get($this->model, 'emails', new \stdClass, []);
         $this->assertInstanceOf(ContactCollection::class, $result);
-        $this->assertEmpty($result->getContacts());
+        $this->assertEmpty($result->toArray());
     }
 
     public function test_set_method_handles_null_value(): void
@@ -233,7 +233,7 @@ class ContactCollectionCastTest extends TestCase
         $retrieved = $this->cast->get($this->model, 'emails', $stored, []);
 
         $this->assertInstanceOf(ContactCollection::class, $retrieved);
-        $contacts = $retrieved->getContacts();
+        $contacts = $retrieved->toArray();
         $this->assertCount(2, $contacts);
         $this->assertEquals($originalContacts, $contacts);
     }
@@ -249,7 +249,7 @@ class ContactCollectionCastTest extends TestCase
         $retrieved = $this->cast->get($this->model, 'emails', $stored, []);
 
         $this->assertInstanceOf(ContactCollection::class, $retrieved);
-        $contacts = $retrieved->getContacts();
+        $contacts = $retrieved->toArray();
         $this->assertCount(2, $contacts);
         $this->assertEquals('', $contacts[0]['name']);
         $this->assertEquals('john@example.test', $contacts[0]['email']);
@@ -268,7 +268,7 @@ class ContactCollectionCastTest extends TestCase
 
         $this->assertInstanceOf(ContactCollection::class, $organization->emails);
 
-        $contacts = $organization->emails->getContacts();
+        $contacts = $organization->emails->toArray();
         $this->assertCount(2, $contacts);
         $this->assertEquals('John Doe', $contacts[0]['name']);
         $this->assertEquals('john@example.test', $contacts[0]['email']);
@@ -282,7 +282,7 @@ class ContactCollectionCastTest extends TestCase
 
         $this->assertInstanceOf(ContactCollection::class, $organization->emails);
 
-        $contacts = $organization->emails->getContacts();
+        $contacts = $organization->emails->toArray();
         $this->assertCount(2, $contacts);
         $this->assertEquals('', $contacts[0]['name']); // Empty names for simple email strings
         $this->assertEquals('john@example.test', $contacts[0]['email']);
@@ -297,7 +297,7 @@ class ContactCollectionCastTest extends TestCase
         // The cast should handle this gracefully
         $emails = $organization->emails;
         $this->assertInstanceOf(ContactCollection::class, $emails);
-        $this->assertEmpty($emails->getContacts());
+        $this->assertEmpty($emails->toArray());
     }
 
     public function test_handles_legacy_data_formats(): void
@@ -309,7 +309,7 @@ class ContactCollectionCastTest extends TestCase
 
         $this->assertInstanceOf(ContactCollection::class, $result);
         // Should handle legacy simple email array format
-        $contacts = $result->getContacts();
+        $contacts = $result->toArray();
         $this->assertCount(2, $contacts);
     }
 
@@ -349,7 +349,7 @@ class ContactCollectionCastTest extends TestCase
         $stored = $this->cast->set($this->model, 'emails', $unicodeContacts, []);
         $retrieved = $this->cast->get($this->model, 'emails', $stored, []);
 
-        $contacts = $retrieved->getContacts();
+        $contacts = $retrieved->toArray();
         $this->assertEquals('José García', $contacts[0]['name']);
         $this->assertEquals('山田太郎', $contacts[1]['name']);
     }

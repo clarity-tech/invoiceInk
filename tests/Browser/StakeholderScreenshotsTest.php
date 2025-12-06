@@ -4,7 +4,6 @@ namespace Tests\Browser;
 
 use App\Models\Customer;
 use App\Models\Location;
-use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
@@ -53,7 +52,7 @@ class StakeholderScreenshotsTest extends DuskTestCase
                 // Try alternative selector
                 $browser->click('.next-step, [wire\\:click="nextStep"], .btn-next');
             }
-            
+
             $browser->pause(3000)
                 ->screenshot('user-onboarding/04-setup-wizard-step2-empty');
 
@@ -74,7 +73,7 @@ class StakeholderScreenshotsTest extends DuskTestCase
             } catch (\Exception $e) {
                 $browser->click('.next-step, [wire\\:click="nextStep"], .btn-next');
             }
-            
+
             $browser->pause(3000)
                 ->screenshot('user-onboarding/06-setup-wizard-step3-empty');
 
@@ -89,7 +88,7 @@ class StakeholderScreenshotsTest extends DuskTestCase
             } catch (\Exception $e) {
                 $browser->click('.next-step, [wire\\:click="nextStep"], .btn-next');
             }
-            
+
             $browser->pause(3000)
                 ->screenshot('user-onboarding/08-setup-wizard-step4-empty');
 
@@ -117,7 +116,7 @@ class StakeholderScreenshotsTest extends DuskTestCase
             try {
                 $browser->click('button[wire\\:click="completeSetup"]')
                     ->pause(5000);
-                    
+
                 // If successful, take completion screenshot
                 $browser->screenshot('user-onboarding/11-setup-completed-dashboard');
             } catch (\Exception $e) {
@@ -199,6 +198,7 @@ class StakeholderScreenshotsTest extends DuskTestCase
                     ->screenshot('invoice-journey/03-invoice-wizard-step1-empty');
             } catch (\Exception $e) {
                 $browser->screenshot('invoice-journey/03-invoices-page-no-create-button');
+
                 return;
             }
 
@@ -276,9 +276,9 @@ class StakeholderScreenshotsTest extends DuskTestCase
         $user = User::factory()->withPersonalTeam()->create();
         $organization = $user->currentTeam;
         $organization->update(['setup_completed_at' => now()]);
-        
+
         $customer = Customer::factory()->create(['organization_id' => $organization->id]);
-        
+
         $invoice = \App\Models\Invoice::factory()->create([
             'organization_id' => $organization->id,
             'customer_id' => $customer->id,
@@ -287,7 +287,7 @@ class StakeholderScreenshotsTest extends DuskTestCase
 
         $this->browse(function (Browser $browser) use ($invoice) {
             // Public invoice view
-            $browser->visit("/invoices/{$invoice->ulid}")
+            $browser->visit("/invoices/view/{$invoice->ulid}")
                 ->pause(3000)
                 ->screenshot('invoice-journey/08-public-invoice-view');
         });
@@ -301,7 +301,7 @@ class StakeholderScreenshotsTest extends DuskTestCase
 
         $this->browse(function (Browser $browser) use ($estimate) {
             // Public estimate view
-            $browser->visit("/estimates/{$estimate->ulid}")
+            $browser->visit("/estimates/view/{$estimate->ulid}")
                 ->pause(3000)
                 ->screenshot('estimate-journey/03-public-estimate-view');
         });

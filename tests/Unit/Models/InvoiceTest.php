@@ -1,6 +1,7 @@
 <?php
 
 use App\Currency;
+use App\Enums\InvoiceStatus;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Organization;
@@ -18,7 +19,7 @@ test('can create invoice with required fields', function () {
 
     expect($invoice->type)->toBe('invoice');
     expect($invoice->invoice_number)->toBe('INV-001');
-    expect($invoice->status)->toBe('draft');
+    expect($invoice->status)->toBe(InvoiceStatus::DRAFT);
     expect($invoice->subtotal)->toBe(10000);
     expect($invoice->tax)->toBe(1800);
     expect($invoice->total)->toBe(11800);
@@ -219,7 +220,7 @@ test('invoice fillable attributes work correctly', function () {
     expect($invoice->customer_id)->toBe(1);
     expect($invoice->customer_location_id)->toBe(2);
     expect($invoice->invoice_number)->toBe('INV-001');
-    expect($invoice->status)->toBe('sent');
+    expect($invoice->status)->toBe(InvoiceStatus::SENT);
     expect($invoice->currency->value)->toBe('INR');
     expect($invoice->exchange_rate)->toBe('1.000000');
     expect($invoice->subtotal)->toBe(1000);
@@ -429,7 +430,7 @@ test('invoice can be created with all fillable attributes', function () {
     expect($invoice->customer_id)->toBe($customer->id);
     expect($invoice->customer_location_id)->toBe($customer->primaryLocation->id);
     expect($invoice->invoice_number)->toBe('INV-COMPLETE-001');
-    expect($invoice->status)->toBe('sent');
+    expect($invoice->status)->toBe(InvoiceStatus::SENT);
     expect($invoice->issued_at->format('Y-m-d H:i:s'))->toBe($issuedAt->format('Y-m-d H:i:s'));
     expect($invoice->due_at->format('Y-m-d H:i:s'))->toBe($dueAt->format('Y-m-d H:i:s'));
     expect($invoice->currency->value)->toBe('EUR');
@@ -488,7 +489,7 @@ test('invoice can be updated with new attributes', function () {
         'terms' => 'Updated terms',
     ]);
 
-    expect($invoice->status)->toBe('sent');
+    expect($invoice->status)->toBe(InvoiceStatus::SENT);
     expect($invoice->currency->value)->toBe('USD');
     expect($invoice->exchange_rate)->toBe('82.500000');
     expect($invoice->notes)->toBe('Updated notes');
@@ -506,15 +507,19 @@ test('invoice ulid is automatically generated when not provided', function () {
 });
 
 test('invoice can have different statuses', function () {
-    $statuses = ['draft', 'sent', 'paid']; // Only use valid statuses based on DB constraints
+    $statuses = [
+        ['draft', InvoiceStatus::DRAFT],
+        ['sent', InvoiceStatus::SENT],
+        ['paid', InvoiceStatus::PAID],
+    ];
 
-    foreach ($statuses as $status) {
+    foreach ($statuses as [$statusString, $statusEnum]) {
         $invoice = createInvoiceWithItems([
-            'invoice_number' => "INV-{$status}-001",
-            'status' => $status,
+            'invoice_number' => "INV-{$statusString}-001",
+            'status' => $statusString,
         ]);
 
-        expect($invoice->status)->toBe($status);
+        expect($invoice->status)->toBe($statusEnum);
     }
 });
 

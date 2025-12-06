@@ -72,7 +72,7 @@ test('can view public invoice page', function () {
         'tax_rate' => 18,
     ]);
 
-    $response = $this->get("/invoices/{$invoice->ulid}");
+    $response = $this->get("/invoices/view/{$invoice->ulid}");
 
     $response->assertStatus(200);
     $response->assertViewIs('public.invoice');
@@ -112,7 +112,7 @@ test('can view public estimate page', function () {
         'tax_rate' => 18,
     ]);
 
-    $response = $this->get("/estimates/{$estimate->ulid}");
+    $response = $this->get("/estimates/view/{$estimate->ulid}");
 
     $response->assertStatus(200);
     $response->assertViewIs('public.estimate');
@@ -126,13 +126,13 @@ test('can view public estimate page', function () {
 });
 
 test('returns 404 for non-existent invoice', function () {
-    $response = $this->get('/invoices/non-existent-ulid');
+    $response = $this->get('/invoices/view/non-existent-ulid');
 
     $response->assertStatus(404);
 });
 
 test('returns 404 for non-existent estimate', function () {
-    $response = $this->get('/estimates/non-existent-ulid');
+    $response = $this->get('/estimates/view/non-existent-ulid');
 
     $response->assertStatus(404);
 });
@@ -198,7 +198,7 @@ test('public invoice page displays all address details', function () {
         'total' => 2360,
     ]);
 
-    $response = $this->get("/invoices/{$invoice->ulid}");
+    $response = $this->get("/invoices/view/{$invoice->ulid}");
 
     $response->assertStatus(200);
     $response->assertSee('123 Business Street');
@@ -248,7 +248,7 @@ test('public invoice page displays multiple items correctly', function () {
         'tax_rate' => 12,
     ]);
 
-    $response = $this->get("/invoices/{$invoice->ulid}");
+    $response = $this->get("/invoices/view/{$invoice->ulid}");
 
     $response->assertStatus(200);
     $response->assertSee('Web Development');

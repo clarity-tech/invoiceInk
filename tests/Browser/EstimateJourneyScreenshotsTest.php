@@ -9,11 +9,10 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
-use Tests\TestHelpers;
 
 class EstimateJourneyScreenshotsTest extends DuskTestCase
 {
-    use DatabaseMigrations, TestHelpers;
+    use DatabaseMigrations;
 
     public function test_complete_estimate_creation_journey(): void
     {
@@ -159,7 +158,7 @@ class EstimateJourneyScreenshotsTest extends DuskTestCase
             // Test public estimate view (if implemented)
             $estimate = \App\Models\Invoice::where('document_type', 'estimate')->first();
             if ($estimate) {
-                $browser->visit("/estimates/{$estimate->ulid}")
+                $browser->visit("/estimates/view/{$estimate->ulid}")
                     ->waitFor('.public-estimate')
                     ->screenshot('estimate-journey/16-public-estimate-view');
             }

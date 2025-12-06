@@ -89,7 +89,7 @@ class QuickScreenshotTest extends DuskTestCase
             ]);
 
             // 8. Public invoice view
-            $browser->visit("/invoices/{$invoice->ulid}")
+            $browser->visit("/invoices/view/{$invoice->ulid}")
                 ->pause(4000)
                 ->screenshot('invoice-journey/02-public-invoice-view');
 
@@ -105,7 +105,7 @@ class QuickScreenshotTest extends DuskTestCase
             ]);
 
             // 10. Public estimate view
-            $browser->visit("/estimates/{$estimate->ulid}")
+            $browser->visit("/estimates/view/{$estimate->ulid}")
                 ->pause(4000)
                 ->screenshot('estimate-journey/01-public-estimate-view');
 
@@ -167,7 +167,7 @@ class QuickScreenshotTest extends DuskTestCase
             ]);
             $completeUser->currentTeam->update([
                 'company_name' => 'Complete Corp',
-                'setup_completed_at' => now()
+                'setup_completed_at' => now(),
             ]);
 
             $browser->loginAs($completeUser)

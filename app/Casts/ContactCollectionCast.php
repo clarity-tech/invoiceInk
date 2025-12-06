@@ -52,14 +52,20 @@ class ContactCollectionCast implements CastsAttributes
 
         if (is_array($value)) {
             // Handle array of contacts or simple emails for backward compatibility during development
-            if (!empty($value) && is_array($value[0])) {
-                // Already in contact format
-                return (new ContactCollection($value))->toJson();
-            } else {
-                // Convert simple email array to contact array with empty names
-                $contacts = array_map(fn($email) => ['name' => '', 'email' => $email], $value);
-                return (new ContactCollection($contacts))->toJson();
+            // Check if we have a mixed array or uniform format
+            $contacts = [];
+            foreach ($value as $item) {
+                if (is_array($item) && isset($item['name'], $item['email'])) {
+                    // Already in contact format
+                    $contacts[] = $item;
+                } elseif (is_string($item)) {
+                    // Convert simple email to contact format
+                    $contacts[] = ['name' => '', 'email' => $item];
+                }
+                // Skip invalid items
             }
+
+            return (new ContactCollection($contacts))->toJson();
         }
 
         if (is_string($value)) {

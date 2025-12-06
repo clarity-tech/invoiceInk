@@ -12,233 +12,249 @@ use Illuminate\Support\Facades\Hash;
 // Global test counter to ensure unique values
 $GLOBALS['test_counter'] = $GLOBALS['test_counter'] ?? 0;
 
-function getUniqueTestId(): int
-{
-    return ++$GLOBALS['test_counter'].rand(1, 9999999);
+if (! function_exists('getUniqueTestId')) {
+    function getUniqueTestId(): int
+    {
+        return ++$GLOBALS['test_counter'].rand(1, 9999999);
+    }
 }
 
-function makeUniqueInvoiceNumber(string $baseNumber): string
-{
-    // With database cleanup, just add a simple counter for uniqueness within test run
-    $counter = getUniqueTestId();
+if (! function_exists('makeUniqueInvoiceNumber')) {
+    function makeUniqueInvoiceNumber(string $baseNumber): string
+    {
+        // With database cleanup, just add a simple counter for uniqueness within test run
+        $counter = getUniqueTestId();
 
-    return $baseNumber.'-T'.$counter;
+        return $baseNumber.'-T'.$counter;
+    }
 }
 
-function createUserWithTeam(array $userAttributes = [], array $teamAttributes = []): User
-{
-    $defaultUserAttributes = [
-        'name' => 'Test User',
-        'email' => 'user'.uniqid().rand(1, 99999999).'@example.test',
-        'email_verified_at' => now(),
-        'password' => 'password', // Laravel will hash this automatically via User model cast
-    ];
-
-    $user = User::create(array_merge($defaultUserAttributes, $userAttributes));
-
-    $defaultTeamAttributes = [
-        'name' => 'Test Organization',
-        'user_id' => $user->id, // Required for proper team ownership
-        'personal_team' => true,
-        'company_name' => 'Test Organization Inc.',
-        'currency' => 'INR',
-    ];
-
-    $team = $user->ownedTeams()->create(array_merge($defaultTeamAttributes, $teamAttributes));
-
-    // Set the team as the user's current team
-    $user->switchTeam($team);
-
-    return $user->fresh(['teams', 'currentTeam']);
-}
-
-function createOrganizationWithLocation(array $orgAttributes = [], array $locationAttributes = [], ?User $user = null): Organization
-{
-    // Create a user with team if not provided
-    if (! $user && auth()->check()) {
-        $user = auth()->user();
-    } elseif (! $user) {
-        $user = createUserWithTeam();
-    }
-
-    $defaultLocationAttributes = [
-        'name' => 'Head Office',
-        'address_line_1' => '123 Business Street',
-        'city' => 'Business City',
-        'state' => 'Business State',
-        'country' => 'IN',
-        'postal_code' => '12345',
-        'locatable_type' => Organization::class,
-        'locatable_id' => 1, // Temporary
-    ];
-
-    $location = Location::create(array_merge($defaultLocationAttributes, $locationAttributes));
-
-    $defaultOrgAttributes = [
-        'name' => 'Test Organization',
-        'personal_team' => false,
-        'company_name' => 'Test Organization Inc.',
-        'tax_number' => 'TX-'.getUniqueTestId(),
-        'registration_number' => 'REG-'.getUniqueTestId(),
-        'emails' => new ContactCollection([['name' => 'Test Org Contact', 'email' => 'org'.getUniqueTestId().'@example.test']]),
-        'phone' => '+1-555-0123',
-        'website' => 'https://testorg.com',
-        'currency' => 'INR',
-        'country_code' => 'IN',
-        'financial_year_type' => 'april_march',
-        'financial_year_start_month' => 4,
-        'financial_year_start_day' => 1,
-        'primary_location_id' => $location->id,
-        'setup_completed_at' => now(), // Mark setup as complete for tests
-    ];
-
-    $organization = $user->currentTeam;
-    $organization->update(array_merge($defaultOrgAttributes, $orgAttributes));
-
-    // Update location with correct organization ID
-    $location->update(['locatable_id' => $organization->id]);
-
-    return $organization->fresh(['primaryLocation']);
-}
-
-function createCustomerWithLocation(array $customerAttributes = [], array $locationAttributes = [], ?Organization $organization = null): Customer
-{
-    // Create an organization if not provided
-    if (! $organization) {
-        $organization = createOrganizationWithLocation();
-    }
-
-    $defaultLocationAttributes = [
-        'name' => 'Customer Office',
-        'address_line_1' => '456 Customer Avenue',
-        'city' => 'Customer City',
-        'state' => 'Customer State',
-        'country' => 'IN',
-        'postal_code' => '54321',
-        'locatable_type' => Customer::class,
-        'locatable_id' => 1, // Temporary
-    ];
-
-    $location = Location::create(array_merge($defaultLocationAttributes, $locationAttributes));
-
-    $defaultCustomerAttributes = [
-        'name' => 'Test Customer',
-        'emails' => new ContactCollection([['name' => 'Test Customer Contact', 'email' => 'customer'.getUniqueTestId().'@example.test']]),
-        'primary_location_id' => $location->id,
-        'organization_id' => $organization->id,
-    ];
-
-    $customer = Customer::create(array_merge($defaultCustomerAttributes, $customerAttributes));
-
-    // Update location with correct customer ID
-    $location->update(['locatable_id' => $customer->id]);
-
-    return $customer->fresh(['primaryLocation']);
-}
-
-function createInvoiceWithItems(
-    array $invoiceAttributes = [],
-    ?array $items = null,
-    ?Organization $organization = null,
-    ?Customer $customer = null
-): Invoice {
-    if (! $organization) {
-        $organization = createOrganizationWithLocation();
-    }
-
-    if (! $customer) {
-        $customer = createCustomerWithLocation([], [], $organization);
-    }
-
-    $defaultInvoiceAttributes = [
-        'type' => 'invoice',
-        'organization_id' => $organization->id,
-        'organization_location_id' => $organization->primary_location_id,
-        'customer_id' => $customer->id,
-        'customer_location_id' => $customer->primary_location_id,
-        'invoice_number' => 'INV-'.fake()->unique()->numerify('########'),
-        'status' => 'draft',
-        'currency' => $organization->currency ?? 'INR',
-        'exchange_rate' => 1.000000,
-        'subtotal' => 10000, // 100.00 in cents
-        'tax' => 1800,       // 18.00 in cents
-        'total' => 11800,    // 118.00 in cents
-        'email_recipients' => ['customer@example.com'],
-    ];
-
-    // Merge attributes, only make auto-generated invoice numbers unique
-    $mergedAttributes = array_merge($defaultInvoiceAttributes, $invoiceAttributes);
-
-    // Only apply uniqueness suffix if invoice_number wasn't explicitly provided in test
-    if (! isset($invoiceAttributes['invoice_number']) && isset($mergedAttributes['invoice_number'])) {
-        $mergedAttributes['invoice_number'] = makeUniqueInvoiceNumber($mergedAttributes['invoice_number']);
-    }
-
-    $invoice = Invoice::create($mergedAttributes);
-
-    // Create default items if none provided
-    if ($items === null) {
-        $items = [
-            [
-                'description' => 'Test Product 1',
-                'quantity' => 2,
-                'unit_price' => 5000, // 50.00 in cents
-                'tax_rate' => 18.00,  // 18.00%
-            ],
-        ];
-    }
-
-    // Create invoice items
-    foreach ($items as $itemData) {
-        $defaultItemAttributes = [
-            'invoice_id' => $invoice->id,
-            'description' => 'Test Item',
-            'quantity' => 1,
-            'unit_price' => 10000, // 100.00 in cents
-            'tax_rate' => 18.00,   // 18.00%
-        ];
-
-        InvoiceItem::create(array_merge($defaultItemAttributes, $itemData));
-    }
-
-    return $invoice->fresh(['items', 'organizationLocation', 'customerLocation', 'customer']);
-}
-
-function createLocation(string $locatableType, int $locatableId, array $attributes = []): Location
-{
-    $defaultAttributes = [
-        'name' => 'Default Location',
-        'address_line_1' => '123 Default Street',
-        'city' => 'Default City',
-        'state' => 'Default State',
-        'country' => 'IN',
-        'postal_code' => '12345',
-        'locatable_type' => $locatableType,
-        'locatable_id' => $locatableId,
-    ];
-
-    return Location::create(array_merge($defaultAttributes, $attributes));
-}
-
-function loginUserInBrowser($browser, ?User $user = null): User
-{
-    // Create user inline if not provided - this ensures fresh user for each test
-    if (! $user) {
-        $user = User::factory()->withPersonalTeam()->create([
-            'name' => 'Browser Test User',
-            'email' => 'browser'.uniqid().rand(10000, 99999).'@example.test',
-            'password' => 'password',
+if (! function_exists('createUserWithTeam')) {
+    function createUserWithTeam(array $userAttributes = [], array $teamAttributes = []): User
+    {
+        $defaultUserAttributes = [
+            'name' => 'Test User',
+            'email' => 'user'.uniqid().rand(1, 99999999).'@example.test',
             'email_verified_at' => now(),
-        ]);
+            'password' => 'password', // Laravel will hash this automatically via User model cast
+        ];
+
+        $user = User::create(array_merge($defaultUserAttributes, $userAttributes));
+
+        $defaultTeamAttributes = [
+            'name' => 'Test Organization',
+            'user_id' => $user->id, // Required for proper team ownership
+            'personal_team' => true,
+            'company_name' => 'Test Organization Inc.',
+            'currency' => 'INR',
+        ];
+
+        $team = $user->ownedTeams()->create(array_merge($defaultTeamAttributes, $teamAttributes));
+
+        // Set the team as the user's current team
+        $user->switchTeam($team);
+
+        return $user->fresh(['teams', 'currentTeam']);
     }
+}
 
-    // Optimized login flow with reliable timeouts for heavy test loads
-    $browser->visit('/login')
-        ->waitForText('Email', 15) // Increased timeout for full test suite reliability
-        ->type('email', $user->email)
-        ->type('password', 'password')
-        ->press('LOG IN')
-        ->waitForLocation('/dashboard', 15); // Increased timeout for redirect
+if (! function_exists('createOrganizationWithLocation')) {
+    function createOrganizationWithLocation(array $orgAttributes = [], array $locationAttributes = [], ?User $user = null): Organization
+    {
+        // Create a user with team if not provided
+        if (! $user && auth()->check()) {
+            $user = auth()->user();
+        } elseif (! $user) {
+            $user = createUserWithTeam();
+        }
 
-    return $user;
+        $defaultLocationAttributes = [
+            'name' => 'Head Office',
+            'address_line_1' => '123 Business Street',
+            'city' => 'Business City',
+            'state' => 'Business State',
+            'country' => 'IN',
+            'postal_code' => '12345',
+            'locatable_type' => Organization::class,
+            'locatable_id' => 1, // Temporary
+        ];
+
+        $location = Location::create(array_merge($defaultLocationAttributes, $locationAttributes));
+
+        $defaultOrgAttributes = [
+            'name' => 'Test Organization',
+            'personal_team' => false,
+            'company_name' => 'Test Organization Inc.',
+            'tax_number' => 'TX-'.getUniqueTestId(),
+            'registration_number' => 'REG-'.getUniqueTestId(),
+            'emails' => new ContactCollection([['name' => 'Test Org Contact', 'email' => 'org'.getUniqueTestId().'@example.test']]),
+            'phone' => '+1-555-0123',
+            'website' => 'https://testorg.com',
+            'currency' => 'INR',
+            'country_code' => 'IN',
+            'financial_year_type' => 'april_march',
+            'financial_year_start_month' => 4,
+            'financial_year_start_day' => 1,
+            'primary_location_id' => $location->id,
+            'setup_completed_at' => now(), // Mark setup as complete for tests
+        ];
+
+        $organization = $user->currentTeam;
+        $organization->update(array_merge($defaultOrgAttributes, $orgAttributes));
+
+        // Update location with correct organization ID
+        $location->update(['locatable_id' => $organization->id]);
+
+        return $organization->fresh(['primaryLocation']);
+    }
+}
+
+if (! function_exists('createCustomerWithLocation')) {
+    function createCustomerWithLocation(array $customerAttributes = [], array $locationAttributes = [], ?Organization $organization = null): Customer
+    {
+        // Create an organization if not provided
+        if (! $organization) {
+            $organization = createOrganizationWithLocation();
+        }
+
+        $defaultLocationAttributes = [
+            'name' => 'Customer Office',
+            'address_line_1' => '456 Customer Avenue',
+            'city' => 'Customer City',
+            'state' => 'Customer State',
+            'country' => 'IN',
+            'postal_code' => '54321',
+            'locatable_type' => Customer::class,
+            'locatable_id' => 1, // Temporary
+        ];
+
+        $location = Location::create(array_merge($defaultLocationAttributes, $locationAttributes));
+
+        $defaultCustomerAttributes = [
+            'name' => 'Test Customer',
+            'emails' => new ContactCollection([['name' => 'Test Customer Contact', 'email' => 'customer'.getUniqueTestId().'@example.test']]),
+            'primary_location_id' => $location->id,
+            'organization_id' => $organization->id,
+        ];
+
+        $customer = Customer::create(array_merge($defaultCustomerAttributes, $customerAttributes));
+
+        // Update location with correct customer ID
+        $location->update(['locatable_id' => $customer->id]);
+
+        return $customer->fresh(['primaryLocation']);
+    }
+}
+
+if (! function_exists('createInvoiceWithItems')) {
+    function createInvoiceWithItems(
+        array $invoiceAttributes = [],
+        ?array $items = null,
+        ?Organization $organization = null,
+        ?Customer $customer = null
+    ): Invoice {
+        if (! $organization) {
+            $organization = createOrganizationWithLocation();
+        }
+
+        if (! $customer) {
+            $customer = createCustomerWithLocation([], [], $organization);
+        }
+
+        $defaultInvoiceAttributes = [
+            'type' => 'invoice',
+            'organization_id' => $organization->id,
+            'organization_location_id' => $organization->primary_location_id,
+            'customer_id' => $customer->id,
+            'customer_location_id' => $customer->primary_location_id,
+            'invoice_number' => 'INV-'.fake()->unique()->numerify('########'),
+            'status' => 'draft',
+            'currency' => $organization->currency ?? 'INR',
+            'exchange_rate' => 1.000000,
+            'subtotal' => 10000, // 100.00 in cents
+            'tax' => 1800,       // 18.00 in cents
+            'total' => 11800,    // 118.00 in cents
+            'email_recipients' => ['customer@example.com'],
+        ];
+
+        // Merge attributes, only make auto-generated invoice numbers unique
+        $mergedAttributes = array_merge($defaultInvoiceAttributes, $invoiceAttributes);
+
+        // Only apply uniqueness suffix if invoice_number wasn't explicitly provided in test
+        if (! isset($invoiceAttributes['invoice_number']) && isset($mergedAttributes['invoice_number'])) {
+            $mergedAttributes['invoice_number'] = makeUniqueInvoiceNumber($mergedAttributes['invoice_number']);
+        }
+
+        $invoice = Invoice::create($mergedAttributes);
+
+        // Create default items if none provided
+        if ($items === null) {
+            $items = [
+                [
+                    'description' => 'Test Product 1',
+                    'quantity' => 2,
+                    'unit_price' => 5000, // 50.00 in cents
+                    'tax_rate' => 18.00,  // 18.00%
+                ],
+            ];
+        }
+
+        // Create invoice items
+        foreach ($items as $itemData) {
+            $defaultItemAttributes = [
+                'invoice_id' => $invoice->id,
+                'description' => 'Test Item',
+                'quantity' => 1,
+                'unit_price' => 10000, // 100.00 in cents
+                'tax_rate' => 18.00,   // 18.00%
+            ];
+
+            InvoiceItem::create(array_merge($defaultItemAttributes, $itemData));
+        }
+
+        return $invoice->fresh(['items', 'organizationLocation', 'customerLocation', 'customer']);
+    }
+}
+
+if (! function_exists('createLocation')) {
+    function createLocation(string $locatableType, int $locatableId, array $attributes = []): Location
+    {
+        $defaultAttributes = [
+            'name' => 'Default Location',
+            'address_line_1' => '123 Default Street',
+            'city' => 'Default City',
+            'state' => 'Default State',
+            'country' => 'IN',
+            'postal_code' => '12345',
+            'locatable_type' => $locatableType,
+            'locatable_id' => $locatableId,
+        ];
+
+        return Location::create(array_merge($defaultAttributes, $attributes));
+    }
+}
+
+if (! function_exists('loginUserInBrowser')) {
+    function loginUserInBrowser($browser, ?User $user = null): User
+    {
+        // Create user inline if not provided - this ensures fresh user for each test
+        if (! $user) {
+            $user = User::factory()->withPersonalTeam()->create([
+                'name' => 'Browser Test User',
+                'email' => 'browser'.uniqid().rand(10000, 99999).'@example.test',
+                'password' => 'password',
+                'email_verified_at' => now(),
+            ]);
+        }
+
+        // Optimized login flow with reliable timeouts for heavy test loads
+        $browser->visit('/login')
+            ->waitForText('Email', 15) // Increased timeout for full test suite reliability
+            ->type('email', $user->email)
+            ->type('password', 'password')
+            ->press('LOG IN')
+            ->waitForLocation('/dashboard', 15); // Increased timeout for redirect
+
+        return $user;
+    }
 }

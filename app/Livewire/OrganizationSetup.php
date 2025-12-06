@@ -103,8 +103,9 @@ class OrganizationSetup extends Component
             $this->website = $this->organization->website ?? '';
             $this->notes = $this->organization->notes ?? '';
             $this->phone = $this->organization->phone ?? '';
-            $this->emails = $this->organization->emails ? $this->organization->emails->getEmails() : [''];
-            $this->currency = $this->organization->currency?->value ?? Currency::default()->value;
+            $emails = $this->organization->emails ? array_column($this->organization->emails->toArray(), 'email') : [];
+            $this->emails = ! empty($emails) ? $emails : [''];
+            $this->currency = $this->organization->currency?->value ?? '';
             $this->country_code = $this->organization->country_code?->value ?? null;
             $this->financial_year_type = $this->organization->financial_year_type?->value ?? null;
             $this->financial_year_start_month = $this->organization->financial_year_start_month ?? 4;
@@ -218,7 +219,6 @@ class OrganizationSetup extends Component
             ]),
             4 => $this->validate([
                 'emails' => 'required|array|min:1',
-                'emails.*' => 'nullable|email',
                 'phone' => 'nullable|string|max:20',
             ]),
             default => null
@@ -256,14 +256,29 @@ class OrganizationSetup extends Component
             }
         }
 
-        $filteredEmails = array_filter($this->emails, fn ($email) => ! empty(trim($email)));
+        // Filter out empty emails and validate formats
+        $validEmails = [];
+        foreach ($this->emails as $index => $email) {
+            $email = is_string($email) ? trim($email) : '';
+            if ($email !== '') {
+                if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $this->addError("emails.{$index}", 'Please provide a valid email address.');
+                    $this->currentStep = 4;
 
-        if (empty($filteredEmails)) {
+                    return;
+                }
+                $validEmails[] = $email;
+            }
+        }
+
+        if (empty($validEmails)) {
             $this->addError('emails.0', 'At least one email is required.');
             $this->currentStep = 4;
 
             return;
         }
+
+        $filteredEmails = $validEmails;
 
         // Convert simple emails to ContactCollection format (email with empty name)
         $contactData = array_map(fn ($email) => ['name' => '', 'email' => $email], $filteredEmails);

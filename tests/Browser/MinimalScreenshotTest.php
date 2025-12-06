@@ -18,7 +18,7 @@ class MinimalScreenshotTest extends DuskTestCase
             $browser->visit('/register')
                 ->pause(3000)
                 ->screenshot('user-onboarding/01-registration-page');
-            
+
             // 2. Login Page
             $browser->visit('/login')
                 ->pause(3000)
@@ -29,7 +29,7 @@ class MinimalScreenshotTest extends DuskTestCase
                 'name' => 'Demo User',
                 'email' => 'demo@test.test',
             ]);
-            
+
             $user->currentTeam->update([
                 'name' => 'Demo Organization',
                 'setup_completed_at' => null,
@@ -52,7 +52,7 @@ class MinimalScreenshotTest extends DuskTestCase
                 'name' => 'Completed Demo',
                 'email' => 'completed@test.test',
             ]);
-            
+
             $completedUser->currentTeam->update([
                 'name' => 'Completed Organization',
                 'company_name' => 'Demo Corp Ltd',
@@ -87,7 +87,7 @@ class MinimalScreenshotTest extends DuskTestCase
                 'name' => 'Setup Process Demo',
                 'email' => 'setup.process@test.test',
             ]);
-            
+
             $user->currentTeam->update(['setup_completed_at' => null]);
 
             $browser->loginAs($user)
@@ -128,7 +128,7 @@ class MinimalScreenshotTest extends DuskTestCase
             $invoice->save();
 
             // Public invoice view
-            $browser->visit("/invoices/{$invoice->ulid}")
+            $browser->visit("/invoices/view/{$invoice->ulid}")
                 ->pause(4000)
                 ->screenshot('invoice-journey/02-public-invoice-view');
 
@@ -148,7 +148,7 @@ class MinimalScreenshotTest extends DuskTestCase
             $estimate->save();
 
             // Public estimate view
-            $browser->visit("/estimates/{$estimate->ulid}")
+            $browser->visit("/estimates/view/{$estimate->ulid}")
                 ->pause(4000)
                 ->screenshot('estimate-journey/01-public-estimate-view');
         });

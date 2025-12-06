@@ -272,9 +272,9 @@ class ComprehensiveScreenshotsTest extends DuskTestCase
         $user = User::factory()->withPersonalTeam()->create();
         $organization = $user->currentTeam;
         $organization->update(['setup_completed_at' => now()]);
-        
+
         $customer = Customer::factory()->create(['organization_id' => $organization->id]);
-        
+
         $invoice = \App\Models\Invoice::factory()->create([
             'organization_id' => $organization->id,
             'customer_id' => $customer->id,
@@ -283,7 +283,7 @@ class ComprehensiveScreenshotsTest extends DuskTestCase
 
         $this->browse(function (Browser $browser) use ($invoice) {
             // Public invoice view
-            $browser->visit("/invoices/{$invoice->ulid}")
+            $browser->visit("/invoices/view/{$invoice->ulid}")
                 ->pause(3000)
                 ->screenshot('invoice-journey/10-public-invoice-view');
         });
@@ -297,7 +297,7 @@ class ComprehensiveScreenshotsTest extends DuskTestCase
 
         $this->browse(function (Browser $browser) use ($estimate) {
             // Public estimate view
-            $browser->visit("/estimates/{$estimate->ulid}")
+            $browser->visit("/estimates/view/{$estimate->ulid}")
                 ->pause(3000)
                 ->screenshot('estimate-journey/07-public-estimate-view');
         });

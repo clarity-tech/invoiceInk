@@ -22,7 +22,7 @@ class PublicViewScreenshotTest extends DuskTestCase
                 'name' => 'Demo Company Owner',
                 'email' => 'owner@democorp.test',
             ]);
-            
+
             $organization = $user->currentTeam;
             $organization->update([
                 'company_name' => 'Demo Corporation Ltd',
@@ -56,7 +56,7 @@ class PublicViewScreenshotTest extends DuskTestCase
                 'name' => 'Customer Office',
                 'address_line_1' => '789 Innovation Drive',
                 'city' => 'Pune',
-                'state' => 'Maharashtra', 
+                'state' => 'Maharashtra',
                 'country' => 'IN',
                 'postal_code' => '411001',
                 'locatable_type' => Customer::class,
@@ -94,7 +94,7 @@ class PublicViewScreenshotTest extends DuskTestCase
             ]);
 
             // Screenshot: Public Invoice View
-            $browser->visit("/invoices/{$invoice->ulid}")
+            $browser->visit("/invoices/view/{$invoice->ulid}")
                 ->pause(4000)
                 ->screenshot('invoice-journey/02-public-invoice-view');
 
@@ -144,7 +144,7 @@ class PublicViewScreenshotTest extends DuskTestCase
             ]);
 
             // Screenshot: Public Estimate View
-            $browser->visit("/estimates/{$estimate->ulid}")
+            $browser->visit("/estimates/view/{$estimate->ulid}")
                 ->pause(4000)
                 ->screenshot('estimate-journey/01-public-estimate-view');
 
@@ -156,7 +156,7 @@ class PublicViewScreenshotTest extends DuskTestCase
 
             // Try to show PDF views if working
             try {
-                $browser->visit("/invoices/{$invoice->ulid}/pdf")
+                $browser->visit("/invoices/view/{$invoice->ulid}/pdf")
                     ->pause(3000)
                     ->screenshot('invoice-journey/04-invoice-pdf-view');
             } catch (\Exception $e) {
@@ -164,7 +164,7 @@ class PublicViewScreenshotTest extends DuskTestCase
             }
 
             try {
-                $browser->visit("/estimates/{$estimate->ulid}/pdf")
+                $browser->visit("/estimates/view/{$estimate->ulid}/pdf")
                     ->pause(3000)
                     ->screenshot('estimate-journey/02-estimate-pdf-view');
             } catch (\Exception $e) {
@@ -181,7 +181,7 @@ class PublicViewScreenshotTest extends DuskTestCase
                 'name' => 'Business Owner',
                 'email' => 'owner@business.test',
             ]);
-            
+
             $organization = $user->currentTeam;
             $organization->update([
                 'company_name' => 'Professional Services LLC',
