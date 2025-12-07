@@ -11,10 +11,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Invoice extends Model
+class Invoice extends Model implements HasMedia
 {
-    use HasFactory, HasUlids;
+    use HasFactory, HasUlids, InteractsWithMedia;
 
     protected $fillable = [
         'type',
@@ -23,6 +25,7 @@ class Invoice extends Model
         'organization_location_id',
         'customer_id',
         'customer_location_id',
+        'customer_shipping_location_id',
         'invoice_number',
         'invoice_numbering_series_id',
         'status',
@@ -71,6 +74,11 @@ class Invoice extends Model
     public function customerLocation(): BelongsTo
     {
         return $this->belongsTo(Location::class, 'customer_location_id');
+    }
+
+    public function customerShippingLocation(): BelongsTo
+    {
+        return $this->belongsTo(Location::class, 'customer_shipping_location_id');
     }
 
     public function items(): HasMany
@@ -143,5 +151,14 @@ class Invoice extends Model
     public function getCurrencySymbolAttribute(): string
     {
         return Money::{$this->currency->value}(0)->getCurrency()->getSymbol();
+    }
+
+    /**
+     * Register media collections for invoice attachments
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('attachments')
+            ->useDisk('local');
     }
 }

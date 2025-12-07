@@ -76,6 +76,6 @@ class DocumentMailer extends Mailable implements ShouldQueue
     {
         $type = $this->invoice->isInvoice() ? 'invoices' : 'estimates';
 
-        return url("/{$type}/{$this->invoice->ulid}");
+        return url("/{$type}/view/{$this->invoice->ulid}");
     }
 }

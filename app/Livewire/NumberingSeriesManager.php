@@ -58,7 +58,7 @@ class NumberingSeriesManager extends Component
     public function mount(): void
     {
         $this->reset_frequency = ResetFrequency::YEARLY;
-        $this->format_pattern = '{PREFIX}-{YEAR}-{MONTH}-{SEQUENCE:4}';
+        $this->format_pattern = '{PREFIX}{YEAR}{MONTH}{SEQUENCE:4}';
         $this->prefix = 'INV';
     }
 
@@ -180,7 +180,7 @@ class NumberingSeriesManager extends Component
         $this->location_id = null;
         $this->name = '';
         $this->prefix = 'INV';
-        $this->format_pattern = '{PREFIX}-{YEAR}-{MONTH}-{SEQUENCE:4}';
+        $this->format_pattern = '{PREFIX}{YEAR}{MONTH}{SEQUENCE:4}';
         $this->current_number = 0;
         $this->reset_frequency = ResetFrequency::YEARLY;
         $this->is_active = true;
@@ -240,10 +240,10 @@ class NumberingSeriesManager extends Component
 
         // Set format pattern based on organization's financial year setup
         if ($organization->financial_year_type && $organization->country_code) {
-            $tempSeries->format_pattern = '{PREFIX}-{FY}-{SEQUENCE:4}';
+            $tempSeries->format_pattern = '{PREFIX}{FY}{SEQUENCE:4}';
             $tempSeries->reset_frequency = ResetFrequency::FINANCIAL_YEAR;
         } else {
-            $tempSeries->format_pattern = '{PREFIX}-{YEAR}-{MONTH}-{SEQUENCE:4}';
+            $tempSeries->format_pattern = '{PREFIX}{YEAR}{MONTH}{SEQUENCE:4}';
             $tempSeries->reset_frequency = ResetFrequency::YEARLY;
         }
 
@@ -300,14 +300,23 @@ class NumberingSeriesManager extends Component
         }
 
         try {
+            // Get the organization to include financial year information
+            $organization = Organization::find($this->organization_id);
+
             // Create a temporary series to preview the next number
             $tempSeries = new InvoiceNumberingSeries([
+                'organization_id' => $this->organization_id,
                 'prefix' => $this->prefix,
                 'format_pattern' => $this->format_pattern,
                 'current_number' => $this->current_number,
                 'reset_frequency' => $this->reset_frequency,
                 'last_reset_at' => now(),
             ]);
+
+            // Set the organization relationship for FY token support
+            if ($organization) {
+                $tempSeries->setRelation('organization', $organization);
+            }
 
             return $this->numberingService->previewNextNumber($tempSeries);
         } catch (\Exception $e) {

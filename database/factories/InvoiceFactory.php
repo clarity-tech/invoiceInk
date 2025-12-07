@@ -40,6 +40,10 @@ class InvoiceFactory extends Factory
             'customer_location_id' => function (array $attributes) {
                 return Customer::find($attributes['customer_id'])->primaryLocation->id;
             },
+            'customer_shipping_location_id' => function (array $attributes) {
+                // Default shipping location same as billing location
+                return Customer::find($attributes['customer_id'])->primaryLocation->id;
+            },
             'invoice_number' => $number,
             'status' => fake()->randomElement(['draft', 'sent', 'paid', 'void']),
             'issued_at' => fake()->optional(0.8)->dateTimeBetween('-6 months', 'now'),
@@ -59,9 +63,9 @@ class InvoiceFactory extends Factory
         return $this->afterCreating(function (Invoice $invoice) {
             // Use numbering service for invoices after creation
             if ($invoice->type === 'invoice') {
-                $numberingService = new InvoiceNumberingService();
+                $numberingService = new InvoiceNumberingService;
                 $invoiceNumberData = $numberingService->generateInvoiceNumber(
-                    $invoice->organization, 
+                    $invoice->organization,
                     $invoice->organizationLocation
                 );
                 $invoice->update([
@@ -378,7 +382,7 @@ class InvoiceFactory extends Factory
     }
 
     /**
-     * AED invoice configuration  
+     * AED invoice configuration
      */
     public function aedInvoice(): static
     {

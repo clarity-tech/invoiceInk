@@ -6,7 +6,6 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Organization;
-use Illuminate\Database\Eloquent\Factories\Factory;
 
 class InvoiceSeeder extends ProductionSafeSeeder
 {
@@ -42,33 +41,33 @@ class InvoiceSeeder extends ProductionSafeSeeder
     private function createInvoicesForCustomer(Organization $organization, Customer $customer): int
     {
         $invoiceCount = 0;
-        
+
         // Create invoices based on customer location and organization type
         if ($this->isForeignCustomer($customer, $organization)) {
             // Create foreign currency invoices for foreign customers
             $invoiceCount += $this->createForeignCurrencyInvoices($organization, $customer);
         }
-        
-        // Always create some domestic currency invoices 
+
+        // Always create some domestic currency invoices
         $domesticInvoices = $this->createDomesticCurrencyInvoices($organization, $customer);
         $invoiceCount += $domesticInvoices;
-        
+
         return $invoiceCount;
     }
-    
+
     private function isForeignCustomer(Customer $customer, Organization $organization): bool
     {
         $customerCountry = $customer->primaryLocation?->country ?? 'IN';
         $orgCountry = $organization->country_code?->value ?? 'IN';
-        
+
         return $customerCountry !== $orgCountry;
     }
-    
+
     private function createForeignCurrencyInvoices(Organization $organization, Customer $customer): int
     {
         $customerCountry = $customer->primaryLocation?->country ?? 'IN';
         $invoices = [];
-        
+
         // Create foreign currency invoices based on customer location
         if ($customerCountry === 'AE') {
             $invoices = [
@@ -86,7 +85,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 Invoice::factory()->techServicesInvoice()->eurInvoice()->overdueInvoice(),
             ];
         }
-        
+
         $invoiceCount = 0;
         foreach ($invoices as $factory) {
             $invoice = $factory
@@ -95,23 +94,24 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 ->state([
                     'organization_location_id' => $organization->primaryLocation->id,
                     'customer_location_id' => $customer->primaryLocation->id,
+                    'customer_shipping_location_id' => $customer->primaryLocation->id,
                 ])
                 ->withLocations()
                 ->create();
-                
+
             $this->createInvoiceItemsForInvoice($invoice, $organization);
             $invoiceCount++;
         }
-        
+
         return $invoiceCount;
     }
-    
+
     private function createDomesticCurrencyInvoices(Organization $organization, Customer $customer): int
     {
         // Get a subset of domestic invoices to avoid overwhelming data
         $allFactories = $this->getInvoiceFactoriesForOrganization($organization);
         $domesticFactories = array_slice($allFactories, 0, 2); // Take first 2 patterns
-        
+
         $invoiceCount = 0;
         foreach ($domesticFactories as $factory) {
             $invoice = $factory
@@ -120,15 +120,16 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 ->state([
                     'organization_location_id' => $organization->primaryLocation->id,
                     'customer_location_id' => $customer->primaryLocation->id,
+                    'customer_shipping_location_id' => $customer->primaryLocation->id,
                     'currency' => $organization->currency,
                 ])
                 ->withLocations()
                 ->create();
-                
+
             $this->createInvoiceItemsForInvoice($invoice, $organization);
             $invoiceCount++;
         }
-        
+
         return $invoiceCount;
     }
 
@@ -143,7 +144,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 Invoice::factory()->estimate()->manufacturingInvoice()->draft(),
                 Invoice::factory()->estimate()->manufacturingInvoice()->sent(),
             ],
-            
+
             str_contains($organization->name, 'TechStart') => [
                 Invoice::factory()->techServicesInvoice()->recentDraft(),
                 Invoice::factory()->techServicesInvoice()->sent(),
@@ -152,7 +153,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 Invoice::factory()->estimate()->techServicesInvoice()->approvedEstimate(),
                 Invoice::factory()->estimate()->techServicesInvoice()->draft(),
             ],
-            
+
             str_contains($organization->name, 'EuroConsult') => [
                 Invoice::factory()->consultingInvoice()->eurInvoice()->recentlyPaid(),
                 Invoice::factory()->consultingInvoice()->eurInvoice()->sent(),
@@ -160,7 +161,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 Invoice::factory()->estimate()->consultingInvoice()->eurInvoice()->sent(),
                 Invoice::factory()->estimate()->consultingInvoice()->eurInvoice()->rejectedEstimate(),
             ],
-            
+
             str_contains($organization->name, 'Demo Company') => [
                 Invoice::factory()->digitalMarketingInvoice()->inrInvoice()->recentlyPaid(),
                 Invoice::factory()->techServicesInvoice()->inrInvoice()->sent(),
@@ -172,13 +173,13 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 Invoice::factory()->techServicesInvoice()->aedInvoice()->recentlyPaid(),
                 Invoice::factory()->estimate()->consultingInvoice()->aedInvoice()->draft(),
             ],
-            
+
             str_contains($organization->name, 'Dubai Trading') => [
                 Invoice::factory()->consultingInvoice()->aedInvoice()->sent(),
                 Invoice::factory()->techServicesInvoice()->aedInvoice()->recentlyPaid(),
                 Invoice::factory()->estimate()->consultingInvoice()->aedInvoice()->draft(),
             ],
-            
+
             // GlobalCorp organizations
             str_contains($organization->name, 'GlobalCorp Holdings') => [
                 Invoice::factory()->enterpriseAmount()->consultingInvoice()->inrInvoice()->recentlyPaid(),
@@ -189,7 +190,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 Invoice::factory()->techServicesInvoice()->eurInvoice()->sent(),
                 Invoice::factory()->estimate()->manufacturingInvoice()->aedInvoice()->draft(),
             ],
-            
+
             str_contains($organization->name, 'GlobalCorp Tech') => [
                 Invoice::factory()->techServicesInvoice()->inrInvoice()->recentlyPaid(),
                 Invoice::factory()->digitalMarketingInvoice()->inrInvoice()->sent(),
@@ -198,13 +199,13 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 Invoice::factory()->techServicesInvoice()->usdInvoice()->recentlyPaid(),
                 Invoice::factory()->consultingInvoice()->eurInvoice()->overdueInvoice(),
             ],
-            
+
             str_contains($organization->name, 'GlobalCorp Business') => [
                 Invoice::factory()->consultingInvoice()->inrInvoice()->overdueInvoice(),
                 Invoice::factory()->techServicesInvoice()->inrInvoice()->recentlyPaid(),
                 Invoice::factory()->estimate()->consultingInvoice()->inrInvoice()->sent(),
             ],
-            
+
             default => [
                 Invoice::factory()->mediumAmount()->sent(),
                 Invoice::factory()->smallAmount()->recentlyPaid(),
@@ -217,7 +218,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
     {
         // Create appropriate invoice items based on invoice type and organization
         $itemsData = $this->getInvoiceItemsForType($invoice->type, $organization);
-        
+
         foreach ($itemsData as $itemData) {
             InvoiceItem::create([
                 'invoice_id' => $invoice->id,
@@ -228,7 +229,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
             ]);
         }
     }
-    
+
     private function getInvoiceItemsForType(string $invoiceType, Organization $organization): array
     {
         return match (true) {
@@ -305,7 +306,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
             ],
         ]);
     }
-    
+
     private function getTradingItems(Organization $organization): array
     {
         return fake()->randomElement([
@@ -321,7 +322,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
             ],
         ]);
     }
-    
+
     private function getEnterpriseItems(Organization $organization): array
     {
         return fake()->randomElement([
@@ -337,7 +338,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
             ],
         ]);
     }
-    
+
     private function getGeneralServiceItems(Organization $organization): array
     {
         return [
@@ -351,7 +352,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
         return match ($organization->currency->value) {
             'USD' => fake()->randomElement([0, 4, 6, 8]), // US state sales tax rates
             'EUR' => fake()->randomElement([0, 7, 19]), // German VAT rates
-            'GBP' => fake()->randomElement([0, 5, 20]), // UK VAT rates  
+            'GBP' => fake()->randomElement([0, 5, 20]), // UK VAT rates
             'INR' => fake()->randomElement([0, 5, 12, 18, 28]), // GST rates
             'AED' => fake()->randomElement([0, 5]), // UAE VAT rates
             default => 10,

@@ -32,12 +32,12 @@
                         <h1 class="text-2xl font-bold">{{ __('documents.headers.invoice_upper') }}</h1>
                         <p class="text-blue-100">{{ $invoice->invoice_number }}</p>
                     </div>
-                    <div class="text-right">
+                   <!--  <div class="text-right">
                         <div class="text-sm text-blue-100">{{ __('documents.fields.status') }}</div>
                         <span class="inline-block px-3 py-1 rounded-full text-sm font-medium {{ $invoice->status->color() === 'green' ? 'bg-green-500' : ($invoice->status->color() === 'blue' ? 'bg-yellow-500' : 'bg-gray-500') }}">
                             {{ $invoice->status->label() }}
                         </span>
-                    </div>
+                    </div> -->
                 </div>
             </div>
 
@@ -141,7 +141,12 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             @foreach($invoice->items as $item)
                                 <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $item->description }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-900">
+                                        <div>{{ $item->description }}</div>
+                                        @if($item->sac_code)
+                                            <div class="text-xs text-gray-500 mt-1">SAC: {{ $item->sac_code }}</div>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ $item->quantity }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ $item->formatted_unit_price }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ $item->formatted_tax_rate }}</td>

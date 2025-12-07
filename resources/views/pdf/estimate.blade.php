@@ -134,7 +134,12 @@
                     <tbody class="bg-white">
                         @foreach($estimate->items as $item)
                             <tr>
-                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-900">{{ $item->description }}</td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-900">
+                                    <div>{{ $item->description }}</div>
+                                    @if($item->sac_code)
+                                        <div class="text-xs text-gray-500 mt-1">SAC: {{ $item->sac_code }}</div>
+                                    @endif
+                                </td>
                                 <td class="border border-gray-300 px-4 py-3 text-sm text-gray-900 text-right">{{ $item->quantity }}</td>
                                 <td class="border border-gray-300 px-4 py-3 text-sm text-gray-900 text-right">{{ $item->formatted_unit_price }}</td>
                                 <td class="border border-gray-300 px-4 py-3 text-sm text-gray-900 text-right">{{ $item->formatted_tax_rate }}%</td>

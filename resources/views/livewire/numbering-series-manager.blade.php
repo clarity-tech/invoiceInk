@@ -87,13 +87,16 @@
                                     <label for="format_pattern" class="block text-sm font-medium text-gray-700">
                                         Format Pattern *
                                     </label>
-                                    <input wire:model.live="format_pattern" type="text" id="format_pattern" 
+                                    <input wire:model.live="format_pattern" type="text" id="format_pattern"
                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                           placeholder="{PREFIX}-{YEAR}-{MONTH}-{SEQUENCE:4}">
+                                           placeholder="{PREFIX}{YEAR}{MONTH}{SEQUENCE:4}">
                                     @error('format_pattern') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                     <p class="mt-1 text-sm text-gray-500">
-                                        Available tokens: {PREFIX}, {YEAR}, {YEAR:2}, {MONTH}, {MONTH:3}, {DAY}, {SEQUENCE}, {SEQUENCE:4}
+                                        Available tokens: {PREFIX}, {YEAR}, {YEAR:2}, {MONTH}, {MONTH:3}, {DAY}, {SEQUENCE}, {SEQUENCE:4}, {FY}
                                     </p>
+                                    <!-- <p class="mt-1 text-xs text-gray-400">
+                                        FY tokens: {FY} = Start year (2024), {FY_FULL} = Short format (2024-25), {FY_RANGE} = Full format (2024-2025)
+                                    </p> -->
                                 </div>
 
                                 <!-- Current Number -->

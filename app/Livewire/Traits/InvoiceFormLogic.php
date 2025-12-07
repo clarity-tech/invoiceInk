@@ -16,6 +16,7 @@ use Illuminate\Validation\Rule as ValidationRule;
 use InvalidArgumentException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Rule;
+use Log;
 
 trait InvoiceFormLogic
 {
@@ -33,6 +34,9 @@ trait InvoiceFormLogic
 
     #[Rule('required|exists:locations,id')]
     public ?int $customer_location_id = null;
+
+    #[Rule('required|exists:locations,id')]
+    public ?int $customer_shipping_location_id = null;
 
     #[Rule('nullable|date')]
     public ?string $issued_at = null;
@@ -63,6 +67,14 @@ trait InvoiceFormLogic
         // Auto-set organization to current team if user is authenticated
         if (auth()->check()) {
             $this->organization_id = auth()->user()->currentTeam?->id;
+
+            // Auto-set organization location to primary location
+            if ($this->organization_id) {
+                $organization = Organization::find($this->organization_id);
+                if ($organization && $organization->primary_location_id) {
+                    $this->organization_location_id = $organization->primary_location_id;
+                }
+            }
         }
 
         $this->addItem();
@@ -84,6 +96,7 @@ trait InvoiceFormLogic
         $this->customer_id = $invoice->customerLocation->locatable_id;
         $this->organization_location_id = $invoice->organization_location_id;
         $this->customer_location_id = $invoice->customer_location_id;
+        $this->customer_shipping_location_id = $invoice->customer_shipping_location_id;
         $this->issued_at = $invoice->issued_at?->format('Y-m-d');
         $this->due_at = $invoice->due_at?->format('Y-m-d');
         $this->status = $invoice->status?->value ?? 'draft';
@@ -145,6 +158,21 @@ trait InvoiceFormLogic
         $this->calculateTotals();
     }
 
+    public function updatedCustomerId(): void
+    {
+        // Reset customer locations when customer changes
+        $this->customer_location_id = null;
+        $this->customer_shipping_location_id = null;
+
+        // Auto-select the first available customer location for both billing and shipping
+        $customerLocations = $this->customerLocations;
+        if ($customerLocations->isNotEmpty()) {
+            $firstLocationId = $customerLocations->first()->id;
+            $this->customer_location_id = $firstLocationId;
+            $this->customer_shipping_location_id = $firstLocationId;
+        }
+    }
+
     public function saveInvoice(?Invoice $existingInvoice = null): ?Invoice
     {
         logger('-----invoice_numbering_series_id-------- '.$this->invoice_numbering_series_id);
@@ -154,6 +182,7 @@ trait InvoiceFormLogic
             'customer_id' => 'required|exists:customers,id',
             'organization_location_id' => 'required|exists:locations,id',
             'customer_location_id' => 'required|exists:locations,id',
+            'customer_shipping_location_id' => 'required|exists:locations,id',
             'status' => ['required', 'string', ValidationRule::enum(InvoiceStatus::class)],
             'items.*.description' => 'required|string|max:500',
             'items.*.quantity' => 'required|integer|min:1',
@@ -168,6 +197,7 @@ trait InvoiceFormLogic
                 'customer_id' => $this->customer_id,
                 'organization_location_id' => $this->organization_location_id,
                 'customer_location_id' => $this->customer_location_id,
+                'customer_shipping_location_id' => $this->customer_shipping_location_id,
                 'status' => $this->status,
                 'issued_at' => $this->issued_at ? now()->parse($this->issued_at) : null,
                 'due_at' => $this->due_at ? now()->parse($this->due_at) : null,
@@ -212,6 +242,7 @@ trait InvoiceFormLogic
                 'customer_id' => $this->customer_id,
                 'organization_location_id' => $this->organization_location_id,
                 'customer_location_id' => $this->customer_location_id,
+                'customer_shipping_location_id' => $this->customer_shipping_location_id,
                 'invoice_number' => $invoiceNumberData ? $invoiceNumberData['invoice_number'] : $this->generateInvoiceNumber(),
                 'invoice_numbering_series_id' => $invoiceNumberData ? $invoiceNumberData['series_id'] : null,
                 'status' => 'draft',
@@ -235,6 +266,31 @@ trait InvoiceFormLogic
                 'unit_price' => (int) ($item['unit_price'] * 100), // Convert to cents
                 'tax_rate' => (int) (($item['tax_rate'] ?: 0) * 100), // Convert percentage to basis points
             ]);
+        }
+
+        // Handle file uploads if present
+        if (! empty($this->uploadedFiles)) {
+
+            foreach ($this->uploadedFiles as $file) {
+                try {
+                    if (is_object($file) && method_exists($file, 'getRealPath')) {
+                        $invoice->addMedia($file)
+                            ->toMediaCollection('attachments');
+                    } else {
+                        Log::warning('Invalid file object', [
+                            'file_type' => is_object($file) ? get_class($file) : gettype($file),
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error adding file to media library', [
+                        'error' => $e->getMessage(),
+                        'invoice_id' => $invoice->id,
+                    ]);
+                }
+            }
+
+            // Clear uploaded files after saving
+            $this->uploadedFiles = [];
         }
 
         $documentType = ucfirst($this->type);

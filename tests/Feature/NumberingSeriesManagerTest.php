@@ -41,7 +41,7 @@ class NumberingSeriesManagerTest extends TestCase
             ->set('organization_id', $organization->id)
             ->set('name', 'Test Series')
             ->set('prefix', 'TST')
-            ->set('format_pattern', '{PREFIX}-{YEAR}-{SEQUENCE:4}')
+            ->set('format_pattern', '{PREFIX}{YEAR}{SEQUENCE:4}')
             ->set('current_number', 0)
             ->set('reset_frequency', ResetFrequency::YEARLY)
             ->set('is_active', true)
@@ -55,7 +55,7 @@ class NumberingSeriesManagerTest extends TestCase
             'organization_id' => $organization->id,
             'name' => 'Test Series',
             'prefix' => 'TST',
-            'format_pattern' => '{PREFIX}-{YEAR}-{SEQUENCE:4}',
+            'format_pattern' => '{PREFIX}{YEAR}{SEQUENCE:4}',
             'current_number' => 0,
             'reset_frequency' => ResetFrequency::YEARLY->value,
             'is_active' => true,
@@ -177,13 +177,76 @@ class NumberingSeriesManagerTest extends TestCase
         $component->call('create')
             ->set('organization_id', $organization->id)
             ->set('prefix', 'TST')
-            ->set('format_pattern', '{PREFIX}-{YEAR}-{SEQUENCE:4}')
+            ->set('format_pattern', '{PREFIX}{YEAR}{SEQUENCE:4}')
             ->set('current_number', 5);
 
         $preview = $component->get('nextNumberPreview');
 
-        $this->assertStringContainsString('TST-', $preview);
-        $this->assertStringContainsString('-0006', $preview);
+        $this->assertStringContainsString('TST', $preview);
+        $this->assertStringContainsString('0006', $preview);
+    }
+
+    public function test_next_number_preview_with_financial_year(): void
+    {
+        // Use the authenticated user's current team as organization
+        $organization = $this->user->currentTeam;
+
+        // Set up financial year for the organization
+        $organization->update([
+            'financial_year_type' => \App\Enums\FinancialYearType::APRIL_MARCH,
+            'country_code' => 'IN',
+        ]);
+
+        $component = Livewire::test(\App\Livewire\NumberingSeriesManager::class);
+
+        $component->call('create')
+            ->set('organization_id', $organization->id)
+            ->set('prefix', 'INV')
+            ->set('format_pattern', '{PREFIX}{FY}{SEQUENCE:4}')
+            ->set('current_number', 5);
+
+        $preview = $component->get('nextNumberPreview');
+
+        // Preview should show the actual financial year start year only, not {FY}
+        $this->assertStringContainsString('INV', $preview);
+        $this->assertStringNotContainsString('{FY}', $preview);
+        $this->assertStringContainsString('0006', $preview);
+
+        // Verify it contains a valid format with just the start year (e.g., "INV20250006")
+        $this->assertMatchesRegularExpression('/INV\d{4}0006/', $preview);
+    }
+
+    public function test_financial_year_token_formats(): void
+    {
+        // Use the authenticated user's current team as organization
+        $organization = $this->user->currentTeam;
+
+        // Set up financial year for the organization
+        $organization->update([
+            'financial_year_type' => \App\Enums\FinancialYearType::APRIL_MARCH,
+            'country_code' => 'IN',
+        ]);
+
+        $component = Livewire::test(\App\Livewire\NumberingSeriesManager::class);
+
+        // Test {FY} - should show only start year
+        $component->call('create')
+            ->set('organization_id', $organization->id)
+            ->set('prefix', 'INV')
+            ->set('format_pattern', '{PREFIX}{FY}{SEQUENCE:4}')
+            ->set('current_number', 0);
+        $preview1 = $component->get('nextNumberPreview');
+        $this->assertMatchesRegularExpression('/INV\d{4}0001/', $preview1);
+
+        // Test {FY_FULL} - should show short format (2024-25) - includes dash in token value
+        $component->set('format_pattern', '{PREFIX}{FY_FULL}{SEQUENCE:4}');
+        $preview2 = $component->get('nextNumberPreview');
+        $this->assertMatchesRegularExpression('/INV\d{4}-\d{2}0001/', $preview2);
+
+        // Test {FY_RANGE} - should show full format (2024-2025) - includes dash in token value
+        $component->set('format_pattern', '{PREFIX}{FY_RANGE}{SEQUENCE:4}');
+        $preview3 = $component->get('nextNumberPreview');
+        $this->assertMatchesRegularExpression('/INV\d{4}-\d{4}0001/', $preview3);
     }
 
     public function test_computed_properties_work(): void

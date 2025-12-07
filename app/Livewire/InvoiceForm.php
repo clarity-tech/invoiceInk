@@ -10,14 +10,20 @@ use App\Services\PdfService;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class InvoiceForm extends Component
 {
-    use InvoiceFormLogic;
+    use InvoiceFormLogic, WithFileUploads;
 
     public string $mode = 'create'; // 'create' or 'edit'
 
     public ?Invoice $invoice = null;
+
+    // File upload properties
+    public array $uploadedFiles = [];
+
+    public $newFile = null;
 
     // Email-related properties
     public bool $showEmailModal = false;
@@ -37,6 +43,8 @@ class InvoiceForm extends Component
     public string $emailBody = '';
 
     public bool $attachPdf = true;
+
+    public array $attachInvoiceFiles = [];
 
     public function mount(?Invoice $invoice, string $type = 'invoice'): void
     {
@@ -100,6 +108,40 @@ class InvoiceForm extends Component
         return redirect()->route($routeName, ['ulid' => $this->invoice->ulid]);
     }
 
+    public function updatedNewFile(): void
+    {
+        // When a new file is uploaded, add it to the uploadedFiles array
+        if ($this->newFile) {
+            $this->uploadedFiles[] = $this->newFile;
+            $this->newFile = null; // Reset for next upload
+        }
+    }
+
+    public function removeUploadedFile(int $index): void
+    {
+        unset($this->uploadedFiles[$index]);
+        $this->uploadedFiles = array_values($this->uploadedFiles);
+    }
+
+    public function deleteAttachment(int $mediaId): void
+    {
+        if (! $this->invoice) {
+            return;
+        }
+
+        // Security check
+        if (! auth()->user()->allTeams()->contains('id', $this->invoice->organization_id)) {
+            abort(403, 'Unauthorized access to invoice.');
+        }
+
+        $media = $this->invoice->getMedia('attachments')->where('id', $mediaId)->first();
+
+        if ($media) {
+            $media->delete();
+            session()->flash('message', 'Attachment deleted successfully.');
+        }
+    }
+
     public function getPageTitleProperty(): string
     {
         if ($this->mode === 'edit') {
@@ -140,6 +182,10 @@ class InvoiceForm extends Component
             }
         }
 
+        // Auto-select all invoice attachments for email
+        $invoiceAttachments = $this->invoice->getMedia('attachments');
+        $this->attachInvoiceFiles = $invoiceAttachments->pluck('id')->toArray();
+
         $this->showEmailModal = true;
     }
 
@@ -154,6 +200,7 @@ class InvoiceForm extends Component
         $this->emailSubject = '';
         $this->emailBody = '';
         $this->attachPdf = true;
+        $this->attachInvoiceFiles = [];
         $this->resetValidation();
     }
 
@@ -435,6 +482,17 @@ class InvoiceForm extends Component
                     'as' => "{$this->invoice->invoice_number}.pdf",
                     'mime' => 'application/pdf',
                 ]);
+            }
+
+            // Attach selected invoice files
+            if (! empty($this->attachInvoiceFiles)) {
+                $selectedMedia = $this->invoice->getMedia('attachments')->whereIn('id', $this->attachInvoiceFiles);
+                foreach ($selectedMedia as $media) {
+                    $mailable->attach($media->getPath(), [
+                        'as' => $media->file_name,
+                        'mime' => $media->mime_type,
+                    ]);
+                }
             }
 
             Mail::send($mailable);

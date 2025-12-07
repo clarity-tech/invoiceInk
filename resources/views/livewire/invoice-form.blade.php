@@ -32,6 +32,33 @@
 
         <!-- Single Page Form -->
         <form wire:submit="save" class="space-y-6">
+            <!-- Organization Location Section -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Organization Location</h2>
+                @if($organization_id && $this->organizationLocations->count() > 0)
+                    <div class="max-w-md">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Location *</label>
+                        <select wire:model.live="organization_location_id"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Location</option>
+                            @foreach($this->organizationLocations as $location)
+                                <option value="{{ $location->id }}">{{ $location->name }} - {{ $location->city }}</option>
+                            @endforeach
+                        </select>
+                        @error('organization_location_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    </div>
+                @else
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3 max-w-md">
+                        <p class="text-sm text-yellow-700">
+                            No organization location found.
+                            <a href="/organizations" class="font-medium underline hover:text-yellow-600" target="_blank">
+                                Add location →
+                            </a>
+                        </p>
+                    </div>
+                @endif
+            </div>
+
             <!-- Customer & Address Section -->
             <div class="bg-white shadow rounded-lg p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -120,63 +147,48 @@
                         @endif
                     </div>
 
-                    <!-- Right Column: Organization & Shipping Address -->
+                    <!-- Right Column: Customer Shipping Address -->
                     <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Organization</label>
-                            <div class="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2">
-                                @if(auth()->check() && auth()->user()->currentTeam)
-                                    <span class="text-gray-900 font-medium">{{ auth()->user()->currentTeam->name }}</span>
-                                    @if(auth()->user()->currentTeam->company_name && auth()->user()->currentTeam->company_name !== auth()->user()->currentTeam->name)
-                                        <span class="text-gray-500 text-sm"> ({{ auth()->user()->currentTeam->company_name }})</span>
-                                    @endif
-                                @else
-                                    <span class="text-gray-500">No organization selected</span>
-                                @endif
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Use the team switcher in the navigation to change organizations</p>
-                        </div>
-
-                        @if($organization_id)
-                            <div class="border border-gray-200 rounded-md p-4 bg-gray-50">
+                        @if($customer_id)
+                            <div class="border border-gray-200 rounded-md p-4 bg-gray-50 mt-20">
                                 <h3 class="text-sm font-semibold text-gray-700 mb-2">SHIPPING ADDRESS</h3>
-                                @if($this->organizationLocations->count() > 0)
+                                @if($this->customerLocations->count() > 0)
                                     <div class="mb-3">
-                                        <select wire:model.live="organization_location_id"
+                                        <select wire:model.live="customer_shipping_location_id"
                                                 class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                                             <option value="">Select Location</option>
-                                            @foreach($this->organizationLocations as $location)
+                                            @foreach($this->customerLocations as $location)
                                                 <option value="{{ $location->id }}">{{ $location->name }} - {{ $location->city }}</option>
                                             @endforeach
                                         </select>
-                                        @error('organization_location_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                        @error('customer_shipping_location_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                     </div>
 
-                                    @if($organization_location_id)
+                                    @if($customer_shipping_location_id)
                                         @php
-                                            $selectedOrgLocation = $this->organizationLocations->firstWhere('id', $organization_location_id);
+                                            $selectedShippingLocation = $this->customerLocations->firstWhere('id', $customer_shipping_location_id);
                                         @endphp
-                                        @if($selectedOrgLocation)
+                                        @if($selectedShippingLocation)
                                             <div class="text-sm text-gray-600 space-y-1">
-                                                @if($selectedOrgLocation->address_line_1)
-                                                    <p>{{ $selectedOrgLocation->address_line_1 }}</p>
+                                                @if($selectedShippingLocation->address_line_1)
+                                                    <p>{{ $selectedShippingLocation->address_line_1 }}</p>
                                                 @endif
-                                                @if($selectedOrgLocation->address_line_2)
-                                                    <p>{{ $selectedOrgLocation->address_line_2 }}</p>
+                                                @if($selectedShippingLocation->address_line_2)
+                                                    <p>{{ $selectedShippingLocation->address_line_2 }}</p>
                                                 @endif
                                                 <p>
-                                                    @if($selectedOrgLocation->city)
-                                                        {{ $selectedOrgLocation->city }}
+                                                    @if($selectedShippingLocation->city)
+                                                        {{ $selectedShippingLocation->city }}
                                                     @endif
-                                                    @if($selectedOrgLocation->state)
-                                                        , {{ $selectedOrgLocation->state }}
+                                                    @if($selectedShippingLocation->state)
+                                                        , {{ $selectedShippingLocation->state }}
                                                     @endif
-                                                    @if($selectedOrgLocation->zip_code)
-                                                        - {{ $selectedOrgLocation->zip_code }}
+                                                    @if($selectedShippingLocation->zip_code)
+                                                        - {{ $selectedShippingLocation->zip_code }}
                                                     @endif
                                                 </p>
-                                                @if($selectedOrgLocation->country)
-                                                    <p>{{ $selectedOrgLocation->country }}</p>
+                                                @if($selectedShippingLocation->country)
+                                                    <p>{{ $selectedShippingLocation->country }}</p>
                                                 @endif
                                             </div>
                                         @endif
@@ -185,7 +197,7 @@
                                     <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
                                         <p class="text-sm text-yellow-700">
                                             No location found.
-                                            <a href="/organizations" class="font-medium underline hover:text-yellow-600" target="_blank">
+                                            <a href="/customers" class="font-medium underline hover:text-yellow-600" target="_blank">
                                                 Add location →
                                             </a>
                                         </p>
@@ -400,6 +412,75 @@
                 </div>
             </div>
 
+            <!-- Attach File(s) to Invoice Section -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Attach File(s) to Invoice</h2>
+
+                <!-- File Upload Area -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Upload Files</label>
+                    <div class="space-y-3">
+                        @foreach($uploadedFiles as $index => $file)
+                            <div class="flex items-center gap-3 p-2 bg-gray-50 border border-gray-200 rounded-md">
+                                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-sm text-gray-700 flex-1">{{ is_object($file) ? $file->getClientOriginalName() : 'File queued' }}</span>
+                                <button type="button" wire:click="removeUploadedFile({{ $index }})" class="text-red-500 hover:text-red-700">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        @endforeach
+
+                        <div class="flex items-center gap-3">
+                            <input type="file" wire:model="newFile" id="file-upload-{{ uniqid() }}"
+                                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Upload files one at a time. These files will be attached to the invoice and can be sent via email.</p>
+                    @error('uploadedFiles.*') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    @error('newFile') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                </div>
+
+                <!-- Existing Attachments List (Edit Mode) -->
+                @if($mode === 'edit' && $invoice)
+                    @php
+                        $existingAttachments = $invoice->getMedia('attachments');
+                    @endphp
+
+                    @if($existingAttachments->count() > 0)
+                        <div class="border-t border-gray-200 pt-4">
+                            <h3 class="text-sm font-medium text-gray-700 mb-3">Existing Attachments</h3>
+                            <div class="space-y-2">
+                                @foreach($existingAttachments as $media)
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition">
+                                        <div class="flex items-center gap-3">
+                                            <!-- File Icon -->
+                                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                            </svg>
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900">{{ $media->file_name }}</div>
+                                                <div class="text-xs text-gray-500">{{ number_format($media->size / 1024, 2) }} KB</div>
+                                            </div>
+                                        </div>
+                                        <button type="button" wire:click="deleteAttachment({{ $media->id }})"
+                                                wire:confirm="Are you sure you want to delete this attachment?"
+                                                class="text-red-500 hover:text-red-700 transition">
+                                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                @endif
+            </div>
+
             <!-- Action Buttons -->
             <div class="flex justify-between items-center pt-4">
                 <button type="button" wire:click="cancel"
@@ -505,7 +586,6 @@
                                     </div>
                                     @error('selectedRecipients') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                                 </div>
-                                <a href="#" class="ml-2 text-sm text-blue-600 hover:text-blue-700">Bcc</a>
                             </div>
                         </div>
 
@@ -614,21 +694,41 @@
                         <!-- Attachments Section -->
                         <div class="mb-4">
                             <div class="border-t pt-4">
-                                <label class="flex items-center cursor-pointer mb-2">
+                                <h3 class="text-sm font-semibold text-gray-700 mb-3">Attachments</h3>
+
+                                <!-- Invoice PDF Attachment -->
+                                <label class="flex items-center cursor-pointer mb-3 p-3 hover:bg-gray-50 rounded-md transition">
                                     <input type="checkbox" wire:model="attachPdf"
                                            class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                                    <span class="ml-2 text-sm font-medium text-gray-700">Attach invoice PDF</span>
+                                    <svg class="w-8 h-8 text-red-500 mx-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <div class="flex-1">
+                                        <div class="text-sm font-medium text-gray-900">{{ $invoice?->invoice_number ?? 'Invoice' }}.pdf</div>
+                                        <div class="text-xs text-gray-500">Invoice PDF Document</div>
+                                    </div>
                                 </label>
 
-                                @if($attachPdf)
-                                    <div class="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
-                                        <svg class="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path>
-                                        </svg>
-                                        <div class="flex-1">
-                                            <div class="text-sm font-medium text-gray-900">{{ $invoice?->invoice_number ?? 'Invoice' }}</div>
-                                            <div class="text-xs text-gray-500">PDF Document</div>
-                                        </div>
+                                <!-- Invoice File Attachments -->
+                                @php
+                                    $invoiceAttachments = $invoice?->getMedia('attachments') ?? collect();
+                                @endphp
+
+                                @if($invoiceAttachments->count() > 0)
+                                    <div class="space-y-2 mt-2">
+                                        @foreach($invoiceAttachments as $media)
+                                            <label class="flex items-center cursor-pointer p-3 hover:bg-gray-50 rounded-md transition border border-gray-200">
+                                                <input type="checkbox" wire:model="attachInvoiceFiles" value="{{ $media->id }}"
+                                                       class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                                <svg class="w-8 h-8 text-gray-400 mx-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                                </svg>
+                                                <div class="flex-1">
+                                                    <div class="text-sm font-medium text-gray-900">{{ $media->file_name }}</div>
+                                                    <div class="text-xs text-gray-500">{{ number_format($media->size / 1024, 2) }} KB</div>
+                                                </div>
+                                            </label>
+                                        @endforeach
                                     </div>
                                 @endif
                             </div>
@@ -637,12 +737,12 @@
 
                     <!-- Modal Footer -->
                     <div class="px-6 py-4 border-t border-gray-200 flex justify-between items-center bg-gray-50">
-                        <button type="button" class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                        <!-- <button type="button" class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
                             </svg>
                             Attachments
-                        </button>
+                        </button> -->
                         <div class="flex gap-3">
                             <button wire:click="closeEmailModal" type="button"
                                     class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 font-medium transition">

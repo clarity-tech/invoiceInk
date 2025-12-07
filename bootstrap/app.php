@@ -17,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'organization.setup' => \App\Http\Middleware\EnsureOrganizationSetup::class,
         ]);
     })
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->trustProxies(at: '*');
+    })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
