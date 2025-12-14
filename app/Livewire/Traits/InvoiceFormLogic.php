@@ -164,12 +164,24 @@ trait InvoiceFormLogic
         $this->customer_location_id = null;
         $this->customer_shipping_location_id = null;
 
-        // Auto-select the first available customer location for both billing and shipping
-        $customerLocations = $this->customerLocations;
-        if ($customerLocations->isNotEmpty()) {
-            $firstLocationId = $customerLocations->first()->id;
-            $this->customer_location_id = $firstLocationId;
-            $this->customer_shipping_location_id = $firstLocationId;
+        // Auto-select primary location, or first available location if no primary
+        if ($this->customer_id) {
+            $customer = Customer::find($this->customer_id);
+            if ($customer) {
+                // Prefer primary location
+                if ($customer->primary_location_id) {
+                    $this->customer_location_id = $customer->primary_location_id;
+                    $this->customer_shipping_location_id = $customer->primary_location_id;
+                } else {
+                    // Fall back to first available location
+                    $customerLocations = $this->customerLocations;
+                    if ($customerLocations->isNotEmpty()) {
+                        $firstLocationId = $customerLocations->first()->id;
+                        $this->customer_location_id = $firstLocationId;
+                        $this->customer_shipping_location_id = $firstLocationId;
+                    }
+                }
+            }
         }
     }
 

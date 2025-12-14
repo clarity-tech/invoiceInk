@@ -27,6 +27,7 @@ class CustomerManager extends Component
 
     public array $contacts = [['name' => '', 'email' => '']];
 
+    // Location modal fields
     #[Rule('nullable|string|max:255')]
     public string $location_name = '';
 
@@ -51,9 +52,15 @@ class CustomerManager extends Component
     #[Rule('nullable|string|max:20')]
     public string $postal_code = '';
 
+    public bool $is_primary = false;
+
     public bool $showForm = false;
 
+    public bool $showLocationModal = false;
+
     public ?int $editingId = null;
+
+    public ?int $editingLocationId = null;
 
     public function addContactField(): void
     {
@@ -76,7 +83,7 @@ class CustomerManager extends Component
 
     public function edit(Customer $customer): void
     {
-        $customer->load('primaryLocation');
+        $customer->load('locations');
 
         $this->editingId = $customer->id;
         $this->name = $customer->name;
@@ -84,18 +91,169 @@ class CustomerManager extends Component
         $this->currency = $customer->currency?->value ?? 'INR';
         $this->contacts = $customer->emails->toArray() ?: [['name' => '', 'email' => '']];
 
-        if ($customer->primaryLocation) {
-            $this->location_name = $customer->primaryLocation->name;
-            $this->gstin = $customer->primaryLocation->gstin ?? '';
-            $this->address_line_1 = $customer->primaryLocation->address_line_1;
-            $this->address_line_2 = $customer->primaryLocation->address_line_2 ?? '';
-            $this->city = $customer->primaryLocation->city;
-            $this->state = $customer->primaryLocation->state;
-            $this->country = $customer->primaryLocation->country;
-            $this->postal_code = $customer->primaryLocation->postal_code;
+        $this->showForm = true;
+    }
+
+    public function addLocation(): void
+    {
+        if (! $this->editingId) {
+            $this->addError('location', 'Please save the customer first before adding locations.');
+
+            return;
         }
 
-        $this->showForm = true;
+        $this->resetLocationForm();
+        $this->showLocationModal = true;
+    }
+
+    public function editLocation(Location $location): void
+    {
+        // Verify location belongs to the customer being edited
+        if ($location->locatable_type !== Customer::class || $location->locatable_id !== $this->editingId) {
+            abort(403, 'Unauthorized access to location.');
+        }
+
+        $this->editingLocationId = $location->id;
+        $this->location_name = $location->name;
+        $this->gstin = $location->gstin ?? '';
+        $this->address_line_1 = $location->address_line_1;
+        $this->address_line_2 = $location->address_line_2 ?? '';
+        $this->city = $location->city;
+        $this->state = $location->state;
+        $this->country = $location->country;
+        $this->postal_code = $location->postal_code ?? '';
+
+        $customer = Customer::find($this->editingId);
+        $this->is_primary = $customer && $customer->primary_location_id === $location->id;
+
+        $this->showLocationModal = true;
+    }
+
+    public function saveLocation(): void
+    {
+        if (! $this->editingId) {
+            $this->addError('location', 'Please save the customer first.');
+
+            return;
+        }
+
+        $this->validate([
+            'location_name' => 'required|string|max:255',
+            'gstin' => 'nullable|string|max:50',
+            'address_line_1' => 'required|string|max:500',
+            'address_line_2' => 'nullable|string|max:500',
+            'city' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'country' => ['required', 'string', ValidationRule::enum(Country::class)],
+            'postal_code' => 'nullable|string|max:20',
+        ]);
+
+        $customer = Customer::findOrFail($this->editingId);
+
+        if ($this->editingLocationId) {
+            // Update existing location
+            $location = Location::findOrFail($this->editingLocationId);
+            $location->update([
+                'name' => $this->location_name,
+                'gstin' => $this->gstin ?: null,
+                'address_line_1' => $this->address_line_1,
+                'address_line_2' => $this->address_line_2 ?: null,
+                'city' => $this->city,
+                'state' => $this->state,
+                'country' => $this->country,
+                'postal_code' => $this->postal_code ?: null,
+            ]);
+        } else {
+            // Create new location
+            $location = Location::create([
+                'name' => $this->location_name,
+                'gstin' => $this->gstin ?: null,
+                'address_line_1' => $this->address_line_1,
+                'address_line_2' => $this->address_line_2 ?: null,
+                'city' => $this->city,
+                'state' => $this->state,
+                'country' => $this->country,
+                'postal_code' => $this->postal_code ?: null,
+                'locatable_type' => Customer::class,
+                'locatable_id' => $customer->id,
+            ]);
+        }
+
+        // Update primary location if marked as primary
+        if ($this->is_primary) {
+            $customer->update(['primary_location_id' => $location->id]);
+        }
+
+        // If this is the first location, make it primary automatically
+        if ($customer->locations()->count() === 1 && ! $customer->primary_location_id) {
+            $customer->update(['primary_location_id' => $location->id]);
+        }
+
+        $this->showLocationModal = false;
+        $this->resetLocationForm();
+
+        session()->flash('message', $this->editingLocationId ? 'Location updated successfully!' : 'Location added successfully!');
+    }
+
+    public function deleteLocation(Location $location): void
+    {
+        // Verify location belongs to the customer being edited
+        if ($location->locatable_type !== Customer::class || $location->locatable_id !== $this->editingId) {
+            abort(403, 'Unauthorized access to location.');
+        }
+
+        $customer = Customer::find($this->editingId);
+
+        // Don't allow deleting the last location
+        if ($customer->locations()->count() <= 1) {
+            $this->addError('location', 'Cannot delete the last location. Customer must have at least one location.');
+
+            return;
+        }
+
+        // If deleting primary location, set another location as primary
+        if ($customer->primary_location_id === $location->id) {
+            $newPrimary = $customer->locations()->where('id', '!=', $location->id)->first();
+            $customer->update(['primary_location_id' => $newPrimary->id]);
+        }
+
+        $location->delete();
+
+        session()->flash('message', 'Location deleted successfully!');
+    }
+
+    public function setPrimaryLocation(Location $location): void
+    {
+        // Verify location belongs to the customer being edited
+        if ($location->locatable_type !== Customer::class || $location->locatable_id !== $this->editingId) {
+            abort(403, 'Unauthorized access to location.');
+        }
+
+        $customer = Customer::findOrFail($this->editingId);
+        $customer->update(['primary_location_id' => $location->id]);
+
+        session()->flash('message', 'Primary location updated successfully!');
+    }
+
+    public function cancelLocation(): void
+    {
+        $this->showLocationModal = false;
+        $this->resetLocationForm();
+    }
+
+    private function resetLocationForm(): void
+    {
+        $this->editingLocationId = null;
+        $this->location_name = '';
+        $this->gstin = '';
+        $this->address_line_1 = '';
+        $this->address_line_2 = '';
+        $this->city = '';
+        $this->state = '';
+        $this->country = '';
+        $this->postal_code = '';
+        $this->is_primary = false;
+        $this->resetValidation();
     }
 
     public function save(): void
@@ -104,14 +262,6 @@ class CustomerManager extends Component
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
             'currency' => ['required', 'string', ValidationRule::enum(\App\Currency::class)],
-            'location_name' => 'nullable|string|max:255',
-            'gstin' => 'nullable|string|max:50',
-            'address_line_1' => 'required|string|max:500',
-            'address_line_2' => 'nullable|string|max:500',
-            'city' => 'required|string|max:100',
-            'state' => 'required|string|max:100',
-            'country' => ['required', 'string', ValidationRule::enum(Country::class)],
-            'postal_code' => 'nullable|string|max:20',
             'contacts' => 'required|array|min:1',
             'contacts.*.name' => 'nullable|string|max:255',
             'contacts.*.email' => 'required|email|max:255',
@@ -136,51 +286,25 @@ class CustomerManager extends Component
                 'emails' => $contactCollection,
             ]);
 
-            if ($customer->primaryLocation) {
-                $customer->primaryLocation->update([
-                    'name' => $this->location_name ?: ($this->name ? $this->name.' Office' : 'Main Office'),
-                    'gstin' => $this->gstin ?: null,
-                    'address_line_1' => $this->address_line_1,
-                    'address_line_2' => $this->address_line_2 ?: null,
-                    'city' => $this->city,
-                    'state' => $this->state,
-                    'country' => $this->country,
-                    'postal_code' => $this->postal_code ?: null,
-                ]);
-            }
-        } else {
-            $location = Location::create([
-                'name' => $this->location_name ?: ($this->name ? $this->name.' Office' : 'Main Office'),
-                'gstin' => $this->gstin ?: null,
-                'address_line_1' => $this->address_line_1,
-                'address_line_2' => $this->address_line_2 ?: null,
-                'city' => $this->city,
-                'state' => $this->state,
-                'country' => $this->country,
-                'postal_code' => $this->postal_code ?: null,
-                'locatable_type' => Customer::class,
-                'locatable_id' => 0,
-            ]);
+            $this->resetForm();
+            $this->showForm = false;
+            $this->resetPage();
 
+            session()->flash('message', 'Customer updated successfully!');
+        } else {
             $customer = Customer::create([
                 'name' => $this->name,
                 'phone' => $this->phone ?: null,
                 'currency' => $this->currency,
                 'emails' => $contactCollection,
-                'primary_location_id' => $location->id,
                 'organization_id' => auth()->user()?->currentTeam?->id,
             ]);
 
-            $location->update([
-                'locatable_id' => $customer->id,
-            ]);
+            // Stay in edit mode to allow adding locations
+            $this->editingId = $customer->id;
+
+            session()->flash('message', 'Customer created successfully! Now add at least one location.');
         }
-
-        $this->resetForm();
-        $this->showForm = false;
-        $this->resetPage();
-
-        session()->flash('message', $this->editingId ? 'Customer updated successfully!' : 'Customer created successfully!');
     }
 
     public function delete(Customer $customer): void
@@ -210,15 +334,19 @@ class CustomerManager extends Component
         $this->phone = '';
         $this->currency = 'INR';
         $this->contacts = [['name' => '', 'email' => '']];
-        $this->location_name = '';
-        $this->gstin = '';
-        $this->address_line_1 = '';
-        $this->address_line_2 = '';
-        $this->city = '';
-        $this->state = '';
-        $this->country = '';
-        $this->postal_code = '';
         $this->resetValidation();
+    }
+
+    #[Computed]
+    public function currentCustomerLocations()
+    {
+        if (! $this->editingId) {
+            return collect();
+        }
+
+        $customer = Customer::with('locations')->find($this->editingId);
+
+        return $customer ? $customer->locations : collect();
     }
 
     #[Computed]
