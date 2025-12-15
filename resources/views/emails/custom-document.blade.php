@@ -26,6 +26,13 @@
             font-size: 14px;
             line-height: 1.8;
         }
+        /* Constrain logo images */
+        .email-body img {
+            max-height: 100px;
+            max-width: 200px;
+            height: auto;
+            width: 150px;
+        }
         /* Style company name */
         .email-body > div:first-child strong {
             font-size: 24px;
@@ -33,14 +40,14 @@
             letter-spacing: 3px;
         }
         /* Style invoice number banner */
-        .email-body > div:nth-child(3) {
+        .email-body > div:nth-child(2) {
             background-color: #3b82f6;
             color: white;
             padding: 20px;
             text-align: center;
             margin: 10px 0 20px 0;
         }
-        .email-body > div:nth-child(3) strong {
+        .email-body > div:nth-child(2) strong {
             font-size: 18px;
             font-weight: 400;
         }

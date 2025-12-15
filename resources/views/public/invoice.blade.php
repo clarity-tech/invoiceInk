@@ -24,20 +24,25 @@
         </div>
 
         <!-- Invoice Document -->
+        @php
+            $organization = $invoice->organizationLocation->locatable;
+            $logoUrl = $organization->logo_url;
+        @endphp
         <div class="bg-white shadow-lg rounded-lg overflow-hidden">
             <!-- Header -->
             <div class="bg-blue-600 text-white px-6 py-4">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h1 class="text-2xl font-bold">{{ __('documents.headers.invoice_upper') }}</h1>
-                        <p class="text-blue-100">{{ $invoice->invoice_number }}</p>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        @if($logoUrl)
+                            <div class="bg-white p-2 rounded">
+                                <img src="{{ $logoUrl }}" alt="{{ $organization->name }}" class="h-12 max-w-24 object-contain">
+                            </div>
+                        @endif
+                        <div>
+                            <h1 class="text-2xl font-bold">{{ __('documents.headers.invoice_upper') }}</h1>
+                            <p class="text-blue-100">{{ $invoice->invoice_number }}</p>
+                        </div>
                     </div>
-                   <!--  <div class="text-right">
-                        <div class="text-sm text-blue-100">{{ __('documents.fields.status') }}</div>
-                        <span class="inline-block px-3 py-1 rounded-full text-sm font-medium {{ $invoice->status->color() === 'green' ? 'bg-green-500' : ($invoice->status->color() === 'blue' ? 'bg-yellow-500' : 'bg-gray-500') }}">
-                            {{ $invoice->status->label() }}
-                        </span>
-                    </div> -->
                 </div>
             </div>
 
@@ -48,7 +53,7 @@
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ __('documents.headers.from') }}</h3>
                         <div class="text-gray-700">
-                            <p class="font-medium">{{ $invoice->organizationLocation->locatable->company_name }}</p>
+                            <p class="font-medium">{{ $organization->company_name }}</p>
                             <p class="text-sm">{{ $invoice->organizationLocation->name }}</p>
                             <div class="mt-2 text-sm">
                                 <p>{{ $invoice->organizationLocation->address_line_1 }}</p>

@@ -69,6 +69,63 @@
                         </div>
                     </div>
 
+                    <!-- Logo Upload Section -->
+                    <div class="border-t pt-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Organization Logo</h3>
+                        <div class="flex items-start space-x-6">
+                            <!-- Logo Preview -->
+                            <div class="flex-shrink-0">
+                                @if($logo)
+                                    <div class="relative">
+                                        <img src="{{ $logo->temporaryUrl() }}" alt="Logo preview" class="w-32 h-32 object-contain border border-gray-300 rounded-lg bg-white p-2">
+                                        <button type="button" wire:click="$set('logo', null)"
+                                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                @elseif($existingLogoUrl)
+                                    <div class="relative">
+                                        <img src="{{ $existingLogoUrl }}" alt="Current logo" class="w-32 h-32 object-contain border border-gray-300 rounded-lg bg-white p-2">
+                                        <button type="button" wire:click="removeLogo"
+                                                wire:confirm="Are you sure you want to remove the logo?"
+                                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                @else
+                                    <div class="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Upload Input -->
+                            <div class="flex-1">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Upload Logo</label>
+                                <input type="file" wire:model="logo" accept="image/*"
+                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                <p class="mt-2 text-xs text-gray-500">PNG, JPG, GIF, or SVG. Max 2MB. Recommended size: 200x200px.</p>
+                                @error('logo') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+
+                                <div wire:loading wire:target="logo" class="mt-2">
+                                    <div class="flex items-center text-sm text-blue-600">
+                                        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Uploading...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Country and Business Configuration -->
                     <div class="border-t pt-6">
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Business Configuration</h3>

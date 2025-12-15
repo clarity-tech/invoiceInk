@@ -9,15 +9,20 @@ use App\Models\Location;
 use App\Models\Organization;
 use App\Rules\CurrencyCode;
 use App\ValueObjects\ContactCollection;
+use Exception;
 use Illuminate\Validation\Rule as ValidationRule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Log;
+use ValueError;
 
 class OrganizationManager extends Component
 {
-    use WithPagination;
+    use WithFileUploads, WithPagination;
 
     #[Rule('required|string|max:255')]
     public string $name = '';
@@ -67,6 +72,11 @@ class OrganizationManager extends Component
 
     public bool $autoEdit = false;
 
+    // Logo upload
+    public $logo = null;
+
+    public ?string $existingLogoUrl = null;
+
     public function mount(): void
     {
         // Check if we should auto-edit the current organization
@@ -107,7 +117,7 @@ class OrganizationManager extends Component
                 // Always reset the start month and day based on the financial year type
                 $this->financial_year_start_month = $defaultFYType->getStartMonth();
                 $this->financial_year_start_day = $defaultFYType->getStartDay();
-            } catch (\ValueError $e) {
+            } catch (ValueError $e) {
                 // Invalid country code, ignore
             }
         }
@@ -137,7 +147,6 @@ class OrganizationManager extends Component
             $memberTeamIds = $user->teams()->pluck('id')->toArray();
             $hasAccess = $userTeams->contains('id', $organization->id);
 
-
             // Security check: Ensure user has access to this organization
             if (! $hasAccess) {
                 // Instead of aborting, show a user-friendly error
@@ -147,7 +156,7 @@ class OrganizationManager extends Component
             }
 
             $organization->load('primaryLocation');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->addError('name', 'Failed to load organization for editing: '.$e->getMessage());
 
             return;
@@ -164,7 +173,6 @@ class OrganizationManager extends Component
             $this->financial_year_type = $organization->financial_year_type?->value ?? null;
             $this->financial_year_start_month = $organization->financial_year_start_month ?? 4;
             $this->financial_year_start_day = $organization->financial_year_start_day ?? 1;
-
 
             if ($organization->primaryLocation) {
                 $this->location_name = $organization->primaryLocation->name;
@@ -188,13 +196,28 @@ class OrganizationManager extends Component
                 $this->postal_code = '';
             }
 
+            // Load existing logo
+            $this->existingLogoUrl = $organization->logo_url;
+
             $this->showForm = true;
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->addError('name', 'Failed to load organization data: '.$e->getMessage());
 
             return;
         }
+    }
+
+    public function removeLogo(): void
+    {
+        if ($this->editingId) {
+            $organization = Organization::find($this->editingId);
+            if ($organization) {
+                $organization->clearMediaCollection('logo');
+                $this->existingLogoUrl = null;
+            }
+        }
+        $this->logo = null;
     }
 
     public function save(): void
@@ -204,7 +227,6 @@ class OrganizationManager extends Component
             if ($this->country_code) {
                 $this->country = $this->country_code;
             }
-
 
             $this->validate([
                 'name' => 'required|string|max:255',
@@ -224,9 +246,10 @@ class OrganizationManager extends Component
                 'postal_code' => 'required|string|max:20',
                 'emails' => 'required|array|min:1',
                 'emails.*' => 'nullable|email',
+                'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             ]);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             throw $e;
         }
 
@@ -243,7 +266,7 @@ class OrganizationManager extends Component
 
                     return;
                 }
-            } catch (\ValueError $e) {
+            } catch (ValueError $e) {
                 // Invalid country code, but this will be caught by country_code validation above
             }
         }
@@ -257,11 +280,11 @@ class OrganizationManager extends Component
         }
 
         // Convert simple emails to ContactCollection format (email with empty name)
-        $contactData = array_map(fn($email) => ['name' => '', 'email' => trim($email)], $filteredEmails);
+        $contactData = array_map(fn ($email) => ['name' => '', 'email' => trim($email)], $filteredEmails);
 
         try {
             $contactCollection = new ContactCollection($contactData);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->addError('emails.0', 'Failed to process email addresses: '.$e->getMessage());
 
             return;
@@ -273,7 +296,6 @@ class OrganizationManager extends Component
                 $user = auth()->user();
                 $userTeams = $user->allTeams();
                 $hasAccess = $userTeams->contains('id', $organization->id);
-
 
                 // Security check: Ensure user has access to this organization
                 if (! $hasAccess) {
@@ -335,7 +357,7 @@ class OrganizationManager extends Component
                 $this->addError('name', 'Organization not found. It may have been deleted.');
 
                 return;
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->addError('name', 'Failed to update organization: '.$e->getMessage());
 
                 return;
@@ -387,10 +409,27 @@ class OrganizationManager extends Component
                     return $organization;
                 });
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->addError('name', 'Failed to create organization: '.$e->getMessage());
 
                 return;
+            }
+        }
+
+        // Handle logo upload after organization is saved
+        if ($this->logo) {
+            try {
+                $targetOrganization = $this->editingId
+                    ? Organization::find($this->editingId)
+                    : $organization;
+
+                if ($targetOrganization) {
+                    $targetOrganization->addMedia($this->logo)
+                        ->toMediaCollection('logo');
+                }
+            } catch (Exception $e) {
+                // Log but don't fail the save
+                Log::error('Failed to upload logo: '.$e->getMessage());
             }
         }
 
@@ -446,6 +485,8 @@ class OrganizationManager extends Component
         $this->financial_year_type = null;
         $this->financial_year_start_month = 4;
         $this->financial_year_start_day = 1;
+        $this->logo = null;
+        $this->existingLogoUrl = null;
         $this->resetValidation();
     }
 
@@ -506,7 +547,7 @@ class OrganizationManager extends Component
     {
         if (! $this->country_code) {
             // If no country selected, show all currencies
-            return \App\Currency::options();
+            return Currency::options();
         }
 
         try {
@@ -520,7 +561,7 @@ class OrganizationManager extends Component
                 ->toArray();
         } catch (\ValueError $e) {
             // Invalid country code, fallback to all currencies
-            return \App\Currency::options();
+            return Currency::options();
         }
     }
 

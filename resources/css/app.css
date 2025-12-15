@@ -11,13 +11,20 @@
 }
 
 /* Email preview styling in Trix editor */
+.trix-content img {
+    max-height: 100px;
+    max-width: 100px;
+    height: auto;
+    width: 200px;
+}
+
 .trix-content > div:first-child strong {
     font-size: 24px;
     font-weight: 300;
     letter-spacing: 3px;
 }
 
-.trix-content > div:nth-child(3) {
+.trix-content > div:nth-child(2) {
     background-color: #3b82f6;
     color: white;
     text-align: center;

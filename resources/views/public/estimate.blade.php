@@ -24,13 +24,24 @@
         </div>
 
         <!-- Estimate Document -->
+        @php
+            $organization = $estimate->organizationLocation->locatable;
+            $logoUrl = $organization->logo_url;
+        @endphp
         <div class="bg-white shadow-lg rounded-lg overflow-hidden">
             <!-- Header -->
             <div class="bg-green-600 text-white px-6 py-4">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h1 class="text-2xl font-bold">{{ __('documents.headers.estimate_upper') }}</h1>
-                        <p class="text-green-100">{{ $estimate->invoice_number }}</p>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        @if($logoUrl)
+                            <div class="bg-white p-2 rounded">
+                                <img src="{{ $logoUrl }}" alt="{{ $organization->name }}" class="h-12 max-w-24 object-contain">
+                            </div>
+                        @endif
+                        <div>
+                            <h1 class="text-2xl font-bold">{{ __('documents.headers.estimate_upper') }}</h1>
+                            <p class="text-green-100">{{ $estimate->invoice_number }}</p>
+                        </div>
                     </div>
                     <div class="text-right">
                         <div class="text-sm text-green-100">{{ __('documents.fields.status') }}</div>
@@ -48,7 +59,7 @@
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ __('documents.headers.from') }}</h3>
                         <div class="text-gray-700">
-                            <p class="font-medium">{{ $estimate->organizationLocation->locatable->company_name }}</p>
+                            <p class="font-medium">{{ $organization->company_name }}</p>
                             <p class="text-sm">{{ $estimate->organizationLocation->name }}</p>
                             <div class="mt-2 text-sm">
                                 <p>{{ $estimate->organizationLocation->address_line_1 }}</p>

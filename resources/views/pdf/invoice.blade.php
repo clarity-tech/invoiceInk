@@ -24,11 +24,22 @@
         <!-- Invoice Document -->
         <div class="bg-white">
             <!-- Header -->
+            @php
+                $organization = $invoice->organizationLocation->locatable;
+                $logoUrl = $organization->logo_url;
+            @endphp
             <div class="bg-blue-600 text-white px-6 py-4 mb-6">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h1 class="text-3xl font-bold">{{ __('documents.headers.invoice_upper') }}</h1>
-                        <p class="text-blue-100 text-lg">{{ $invoice->invoice_number }}</p>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        @if($logoUrl)
+                            <div class="bg-white p-2 rounded">
+                                <img src="{{ $logoUrl }}" alt="{{ $organization->name }}" class="h-12 max-w-24 object-contain">
+                            </div>
+                        @endif
+                        <div>
+                            <h1 class="text-3xl font-bold">{{ __('documents.headers.invoice_upper') }}</h1>
+                            <p class="text-blue-100 text-lg">{{ $invoice->invoice_number }}</p>
+                        </div>
                     </div>
                     <div class="text-right">
                         <div class="text-sm text-blue-100">{{ __('documents.fields.status') }}</div>
@@ -46,7 +57,7 @@
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ __('documents.headers.from') }}</h3>
                         <div class="text-gray-700">
-                            <p class="font-medium text-lg">{{ $invoice->organizationLocation->locatable->name }}</p>
+                            <p class="font-medium text-lg">{{ $organization->name }}</p>
                             <p class="text-sm mb-2">{{ $invoice->organizationLocation->name }}</p>
                             <div class="text-sm space-y-1">
                                 <p>{{ $invoice->organizationLocation->address_line_1 }}</p>

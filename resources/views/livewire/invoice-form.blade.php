@@ -136,6 +136,11 @@
                                                 @if($selectedCustomerLocation->country)
                                                     <p>{{ $selectedCustomerLocation->country }}</p>
                                                 @endif
+                                                @if($selectedCustomerLocation->gstin)
+                                                    <p class="mt-1 font-medium text-gray-700">
+                                                        <span class="text-gray-500">Tax Id:</span> {{ $selectedCustomerLocation->gstin }}
+                                                    </p>
+                                                @endif
                                             </div>
                                         @endif
                                     @endif
@@ -201,6 +206,11 @@
                                                 </p>
                                                 @if($selectedShippingLocation->country)
                                                     <p>{{ $selectedShippingLocation->country }}</p>
+                                                @endif
+                                                @if($selectedShippingLocation->gstin)
+                                                    <p class="mt-1 font-medium text-gray-700">
+                                                        <span class="text-gray-500">Tax Id:</span> {{ $selectedShippingLocation->gstin }}
+                                                    </p>
                                                 @endif
                                             </div>
                                         @endif

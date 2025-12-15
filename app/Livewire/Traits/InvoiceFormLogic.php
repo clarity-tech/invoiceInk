@@ -74,6 +74,23 @@ trait InvoiceFormLogic
                 if ($organization && $organization->primary_location_id) {
                     $this->organization_location_id = $organization->primary_location_id;
                 }
+
+                // Auto-select default/first numbering series for invoices
+                if ($this->type === 'invoice') {
+                    $numberingService = new InvoiceNumberingService;
+                    $availableSeries = $numberingService->getSeriesForOrganization($organization);
+
+                    if ($availableSeries->isNotEmpty()) {
+                        // Prefer default series
+                        $defaultSeries = $availableSeries->where('is_default', true)->first();
+                        if ($defaultSeries) {
+                            $this->invoice_numbering_series_id = $defaultSeries->id;
+                        } else {
+                            // Fall back to first available series
+                            $this->invoice_numbering_series_id = $availableSeries->first()->id;
+                        }
+                    }
+                }
             }
         }
 

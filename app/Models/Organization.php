@@ -14,11 +14,14 @@ use Laravel\Jetstream\Events\TeamCreated;
 use Laravel\Jetstream\Events\TeamDeleted;
 use Laravel\Jetstream\Events\TeamUpdated;
 use Laravel\Jetstream\Team as JetstreamTeam;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Organization extends JetstreamTeam
+class Organization extends JetstreamTeam implements HasMedia
 {
     /** @use HasFactory<\Database\Factories\OrganizationFactory> */
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
     /**
      * The table associated with the model.
@@ -361,6 +364,75 @@ class Organization extends JetstreamTeam
         }
 
         return is_null($this->setup_completed_at);
+    }
+
+    /**
+     * Register media collections for the organization.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('logo')
+            ->singleFile()
+            ->useDisk('public');
+    }
+
+    /**
+     * Register media conversions for optimized logo sizes.
+     */
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->width(100)
+            ->height(100)
+            ->nonQueued();
+
+        $this->addMediaConversion('medium')
+            ->width(200)
+            ->height(200)
+            ->nonQueued();
+    }
+
+    /**
+     * Get the organization's logo URL.
+     */
+    public function getLogoUrlAttribute(): ?string
+    {
+        $logo = $this->getFirstMedia('logo');
+
+        return $logo ? $logo->getUrl() : null;
+    }
+
+    /**
+     * Get the organization's logo thumbnail URL.
+     */
+    public function getLogoThumbUrlAttribute(): ?string
+    {
+        $logo = $this->getFirstMedia('logo');
+
+        return $logo ? $logo->getUrl('thumb') : null;
+    }
+
+    /**
+     * Get the organization's logo as base64 for PDF embedding.
+     */
+    public function getLogoBase64Attribute(): ?string
+    {
+        $logo = $this->getFirstMedia('logo');
+
+        if (! $logo) {
+            return null;
+        }
+
+        $path = $logo->getPath();
+
+        if (! file_exists($path)) {
+            return null;
+        }
+
+        $mimeType = $logo->mime_type;
+        $content = file_get_contents($path);
+
+        return 'data:'.$mimeType.';base64,'.base64_encode($content);
     }
 
     /**
