@@ -17,7 +17,7 @@ return [
             'code'                => 784,
             'precision'           => 2,
             'subunit'             => 100,
-            'symbol'              => 'د.إ',
+            'symbol'              => 'AED',
             'symbol_first'        => true,
             'decimal_mark'        => '.',
             'thousands_separator' => ',',

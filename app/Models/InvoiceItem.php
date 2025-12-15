@@ -79,7 +79,8 @@ class InvoiceItem extends Model
      */
     public function getFormattedLineTotalAttribute(): string
     {
-        return $this->formatMoney($this->getLineTotal());
+        $lineTotal = $this->getLineTotal() + $this->getTaxAmount();
+        return $this->formatMoney($lineTotal);
     }
 
     /**

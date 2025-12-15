@@ -9,194 +9,194 @@
         @media print {
             .no-print { display: none !important; }
         }
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+        }
     </style>
 </head>
-<body class="bg-gray-50">
-    <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+<body class="bg-gray-100">
+    <div class="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <!-- Action Buttons -->
         <div class="mb-6 no-print flex space-x-3">
-            <button onclick="window.print()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <button onclick="window.print()" class="bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200">
                 {{ __('actions.buttons.print_invoice') }}
             </button>
-            <a href="{{ route('invoices.pdf', $invoice->ulid) }}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-block">
+            <a href="{{ route('invoices.pdf', $invoice->ulid) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200 inline-block">
                 {{ __('actions.buttons.download_pdf') }}
             </a>
         </div>
 
         <!-- Invoice Document -->
         @php
-            $organization = $invoice->organizationLocation->locatable;
+            $organization = $invoice->organization;
             $logoUrl = $organization->logo_url;
         @endphp
-        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-            <!-- Header -->
-            <div class="bg-blue-600 text-white px-6 py-4">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center gap-4">
+        <div class="bg-white shadow-xl rounded-lg overflow-hidden">
+            <!-- Modern Header with Logo -->
+            <div class="px-8 pt-8 pb-6 border-b-2 border-gray-200">
+                <div class="flex justify-between items-start">
+                    <!-- Left: Logo and Company Info -->
+                    <div class="flex-1">
                         @if($logoUrl)
-                            <div class="bg-white p-2 rounded">
-                                <img src="{{ $logoUrl }}" alt="{{ $organization->name }}" class="h-12 max-w-24 object-contain">
-                            </div>
+                            <img src="{{ $logoUrl }}" alt="{{ $organization->name }}" class="h-14 mb-4 object-contain" style="max-width: 180px;">
                         @endif
-                        <div>
-                            <h1 class="text-2xl font-bold">{{ __('documents.headers.invoice_upper') }}</h1>
-                            <p class="text-blue-100">{{ $invoice->invoice_number }}</p>
+                        <h2 class="text-xl font-bold text-gray-900 mb-1">{{ $organization->name }}</h2>
+                        <div class="text-sm text-gray-600 space-y-0.5">
+                            <p>{{ $invoice->organizationLocation->name }}</p>
+                            <p>{{ $invoice->organizationLocation->address_line_1 }}</p>
+                            @if($invoice->organizationLocation->address_line_2)
+                                <p>{{ $invoice->organizationLocation->address_line_2 }}</p>
+                            @endif
+                            <p>{{ $invoice->organizationLocation->city }}, {{ $invoice->organizationLocation->state }} {{ $invoice->organizationLocation->postal_code }}</p>
+                            <p>{{ $invoice->organizationLocation->country }}</p>
+                        </div>
+                        <div class="mt-3 text-sm text-gray-600 space-y-0.5">
+                            @if($invoice->organizationLocation->gstin)
+                                <p><span class="font-semibold text-gray-700">Tax ID:</span> {{ $invoice->organizationLocation->gstin }}</p>
+                            @endif
+                            @if($organization->emails && !$organization->emails->isEmpty())
+                                @php
+                                    $orgEmails = $organization->emails;
+                                    $firstOrgEmail = method_exists($orgEmails, 'getFirstEmail') ? $orgEmails->getFirstEmail() : $orgEmails->first();
+                                @endphp
+                                <p><span class="font-semibold text-gray-700">Email:</span> {{ $firstOrgEmail }}</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Right: Invoice Title and Details -->
+                    <div class="text-right">
+                        <h1 class="text-4xl font-bold text-gray-900 mb-2">INVOICE</h1>
+                        <p class="text-lg font-semibold text-gray-700 mb-4">{{ $invoice->invoice_number }}</p>
+
+                        <div class="inline-block px-4 py-2 rounded-lg {{ $invoice->status->color() === 'green' ? 'bg-green-100 text-green-800' : ($invoice->status->color() === 'blue' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800') }}">
+                            <span class="text-sm font-semibold uppercase">{{ $invoice->status->label() }}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Company & Customer Info -->
-            <div class="px-6 py-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- From -->
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ __('documents.headers.from') }}</h3>
-                        <div class="text-gray-700">
-                            <p class="font-medium">{{ $organization->company_name }}</p>
-                            <p class="text-sm">{{ $invoice->organizationLocation->name }}</p>
-                            <div class="mt-2 text-sm">
-                                <p>{{ $invoice->organizationLocation->address_line_1 }}</p>
-                                @if($invoice->organizationLocation->address_line_2)
-                                    <p>{{ $invoice->organizationLocation->address_line_2 }}</p>
-                                @endif
-                                <p>{{ $invoice->organizationLocation->city }}, {{ $invoice->organizationLocation->state }} {{ $invoice->organizationLocation->postal_code }}</p>
-                                <p>{{ $invoice->organizationLocation->country }}</p>
-                                @if($invoice->organizationLocation->gstin)
-                                    <p class="mt-1"><span class="font-medium">GSTIN:</span> {{ $invoice->organizationLocation->gstin }}</p>
-                                @endif
-                            </div>
-                            @if($invoice->organizationLocation->locatable->emails && !$invoice->organizationLocation->locatable->emails->isEmpty())
-                                <div class="mt-2 text-sm">
-                                    @php
-                                        $orgEmails = $invoice->organizationLocation->locatable->emails;
-                                        $firstOrgEmail = method_exists($orgEmails, 'getFirstEmail') ? $orgEmails->getFirstEmail() : $orgEmails->first();
-                                    @endphp
-                                    <p><span class="font-medium">Email:</span> {{ $firstOrgEmail }}</p>
-                                </div>
+            <!-- Bill To & Invoice Info Section -->
+            <div class="px-8 py-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Bill To -->
+                <div>
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Bill To</h3>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="text-base font-bold text-gray-900 mb-1">{{ $invoice->customerLocation->locatable->name }}</h4>
+                        <p class="text-sm text-gray-600 mb-2">{{ $invoice->customerLocation->name }}</p>
+                        <div class="text-sm text-gray-600 space-y-0.5">
+                            <p>{{ $invoice->customerLocation->address_line_1 }}</p>
+                            @if($invoice->customerLocation->address_line_2)
+                                <p>{{ $invoice->customerLocation->address_line_2 }}</p>
                             @endif
+                            <p>{{ $invoice->customerLocation->city }}, {{ $invoice->customerLocation->state }} {{ $invoice->customerLocation->postal_code }}</p>
+                            <p>{{ $invoice->customerLocation->country }}</p>
                         </div>
-                    </div>
-
-                    <!-- To -->
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ __('documents.headers.to') }}</h3>
-                        <div class="text-gray-700">
-                            <p class="font-medium">{{ $invoice->customerLocation->locatable->name }}</p>
-                            <p class="text-sm">{{ $invoice->customerLocation->name }}</p>
-                            <div class="mt-2 text-sm">
-                                <p>{{ $invoice->customerLocation->address_line_1 }}</p>
-                                @if($invoice->customerLocation->address_line_2)
-                                    <p>{{ $invoice->customerLocation->address_line_2 }}</p>
-                                @endif
-                                <p>{{ $invoice->customerLocation->city }}, {{ $invoice->customerLocation->state }} {{ $invoice->customerLocation->postal_code }}</p>
-                                <p>{{ $invoice->customerLocation->country }}</p>
-                                @if($invoice->customerLocation->gstin)
-                                    <p class="mt-1"><span class="font-medium">GSTIN:</span> {{ $invoice->customerLocation->gstin }}</p>
-                                @endif
-                            </div>
-                            @if($invoice->customerLocation->locatable->emails && !$invoice->customerLocation->locatable->emails->isEmpty())
-                                <div class="mt-2 text-sm">
-                                    @php
-                                        $custEmails = $invoice->customerLocation->locatable->emails;
-                                        $firstCustEmail = method_exists($custEmails, 'getFirstEmail') ? $custEmails->getFirstEmail() : $custEmails->first();
-                                    @endphp
-                                    <p><span class="font-medium">Email:</span> {{ $firstCustEmail }}</p>
-                                </div>
-                            @endif
-                        </div>
+                        @if($invoice->customerLocation->gstin)
+                            <p class="text-sm text-gray-700 mt-2"><span class="font-semibold">Tax ID:</span> {{ $invoice->customerLocation->gstin }}</p>
+                        @endif
+                        @if($invoice->customerLocation->locatable->emails && !$invoice->customerLocation->locatable->emails->isEmpty())
+                            @php
+                                $custEmails = $invoice->customerLocation->locatable->emails;
+                                $firstCustEmail = method_exists($custEmails, 'getFirstEmail') ? $custEmails->getFirstEmail() : $custEmails->first();
+                            @endphp
+                            <p class="text-sm text-gray-700 mt-1"><span class="font-semibold">Email:</span> {{ $firstCustEmail }}</p>
+                        @endif
                     </div>
                 </div>
 
                 <!-- Invoice Details -->
-                <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-                    @if($invoice->issued_at)
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-500 uppercase">{{ __('documents.fields.issue_date') }}</h4>
-                            <p class="mt-1 text-sm text-gray-900">{{ $invoice->issued_at->format('F j, Y') }}</p>
+                <div>
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Invoice Details</h3>
+                    <div class="space-y-3">
+                        @if($invoice->issued_at)
+                            <div class="flex justify-between py-2 border-b border-gray-200">
+                                <span class="text-sm font-semibold text-gray-700">Issue Date:</span>
+                                <span class="text-sm text-gray-900">{{ $invoice->issued_at->format('M d, Y') }}</span>
+                            </div>
+                        @endif
+                        @if($invoice->due_at)
+                            <div class="flex justify-between py-2 border-b border-gray-200">
+                                <span class="text-sm font-semibold text-gray-700">Due Date:</span>
+                                <span class="text-sm text-gray-900">{{ $invoice->due_at->format('M d, Y') }}</span>
+                            </div>
+                        @endif
+                        <div class="flex justify-between py-3 bg-gray-50 rounded-lg px-3 mt-4">
+                            <span class="text-base font-bold text-gray-900">Amount Due:</span>
+                            <span class="text-xl font-bold text-gray-900">{{ $invoice->formatted_total }}</span>
                         </div>
-                    @endif
-                    @if($invoice->due_at)
-                        <div>
-                            <h4 class="text-sm font-medium text-gray-500 uppercase">{{ __('documents.fields.due_date') }}</h4>
-                            <p class="mt-1 text-sm text-gray-900">{{ $invoice->due_at->format('F j, Y') }}</p>
-                        </div>
-                    @endif
-                    <div>
-                        <h4 class="text-sm font-medium text-gray-500 uppercase">{{ __('documents.financial.total_amount') }}</h4>
-                        <p class="mt-1 text-lg font-semibold text-gray-900">{{ $invoice->formatted_total }}</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Items Table -->
-            <div class="px-6 pb-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Items</h3>
+            <!-- Line Items Table -->
+            <div class="px-8 pb-6">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Tax %</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-800 text-white">
+                                <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Description</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider" style="width: 80px;">Qty</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider" style="width: 100px;">Rate</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider" style="width: 80px;">Tax %</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider" style="width: 120px;">Amount</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @foreach($invoice->items as $item)
-                                <tr>
-                                    <td class="px-6 py-4 text-sm text-gray-900">
-                                        <div>{{ $item->description }}</div>
+                        <tbody>
+                            @foreach($invoice->items as $index => $item)
+                                <tr class="{{ $index % 2 === 0 ? 'bg-white' : 'bg-gray-50' }}">
+                                    <td class="px-4 py-3 border-b border-gray-200">
+                                        <div class="text-sm font-medium text-gray-900">{{ $item->description }}</div>
                                         @if($item->sac_code)
-                                            <div class="text-xs text-gray-500 mt-1">SAC: {{ $item->sac_code }}</div>
+                                            <div class="text-xs text-gray-500 mt-0.5">SAC: {{ $item->sac_code }}</div>
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ $item->quantity }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ $item->formatted_unit_price }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ $item->formatted_tax_rate }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ $item->formatted_line_total }}</td>
+                                    <td class="px-4 py-3 text-center text-sm text-gray-900 border-b border-gray-200">{{ $item->quantity }}</td>
+                                    <td class="px-4 py-3 text-right text-sm text-gray-900 border-b border-gray-200">{{ $item->formatted_unit_price }}</td>
+                                    <td class="px-4 py-3 text-right text-sm text-gray-900 border-b border-gray-200">{{ $item->formatted_tax_rate }}</td>
+                                    <td class="px-4 py-3 text-right text-sm font-semibold text-gray-900 border-b border-gray-200">{{ $item->formatted_line_total }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Totals -->
+                <!-- Totals Section -->
                 <div class="mt-6 flex justify-end">
-                    <div class="w-full max-w-md">
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <div class="flex justify-between py-2">
-                                <span class="text-sm text-gray-600">Subtotal:</span>
-                                <span class="text-sm font-medium text-gray-900">{{ $invoice->formatted_subtotal }}</span>
+                    <div class="w-80">
+                        <div class="space-y-2 mb-3">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Subtotal:</span>
+                                <span class="font-medium text-gray-900">{{ $invoice->formatted_subtotal }}</span>
                             </div>
-                            <div class="flex justify-between py-2">
-                                <span class="text-sm text-gray-600">Tax:</span>
-                                <span class="text-sm font-medium text-gray-900">{{ $invoice->formatted_tax }}</span>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Tax:</span>
+                                <span class="font-medium text-gray-900">{{ $invoice->formatted_tax }}</span>
                             </div>
-                            <div class="border-t pt-2 mt-2 flex justify-between">
-                                <span class="text-lg font-bold text-gray-900">Total:</span>
-                                <span class="text-lg font-bold text-gray-900">{{ $invoice->formatted_total }}</span>
+                        </div>
+                        <div class="border-t-2 border-gray-300 pt-3">
+                            <div class="flex justify-between items-center bg-gray-800 text-white rounded-lg px-4 py-3">
+                                <span class="text-base font-bold">Total Amount:</span>
+                                <span class="text-2xl font-bold">{{ $invoice->formatted_total }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Customer Notes -->
+                <!-- Notes -->
                 @if($invoice->notes)
-                    <div class="mt-8">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-3">Notes</h3>
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ $invoice->notes }}</p>
-                        </div>
+                    <div class="mt-8 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg p-4">
+                        <h3 class="text-sm font-bold text-gray-900 mb-2">Notes</h3>
+                        <p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{{ $invoice->notes }}</p>
                     </div>
                 @endif
             </div>
         </div>
 
         <!-- Footer -->
-        <div class="mt-8 text-center text-sm text-gray-500 no-print">
-            <p>This is a computer-generated invoice. No signature required.</p>
+        <div class="mt-8 text-center no-print">
+            <p class="text-xs text-gray-500">{{ __('messages.footer.computer_generated_invoice') }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ __('messages.footer.generated_on', ['date' => now()->format('M d, Y \\a\\t g:i A')]) }}</p>
         </div>
     </div>
 </body>
