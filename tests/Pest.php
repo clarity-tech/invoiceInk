@@ -19,9 +19,8 @@ pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Unit');
 
-pest()->extend(Tests\DuskTestCase::class)
+pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->use(Laravel\Dusk\Concerns\ProvidesBrowser::class)
     ->in('Browser');
 
 /*
