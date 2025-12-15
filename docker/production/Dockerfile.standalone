@@ -1,40 +1,16 @@
 # Laravel Application as Standalone Binary with FrankenPHP
-# Based on official FrankenPHP documentation for static builds
+# Optimized: separate PHP deps, frontend build (bun), clean app assembly
 
 # ========================================
-# Build Stage - Dependencies & Assets
+# Stage 1: PHP Dependencies
 # ========================================
-FROM serversideup/php:8.4-cli AS build
+FROM serversideup/php:8.5-cli AS php-deps
 
-# Switch to root for package installation
 USER root
-
-# Set build-time environment variables
-ENV APP_ENV=production
-ENV NODE_MAJOR=22
-
-# Install system dependencies needed for build
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    build-essential \
-    python3 \
-    ca-certificates \
-    gnupg \
-    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs \
-    && corepack enable \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
 WORKDIR /var/www/html
 
-# Copy dependency files first for better layer caching
 COPY composer.json composer.lock ./
-COPY package.json yarn.lock .yarnrc.yml ./
 
-# Install PHP dependencies (production only, optimized)
 RUN composer install \
     --no-dev \
     --no-interaction \
@@ -44,24 +20,57 @@ RUN composer install \
     --optimize-autoloader \
     --classmap-authoritative
 
-# Install Node.js dependencies
-RUN yarn install --immutable
+# ========================================
+# Stage 2: Frontend Build (bun, no Node.js)
+# ========================================
+FROM oven/bun:1.2-slim AS frontend
 
-# Copy application source code
+WORKDIR /build
+
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
+
+# Copy only what Tailwind @source + Vite needs
+COPY resources/ resources/
+COPY vite.config.js postcss.config.js tailwind.config.js ./
+
+# Vendor blade files for Tailwind class scanning (referenced in app.css @source)
+COPY --from=php-deps /var/www/html/vendor/laravel/framework/src/Illuminate/Pagination/resources/views/ \
+    vendor/laravel/framework/src/Illuminate/Pagination/resources/views/
+COPY --from=php-deps /var/www/html/vendor/laravel/jetstream/ \
+    vendor/laravel/jetstream/
+
+RUN mkdir -p storage/framework/views
+
+ARG VITE_APP_NAME="Clarity Invoicing"
+RUN bun run build
+
+# ========================================
+# Stage 3: Clean Application Assembly
+# ========================================
+FROM serversideup/php:8.5-cli AS app
+
+USER root
+WORKDIR /var/www/html
+
 COPY . .
+COPY --from=php-deps /var/www/html/vendor vendor/
+COPY --from=frontend /build/public/build public/build/
 
-# Build frontend assets
-RUN yarn build && \
-    yarn workspaces focus --production && \
-    yarn cache clean --all
+# Remove non-runtime files
+RUN rm -rf node_modules tests docker .git .github .agents .claude .gemini \
+    docs *.md phpunit.xml phpunit.dusk.xml bun.lock package.json boost.json \
+    .env .env.* .editorconfig .gitignore .gitattributes .gitmodules \
+    .mcp.json postcss.config.js tailwind.config.js vite.config.js \
+    resources/css resources/js
 
 # ========================================
 # Static Binary Build Stage
 # ========================================
 FROM dunglas/frankenphp:static-builder AS static-builder
 
-# Copy built application from build stage
-COPY --from=build /var/www/html /go/src/app/dist
+# Copy clean application from app stage
+COPY --from=app /var/www/html /go/src/app/dist
 
 # Build the static binary with embedded application
 RUN cd /go/src/app && \
@@ -72,12 +81,12 @@ RUN cd /go/src/app && \
         -o frankenphp-app
 
 # ========================================
-# Runtime Stage - Distroless for Security
+# Runtime Stage - Minimal Debian
 # ========================================
 FROM debian:12-slim AS runtime
 
 # Install minimal runtime dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     && apt-get clean \
@@ -113,9 +122,9 @@ USER www
 # Expose port
 EXPOSE 8000
 
-# Health check (using curl to check if server is running)
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD ["curl", "-f", "http://localhost:8000/"] || exit 1
+    CMD curl -f http://localhost:8000/up || exit 1
 
 # Run the standalone binary
 CMD ["/usr/local/bin/frankenphp-app", "php-server", "--listen", "0.0.0.0:8000"]
@@ -125,9 +134,10 @@ CMD ["/usr/local/bin/frankenphp-app", "php-server", "--listen", "0.0.0.0:8000"]
 # ========================================
 FROM alpine:3.19 AS standalone-alpine
 
-# Install minimal runtime dependencies
+# Install minimal runtime dependencies (curl needed for health check)
 RUN apk add --no-cache \
     ca-certificates \
+    curl \
     tzdata \
     && addgroup -g 1000 www \
     && adduser -u 1000 -G www -s /bin/sh -D www
@@ -157,7 +167,7 @@ EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD ["curl", "-f", "http://localhost:8000/"] || exit 1
+    CMD curl -f http://localhost:8000/up || exit 1
 
 # Run the standalone binary
 CMD ["/usr/local/bin/frankenphp-app", "php-server", "--listen", "0.0.0.0:8000"]

@@ -95,7 +95,7 @@ location ~* ^/api/ {
 }
 
 # Laravel-specific security blocks
-location ~ /(\.env|artisan|composer\.(json|lock)|package\.(json|lock)|yarn\.lock) {
+location ~ /(\.env|artisan|composer\.(json|lock)|package\.(json|lock)|bun\.lock|yarn\.lock) {
     deny all;
     access_log off;
     log_not_found off;

@@ -23,17 +23,9 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /public/vendor
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
-.pnp.*
 
-# Dusk Browser Testing
-/tests/Browser/console
-/tests/Browser/screenshots
+# Pest Browser Testing
+/tests/Browser/Screenshots
 **/caddy
 frankenphp
 frankenphp-worker.php

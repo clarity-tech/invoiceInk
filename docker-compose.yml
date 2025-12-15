@@ -1,12 +1,12 @@
 services:
     laravel.test:
         build:
-            context: ./docker/8.4
+            context: ./docker/8.5
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP:-1000}'
                 WWWUSER: '${WWWUSER:-1000}'
-        image: ghcr.io/clarity-tech/laravel-strict:php8.4
+        image: ghcr.io/clarity-tech/laravel-strict:php8.5
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         ports:
@@ -20,13 +20,14 @@ services:
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
         volumes:
             - '.:/var/www/html'
+            - 'sail-playwright:/opt/playwright-browsers'
         networks:
             - sail
         depends_on:
             - valkey
             - mailpit
             - pgsql
-            - minio
+            - rustfs
     valkey:
         image: 'valkey/valkey:alpine'
         ports:
@@ -86,36 +87,32 @@ services:
         networks:
             - sail
 
-    minio:
-        image: 'minio/minio:latest'
+    rustfs:
+        image: 'rustfs/rustfs:latest'
         ports:
-            - '${FORWARD_MINIO_PORT:-9000}:9000'
-            - '${FORWARD_MINIO_CONSOLE_PORT:-8900}:8900'
+            - '${FORWARD_RUSTFS_PORT:-9000}:9000'
+            - '${FORWARD_RUSTFS_CONSOLE_PORT:-9001}:9001'
         environment:
-            MINIO_ROOT_USER: sail
-            MINIO_ROOT_PASSWORD: password
+            RUSTFS_VOLUMES: '/data'
+            RUSTFS_ADDRESS: '0.0.0.0:9000'
+            RUSTFS_CONSOLE_ADDRESS: '0.0.0.0:9001'
+            RUSTFS_CONSOLE_ENABLE: 'true'
+            RUSTFS_EXTERNAL_ADDRESS: ':9000'
+            RUSTFS_CORS_ALLOWED_ORIGINS: '*'
+            RUSTFS_CONSOLE_CORS_ALLOWED_ORIGINS: '*'
+            RUSTFS_ACCESS_KEY: 'sail'
+            RUSTFS_SECRET_KEY: 'password'
+            RUSTFS_LOG_LEVEL: 'info'
         volumes:
-            - 'sail-minio:/data'
+            - 'sail-rustfs:/data'
         networks:
             - sail
-        command: 'minio server /data --console-address ":8900"'
         healthcheck:
-            test:
-                - CMD
-                - mc
-                - ready
-                - local
+            test: ["CMD", "sh", "-c", "curl -f http://127.0.0.1:9000/health && curl -f http://127.0.0.1:9001/health"]
+            interval: 30s
+            timeout: 10s
             retries: 3
-            timeout: 5s
-
-    selenium:
-        image: 'selenium/standalone-chromium'
-        extra_hosts:
-            - 'host.docker.internal:host-gateway'
-        volumes:
-            - '/dev/shm:/dev/shm'
-        networks:
-            - sail
+            start_period: 40s
 
     chrome:
         image: 'ghcr.io/zenika/alpine-chrome:with-puppeteer'
@@ -140,5 +137,7 @@ volumes:
         driver: local
     sail-pgsql:
         driver: local
-    sail-minio:
+    sail-rustfs:
+        driver: local
+    sail-playwright:
         driver: local

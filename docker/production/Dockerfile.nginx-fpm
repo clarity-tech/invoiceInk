@@ -1,40 +1,16 @@
-# Alternative production Dockerfile with ServerSideUp FPM + Nginx
-# For traditional deployments that prefer separate web server and PHP-FPM
+# Production Dockerfile with ServerSideUp FPM + Nginx
+# Optimized: separate PHP deps, frontend build (bun), clean app assembly
 
 # ========================================
-# Build Stage - Dependencies & Assets
+# Stage 1: PHP Dependencies
 # ========================================
-FROM serversideup/php:8.4-cli AS build
+FROM serversideup/php:8.5-cli AS php-deps
 
-# Set build-time environment variables
-ENV APP_ENV=production
-ENV NODE_MAJOR=22
-
-# Switch to root for package installation
 USER root
-
-# Install system dependencies needed for build
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    build-essential \
-    python3 \
-    ca-certificates \
-    gnupg \
-    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs \
-    && corepack enable \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
 WORKDIR /var/www/html
 
-# Copy dependency files first for better layer caching
 COPY composer.json composer.lock ./
-COPY package.json yarn.lock .yarnrc.yml ./
 
-# Install PHP dependencies (production only, optimized)
 RUN composer install \
     --no-dev \
     --no-interaction \
@@ -44,23 +20,54 @@ RUN composer install \
     --optimize-autoloader \
     --classmap-authoritative
 
-# Install Node.js dependencies
-RUN yarn install --immutable
+# ========================================
+# Stage 2: Frontend Build (bun, no Node.js)
+# ========================================
+FROM oven/bun:1.2-slim AS frontend
 
-# Copy application source code
+WORKDIR /build
+
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
+
+# Copy only what Tailwind @source + Vite needs
+COPY resources/ resources/
+COPY vite.config.js postcss.config.js tailwind.config.js ./
+
+# Vendor blade files for Tailwind class scanning (referenced in app.css @source)
+COPY --from=php-deps /var/www/html/vendor/laravel/framework/src/Illuminate/Pagination/resources/views/ \
+    vendor/laravel/framework/src/Illuminate/Pagination/resources/views/
+COPY --from=php-deps /var/www/html/vendor/laravel/jetstream/ \
+    vendor/laravel/jetstream/
+
+RUN mkdir -p storage/framework/views
+
+ARG VITE_APP_NAME="Clarity Invoicing"
+RUN bun run build
+
+# ========================================
+# Stage 3: Clean Application Assembly
+# ========================================
+FROM serversideup/php:8.5-cli AS app
+
+USER root
+WORKDIR /var/www/html
+
 COPY . .
+COPY --from=php-deps /var/www/html/vendor vendor/
+COPY --from=frontend /build/public/build public/build/
 
-# Build frontend assets
-RUN yarn build
-
-# Clean up development dependencies
-RUN yarn workspaces focus --production && \
-    yarn cache clean --all
+# Remove non-runtime files
+RUN rm -rf node_modules tests docker .git .github .agents .claude .gemini \
+    docs *.md phpunit.xml phpunit.dusk.xml bun.lock package.json boost.json \
+    .env .env.* .editorconfig .gitignore .gitattributes .gitmodules \
+    .mcp.json postcss.config.js tailwind.config.js vite.config.js \
+    resources/css resources/js
 
 # ========================================
 # Production Stage - ServerSideUp FPM + Nginx
 # ========================================
-FROM serversideup/php:8.4-fpm-nginx AS production
+FROM serversideup/php:8.5-fpm-nginx AS production
 
 # Switch to root for PHP extension installation
 USER root
@@ -86,11 +93,10 @@ ENV QUEUE_CONNECTION=redis
 ENV REDIS_HOST=redis
 ENV REDIS_PORT=6379
 
-# Copy built application from build stage
-COPY --from=build --chown=www-data:www-data /var/www/html /var/www/html
+# Copy clean application from app stage
+COPY --from=app --chown=www-data:www-data /var/www/html /var/www/html
 
 # Copy H5BP and Laravel nginx configurations
-# Copy H5BP base configurations
 COPY --chown=www-data:www-data docker/production/nginx/h5bp/h5bp/ /etc/nginx/h5bp/
 COPY --chown=www-data:www-data docker/production/nginx/h5bp/mime.types /etc/nginx/mime.types
 
@@ -116,7 +122,7 @@ RUN chmod +x /usr/local/bin/entrypoint.sh && \
 USER root
 
 # Install supervisor for background processes
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     supervisor \
     netcat-openbsd \
     curl \
