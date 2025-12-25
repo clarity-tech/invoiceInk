@@ -20,7 +20,7 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         .header {
-            border-bottom: 3px solid #3b82f6;
+            border-bottom: 3px solid #7c3aed;
             padding-bottom: 20px;
             margin-bottom: 30px;
         }
@@ -44,7 +44,7 @@
         }
         .details-box {
             background-color: #f9fafb;
-            border-left: 4px solid #3b82f6;
+            border-left: 4px solid #7c3aed;
             padding: 20px;
             margin: 20px 0;
         }
@@ -72,14 +72,14 @@
         .total-row {
             font-size: 18px;
             font-weight: bold;
-            color: #3b82f6;
+            color: #7c3aed;
             margin-top: 10px;
             padding-top: 15px;
             border-top: 2px solid #e5e7eb;
         }
         .cta-button {
             display: inline-block;
-            background-color: #3b82f6;
+            background-color: #7c3aed;
             color: #ffffff;
             text-decoration: none;
             padding: 12px 30px;
@@ -89,7 +89,7 @@
             text-align: center;
         }
         .cta-button:hover {
-            background-color: #2563eb;
+            background-color: #6d28d9;
         }
         .footer {
             margin-top: 40px;

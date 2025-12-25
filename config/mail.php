@@ -111,8 +111,8 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'noreply@clarity-invoicing.com'),
-        'name' => env('MAIL_FROM_NAME', 'Clarity Invoicing'),
+        'address' => env('MAIL_FROM_ADDRESS', 'noreply@invoiceink.app'),
+        'name' => env('MAIL_FROM_NAME', 'InvoiceInk'),
     ],
 
 ];

@@ -9,6 +9,15 @@ use App\Livewire\OrganizationManager;
 use App\Livewire\OrganizationSetup;
 use Illuminate\Support\Facades\Route;
 
+// Homepage (public landing for guests, redirect to dashboard for authenticated users)
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect('/dashboard');
+    }
+
+    return view('welcome');
+});
+
 // Public view routes for invoices and estimates (no authentication required)
 Route::get('/invoices/view/{ulid}', [PublicViewController::class, 'showInvoice'])->name('invoices.public');
 Route::get('/estimates/view/{ulid}', [PublicViewController::class, 'showEstimate'])->name('estimates.public');
@@ -28,11 +37,6 @@ Route::middleware([
 
     // Routes that require organization setup completion
     Route::middleware(['organization.setup'])->group(function () {
-        // Redirect root to dashboard
-        Route::get('/', function () {
-            return redirect('/dashboard');
-        });
-
         // Dashboard
         Route::get('/dashboard', function () {
             return view('dashboard');

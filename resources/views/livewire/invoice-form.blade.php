@@ -276,7 +276,7 @@
                             @error('invoice_numbering_series_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             @if($this->selectedSeriesPreview)
                                 <p class="mt-1 text-sm text-gray-600">
-                                    Next: <span class="font-mono text-indigo-600">{{ $this->selectedSeriesPreview }}</span>
+                                    Next: <span class="font-mono text-brand-600">{{ $this->selectedSeriesPreview }}</span>
                                 </p>
                             @endif
                         </div>

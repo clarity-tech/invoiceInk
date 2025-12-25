@@ -34,9 +34,9 @@ class UserSeeder extends ProductionSafeSeeder
         $this->info('Created users and organizations successfully!');
         $this->info('✓ System Admin: admin@invoicing.claritytech.test (password: password)');
         $this->info('✓ Demo User: demo@invoicing.claritytech.test (password: password)');
-        $this->info('✓ Business Users: john@acmecorp.com, sarah@techstartup.com, maria@euroconsult.de');
-        $this->info('✓ UAE User: ahmed@dubaitrading.ae');
-        $this->info('✓ Multi-org Owner: robert@globalcorp.com');
+        $this->info('✓ Business Users: john@acmecorp.test, sarah@techstartup.test, maria@euroconsult.test');
+        $this->info('✓ UAE User: ahmed@dubaitrading.test');
+        $this->info('✓ Multi-org Owner: robert@globalcorp.test');
         $this->info('All passwords: password');
     }
 
@@ -69,7 +69,7 @@ class UserSeeder extends ProductionSafeSeeder
         if ($globalCorpOrg) {
             TeamInvitation::create([
                 'team_id' => $globalCorpOrg->id,
-                'email' => 'sarah@techstartup.com',
+                'email' => 'sarah@techstartup.test',
                 'role' => 'admin',
             ]);
             $this->info('✓ Created invitation for Sarah to join GlobalCorp');
@@ -78,7 +78,7 @@ class UserSeeder extends ProductionSafeSeeder
         if ($johnOrg) {
             TeamInvitation::create([
                 'team_id' => $johnOrg->id,
-                'email' => 'accountant@acmecorp.com',
+                'email' => 'accountant@acmecorp.test',
                 'role' => 'editor',
             ]);
             $this->info('✓ Created invitation for accountant to join ACME Manufacturing');
@@ -87,7 +87,7 @@ class UserSeeder extends ProductionSafeSeeder
         if ($mariaOrg) {
             TeamInvitation::create([
                 'team_id' => $mariaOrg->id,
-                'email' => 'finance@euroconsult.de',
+                'email' => 'finance@euroconsult.test',
                 'role' => 'admin',
             ]);
             $this->info('✓ Created invitation for finance manager to join EuroConsult');

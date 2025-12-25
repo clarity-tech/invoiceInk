@@ -36,7 +36,7 @@
                                         Organization *
                                     </label>
                                     <select wire:model.live="organization_id" id="organization_id" 
-                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                         <option value="">Select Organization</option>
                                         @foreach ($this->organizations as $org)
                                             <option value="{{ $org->id }}">{{ $org->name }}</option>
@@ -51,7 +51,7 @@
                                         Location (Optional)
                                     </label>
                                     <select wire:model.live="location_id" id="location_id" 
-                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                         <option value="">Organization-wide (All Locations)</option>
                                         @foreach ($this->organizationLocations as $location)
                                             <option value="{{ $location->id }}">{{ $location->name }}</option>
@@ -66,7 +66,7 @@
                                         Series Name *
                                     </label>
                                     <input wire:model.live="name" type="text" id="name" 
-                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
                                            placeholder="e.g., Default Invoice Series">
                                     @error('name') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                 </div>
@@ -77,7 +77,7 @@
                                         Prefix *
                                     </label>
                                     <input wire:model.live="prefix" type="text" id="prefix" 
-                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
                                            placeholder="e.g., INV, BILL, DXB">
                                     @error('prefix') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                 </div>
@@ -88,7 +88,7 @@
                                         Format Pattern *
                                     </label>
                                     <input wire:model.live="format_pattern" type="text" id="format_pattern"
-                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
                                            placeholder="{PREFIX}{YEAR}{MONTH}{SEQUENCE:4}">
                                     @error('format_pattern') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                     <p class="mt-1 text-sm text-gray-500">
@@ -105,7 +105,7 @@
                                         Current Number *
                                     </label>
                                     <input wire:model.live="current_number" type="number" id="current_number" min="0"
-                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                     @error('current_number') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                 </div>
 
@@ -115,7 +115,7 @@
                                         Reset Frequency *
                                     </label>
                                     <select wire:model.live="reset_frequency" id="reset_frequency" 
-                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                         @foreach ($this->resetFrequencyOptions as $value => $label)
                                             <option value="{{ $value }}">{{ $label }}</option>
                                         @endforeach
@@ -128,12 +128,12 @@
                                     <div class="flex items-center space-x-6">
                                         <label class="inline-flex items-center">
                                             <input wire:model="is_active" type="checkbox" 
-                                                   class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                                   class="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                             <span class="ml-2 text-sm text-gray-600">Active</span>
                                         </label>
                                         <label class="inline-flex items-center">
                                             <input wire:model="is_default" type="checkbox" 
-                                                   class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                                   class="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                             <span class="ml-2 text-sm text-gray-600">Default Series</span>
                                         </label>
                                     </div>
@@ -144,7 +144,7 @@
                             @if ($this->nextNumberPreview)
                                 <div class="bg-gray-50 p-4 rounded-md">
                                     <h4 class="text-sm font-medium text-gray-900">Next Invoice Number Preview:</h4>
-                                    <p class="text-lg font-mono text-indigo-600">{{ $this->nextNumberPreview }}</p>
+                                    <p class="text-lg font-mono text-brand-600">{{ $this->nextNumberPreview }}</p>
                                 </div>
                             @endif
 
@@ -155,7 +155,7 @@
                                     Cancel
                                 </button>
                                 <button type="submit" 
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        class="px-4 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                     {{ $editingId ? 'Update' : 'Create' }} Series
                                 </button>
                             </div>
@@ -220,7 +220,7 @@
                         <h3 class="text-lg font-medium text-gray-900">Numbering Series</h3>
                         @if (!$showCreateForm)
                             <button wire:click="create" 
-                                    class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    class="px-4 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                 Create New Series
                             </button>
                         @endif
@@ -285,7 +285,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div class="flex space-x-2">
                                                 <button wire:click="edit({{ $series->id }})" 
-                                                        class="text-indigo-600 hover:text-indigo-900">
+                                                        class="text-brand-600 hover:text-brand-900">
                                                     Edit
                                                 </button>
                                                 <button wire:click="toggleActive({{ $series->id }})" 
@@ -319,7 +319,7 @@
                                                     <p class="text-sm text-gray-600 mb-2">{{ __('forms.numbering_series.create_custom_series') }}</p>
                                                     @if (!$showCreateForm)
                                                         <button wire:click="create" 
-                                                                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500">
                                                             <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                                                                 <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
                                                             </svg>

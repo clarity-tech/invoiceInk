@@ -198,7 +198,7 @@ class UserFactory extends Factory
     {
         return $this->state([
             'name' => 'John Smith',
-            'email' => 'john@acmecorp.com',
+            'email' => 'john@acmecorp.test',
         ])->has(
             Organization::factory()
                 ->businessOrganization()
@@ -217,10 +217,10 @@ class UserFactory extends Factory
                     'company_name' => 'ACME Manufacturing Corporation',
                     'tax_number' => 'US-123456789',
                     'registration_number' => 'REG-ACME-2020',
-                    'emails' => ['billing@acmecorp.com', 'john@acmecorp.com'],
+                    'emails' => ['billing@acmecorp.test', 'john@acmecorp.test'],
                     'phone' => '+1-555-0123',
-                    'website' => 'https://acmecorp.com',
-                    'custom_domain' => 'invoicing.acmecorp.com',
+                    'website' => 'https://acmecorp.test',
+                    'custom_domain' => 'invoicing.acmecorp.test',
                 ])
                 ->count(1),
             'ownedTeams'
@@ -234,7 +234,7 @@ class UserFactory extends Factory
     {
         return $this->state([
             'name' => 'Sarah Johnson',
-            'email' => 'sarah@techstartup.com',
+            'email' => 'sarah@techstartup.test',
         ])->has(
             Organization::factory()
                 ->businessOrganization()
@@ -253,10 +253,10 @@ class UserFactory extends Factory
                     'company_name' => 'TechStart Inc.',
                     'tax_number' => 'US-987654321',
                     'registration_number' => 'REG-TECH-2021',
-                    'emails' => ['hello@techstartup.com', 'sarah@techstartup.com'],
+                    'emails' => ['hello@techstartup.test', 'sarah@techstartup.test'],
                     'phone' => '+1-555-0456',
-                    'website' => 'https://techstartup.com',
-                    'custom_domain' => 'billing.techstartup.com',
+                    'website' => 'https://techstartup.test',
+                    'custom_domain' => 'billing.techstartup.test',
                 ])
                 ->count(1),
             'ownedTeams'
@@ -270,7 +270,7 @@ class UserFactory extends Factory
     {
         return $this->state([
             'name' => 'Maria Schmidt',
-            'email' => 'maria@euroconsult.de',
+            'email' => 'maria@euroconsult.test',
         ])->has(
             Organization::factory()
                 ->businessOrganization()
@@ -289,9 +289,9 @@ class UserFactory extends Factory
                     'company_name' => 'EuroConsult GmbH',
                     'tax_number' => 'DE-123456789',
                     'registration_number' => 'HRB-12345',
-                    'emails' => ['info@euroconsult.de', 'maria@euroconsult.de'],
+                    'emails' => ['info@euroconsult.test', 'maria@euroconsult.test'],
                     'phone' => '+49-30-12345678',
-                    'website' => 'https://euroconsult.de',
+                    'website' => 'https://euroconsult.test',
                 ])
                 ->count(1),
             'ownedTeams'
@@ -305,7 +305,7 @@ class UserFactory extends Factory
     {
         return $this->state([
             'name' => 'Ahmed Al-Mahmoud',
-            'email' => 'ahmed@dubaitrading.ae',
+            'email' => 'ahmed@dubaitrading.test',
         ])->has(
             Organization::factory()
                 ->businessOrganization()
@@ -324,9 +324,9 @@ class UserFactory extends Factory
                     'company_name' => 'Dubai Trading Limited Liability Company',
                     'tax_number' => 'AE-100234567890003',
                     'registration_number' => 'CN-1234567',
-                    'emails' => ['info@dubaitrading.ae', 'ahmed@dubaitrading.ae'],
+                    'emails' => ['info@dubaitrading.test', 'ahmed@dubaitrading.test'],
                     'phone' => '+971-4-1234567',
-                    'website' => 'https://dubaitrading.ae',
+                    'website' => 'https://dubaitrading.test',
                 ])
                 ->count(1),
             'ownedTeams'
@@ -340,7 +340,7 @@ class UserFactory extends Factory
     {
         return $this->state([
             'name' => 'Robert Global',
-            'email' => 'robert@globalcorp.com',
+            'email' => 'robert@globalcorp.test',
         ])->has(
             Organization::factory()
                 ->personalTeam()
@@ -360,7 +360,7 @@ class UserFactory extends Factory
                     'name' => 'GlobalCorp Holdings',
                     'company_name' => 'GlobalCorp Holdings Inc',
                     'currency' => 'INR',
-                    'custom_domain' => 'invoicing.globalcorp.com',
+                    'custom_domain' => 'invoicing.globalcorp.test',
                 ])
                 ->count(1),
             'ownedTeams'
