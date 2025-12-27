@@ -165,34 +165,34 @@
             @endif
 
             <!-- Informational Banner -->
-            <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <div class="mb-6 bg-brand-50 border border-brand-200 rounded-lg p-6">
                 <div class="flex">
                     <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                        <svg class="h-5 w-5 text-brand-400" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <h3 class="text-sm font-medium text-blue-800">{{ __('forms.numbering_series.auto_creation_title') }}</h3>
-                        <div class="mt-2 text-sm text-blue-700">
+                        <h3 class="text-sm font-medium text-brand-800">{{ __('forms.numbering_series.auto_creation_title') }}</h3>
+                        <div class="mt-2 text-sm text-brand-700">
                             <p>{{ __('forms.numbering_series.auto_creation_explanation') }}</p>
                             
                             @if(!$this->hasAnySeriesForCurrentOrg && $this->automaticSeriesPreview)
-                                <div class="mt-4 p-3 bg-blue-100 rounded-md">
-                                    <h4 class="text-sm font-medium text-blue-800 mb-2">{{ __('forms.numbering_series.automatic_preview_title') }}</h4>
-                                    <div class="text-xs text-blue-700">
+                                <div class="mt-4 p-3 bg-brand-100 rounded-md">
+                                    <h4 class="text-sm font-medium text-brand-800 mb-2">{{ __('forms.numbering_series.automatic_preview_title') }}</h4>
+                                    <div class="text-xs text-brand-700">
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
                                                 <span class="font-medium">Series Name:</span> {{ $this->automaticSeriesPreview['series']->name }}
                                             </div>
                                             <div>
-                                                <span class="font-medium">Format:</span> <code class="bg-blue-200 px-1 rounded">{{ $this->automaticSeriesPreview['series']->format_pattern }}</code>
+                                                <span class="font-medium">Format:</span> <code class="bg-brand-200 px-1 rounded">{{ $this->automaticSeriesPreview['series']->format_pattern }}</code>
                                             </div>
                                             <div>
                                                 <span class="font-medium">Reset:</span> {{ $this->automaticSeriesPreview['series']->reset_frequency->label() }}
                                             </div>
                                             <div>
-                                                <span class="font-medium">Next Number:</span> <code class="bg-blue-200 px-1 rounded">{{ $this->automaticSeriesPreview['preview_number'] }}</code>
+                                                <span class="font-medium">Next Number:</span> <code class="bg-brand-200 px-1 rounded">{{ $this->automaticSeriesPreview['preview_number'] }}</code>
                                             </div>
                                         </div>
                                     </div>
@@ -266,7 +266,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {{ $series->name }}
                                             @if ($series->is_default)
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-2">
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-brand-100 text-brand-800 ml-2">
                                                     Default
                                                 </span>
                                             @endif
@@ -294,7 +294,7 @@
                                                 </button>
                                                 @if (!$series->is_default)
                                                     <button wire:click="setAsDefault({{ $series->id }})" 
-                                                            class="text-blue-600 hover:text-blue-900">
+                                                            class="text-brand-600 hover:text-brand-900">
                                                         Set Default
                                                     </button>
                                                 @endif

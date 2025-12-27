@@ -41,7 +41,7 @@
         }
         /* Style invoice number banner */
         .email-body > div:nth-child(2) {
-            background-color: #3b82f6;
+            background-color: #7c3aed;
             color: white;
             padding: 20px;
             text-align: center;
@@ -72,7 +72,7 @@
         }
         .cta-button {
             display: inline-block;
-            background-color: #3b82f6;
+            background-color: #7c3aed;
             color: #ffffff;
             text-decoration: none;
             padding: 12px 30px;
@@ -82,7 +82,7 @@
             text-align: center;
         }
         .cta-button:hover {
-            background-color: #2563eb;
+            background-color: #6d28d9;
         }
         .footer {
             margin-top: 40px;

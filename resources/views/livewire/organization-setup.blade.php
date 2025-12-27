@@ -14,7 +14,7 @@
                         <div class="flex items-center {{ $stepNumber < count($this->stepProgress) ? 'flex-1' : '' }}">
                             <div class="relative">
                                 <div class="flex items-center justify-center w-10 h-10 rounded-full border-2 
-                                    {{ $stepNumber <= $currentStep ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300 bg-white text-gray-500' }}
+                                    {{ $stepNumber <= $currentStep ? 'border-brand-600 bg-brand-600 text-white' : 'border-gray-300 bg-white text-gray-500' }}
                                     {{ $step['completed'] ? 'bg-green-600 border-green-600' : '' }}">
                                     @if($step['completed'])
                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -25,12 +25,12 @@
                                     @endif
                                 </div>
                                 <div class="absolute top-12 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
-                                    <p class="text-sm font-medium {{ $stepNumber <= $currentStep ? 'text-blue-600' : 'text-gray-500' }}">{{ $step['title'] }}</p>
+                                    <p class="text-sm font-medium {{ $stepNumber <= $currentStep ? 'text-brand-600' : 'text-gray-500' }}">{{ $step['title'] }}</p>
                                     <p class="text-xs text-gray-400">{{ $step['description'] }}</p>
                                 </div>
                             </div>
                             @if($stepNumber < count($this->stepProgress))
-                                <div class="flex-1 h-0.5 mx-4 {{ $stepNumber < $currentStep ? 'bg-blue-600' : 'bg-gray-300' }}"></div>
+                                <div class="flex-1 h-0.5 mx-4 {{ $stepNumber < $currentStep ? 'bg-brand-600' : 'bg-gray-300' }}"></div>
                             @endif
                         </div>
                     @endforeach
@@ -60,7 +60,7 @@
                                         Company Name *
                                     </label>
                                     <input type="text" id="company_name" wire:model="company_name" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
                                            placeholder="Enter your company name">
                                     @error('company_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
@@ -70,7 +70,7 @@
                                         Tax Number
                                     </label>
                                     <input type="text" id="tax_number" wire:model="tax_number" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
                                            placeholder="Tax identification number">
                                     @error('tax_number') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
@@ -80,7 +80,7 @@
                                         Registration Number
                                     </label>
                                     <input type="text" id="registration_number" wire:model="registration_number" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
                                            placeholder="Business registration number">
                                     @error('registration_number') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
@@ -90,7 +90,7 @@
                                         Website
                                     </label>
                                     <input type="url" id="website" wire:model="website" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
                                            placeholder="https://yourcompany.com">
                                     @error('website') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
@@ -100,7 +100,7 @@
                                         Notes
                                     </label>
                                     <textarea id="notes" wire:model="notes" rows="3" 
-                                              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
                                               placeholder="Additional notes about your company"></textarea>
                                     @error('notes') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
@@ -121,7 +121,7 @@
                                         Location Name *
                                     </label>
                                     <input type="text" id="location_name" wire:model="location_name" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
                                            placeholder="Head Office, Main Branch, etc.">
                                     @error('location_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
@@ -131,7 +131,7 @@
                                         GSTIN / Tax ID
                                     </label>
                                     <input type="text" id="gstin" wire:model="gstin" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
                                            placeholder="Location-specific tax ID">
                                     @error('gstin') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
@@ -141,7 +141,7 @@
                                         Address Line 1 *
                                     </label>
                                     <input type="text" id="address_line_1" wire:model="address_line_1" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
                                            placeholder="Street address, building name">
                                     @error('address_line_1') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
@@ -151,7 +151,7 @@
                                         Address Line 2
                                     </label>
                                     <input type="text" id="address_line_2" wire:model="address_line_2" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
                                            placeholder="Apartment, floor, suite">
                                     @error('address_line_2') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
@@ -161,7 +161,7 @@
                                         City *
                                     </label>
                                     <input type="text" id="city" wire:model="city" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
                                            placeholder="City name">
                                     @error('city') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
@@ -171,7 +171,7 @@
                                         State / Province *
                                     </label>
                                     <input type="text" id="state" wire:model="state" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
                                            placeholder="State or province">
                                     @error('state') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
@@ -181,7 +181,7 @@
                                         Postal Code *
                                     </label>
                                     <input type="text" id="postal_code" wire:model="postal_code" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
                                            placeholder="ZIP or postal code">
                                     @error('postal_code') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
@@ -202,7 +202,7 @@
                                         Country *
                                     </label>
                                     <select id="country_code" wire:model.live="country_code" 
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500">
                                         <option value="">Select your country</option>
                                         @foreach($this->availableCountries as $country)
                                             <option value="{{ $country['value'] }}">{{ $country['label'] }}</option>
@@ -216,7 +216,7 @@
                                         Currency *
                                     </label>
                                     <select id="currency" wire:model="currency" 
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500">
                                         <option value="">Select currency</option>
                                         @foreach($this->availableCurrencies as $code => $name)
                                             <option value="{{ $code }}">{{ $name }}</option>
@@ -231,7 +231,7 @@
                                             Financial Year
                                         </label>
                                         <select id="financial_year_type" wire:model="financial_year_type" 
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500">
                                             @foreach($this->selectedCountryInfo['financial_year_options'] as $value => $label)
                                                 <option value="{{ $value }}">{{ $label }}</option>
                                             @endforeach
@@ -241,9 +241,9 @@
                                 @endif
 
                                 @if($this->selectedCountryInfo)
-                                    <div class="md:col-span-2 bg-blue-50 p-4 rounded-md">
-                                        <h4 class="text-sm font-medium text-blue-900 mb-2">Country Information</h4>
-                                        <div class="text-sm text-blue-800 space-y-1">
+                                    <div class="md:col-span-2 bg-brand-50 p-4 rounded-md">
+                                        <h4 class="text-sm font-medium text-brand-900 mb-2">Country Information</h4>
+                                        <div class="text-sm text-brand-800 space-y-1">
                                             <p><strong>Tax System:</strong> {{ $this->selectedCountryInfo['tax_system']['name'] }}</p>
                                             <p><strong>Common Rates:</strong> {{ implode(', ', $this->selectedCountryInfo['tax_system']['rates']) }}%</p>
                                             <p><strong>Recommended Format:</strong> {{ $this->selectedCountryInfo['recommended_numbering'] }}</p>
@@ -269,7 +269,7 @@
                                     @foreach($emails as $index => $email)
                                         <div class="flex items-center mb-2">
                                             <input type="email" wire:model="emails.{{ $index }}" 
-                                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
                                                    placeholder="email@company.com">
                                             @if($index > 0)
                                                 <button type="button" wire:click="removeEmailField({{ $index }})" 
@@ -284,7 +284,7 @@
                                     @endforeach
                                     
                                     <button type="button" wire:click="addEmailField" 
-                                            class="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                            class="mt-2 text-brand-600 hover:text-brand-800 text-sm font-medium">
                                         + Add another email
                                     </button>
                                     @error('emails') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
@@ -295,7 +295,7 @@
                                         Phone Number
                                     </label>
                                     <input type="tel" id="phone" wire:model="phone" 
-                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
                                            placeholder="+1 (555) 123-4567">
                                     @error('phone') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
@@ -308,7 +308,7 @@
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between">
                     @if($currentStep > 1)
                         <button type="button" wire:click="previousStep" 
-                                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500">
                             Previous
                         </button>
                     @else
@@ -317,7 +317,7 @@
 
                     @if($currentStep < $totalSteps)
                         <button type="button" wire:click="nextStep" 
-                                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500">
                             Next
                         </button>
                     @else

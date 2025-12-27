@@ -3,7 +3,7 @@
         <!-- Header with Navigation -->
         <div class="mb-6 flex justify-between items-center">
             <div class="flex items-center space-x-4">
-                <a href="{{ route('invoices.index') }}" class="text-blue-600 hover:text-blue-900">
+                <a href="{{ route('invoices.index') }}" class="text-brand-600 hover:text-brand-900">
                     ← Back to Invoices
                 </a>
                 <h1 class="text-3xl font-bold text-gray-900">{{ $this->pageTitle }}</h1>
@@ -39,7 +39,7 @@
                     <div class="max-w-md">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Select Location *</label>
                         <select wire:model.live="organization_location_id"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                             <option value="">Select Location</option>
                             @foreach($this->organizationLocations as $location)
                                 <option value="{{ $location->id }}">{{ $location->name }} - {{ $location->city }}</option>
@@ -69,7 +69,7 @@
                                 {{ __('forms.labels.customer_required') }}
                             </label>
                             <select wire:model.live="customer_id"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                 <option value="">{{ __('forms.labels.select_customer') }}</option>
                                 @foreach($this->customers as $customer)
                                     <option value="{{ $customer->id }}">{{ $customer->name }}</option>
@@ -78,10 +78,10 @@
                             @error('customer_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
 
                             @if($this->customers->count() === 0)
-                                <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                    <p class="text-sm text-blue-700">
+                                <div class="mt-2 p-3 bg-brand-50 border border-brand-200 rounded-md">
+                                    <p class="text-sm text-brand-700">
                                         No customers found.
-                                        <a href="{{ route('customers.index') }}" class="font-medium underline hover:text-blue-600" target="_blank">
+                                        <a href="{{ route('customers.index') }}" class="font-medium underline hover:text-brand-600" target="_blank">
                                             Create your first customer →
                                         </a>
                                     </p>
@@ -95,7 +95,7 @@
                                 @if($this->customerLocations->count() > 0)
                                     <div class="mb-3">
                                         <select wire:model.live="customer_location_id"
-                                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                                             <option value="">Select Location</option>
                                             @foreach($this->customerLocations as $location)
                                                 @php
@@ -166,7 +166,7 @@
                                 @if($this->customerLocations->count() > 0)
                                     <div class="mb-3">
                                         <select wire:model.live="customer_shipping_location_id"
-                                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                                             <option value="">Select Location</option>
                                             @foreach($this->customerLocations as $location)
                                                 @php
@@ -238,7 +238,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
                         <select wire:model="type"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
                                 {{ $mode === 'edit' ? 'disabled' : '' }}>
                             <option value="invoice">Invoice</option>
                             <option value="estimate">Estimate</option>
@@ -248,7 +248,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
                         <select wire:model="status"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                             @foreach(\App\Enums\InvoiceStatus::cases() as $statusOption)
                                 <option value="{{ $statusOption->value }}">{{ $statusOption->label() }}</option>
                             @endforeach
@@ -260,7 +260,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Numbering Series (Optional)</label>
                             <select wire:model.live="invoice_numbering_series_id"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                 <option value="">Auto-select best series</option>
                                 @foreach($this->availableNumberingSeries as $series)
                                     <option value="{{ $series->id }}">
@@ -285,14 +285,14 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('documents.fields.issue_date') }}</label>
                         <input wire:model="issued_at" type="date"
-                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                         @error('issued_at') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('documents.fields.due_date') }}</label>
                         <input wire:model="due_at" type="date"
-                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                         @error('due_at') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                     </div>
                 </div>
@@ -303,7 +303,7 @@
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold text-gray-800">Line Items</h2>
                     <button type="button" wire:click="addItem"
-                            class="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded">
+                            class="bg-brand-500 hover:bg-brand-600 text-white text-sm font-medium py-2 px-4 rounded">
                         + Add Item
                     </button>
                 </div>
@@ -338,7 +338,7 @@
                                     <td class="px-4 py-3">
                                         <input wire:model.live="items.{{ $index }}.description" type="text"
                                                placeholder="Item description"
-                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                                         @error("items.{$index}.description")
                                             <span class="text-red-500 text-xs">{{ $message }}</span>
                                         @enderror
@@ -347,7 +347,7 @@
                                         <div class="mt-2">
                                             <input wire:model.live="items.{{ $index }}.sac_code" type="text"
                                                    placeholder="SAC Code (e.g., 998314)"
-                                                   class="w-40 border border-gray-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                                   class="w-40 border border-gray-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
                                             @if(!empty($item['sac_code']))
                                                 <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                                                     services SAC: {{ $item['sac_code'] }}
@@ -358,7 +358,7 @@
                                     <td class="px-4 py-3">
                                         <input wire:model.live="items.{{ $index }}.quantity" type="number" min="1"
                                                placeholder="1"
-                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                                         @error("items.{$index}.quantity")
                                             <span class="text-red-500 text-xs">{{ $message }}</span>
                                         @enderror
@@ -366,7 +366,7 @@
                                     <td class="px-4 py-3">
                                         <input wire:model.live="items.{{ $index }}.unit_price" type="number" step="0.01" min="0"
                                                placeholder="0.00"
-                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                                         @error("items.{$index}.unit_price")
                                             <span class="text-red-500 text-xs">{{ $message }}</span>
                                         @enderror
@@ -374,7 +374,7 @@
                                     <td class="px-4 py-3">
                                         <input wire:model.live="items.{{ $index }}.tax_rate" type="number" step="0.01" min="0" max="100"
                                                placeholder="0"
-                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                                         @error("items.{$index}.tax_rate")
                                             <span class="text-red-500 text-xs">{{ $message }}</span>
                                         @enderror
@@ -416,7 +416,7 @@
                         </div>
                         <div class="border-t border-gray-300 pt-2 flex justify-between">
                             <span class="text-lg font-bold text-gray-900">Total:</span>
-                            <span class="text-lg font-bold text-blue-600">{{ $this->formatAmount($total) }}</span>
+                            <span class="text-lg font-bold text-brand-600">{{ $this->formatAmount($total) }}</span>
                         </div>
                     </div>
                 </div>
@@ -428,7 +428,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Customer Notes</label>
                     <textarea wire:model="notes" rows="4"
                               placeholder="Enter any notes or terms and conditions for this invoice..."
-                              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
                     @error('notes') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                     <p class="text-xs text-gray-500 mt-1">This will be displayed on the invoice PDF</p>
                 </div>
@@ -458,7 +458,7 @@
 
                         <div class="flex items-center gap-3">
                             <input type="file" wire:model="newFile" id="file-upload-{{ uniqid() }}"
-                                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
                         </div>
                     </div>
                     <p class="text-xs text-gray-500 mt-1">Upload files one at a time. These files will be attached to the invoice and can be sent via email.</p>
@@ -510,7 +510,7 @@
                     Cancel
                 </button>
                 <button type="submit"
-                        class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium">
+                        class="px-6 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 font-medium">
                     {{ $mode === 'edit' ? 'Update' : 'Create' }} {{ ucfirst($type) }}
                 </button>
             </div>
@@ -547,7 +547,7 @@
                             <div class="flex items-start">
                                 <label class="text-sm font-medium text-gray-600 w-20 pt-2">Send To</label>
                                 <div class="flex-1" x-data="{ toEmail: '' }">
-                                    <div class="border border-gray-300 rounded-md p-2 min-h-[44px] flex flex-wrap gap-2 items-center focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+                                    <div class="border border-gray-300 rounded-md p-2 min-h-[44px] flex flex-wrap gap-2 items-center focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
                                         @php
                                             $customer = $customer_id ? \App\Models\Customer::find($customer_id) : null;
                                             $customerEmails = $customer?->emails ?? collect();
@@ -616,7 +616,7 @@
                             <div class="flex items-start">
                                 <label class="text-sm font-medium text-gray-600 w-20 pt-2">Cc</label>
                                 <div class="flex-1" x-data="{ ccEmail: '' }">
-                                    <div class="border border-gray-300 rounded-md p-2 min-h-[44px] flex flex-wrap gap-2 items-center focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+                                    <div class="border border-gray-300 rounded-md p-2 min-h-[44px] flex flex-wrap gap-2 items-center focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
                                         @php
                                             $organization = auth()->user()?->currentTeam;
                                             $organizationEmails = $organization?->emails ?? collect();
@@ -685,7 +685,7 @@
                             <div class="flex items-center">
                                 <label class="text-sm font-medium text-gray-600 w-20">Subject</label>
                                 <input wire:model="emailSubject" type="text"
-                                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                             </div>
                             @error('emailSubject') <span class="text-red-500 text-xs mt-1 ml-20">{{ $message }}</span> @enderror
                         </div>
@@ -721,7 +721,7 @@
                                 <!-- Invoice PDF Attachment -->
                                 <label class="flex items-center cursor-pointer mb-3 p-3 hover:bg-gray-50 rounded-md transition">
                                     <input type="checkbox" wire:model="attachPdf"
-                                           class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                           class="h-4 w-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500">
                                     <svg class="w-8 h-8 text-red-500 mx-3" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path>
                                     </svg>
@@ -741,7 +741,7 @@
                                         @foreach($invoiceAttachments as $media)
                                             <label class="flex items-center cursor-pointer p-3 hover:bg-gray-50 rounded-md transition border border-gray-200">
                                                 <input type="checkbox" wire:model="attachInvoiceFiles" value="{{ $media->id }}"
-                                                       class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                                       class="h-4 w-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500">
                                                 <svg class="w-8 h-8 text-gray-400 mx-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                                                 </svg>
@@ -759,7 +759,7 @@
 
                     <!-- Modal Footer -->
                     <div class="px-6 py-4 border-t border-gray-200 flex justify-between items-center bg-gray-50">
-                        <!-- <button type="button" class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                        <!-- <button type="button" class="text-sm text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
                             </svg>
@@ -771,7 +771,7 @@
                                 Cancel
                             </button>
                             <button wire:click="sendEmail" type="button"
-                                    class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium transition shadow-sm">
+                                    class="px-6 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 font-medium transition shadow-sm">
                                 Send
                             </button>
                         </div>

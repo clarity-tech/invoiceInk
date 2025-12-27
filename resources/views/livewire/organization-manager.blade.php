@@ -11,14 +11,14 @@
                 </h1>
                 @if($autoEdit)
                     <div class="mt-2">
-                        <a href="{{ route('organizations.index') }}" class="text-sm text-blue-600 hover:text-blue-800">
+                        <a href="{{ route('organizations.index') }}" class="text-sm text-brand-600 hover:text-brand-800">
                             ← View all organizations
                         </a>
                     </div>
                 @endif
             </div>
             @if (!$showForm && !$autoEdit)
-                <button wire:click="create" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                <button wire:click="create" class="bg-brand-500 hover:bg-brand-700 text-white font-bold py-2 px-4 rounded">
                     Add Organization
                 </button>
             @endif
@@ -58,13 +58,13 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Organization Name *</label>
-                            <input wire:model="name" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input wire:model="name" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                             @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                            <input wire:model="phone" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input wire:model="phone" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                             @error('phone') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
                     </div>
@@ -109,13 +109,13 @@
                             <div class="flex-1">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Upload Logo</label>
                                 <input type="file" wire:model="logo" accept="image/*"
-                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
                                 <p class="mt-2 text-xs text-gray-500">PNG, JPG, GIF, or SVG. Max 2MB. Recommended size: 200x200px.</p>
                                 @error('logo') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
 
                                 <div wire:loading wire:target="logo" class="mt-2">
-                                    <div class="flex items-center text-sm text-blue-600">
-                                        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <div class="flex items-center text-sm text-brand-600">
+                                        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-brand-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
@@ -133,7 +133,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Country *</label>
-                                <select wire:model.live="country_code" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <select wire:model.live="country_code" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                     <option value="">Select Country</option>
                                     @foreach($this->availableCountries as $country)
                                         <option value="{{ $country['value'] }}">{{ $country['label'] }}</option>
@@ -142,8 +142,8 @@
                                 @error('country_code') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                 
                                 @if($this->selectedCountryInfo)
-                                    <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                        <div class="text-sm text-blue-800">
+                                    <div class="mt-2 p-3 bg-brand-50 border border-brand-200 rounded-md">
+                                        <div class="text-sm text-brand-800">
                                             <div class="font-medium">{{ $this->selectedCountryInfo['tax_system']['name'] ?? 'Tax System' }}</div>
                                             @if(isset($this->selectedCountryInfo['tax_system']['rates']))
                                                 <div class="text-xs mt-1">Common rates: {{ implode(', ', array_map(fn($rate) => $rate.'%', $this->selectedCountryInfo['tax_system']['rates'])) }}</div>
@@ -155,7 +155,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Currency *</label>
-                                <select wire:model="currency" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" @if($country_code) disabled @endif>
+                                <select wire:model="currency" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" @if($country_code) disabled @endif>
                                     <option value="">Select Currency</option>
                                     @foreach($this->availableCurrencies as $value => $label)
                                         <option value="{{ $value }}">{{ $label }}</option>
@@ -179,7 +179,7 @@
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Financial Year Type</label>
-                                        <select wire:model="financial_year_type" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <select wire:model="financial_year_type" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                             <option value="">Select Financial Year</option>
                                             @foreach($this->selectedCountryInfo['financial_year_options'] as $value => $label)
                                                 <option value="{{ $value }}">{{ $label }}</option>
@@ -190,7 +190,7 @@
 
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Start Month</label>
-                                        <select wire:model="financial_year_start_month" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <select wire:model="financial_year_start_month" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                             @for($month = 1; $month <= 12; $month++)
                                                 <option value="{{ $month }}">{{ date('F', mktime(0, 0, 0, $month, 1)) }}</option>
                                             @endfor
@@ -200,7 +200,7 @@
 
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Start Day</label>
-                                        <input wire:model="financial_year_start_day" type="number" min="1" max="31" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <input wire:model="financial_year_start_day" type="number" min="1" max="31" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                         @error('financial_year_start_day') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
@@ -224,7 +224,7 @@
                             @foreach($emails as $index => $email)
                                 <div class="flex items-center space-x-2">
                                     <input wire:model="emails.{{ $index }}" type="email" placeholder="email@example.com" 
-                                           class="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                           class="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                     @if(count($emails) > 1)
                                         <button type="button" wire:click="removeEmailField({{ $index }})" 
                                                 class="text-red-500 hover:text-red-700 font-bold text-lg">×</button>
@@ -233,7 +233,7 @@
                                 @error("emails.{$index}") <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             @endforeach
                         </div>
-                        <button type="button" wire:click="addEmailField" class="mt-2 text-blue-500 hover:text-blue-700 text-sm">
+                        <button type="button" wire:click="addEmailField" class="mt-2 text-brand-500 hover:text-brand-700 text-sm">
                             + Add another email
                         </button>
                         @error('emails') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
@@ -246,37 +246,37 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Location Name</label>
-                                <input wire:model="location_name" type="text" placeholder="Optional - defaults to organization name" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input wire:model="location_name" type="text" placeholder="Optional - defaults to organization name" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                 @error('location_name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">GSTIN</label>
-                                <input wire:model="gstin" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input wire:model="gstin" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                 @error('gstin') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
 
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Address Line 1 *</label>
-                                <input wire:model="address_line_1" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input wire:model="address_line_1" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                 @error('address_line_1') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
 
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Address Line 2</label>
-                                <input wire:model="address_line_2" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input wire:model="address_line_2" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                 @error('address_line_2') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">City *</label>
-                                <input wire:model="city" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input wire:model="city" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                 @error('city') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">State *</label>
-                                <input wire:model="state" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input wire:model="state" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                 @error('state') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
 
@@ -299,7 +299,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Postal Code *</label>
-                                <input wire:model="postal_code" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input wire:model="postal_code" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                 @error('postal_code') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -310,7 +310,7 @@
                             Cancel
                         </button>
                         <button type="submit" 
-                                class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="px-4 py-2 bg-brand-500 text-white rounded-md hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                 wire:loading.attr="disabled"
                                 wire:target="save">
                             <span wire:loading.remove wire:target="save">
@@ -375,7 +375,7 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button wire:click="edit({{ $organization->id }})" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                                    <button wire:click="edit({{ $organization->id }})" class="text-brand-600 hover:text-brand-900 mr-3">Edit</button>
                                     <button wire:click="delete({{ $organization->id }})" 
                                             wire:confirm="Are you sure you want to delete this organization?"
                                             class="text-red-600 hover:text-red-900">Delete</button>
@@ -384,7 +384,7 @@
                         @empty
                             <tr>
                                 <td colspan="4" class="px-6 py-4 text-center text-gray-500">
-                                    No organizations found. <button wire:click="create" class="text-blue-500 hover:text-blue-700">Create your first organization</button>
+                                    No organizations found. <button wire:click="create" class="text-brand-500 hover:text-brand-700">Create your first organization</button>
                                 </td>
                             </tr>
                         @endforelse

@@ -21,7 +21,7 @@
             <button onclick="window.print()" class="bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200">
                 {{ __('actions.buttons.print_estimate') }}
             </button>
-            <a href="{{ route('estimates.pdf', $estimate->ulid) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200 inline-block">
+            <a href="{{ route('estimates.pdf', $estimate->ulid) }}" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200 inline-block">
                 {{ __('actions.buttons.download_pdf') }}
             </a>
         </div>
@@ -69,7 +69,7 @@
                         <h1 class="text-4xl font-bold text-gray-900 mb-2">ESTIMATE</h1>
                         <p class="text-lg font-semibold text-gray-700 mb-4">{{ $estimate->invoice_number }}</p>
 
-                        <div class="inline-block px-4 py-2 rounded-lg {{ $estimate->status->color() === 'green' ? 'bg-green-100 text-green-800' : ($estimate->status->color() === 'blue' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800') }}">
+                        <div class="inline-block px-4 py-2 rounded-lg {{ $estimate->status->color() === 'green' ? 'bg-green-100 text-green-800' : ($estimate->status->color() === 'blue' ? 'bg-brand-100 text-brand-800' : 'bg-gray-100 text-gray-800') }}">
                             <span class="text-sm font-semibold uppercase">{{ $estimate->status->label() }}</span>
                         </div>
                     </div>
@@ -134,7 +134,7 @@
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
-                            <tr class="bg-gray-800 text-white">
+                            <tr class="bg-brand-700 text-white">
                                 <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">Description</th>
                                 <th class="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider" style="width: 80px;">Qty</th>
                                 <th class="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider" style="width: 100px;">Rate</th>
@@ -175,7 +175,7 @@
                             </div>
                         </div>
                         <div class="border-t-2 border-gray-300 pt-3">
-                            <div class="flex justify-between items-center bg-gray-800 text-white rounded-lg px-4 py-3">
+                            <div class="flex justify-between items-center bg-brand-700 text-white rounded-lg px-4 py-3">
                                 <span class="text-base font-bold">Total Amount:</span>
                                 <span class="text-2xl font-bold">{{ $estimate->formatted_total }}</span>
                             </div>
@@ -185,7 +185,7 @@
 
                 <!-- Notes -->
                 @if($estimate->notes)
-                    <div class="mt-8 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg p-4">
+                    <div class="mt-8 bg-brand-50 border-l-4 border-brand-500 rounded-r-lg p-4">
                         <h3 class="text-sm font-bold text-gray-900 mb-2">Notes</h3>
                         <p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{{ $estimate->notes }}</p>
                     </div>

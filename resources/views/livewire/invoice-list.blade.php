@@ -7,7 +7,7 @@
                 <a href="{{ route('estimates.create') }}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
                     {{ __('actions.buttons.create_estimate') }}
                 </a>
-                <a href="{{ route('invoices.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                <a href="{{ route('invoices.create') }}" class="bg-brand-500 hover:bg-brand-700 text-white font-bold py-2 px-4 rounded">
                     {{ __('actions.buttons.create_invoice') }}
                 </a>
             </div>
@@ -36,7 +36,7 @@
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $invoice->type === 'invoice' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $invoice->type === 'invoice' ? 'bg-brand-100 text-brand-800' : 'bg-green-100 text-green-800' }}">
                                         {{ strtoupper($invoice->type) }}
                                     </span>
                                     <div class="ml-3">
@@ -72,7 +72,7 @@
                                    target="_blank" class="text-green-600 hover:text-green-900 mr-3">View</a>
                                 <a href="{{ route($invoice->type === 'invoice' ? 'invoices.pdf' : 'estimates.pdf', $invoice->ulid) }}" 
                                    class="text-red-600 hover:text-red-900 mr-3">PDF</a>
-                                <a href="{{ route('invoices.edit', $invoice) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
+                                <a href="{{ route('invoices.edit', $invoice) }}" class="text-brand-600 hover:text-brand-900 mr-3">Edit</a>
                                 <button wire:click="delete({{ $invoice->id }})" 
                                         wire:confirm="Are you sure you want to delete this {{ $invoice->type }}?"
                                         class="text-red-600 hover:text-red-900">Delete</button>
