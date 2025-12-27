@@ -92,6 +92,13 @@ class NumberingSeriesManager extends Component
     {
         $this->validate();
 
+        // S2: Authorization check — verify user has access to the selected organization
+        abort_unless(
+            auth()->check() && auth()->user()->allTeams()->contains('id', $this->organization_id),
+            403,
+            'Unauthorized access to organization.'
+        );
+
         $data = [
             'organization_id' => $this->organization_id,
             'location_id' => $this->location_id,
@@ -106,6 +113,14 @@ class NumberingSeriesManager extends Component
 
         if ($this->editingId) {
             $series = InvoiceNumberingSeries::findOrFail($this->editingId);
+
+            // Also verify existing series belongs to user's org
+            abort_unless(
+                auth()->user()->allTeams()->contains('id', $series->organization_id),
+                403,
+                'Unauthorized access to numbering series.'
+            );
+
             $series->update($data);
             $message = 'Numbering series updated successfully!';
         } else {

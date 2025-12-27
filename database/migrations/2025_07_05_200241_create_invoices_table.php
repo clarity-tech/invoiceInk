@@ -21,7 +21,7 @@ return new class extends Migration
             $table->foreignId('customer_location_id')->constrained('locations');
             $table->string('invoice_number');
             $table->foreignId('invoice_numbering_series_id')->nullable()->constrained('invoice_numbering_series')->onDelete('set null');
-            $table->enum('status', ['draft', 'sent', 'paid', 'void']);
+            $table->enum('status', ['draft', 'sent', 'accepted', 'paid', 'void']);
             $table->timestamp('issued_at')->nullable();
             $table->timestamp('due_at')->nullable();
 
@@ -44,7 +44,7 @@ return new class extends Migration
             $table->text('terms')->nullable();
 
             $table->timestamps();
-            
+
             // Add organization-scoped unique constraint for invoice numbers
             // This ensures invoice numbers are unique within an organization for invoices only
             $table->unique(['organization_id', 'invoice_number', 'type'], 'unique_invoice_number_per_org');

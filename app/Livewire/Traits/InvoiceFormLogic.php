@@ -12,6 +12,7 @@ use App\Models\Location;
 use App\Models\Organization;
 use App\Services\InvoiceCalculator;
 use App\Services\InvoiceNumberingService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule as ValidationRule;
 use InvalidArgumentException;
 use Livewire\Attributes\Computed;
@@ -204,14 +205,39 @@ trait InvoiceFormLogic
 
     public function saveInvoice(?Invoice $existingInvoice = null): ?Invoice
     {
-        logger('-----invoice_numbering_series_id-------- '.$this->invoice_numbering_series_id);
+        // S1: Authorization check — verify user has access to the selected organization
+        abort_unless(
+            auth()->check() && auth()->user()->allTeams()->contains('id', $this->organization_id),
+            403,
+            'Unauthorized access to organization.'
+        );
 
+        // S4: Org-scoped validation rules to prevent cross-organization data access
         $this->validate([
             'organization_id' => 'required|exists:teams,id',
-            'customer_id' => 'required|exists:customers,id',
-            'organization_location_id' => 'required|exists:locations,id',
-            'customer_location_id' => 'required|exists:locations,id',
-            'customer_shipping_location_id' => 'required|exists:locations,id',
+            'customer_id' => [
+                'required',
+                ValidationRule::exists('customers', 'id')
+                    ->where('organization_id', $this->organization_id),
+            ],
+            'organization_location_id' => [
+                'required',
+                ValidationRule::exists('locations', 'id')
+                    ->where('locatable_type', Organization::class)
+                    ->where('locatable_id', $this->organization_id),
+            ],
+            'customer_location_id' => [
+                'required',
+                ValidationRule::exists('locations', 'id')
+                    ->where('locatable_type', Customer::class)
+                    ->where('locatable_id', $this->customer_id),
+            ],
+            'customer_shipping_location_id' => [
+                'required',
+                ValidationRule::exists('locations', 'id')
+                    ->where('locatable_type', Customer::class)
+                    ->where('locatable_id', $this->customer_id),
+            ],
             'status' => ['required', 'string', ValidationRule::enum(InvoiceStatus::class)],
             'items.*.description' => 'required|string|max:500',
             'items.*.quantity' => 'required|integer|min:1',
@@ -333,24 +359,28 @@ trait InvoiceFormLogic
 
     private function generateInvoiceNumber(): string
     {
-        $prefix = $this->type === 'invoice' ? 'INV' : 'EST';
-        $year = now()->year;
-        $month = now()->format('m');
+        return DB::transaction(function () {
+            $prefix = $this->type === 'invoice' ? 'INV' : 'EST';
+            $year = now()->year;
+            $month = now()->format('m');
 
-        $lastDocument = Invoice::where('type', $this->type)
-            ->where('invoice_number', 'like', "{$prefix}-{$year}-{$month}-%")
-            ->orderBy('invoice_number', 'desc')
-            ->first();
+            $lastDocument = Invoice::where('type', $this->type)
+                ->where('organization_id', $this->organization_id)
+                ->where('invoice_number', 'like', "{$prefix}-{$year}-{$month}-%")
+                ->lockForUpdate()
+                ->orderBy('invoice_number', 'desc')
+                ->first();
 
-        if (! $lastDocument) {
-            $sequence = 1;
-        } else {
-            $lastNumber = $lastDocument->invoice_number;
-            $parts = explode('-', $lastNumber);
-            $sequence = (int) end($parts) + 1;
-        }
+            if (! $lastDocument) {
+                $sequence = 1;
+            } else {
+                $lastNumber = $lastDocument->invoice_number;
+                $parts = explode('-', $lastNumber);
+                $sequence = (int) end($parts) + 1;
+            }
 
-        return sprintf('%s-%s-%s-%04d', $prefix, $year, $month, $sequence);
+            return sprintf('%s-%s-%s-%04d', $prefix, $year, $month, $sequence);
+        });
     }
 
     #[Computed]
