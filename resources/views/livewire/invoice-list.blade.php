@@ -72,6 +72,16 @@
                                    target="_blank" class="text-green-600 hover:text-green-900 mr-3">{{ __('actions.buttons.view') }}</a>
                                 <a href="{{ route($invoice->type === 'invoice' ? 'invoices.pdf' : 'estimates.pdf', $invoice->ulid) }}"
                                    class="text-red-600 hover:text-red-900 mr-3">{{ __('actions.buttons.download_pdf') }}</a>
+                                @if($invoice->type === 'estimate')
+                                    <button wire:click="convertToInvoice({{ $invoice->id }})"
+                                            wire:loading.attr="disabled"
+                                            wire:target="convertToInvoice({{ $invoice->id }})"
+                                            class="text-purple-600 hover:text-purple-900 mr-3">{{ __('actions.buttons.convert_to_invoice') }}</button>
+                                @endif
+                                <button wire:click="duplicate({{ $invoice->id }})"
+                                        wire:loading.attr="disabled"
+                                        wire:target="duplicate({{ $invoice->id }})"
+                                        class="text-gray-600 hover:text-gray-900 mr-3">{{ __('actions.buttons.duplicate') }}</button>
                                 <a href="{{ route('invoices.edit', $invoice) }}" class="text-brand-600 hover:text-brand-900 mr-3">{{ __('actions.buttons.edit') }}</a>
                                 <button wire:click="delete({{ $invoice->id }})"
                                         wire:confirm="{{ __('forms.messages.confirm_delete', ['type' => $invoice->type]) }}"

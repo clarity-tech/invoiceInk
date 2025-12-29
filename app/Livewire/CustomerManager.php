@@ -81,8 +81,18 @@ class CustomerManager extends Component
         $this->showForm = true;
     }
 
+    private function authorizeCustomerAccess(Customer $customer): void
+    {
+        abort_unless(
+            auth()->check() && $customer->organization_id === auth()->user()->currentTeam?->id,
+            403,
+            'Unauthorized access to customer.'
+        );
+    }
+
     public function edit(Customer $customer): void
     {
+        $this->authorizeCustomerAccess($customer);
         $customer->load('locations');
 
         $this->editingId = $customer->id;
@@ -113,6 +123,10 @@ class CustomerManager extends Component
             abort(403, 'Unauthorized access to location.');
         }
 
+        // Verify user owns the customer
+        $customer = Customer::findOrFail($this->editingId);
+        $this->authorizeCustomerAccess($customer);
+
         $this->editingLocationId = $location->id;
         $this->location_name = $location->name;
         $this->gstin = $location->gstin ?? '';
@@ -136,6 +150,10 @@ class CustomerManager extends Component
 
             return;
         }
+
+        // Verify user owns the customer
+        $customer = Customer::findOrFail($this->editingId);
+        $this->authorizeCustomerAccess($customer);
 
         $this->validate([
             'location_name' => 'required|string|max:255',
@@ -202,7 +220,8 @@ class CustomerManager extends Component
             abort(403, 'Unauthorized access to location.');
         }
 
-        $customer = Customer::find($this->editingId);
+        $customer = Customer::findOrFail($this->editingId);
+        $this->authorizeCustomerAccess($customer);
 
         // Don't allow deleting the last location
         if ($customer->locations()->count() <= 1) {
@@ -230,6 +249,7 @@ class CustomerManager extends Component
         }
 
         $customer = Customer::findOrFail($this->editingId);
+        $this->authorizeCustomerAccess($customer);
         $customer->update(['primary_location_id' => $location->id]);
 
         session()->flash('message', 'Primary location updated successfully!');
@@ -309,6 +329,8 @@ class CustomerManager extends Component
 
     public function delete(Customer $customer): void
     {
+        $this->authorizeCustomerAccess($customer);
+
         // Handle foreign key constraint by setting primary_location_id to null first
         $customer->primary_location_id = null;
         $customer->save();

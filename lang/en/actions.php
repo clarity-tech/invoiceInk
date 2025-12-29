@@ -95,6 +95,7 @@ return [
         'activate' => 'Activate',
         'set_default' => 'Set Default',
         'complete_setup' => 'Complete Setup',
+        'convert_to_invoice' => 'Convert to Invoice',
     ],
 
     'navigation' => [

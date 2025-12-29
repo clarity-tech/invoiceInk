@@ -90,6 +90,7 @@
                                         <img src="{{ $existingLogoUrl }}" alt="Current logo" class="w-32 h-32 object-contain border border-gray-300 rounded-lg bg-white p-2">
                                         <button type="button" wire:click="removeLogo"
                                                 wire:confirm="{{ __('actions.confirmations.confirm_remove_logo') }}"
+                                                aria-label="{{ __('actions.buttons.remove') }} {{ __('forms.labels.organization_logo') }}"
                                                 class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -226,7 +227,8 @@
                                     <input wire:model="emails.{{ $index }}" type="email" placeholder="{{ __('forms.placeholders.email_placeholder') }}" 
                                            class="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                                     @if(count($emails) > 1)
-                                        <button type="button" wire:click="removeEmailField({{ $index }})" 
+                                        <button type="button" wire:click="removeEmailField({{ $index }})"
+                                                aria-label="{{ __('actions.buttons.remove') }} email {{ $index + 1 }}"
                                                 class="text-red-500 hover:text-red-700 font-bold text-lg">×</button>
                                     @endif
                                 </div>

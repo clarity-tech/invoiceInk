@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Services\EstimateToInvoiceConverter;
 use App\Services\PdfService;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -42,6 +44,70 @@ class InvoiceList extends Component
         } else {
             return $pdfService->downloadEstimatePdf($invoice);
         }
+    }
+
+    public function convertToInvoice(Invoice $estimate)
+    {
+        // Security check
+        if (! auth()->check() || ! auth()->user()->allTeams()->contains('id', $estimate->organization_id)) {
+            abort(403, 'Unauthorized access to estimate.');
+        }
+
+        if ($estimate->type !== 'estimate') {
+            session()->flash('error', 'Only estimates can be converted to invoices.');
+
+            return null;
+        }
+
+        $converter = app(EstimateToInvoiceConverter::class);
+        $invoice = $converter->convert($estimate);
+
+        session()->flash('message', 'Estimate converted to invoice successfully!');
+
+        return redirect()->route('invoices.edit', $invoice->id);
+    }
+
+    public function duplicate(Invoice $invoice)
+    {
+        // Security check
+        if (! auth()->check() || ! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
+            abort(403, 'Unauthorized access to invoice.');
+        }
+
+        $invoice->load('items');
+
+        $newInvoice = Invoice::create([
+            'type' => $invoice->type,
+            'organization_id' => $invoice->organization_id,
+            'customer_id' => $invoice->customer_id,
+            'organization_location_id' => $invoice->organization_location_id,
+            'customer_location_id' => $invoice->customer_location_id,
+            'customer_shipping_location_id' => $invoice->customer_shipping_location_id,
+            'invoice_number' => 'DRAFT-'.now()->format('YmdHis'),
+            'status' => 'draft',
+            'issued_at' => now(),
+            'due_at' => now()->addDays(30),
+            'subtotal' => $invoice->subtotal,
+            'tax' => $invoice->tax,
+            'total' => $invoice->total,
+            'currency' => $invoice->currency,
+            'notes' => $invoice->notes,
+        ]);
+
+        foreach ($invoice->items as $item) {
+            InvoiceItem::create([
+                'invoice_id' => $newInvoice->id,
+                'description' => $item->description,
+                'sac_code' => $item->sac_code,
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price,
+                'tax_rate' => $item->tax_rate,
+            ]);
+        }
+
+        session()->flash('message', ucfirst($invoice->type).' duplicated successfully!');
+
+        return redirect()->route('invoices.edit', $newInvoice->id);
     }
 
     #[Computed]

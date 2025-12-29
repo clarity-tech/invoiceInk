@@ -110,6 +110,11 @@ class InvoiceForm extends Component
 
     public function updatedNewFile(): void
     {
+        // S7: Validate file MIME type and size before accepting
+        $this->validate([
+            'newFile' => 'file|max:10240|mimes:pdf,doc,docx,xls,xlsx,csv,jpg,jpeg,png,gif,webp,zip',
+        ]);
+
         // When a new file is uploaded, add it to the uploadedFiles array
         if ($this->newFile) {
             $this->uploadedFiles[] = $this->newFile;

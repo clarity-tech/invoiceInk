@@ -65,6 +65,7 @@ return [
         'export_error' => 'Error during export. Please try again.',
         'import_successful' => 'Import completed successfully.',
         'import_error' => 'Error during import. Please check your file and try again.',
+        'file_upload_error' => 'Failed to upload file ":name". Please try again.',
     ],
 
     'system' => [

@@ -141,6 +141,7 @@ return [
         'step_1_details' => 'Step 1: Basic Details',
         'step_2_line_items' => 'Step 2: Line Items',
         'step_3_review' => 'Step 3: Review',
+        'step_progress' => 'Step :current of :total',
     ],
 
     'options' => [

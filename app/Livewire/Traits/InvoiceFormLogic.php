@@ -341,6 +341,8 @@ trait InvoiceFormLogic
                         'error' => $e->getMessage(),
                         'invoice_id' => $invoice->id,
                     ]);
+                    // U3: Show error to user instead of silently swallowing
+                    $this->addError('newFile', __('messages.notifications.file_upload_error', ['name' => is_object($file) && method_exists($file, 'getClientOriginalName') ? $file->getClientOriginalName() : 'file']));
                 }
             }
 

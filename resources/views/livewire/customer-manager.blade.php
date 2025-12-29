@@ -48,7 +48,8 @@
                                     <div class="flex items-center justify-between mb-2">
                                         <span class="text-sm font-medium text-gray-600">{{ __('forms.labels.contact') }} {{ $index + 1 }}</span>
                                         @if(count($contacts) > 1)
-                                            <button type="button" wire:click="removeContactField({{ $index }})" 
+                                            <button type="button" wire:click="removeContactField({{ $index }})"
+                                                    aria-label="{{ __('actions.buttons.remove') }} {{ __('forms.labels.contact') }} {{ $index + 1 }}"
                                                     class="text-red-500 hover:text-red-700 font-bold text-lg">×</button>
                                         @endif
                                     </div>

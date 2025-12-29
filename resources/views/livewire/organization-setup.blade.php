@@ -9,11 +9,25 @@
 
             <!-- Progress Bar -->
             <div class="mb-8">
-                <div class="flex items-center justify-between mb-2">
+                <!-- Mobile: Compact step indicator -->
+                <div class="sm:hidden mb-4">
+                    <p class="text-sm font-medium text-brand-600 text-center">
+                        {{ __('forms.steps.step_progress', ['current' => $currentStep, 'total' => count($this->stepProgress)]) }}:
+                        {{ $this->stepProgress[$currentStep]['title'] ?? '' }}
+                    </p>
+                    <div class="mt-2 flex gap-1">
+                        @foreach($this->stepProgress as $stepNumber => $step)
+                            <div class="flex-1 h-2 rounded-full {{ $stepNumber <= $currentStep ? 'bg-brand-600' : 'bg-gray-300' }} {{ $step['completed'] ? 'bg-green-600' : '' }}"></div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Desktop: Full step indicator with labels -->
+                <div class="hidden sm:flex items-center justify-between mb-2">
                     @foreach($this->stepProgress as $stepNumber => $step)
                         <div class="flex items-center {{ $stepNumber < count($this->stepProgress) ? 'flex-1' : '' }}">
                             <div class="relative">
-                                <div class="flex items-center justify-center w-10 h-10 rounded-full border-2 
+                                <div class="flex items-center justify-center w-10 h-10 rounded-full border-2
                                     {{ $stepNumber <= $currentStep ? 'border-brand-600 bg-brand-600 text-white' : 'border-gray-300 bg-white text-gray-500' }}
                                     {{ $step['completed'] ? 'bg-green-600 border-green-600' : '' }}">
                                     @if($step['completed'])
@@ -272,7 +286,8 @@
                                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
                                                    placeholder="{{ __('forms.placeholders.email_company') }}">
                                             @if($index > 0)
-                                                <button type="button" wire:click="removeEmailField({{ $index }})" 
+                                                <button type="button" wire:click="removeEmailField({{ $index }})"
+                                                        aria-label="{{ __('actions.buttons.remove') }} email {{ $index + 1 }}"
                                                         class="ml-2 text-red-600 hover:text-red-800">
                                                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
