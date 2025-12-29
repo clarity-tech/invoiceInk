@@ -1,7 +1,7 @@
 <div>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Numbering Series Management') }}
+            {{ __('documents.headers.numbering_series_management') }}
         </h2>
     </x-slot>
 
@@ -25,7 +25,7 @@
                 <div class="mb-6 bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 bg-white border-b border-gray-200">
                         <h3 class="text-lg font-medium text-gray-900 mb-4">
-                            {{ $editingId ? 'Edit Numbering Series' : 'Create New Numbering Series' }}
+                            {{ $editingId ? __('documents.headers.edit_numbering_series') : __('documents.headers.create_new_numbering_series') }}
                         </h3>
 
                         <form wire:submit="save" class="space-y-6">
@@ -33,11 +33,11 @@
                                 <!-- Organization -->
                                 <div>
                                     <label for="organization_id" class="block text-sm font-medium text-gray-700">
-                                        Organization *
+                                        {{ __('forms.labels.organization_required') }}
                                     </label>
                                     <select wire:model.live="organization_id" id="organization_id" 
                                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
-                                        <option value="">Select Organization</option>
+                                        <option value="">{{ __('forms.labels.select_organization') }}</option>
                                         @foreach ($this->organizations as $org)
                                             <option value="{{ $org->id }}">{{ $org->name }}</option>
                                         @endforeach
@@ -48,11 +48,11 @@
                                 <!-- Location (Optional) -->
                                 <div>
                                     <label for="location_id" class="block text-sm font-medium text-gray-700">
-                                        Location (Optional)
+                                        {{ __('forms.labels.location') }} (Optional)
                                     </label>
                                     <select wire:model.live="location_id" id="location_id" 
                                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
-                                        <option value="">Organization-wide (All Locations)</option>
+                                        <option value="">{{ __('forms.labels.organization_wide') }} ({{ __('forms.labels.all_locations') }})</option>
                                         @foreach ($this->organizationLocations as $location)
                                             <option value="{{ $location->id }}">{{ $location->name }}</option>
                                         @endforeach
@@ -63,36 +63,36 @@
                                 <!-- Name -->
                                 <div>
                                     <label for="name" class="block text-sm font-medium text-gray-700">
-                                        Series Name *
+                                        {{ __('forms.labels.series_name_required') }}
                                     </label>
                                     <input wire:model.live="name" type="text" id="name" 
                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
-                                           placeholder="e.g., Default Invoice Series">
+                                           placeholder="{{ __('forms.placeholders.series_name_hint') }}">
                                     @error('name') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                 </div>
 
                                 <!-- Prefix -->
                                 <div>
                                     <label for="prefix" class="block text-sm font-medium text-gray-700">
-                                        Prefix *
+                                        {{ __('forms.labels.prefix_required') }}
                                     </label>
                                     <input wire:model.live="prefix" type="text" id="prefix" 
                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
-                                           placeholder="e.g., INV, BILL, DXB">
+                                           placeholder="{{ __('forms.placeholders.prefix_hint') }}">
                                     @error('prefix') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                 </div>
 
                                 <!-- Format Pattern -->
                                 <div>
                                     <label for="format_pattern" class="block text-sm font-medium text-gray-700">
-                                        Format Pattern *
+                                        {{ __('forms.labels.format_pattern_required') }}
                                     </label>
                                     <input wire:model.live="format_pattern" type="text" id="format_pattern"
                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
-                                           placeholder="{PREFIX}{YEAR}{MONTH}{SEQUENCE:4}">
+                                           placeholder="{{ __('forms.placeholders.format_pattern_default') }}">
                                     @error('format_pattern') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                     <p class="mt-1 text-sm text-gray-500">
-                                        Available tokens: {PREFIX}, {YEAR}, {YEAR:2}, {MONTH}, {MONTH:3}, {DAY}, {SEQUENCE}, {SEQUENCE:4}, {FY}
+                                        {{ __('forms.hints.available_tokens') }}
                                     </p>
                                     <!-- <p class="mt-1 text-xs text-gray-400">
                                         FY tokens: {FY} = Start year (2024), {FY_FULL} = Short format (2024-25), {FY_RANGE} = Full format (2024-2025)
@@ -102,7 +102,7 @@
                                 <!-- Current Number -->
                                 <div>
                                     <label for="current_number" class="block text-sm font-medium text-gray-700">
-                                        Current Number *
+                                        {{ __('forms.labels.current_number_required') }}
                                     </label>
                                     <input wire:model.live="current_number" type="number" id="current_number" min="0"
                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
@@ -112,7 +112,7 @@
                                 <!-- Reset Frequency -->
                                 <div>
                                     <label for="reset_frequency" class="block text-sm font-medium text-gray-700">
-                                        Reset Frequency *
+                                        {{ __('forms.labels.reset_frequency_required') }}
                                     </label>
                                     <select wire:model.live="reset_frequency" id="reset_frequency" 
                                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
@@ -129,12 +129,12 @@
                                         <label class="inline-flex items-center">
                                             <input wire:model="is_active" type="checkbox" 
                                                    class="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-500 focus:ring-brand-500">
-                                            <span class="ml-2 text-sm text-gray-600">Active</span>
+                                            <span class="ml-2 text-sm text-gray-600">{{ __('forms.labels.active') }}</span>
                                         </label>
                                         <label class="inline-flex items-center">
                                             <input wire:model="is_default" type="checkbox" 
                                                    class="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-500 focus:ring-brand-500">
-                                            <span class="ml-2 text-sm text-gray-600">Default Series</span>
+                                            <span class="ml-2 text-sm text-gray-600">{{ __('forms.labels.default_series') }}</span>
                                         </label>
                                     </div>
                                 </div>
@@ -143,7 +143,7 @@
                             <!-- Next Number Preview -->
                             @if ($this->nextNumberPreview)
                                 <div class="bg-gray-50 p-4 rounded-md">
-                                    <h4 class="text-sm font-medium text-gray-900">Next Invoice Number Preview:</h4>
+                                    <h4 class="text-sm font-medium text-gray-900">{{ __('forms.hints.next_invoice_preview') }}</h4>
                                     <p class="text-lg font-mono text-brand-600">{{ $this->nextNumberPreview }}</p>
                                 </div>
                             @endif
@@ -152,11 +152,11 @@
                             <div class="flex justify-end space-x-3">
                                 <button type="button" wire:click="cancel" 
                                         class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500">
-                                    Cancel
+                                    {{ __('actions.buttons.cancel') }}
                                 </button>
-                                <button type="submit" 
+                                <button type="submit"
                                         class="px-4 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                                    {{ $editingId ? 'Update' : 'Create' }} Series
+                                    {{ $editingId ? __('actions.buttons.update') : __('actions.buttons.create') }} {{ __('forms.labels.series') }}
                                 </button>
                             </div>
                         </form>
@@ -183,16 +183,16 @@
                                     <div class="text-xs text-brand-700">
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
-                                                <span class="font-medium">Series Name:</span> {{ $this->automaticSeriesPreview['series']->name }}
+                                                <span class="font-medium">{{ __('forms.labels.series_name') }}</span> {{ $this->automaticSeriesPreview['series']->name }}
                                             </div>
                                             <div>
-                                                <span class="font-medium">Format:</span> <code class="bg-brand-200 px-1 rounded">{{ $this->automaticSeriesPreview['series']->format_pattern }}</code>
+                                                <span class="font-medium">{{ __('forms.labels.format_label') }}</span> <code class="bg-brand-200 px-1 rounded">{{ $this->automaticSeriesPreview['series']->format_pattern }}</code>
                                             </div>
                                             <div>
-                                                <span class="font-medium">Reset:</span> {{ $this->automaticSeriesPreview['series']->reset_frequency->label() }}
+                                                <span class="font-medium">{{ __('forms.labels.reset') }}</span> {{ $this->automaticSeriesPreview['series']->reset_frequency->label() }}
                                             </div>
                                             <div>
-                                                <span class="font-medium">Next Number:</span> <code class="bg-brand-200 px-1 rounded">{{ $this->automaticSeriesPreview['preview_number'] }}</code>
+                                                <span class="font-medium">{{ __('forms.labels.next_number') }}</span> <code class="bg-brand-200 px-1 rounded">{{ $this->automaticSeriesPreview['preview_number'] }}</code>
                                             </div>
                                         </div>
                                     </div>
@@ -217,11 +217,11 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-medium text-gray-900">Numbering Series</h3>
+                        <h3 class="text-lg font-medium text-gray-900">{{ __('documents.headers.numbering_series') }}</h3>
                         @if (!$showCreateForm)
                             <button wire:click="create" 
                                     class="px-4 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                                Create New Series
+                                {{ __('actions.buttons.create_new_series') }}
                             </button>
                         @endif
                     </div>
@@ -231,26 +231,26 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Organization
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        {{ __('forms.labels.organization') }}
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Location
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        {{ __('forms.labels.location') }}
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Series Name
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        {{ __('forms.labels.series_name_required') }}
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Format
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        {{ __('forms.labels.format') }}
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Current #
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        {{ __('forms.labels.current_number_short') }}
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Status
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        {{ __('forms.labels.status') }}
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        {{ __('actions.table_actions.actions') }}
                                     </th>
                                 </tr>
                             </thead>
@@ -261,13 +261,13 @@
                                             {{ $series->organization->name }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ $series->location ? $series->location->name : 'All Locations' }}
+                                            {{ $series->location ? $series->location->name : __('forms.labels.all_locations') }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {{ $series->name }}
                                             @if ($series->is_default)
                                                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-brand-100 text-brand-800 ml-2">
-                                                    Default
+                                                    {{ __('forms.labels.default') }}
                                                 </span>
                                             @endif
                                         </td>
@@ -279,29 +279,29 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $series->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                                {{ $series->is_active ? 'Active' : 'Inactive' }}
+                                                {{ $series->is_active ? __('forms.labels.active') : __('forms.labels.inactive') }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div class="flex space-x-2">
-                                                <button wire:click="edit({{ $series->id }})" 
+                                                <button wire:click="edit({{ $series->id }})"
                                                         class="text-brand-600 hover:text-brand-900">
-                                                    Edit
+                                                    {{ __('actions.buttons.edit') }}
                                                 </button>
-                                                <button wire:click="toggleActive({{ $series->id }})" 
+                                                <button wire:click="toggleActive({{ $series->id }})"
                                                         class="text-yellow-600 hover:text-yellow-900">
-                                                    {{ $series->is_active ? 'Deactivate' : 'Activate' }}
+                                                    {{ $series->is_active ? __('actions.buttons.deactivate') : __('actions.buttons.activate') }}
                                                 </button>
                                                 @if (!$series->is_default)
-                                                    <button wire:click="setAsDefault({{ $series->id }})" 
+                                                    <button wire:click="setAsDefault({{ $series->id }})"
                                                             class="text-brand-600 hover:text-brand-900">
-                                                        Set Default
+                                                        {{ __('actions.buttons.set_default') }}
                                                     </button>
                                                 @endif
-                                                <button wire:click="delete({{ $series->id }})" 
-                                                        onclick="return confirm('Are you sure? This action cannot be undone.')"
+                                                <button wire:click="delete({{ $series->id }})"
+                                                        onclick="return confirm('{{ __('actions.confirmations.confirm_delete_irreversible') }}')"
                                                         class="text-red-600 hover:text-red-900">
-                                                    Delete
+                                                    {{ __('actions.buttons.delete') }}
                                                 </button>
                                             </div>
                                         </td>
@@ -323,7 +323,7 @@
                                                             <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                                                                 <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
                                                             </svg>
-                                                            Create Custom Series
+                                                            {{ __('actions.buttons.create_custom_series') }}
                                                         </button>
                                                     @endif
                                                 </div>

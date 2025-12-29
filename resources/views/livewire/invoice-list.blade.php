@@ -24,11 +24,11 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('documents.fields.document_type') }}</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('documents.fields.organization') }} → {{ __('documents.fields.customer') }}</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('documents.table.amount') }}</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('documents.fields.status') }}</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('actions.table_actions.actions') }}</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('documents.fields.document_type') }}</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('documents.fields.organization') }} → {{ __('documents.fields.customer') }}</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('documents.table.amount') }}</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('documents.fields.status') }}</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('actions.table_actions.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -59,7 +59,7 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">{{ $invoice->formatted_total }}</div>
                                 @if($invoice->tax > 0)
-                                    <div class="text-sm text-gray-500">Tax: {{ $invoice->formatted_tax }}</div>
+                                    <div class="text-sm text-gray-500">{{ __('documents.financial.tax') }} {{ $invoice->formatted_tax }}</div>
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
@@ -68,20 +68,20 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <a href="{{ route($invoice->type === 'invoice' ? 'invoices.public' : 'estimates.public', $invoice->ulid) }}" 
-                                   target="_blank" class="text-green-600 hover:text-green-900 mr-3">View</a>
-                                <a href="{{ route($invoice->type === 'invoice' ? 'invoices.pdf' : 'estimates.pdf', $invoice->ulid) }}" 
-                                   class="text-red-600 hover:text-red-900 mr-3">PDF</a>
-                                <a href="{{ route('invoices.edit', $invoice) }}" class="text-brand-600 hover:text-brand-900 mr-3">Edit</a>
-                                <button wire:click="delete({{ $invoice->id }})" 
-                                        wire:confirm="Are you sure you want to delete this {{ $invoice->type }}?"
-                                        class="text-red-600 hover:text-red-900">Delete</button>
+                                <a href="{{ route($invoice->type === 'invoice' ? 'invoices.public' : 'estimates.public', $invoice->ulid) }}"
+                                   target="_blank" class="text-green-600 hover:text-green-900 mr-3">{{ __('actions.buttons.view') }}</a>
+                                <a href="{{ route($invoice->type === 'invoice' ? 'invoices.pdf' : 'estimates.pdf', $invoice->ulid) }}"
+                                   class="text-red-600 hover:text-red-900 mr-3">{{ __('actions.buttons.download_pdf') }}</a>
+                                <a href="{{ route('invoices.edit', $invoice) }}" class="text-brand-600 hover:text-brand-900 mr-3">{{ __('actions.buttons.edit') }}</a>
+                                <button wire:click="delete({{ $invoice->id }})"
+                                        wire:confirm="{{ __('forms.messages.confirm_delete', ['type' => $invoice->type]) }}"
+                                        class="text-red-600 hover:text-red-900">{{ __('actions.buttons.delete') }}</button>
                             </td>
                         </tr>
                     @empty
                         <tr>
                             <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                                No documents found. Create your first invoice or estimate using the buttons above.
+                                {{ __('forms.messages.no_documents_found') }}
                             </td>
                         </tr>
                     @endforelse

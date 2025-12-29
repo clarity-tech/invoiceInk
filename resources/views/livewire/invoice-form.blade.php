@@ -4,21 +4,29 @@
         <div class="mb-6 flex justify-between items-center">
             <div class="flex items-center space-x-4">
                 <a href="{{ route('invoices.index') }}" class="text-brand-600 hover:text-brand-900">
-                    ← Back to Invoices
+                    {{ __('actions.buttons.back_to_invoices') }}
                 </a>
                 <h1 class="text-3xl font-bold text-gray-900">{{ $this->pageTitle }}</h1>
             </div>
             @if($mode === 'edit' && $invoice && $invoice->ulid)
                 <div class="flex space-x-2">
-                    <button wire:click="openEmailModal" class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
-                        Send Email
+                    <button wire:click="openEmailModal"
+                            wire:loading.attr="disabled"
+                            wire:loading.class="opacity-50 cursor-not-allowed"
+                            class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
+                        <span wire:loading.remove wire:target="openEmailModal">{{ __('actions.buttons.send_email') }}</span>
+                        <span wire:loading wire:target="openEmailModal">{{ __('messages.system.opening') }}</span>
                     </button>
                     <a href="{{ route($invoice->type === 'invoice' ? 'invoices.public' : 'estimates.public', $invoice->ulid) }}"
                        target="_blank" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                        View Public
+                        {{ __('actions.buttons.view_public') }}
                     </a>
-                    <button wire:click="downloadPdf" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-                        Download PDF
+                    <button wire:click="downloadPdf"
+                            wire:loading.attr="disabled"
+                            wire:loading.class="opacity-50 cursor-not-allowed"
+                            class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                        <span wire:loading.remove wire:target="downloadPdf">{{ __('actions.buttons.download_pdf') }}</span>
+                        <span wire:loading wire:target="downloadPdf">{{ __('messages.system.generating') }}</span>
                     </button>
                 </div>
             @endif
@@ -34,13 +42,13 @@
         <form wire:submit="save" class="space-y-6">
             <!-- Organization Location Section -->
             <div class="bg-white shadow rounded-lg p-6">
-                <h2 class="text-lg font-semibold text-gray-800 mb-4">Organization Location</h2>
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">{{ __('documents.headers.organization_location') }}</h2>
                 @if($organization_id && $this->organizationLocations->count() > 0)
                     <div class="max-w-md">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Location *</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.location_required') }}</label>
                         <select wire:model.live="organization_location_id"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                            <option value="">Select Location</option>
+                            <option value="">{{ __('forms.labels.select_location') }}</option>
                             @foreach($this->organizationLocations as $location)
                                 <option value="{{ $location->id }}">{{ $location->name }} - {{ $location->city }}</option>
                             @endforeach
@@ -50,9 +58,9 @@
                 @else
                     <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3 max-w-md">
                         <p class="text-sm text-yellow-700">
-                            No organization location found.
+                            {{ __('forms.hints.no_org_location') }}
                             <a href="/organizations" class="font-medium underline hover:text-yellow-600" target="_blank">
-                                Add location →
+                                {{ __('actions.buttons.add_location') }}
                             </a>
                         </p>
                     </div>
@@ -80,9 +88,9 @@
                             @if($this->customers->count() === 0)
                                 <div class="mt-2 p-3 bg-brand-50 border border-brand-200 rounded-md">
                                     <p class="text-sm text-brand-700">
-                                        No customers found.
+                                        {{ __('forms.hints.no_customers') }}
                                         <a href="{{ route('customers.index') }}" class="font-medium underline hover:text-brand-600" target="_blank">
-                                            Create your first customer →
+                                            {{ __('actions.buttons.create_first_customer') }}
                                         </a>
                                     </p>
                                 </div>
@@ -91,12 +99,12 @@
 
                         @if($customer_id)
                             <div class="border border-gray-200 rounded-md p-4 bg-gray-50">
-                                <h3 class="text-sm font-semibold text-gray-700 mb-2">BILLING ADDRESS</h3>
+                                <h3 class="text-sm font-semibold text-gray-700 mb-2">{{ __('documents.headers.billing_address') }}</h3>
                                 @if($this->customerLocations->count() > 0)
                                     <div class="mb-3">
                                         <select wire:model.live="customer_location_id"
                                                 class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-                                            <option value="">Select Location</option>
+                                            <option value="">{{ __('forms.labels.select_location') }}</option>
                                             @foreach($this->customerLocations as $location)
                                                 @php
                                                     $customer = \App\Models\Customer::find($customer_id);
@@ -138,7 +146,7 @@
                                                 @endif
                                                 @if($selectedCustomerLocation->gstin)
                                                     <p class="mt-1 font-medium text-gray-700">
-                                                        <span class="text-gray-500">Tax Id:</span> {{ $selectedCustomerLocation->gstin }}
+                                                        <span class="text-gray-500">{{ __('documents.fields.gstin') }}</span> {{ $selectedCustomerLocation->gstin }}
                                                     </p>
                                                 @endif
                                             </div>
@@ -147,9 +155,9 @@
                                 @else
                                     <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
                                         <p class="text-sm text-yellow-700">
-                                            No location found.
+                                            {{ __('forms.hints.no_location') }}
                                             <a href="/customers" class="font-medium underline hover:text-yellow-600" target="_blank">
-                                                Add location →
+                                                {{ __('actions.buttons.add_location') }}
                                             </a>
                                         </p>
                                     </div>
@@ -162,12 +170,12 @@
                     <div class="space-y-4">
                         @if($customer_id)
                             <div class="border border-gray-200 rounded-md p-4 bg-gray-50 mt-20">
-                                <h3 class="text-sm font-semibold text-gray-700 mb-2">SHIPPING ADDRESS</h3>
+                                <h3 class="text-sm font-semibold text-gray-700 mb-2">{{ __('documents.headers.shipping_address') }}</h3>
                                 @if($this->customerLocations->count() > 0)
                                     <div class="mb-3">
                                         <select wire:model.live="customer_shipping_location_id"
                                                 class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
-                                            <option value="">Select Location</option>
+                                            <option value="">{{ __('forms.labels.select_location') }}</option>
                                             @foreach($this->customerLocations as $location)
                                                 @php
                                                     $customer = \App\Models\Customer::find($customer_id);
@@ -209,7 +217,7 @@
                                                 @endif
                                                 @if($selectedShippingLocation->gstin)
                                                     <p class="mt-1 font-medium text-gray-700">
-                                                        <span class="text-gray-500">Tax Id:</span> {{ $selectedShippingLocation->gstin }}
+                                                        <span class="text-gray-500">{{ __('documents.fields.gstin') }}</span> {{ $selectedShippingLocation->gstin }}
                                                     </p>
                                                 @endif
                                             </div>
@@ -218,9 +226,9 @@
                                 @else
                                     <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
                                         <p class="text-sm text-yellow-700">
-                                            No location found.
+                                            {{ __('forms.hints.no_location') }}
                                             <a href="/customers" class="font-medium underline hover:text-yellow-600" target="_blank">
-                                                Add location →
+                                                {{ __('actions.buttons.add_location') }}
                                             </a>
                                         </p>
                                     </div>
@@ -233,20 +241,20 @@
 
             <!-- Invoice Details Section -->
             <div class="bg-white shadow rounded-lg p-6">
-                <h2 class="text-lg font-semibold text-gray-800 mb-4">Invoice Details</h2>
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">{{ __('documents.headers.invoice_details') }}</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.document_type') }}</label>
                         <select wire:model="type"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
                                 {{ $mode === 'edit' ? 'disabled' : '' }}>
-                            <option value="invoice">Invoice</option>
-                            <option value="estimate">Estimate</option>
+                            <option value="invoice">{{ __('documents.types.invoice') }}</option>
+                            <option value="estimate">{{ __('documents.types.estimate') }}</option>
                         </select>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.status_required') }}</label>
                         <select wire:model="status"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
                             @foreach(\App\Enums\InvoiceStatus::cases() as $statusOption)
@@ -258,17 +266,17 @@
 
                     @if($type === 'invoice' && $organization_id && $this->availableNumberingSeries->count() > 0)
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Numbering Series (Optional)</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('documents.fields.numbering_series_optional') }}</label>
                             <select wire:model.live="invoice_numbering_series_id"
                                     class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                                <option value="">Auto-select best series</option>
+                                <option value="">{{ __('forms.labels.auto_select_series') }}</option>
                                 @foreach($this->availableNumberingSeries as $series)
                                     <option value="{{ $series->id }}">
                                         {{ $series->name }}
                                         @if($series->location)
                                             ({{ $series->location->name }})
                                         @else
-                                            (Organization-wide)
+                                            {{ __('forms.labels.organization_wide') }}
                                         @endif
                                     </option>
                                 @endforeach
@@ -276,7 +284,7 @@
                             @error('invoice_numbering_series_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             @if($this->selectedSeriesPreview)
                                 <p class="mt-1 text-sm text-gray-600">
-                                    Next: <span class="font-mono text-brand-600">{{ $this->selectedSeriesPreview }}</span>
+                                    {{ __('forms.hints.next_number_preview') }} <span class="font-mono text-brand-600">{{ $this->selectedSeriesPreview }}</span>
                                 </p>
                             @endif
                         </div>
@@ -301,10 +309,10 @@
             <!-- Items Section -->
             <div class="bg-white shadow rounded-lg p-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold text-gray-800">Line Items</h2>
+                    <h2 class="text-lg font-semibold text-gray-800">{{ __('documents.table.line_items') }}</h2>
                     <button type="button" wire:click="addItem"
                             class="bg-brand-500 hover:bg-brand-600 text-white text-sm font-medium py-2 px-4 rounded">
-                        + Add Item
+                        {{ __('actions.buttons.add_item') }}
                     </button>
                 </div>
 
@@ -312,23 +320,23 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Description *
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    {{ __('forms.labels.description_required_asterisk') }}
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                                    Quantity *
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                                    {{ __('forms.labels.quantity_required_asterisk') }}
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                                    Rate ({{ $this->currencySymbol }}) *
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                    {{ __('forms.labels.rate', ['currency' => $this->currencySymbol]) }}
                                 </th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                                    Tax %
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                                    {{ __('forms.labels.tax_percent') }}
                                 </th>
-                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                                    Amount
+                                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                    {{ __('forms.labels.amount') }}
                                 </th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                                    Action
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                                    {{ __('forms.labels.action') }}
                                 </th>
                             </tr>
                         </thead>
@@ -337,7 +345,7 @@
                                 <tr>
                                     <td class="px-4 py-3">
                                         <input wire:model.live="items.{{ $index }}.description" type="text"
-                                               placeholder="Item description"
+                                               placeholder="{{ __('forms.placeholders.item_description') }}"
                                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                                         @error("items.{$index}.description")
                                             <span class="text-red-500 text-xs">{{ $message }}</span>
@@ -346,11 +354,11 @@
                                         <!-- SAC Code Field -->
                                         <div class="mt-2">
                                             <input wire:model.live="items.{{ $index }}.sac_code" type="text"
-                                                   placeholder="SAC Code (e.g., 998314)"
+                                                   placeholder="{{ __('forms.labels.sac_code_placeholder') }}"
                                                    class="w-40 border border-gray-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
                                             @if(!empty($item['sac_code']))
                                                 <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                                    services SAC: {{ $item['sac_code'] }}
+                                                    {{ __('forms.labels.services_sac') }} {{ $item['sac_code'] }}
                                                 </span>
                                             @endif
                                         </div>
@@ -407,15 +415,15 @@
                 <div class="mt-6 flex justify-end">
                     <div class="w-full md:w-1/3 space-y-2">
                         <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Subtotal:</span>
+                            <span class="text-gray-600">{{ __('documents.financial.subtotal') }}</span>
                             <span class="font-medium text-gray-900">{{ $this->formatAmount($subtotal) }}</span>
                         </div>
                         <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Tax:</span>
+                            <span class="text-gray-600">{{ __('documents.financial.tax') }}</span>
                             <span class="font-medium text-gray-900">{{ $this->formatAmount($tax) }}</span>
                         </div>
                         <div class="border-t border-gray-300 pt-2 flex justify-between">
-                            <span class="text-lg font-bold text-gray-900">Total:</span>
+                            <span class="text-lg font-bold text-gray-900">{{ __('documents.financial.total') }}</span>
                             <span class="text-lg font-bold text-brand-600">{{ $this->formatAmount($total) }}</span>
                         </div>
                     </div>
@@ -425,29 +433,29 @@
             <!-- Customer Notes Section -->
             <div class="bg-white shadow rounded-lg p-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Customer Notes</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('documents.headers.customer_notes') }}</label>
                     <textarea wire:model="notes" rows="4"
-                              placeholder="Enter any notes or terms and conditions for this invoice..."
+                              placeholder="{{ __('forms.placeholders.enter_notes') }}"
                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
                     @error('notes') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    <p class="text-xs text-gray-500 mt-1">This will be displayed on the invoice PDF</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ __('forms.hints.displayed_on_pdf') }}</p>
                 </div>
             </div>
 
             <!-- Attach File(s) to Invoice Section -->
             <div class="bg-white shadow rounded-lg p-6">
-                <h2 class="text-lg font-semibold text-gray-800 mb-4">Attach File(s) to Invoice</h2>
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">{{ __('forms.labels.attach_files') }}</h2>
 
                 <!-- File Upload Area -->
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Upload Files</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('forms.labels.upload_files') }}</label>
                     <div class="space-y-3">
                         @foreach($uploadedFiles as $index => $file)
                             <div class="flex items-center gap-3 p-2 bg-gray-50 border border-gray-200 rounded-md">
                                 <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
-                                <span class="text-sm text-gray-700 flex-1">{{ is_object($file) ? $file->getClientOriginalName() : 'File queued' }}</span>
+                                <span class="text-sm text-gray-700 flex-1">{{ is_object($file) ? $file->getClientOriginalName() : __('forms.labels.file_queued') }}</span>
                                 <button type="button" wire:click="removeUploadedFile({{ $index }})" class="text-red-500 hover:text-red-700">
                                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
@@ -461,7 +469,7 @@
                                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
                         </div>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">Upload files one at a time. These files will be attached to the invoice and can be sent via email.</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ __('forms.hints.upload_one_at_a_time') }}</p>
                     @error('uploadedFiles.*') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                     @error('newFile') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                 </div>
@@ -474,7 +482,7 @@
 
                     @if($existingAttachments->count() > 0)
                         <div class="border-t border-gray-200 pt-4">
-                            <h3 class="text-sm font-medium text-gray-700 mb-3">Existing Attachments</h3>
+                            <h3 class="text-sm font-medium text-gray-700 mb-3">{{ __('documents.headers.existing_attachments') }}</h3>
                             <div class="space-y-2">
                                 @foreach($existingAttachments as $media)
                                     <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition">
@@ -489,7 +497,7 @@
                                             </div>
                                         </div>
                                         <button type="button" wire:click="deleteAttachment({{ $media->id }})"
-                                                wire:confirm="Are you sure you want to delete this attachment?"
+                                                wire:confirm="{{ __('actions.confirmations.confirm_delete_attachment') }}"
                                                 class="text-red-500 hover:text-red-700 transition">
                                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
@@ -507,22 +515,32 @@
             <div class="flex justify-between items-center pt-4">
                 <button type="button" wire:click="cancel"
                         class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium">
-                    Cancel
+                    {{ __('actions.buttons.cancel') }}
                 </button>
                 <button type="submit"
+                        wire:loading.attr="disabled"
+                        wire:loading.class="opacity-50 cursor-not-allowed"
+                        wire:target="save"
                         class="px-6 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 font-medium">
-                    {{ $mode === 'edit' ? 'Update' : 'Create' }} {{ ucfirst($type) }}
+                    <span wire:loading.remove wire:target="save">{{ $mode === 'edit' ? __('actions.buttons.update') : __('actions.buttons.create') }} {{ ucfirst($type) }}</span>
+                    <span wire:loading wire:target="save">{{ __('messages.system.saving') }}</span>
                 </button>
             </div>
         </form>
 
         <!-- Email Modal -->
         @if($showEmailModal)
-            <div class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50" x-data="{ showRecipients: false }">
-                <div class="bg-white rounded-lg shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50"
+                 x-data="{ showRecipients: false }"
+                 @keydown.escape.window="$wire.closeEmailModal()">
+                <div class="bg-white rounded-lg shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden flex flex-col"
+                     x-trap.noscroll="true"
+                     role="dialog"
+                     aria-modal="true"
+                     aria-labelledby="email-modal-title">
                     <!-- Modal Header -->
                     <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-white">
-                        <h2 class="text-xl font-semibold text-gray-900">Email To {{ $invoice?->customer?->name ?? 'Customer' }}</h2>
+                        <h2 id="email-modal-title" class="text-xl font-semibold text-gray-900">{{ __('documents.headers.email_to', ['customer' => $invoice?->customer?->name ?? __('forms.labels.customer')]) }}</h2>
                         <button wire:click="closeEmailModal" class="text-gray-400 hover:text-gray-600 transition">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -535,9 +553,9 @@
                         <!-- From Field -->
                         <div class="mb-4">
                             <div class="flex items-center">
-                                <label class="text-sm font-medium text-gray-600 w-20">From</label>
+                                <label class="text-sm font-medium text-gray-600 w-20">{{ __('forms.labels.from') }}</label>
                                 <div class="flex-1 flex items-center">
-                                    <span class="text-sm text-gray-500">Accounts &lt;{{ config('mail.from.address') }}&gt;</span>
+                                    <span class="text-sm text-gray-500">{{ __('forms.labels.accounts') }} &lt;{{ config('mail.from.address') }}&gt;</span>
                                 </div>
                             </div>
                         </div>
@@ -545,7 +563,7 @@
                         <!-- Send To Field with Chips -->
                         <div class="mb-4">
                             <div class="flex items-start">
-                                <label class="text-sm font-medium text-gray-600 w-20 pt-2">Send To</label>
+                                <label class="text-sm font-medium text-gray-600 w-20 pt-2">{{ __('forms.labels.send_to') }}</label>
                                 <div class="flex-1" x-data="{ toEmail: '' }">
                                     <div class="border border-gray-300 rounded-md p-2 min-h-[44px] flex flex-wrap gap-2 items-center focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
                                         @php
@@ -603,7 +621,7 @@
                                         <input type="email"
                                                x-model="toEmail"
                                                @keydown.enter.prevent="if(toEmail.trim()) { $wire.addDirectEmail(toEmail).then(() => { toEmail = '' }) }"
-                                               placeholder="Type email and press Enter"
+                                               placeholder="{{ __('forms.placeholders.type_email') }}"
                                                class="flex-1 min-w-[200px] border-none outline-none focus:ring-0 text-sm p-1">
                                     </div>
                                     @error('selectedRecipients') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
@@ -614,7 +632,7 @@
                         <!-- Cc Field with Chips -->
                         <div class="mb-4">
                             <div class="flex items-start">
-                                <label class="text-sm font-medium text-gray-600 w-20 pt-2">Cc</label>
+                                <label class="text-sm font-medium text-gray-600 w-20 pt-2">{{ __('forms.labels.cc') }}</label>
                                 <div class="flex-1" x-data="{ ccEmail: '' }">
                                     <div class="border border-gray-300 rounded-md p-2 min-h-[44px] flex flex-wrap gap-2 items-center focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
                                         @php
@@ -672,7 +690,7 @@
                                         <input type="email"
                                                x-model="ccEmail"
                                                @keydown.enter.prevent="if(ccEmail.trim()) { $wire.addDirectCcEmail(ccEmail).then(() => { ccEmail = '' }) }"
-                                               placeholder="Type email and press Enter"
+                                               placeholder="{{ __('forms.placeholders.type_email') }}"
                                                class="flex-1 min-w-[200px] border-none outline-none focus:ring-0 text-sm p-1">
                                     </div>
                                     @error('selectedCcRecipients') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
@@ -683,7 +701,7 @@
                         <!-- Subject Field -->
                         <div class="mb-4">
                             <div class="flex items-center">
-                                <label class="text-sm font-medium text-gray-600 w-20">Subject</label>
+                                <label class="text-sm font-medium text-gray-600 w-20">{{ __('forms.labels.subject') }}</label>
                                 <input wire:model="emailSubject" type="text"
                                        class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                             </div>
@@ -716,7 +734,7 @@
                         <!-- Attachments Section -->
                         <div class="mb-4">
                             <div class="border-t pt-4">
-                                <h3 class="text-sm font-semibold text-gray-700 mb-3">Attachments</h3>
+                                <h3 class="text-sm font-semibold text-gray-700 mb-3">{{ __('documents.headers.attachments') }}</h3>
 
                                 <!-- Invoice PDF Attachment -->
                                 <label class="flex items-center cursor-pointer mb-3 p-3 hover:bg-gray-50 rounded-md transition">
@@ -727,7 +745,7 @@
                                     </svg>
                                     <div class="flex-1">
                                         <div class="text-sm font-medium text-gray-900">{{ $invoice?->invoice_number ?? 'Invoice' }}.pdf</div>
-                                        <div class="text-xs text-gray-500">Invoice PDF Document</div>
+                                        <div class="text-xs text-gray-500">{{ __('forms.hints.invoice_pdf_document') }}</div>
                                     </div>
                                 </label>
 
@@ -768,11 +786,15 @@
                         <div class="flex gap-3">
                             <button wire:click="closeEmailModal" type="button"
                                     class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 font-medium transition">
-                                Cancel
+                                {{ __('actions.buttons.cancel') }}
                             </button>
                             <button wire:click="sendEmail" type="button"
+                                    wire:loading.attr="disabled"
+                                    wire:loading.class="opacity-50 cursor-not-allowed"
+                                    wire:target="sendEmail"
                                     class="px-6 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 font-medium transition shadow-sm">
-                                Send
+                                <span wire:loading.remove wire:target="sendEmail">{{ __('actions.buttons.send') }}</span>
+                                <span wire:loading wire:target="sendEmail">{{ __('messages.system.sending') }}</span>
                             </button>
                         </div>
                     </div>

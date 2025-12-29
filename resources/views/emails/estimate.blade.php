@@ -113,81 +113,81 @@
         </div>
 
         <div class="greeting">
-            Dear Customer,
+            {{ __('messages.email.greeting_customer') }}
         </div>
 
         <div class="message">
             @if($invoice->type === 'estimate')
-                <p>Thank you for considering our services! Please find your {{ $invoice->type }} details below.</p>
+                <p>{{ __('messages.email.estimate_intro', ['type' => $invoice->type]) }}</p>
                 @if($invoice->due_at)
-                    <p><strong>This estimate is valid until {{ $invoice->due_at->format('F j, Y') }}</strong></p>
+                    <p><strong>{{ __('messages.email.estimate_valid_until', ['date' => $invoice->due_at->format('F j, Y')]) }}</strong></p>
                 @endif
             @else
-                <p>Thank you for your business! Please find your {{ $invoice->type }} details below.</p>
+                <p>{{ __('messages.email.invoice_intro', ['type' => $invoice->type]) }}</p>
                 @if($invoice->due_at)
-                    <p><strong>Payment is due by {{ $invoice->due_at->format('F j, Y') }}</strong></p>
+                    <p><strong>{{ __('messages.email.payment_due_date', ['date' => $invoice->due_at->format('F j, Y')]) }}</strong></p>
                 @endif
             @endif
         </div>
 
         <div class="details-box">
-            <h3>{{ ucfirst($invoice->type) }} Details</h3>
+            <h3>{{ $invoice->type === 'estimate' ? __('messages.email.estimate_details') : __('messages.email.invoice_details') }}</h3>
 
             <div class="detail-row">
-                <span class="detail-label">{{ ucfirst($invoice->type) }} Number:</span>
+                <span class="detail-label">{{ __('documents.fields.document_number') }}:</span>
                 <span class="detail-value">{{ $invoice->invoice_number }}</span>
             </div>
 
             @if($invoice->issued_at)
                 <div class="detail-row">
-                    <span class="detail-label">Issue Date:</span>
+                    <span class="detail-label">{{ __('documents.fields.issue_date') }}:</span>
                     <span class="detail-value">{{ $invoice->issued_at->format('F j, Y') }}</span>
                 </div>
             @endif
 
             @if($invoice->due_at)
                 <div class="detail-row">
-                    <span class="detail-label">{{ $invoice->type === 'estimate' ? 'Valid Until' : 'Due Date' }}:</span>
+                    <span class="detail-label">{{ $invoice->type === 'estimate' ? __('documents.fields.valid_until') : __('documents.fields.due_date') }}:</span>
                     <span class="detail-value">{{ $invoice->due_at->format('F j, Y') }}</span>
                 </div>
             @endif
 
             <div class="detail-row">
-                <span class="detail-label">Status:</span>
+                <span class="detail-label">{{ __('documents.fields.status') }}:</span>
                 <span class="detail-value">{{ $invoice->status->label() }}</span>
             </div>
 
             <div class="detail-row">
-                <span class="detail-label">Subtotal:</span>
+                <span class="detail-label">{{ __('documents.financial.subtotal') }}</span>
                 <span class="detail-value">{{ \Akaunting\Money\Money::{$invoice->currency}($invoice->subtotal)->format() }}</span>
             </div>
 
             <div class="detail-row">
-                <span class="detail-label">Tax:</span>
+                <span class="detail-label">{{ __('documents.financial.tax') }}</span>
                 <span class="detail-value">{{ \Akaunting\Money\Money::{$invoice->currency}($invoice->tax)->format() }}</span>
             </div>
 
             <div class="detail-row total-row">
-                <span class="detail-label">Total Amount:</span>
+                <span class="detail-label">{{ __('documents.financial.total_amount') }}:</span>
                 <span class="detail-value">{{ \Akaunting\Money\Money::{$invoice->currency}($invoice->total)->format() }}</span>
             </div>
         </div>
 
         <div style="text-align: center;">
             <a href="{{ $viewUrl }}" class="cta-button">
-                View {{ ucfirst($invoice->type) }} Online
+                {{ $invoice->type === 'estimate' ? __('messages.email.view_estimate_button') : __('messages.email.view_invoice_button') }}
             </a>
         </div>
 
         @if($invoice->notes)
             <div class="message">
-                <strong>Notes:</strong>
+                <strong>{{ __('documents.fields.notes') }}:</strong>
                 <p>{{ $invoice->notes }}</p>
             </div>
         @endif
 
         <div class="footer">
-            <p>{{ $invoice->type === 'estimate' ? 'Thank you for considering our services!' : 'Thank you for your business!' }}</p>
+            <p>{{ $invoice->type === 'estimate' ? __('messages.email.thank_you_considering') : __('messages.email.thank_you_business') }}</p>
             @if($invoice->organization)
                 <p>
                     {{ $invoice->organization->company_name ?? $invoice->organization->name }}
