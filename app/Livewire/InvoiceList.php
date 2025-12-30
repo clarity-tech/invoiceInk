@@ -114,7 +114,10 @@ class InvoiceList extends Component
     public function invoices()
     {
         // OrganizationScope automatically filters by current user's team
-        return Invoice::with(['organizationLocation', 'customerLocation'])
+        return Invoice::with([
+            'organizationLocation.locatable',
+            'customerLocation.locatable',
+        ])
             ->latest()
             ->paginate(10);
     }

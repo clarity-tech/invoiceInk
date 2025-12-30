@@ -280,7 +280,7 @@ class CustomerManager extends Component
     {
         $this->validate([
             'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:20',
+            'phone' => ['nullable', 'string', 'max:20', 'regex:/^[+]?[\d\s\-().]+$/'],
             'currency' => ['required', 'string', ValidationRule::enum(\App\Currency::class)],
             'contacts' => 'required|array|min:1',
             'contacts.*.name' => 'nullable|string|max:255',

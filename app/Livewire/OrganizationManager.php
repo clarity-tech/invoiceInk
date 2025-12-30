@@ -230,7 +230,7 @@ class OrganizationManager extends Component
 
             $this->validate([
                 'name' => 'required|string|max:255',
-                'phone' => 'nullable|string|max:20',
+                'phone' => ['nullable', 'string', 'max:20', 'regex:/^[+]?[\d\s\-().]+$/'],
                 'currency' => ['required', 'string', new CurrencyCode],
                 'country_code' => ['required', 'string', ValidationRule::enum(Country::class)],
                 'financial_year_type' => ['nullable', 'string', ValidationRule::enum(FinancialYearType::class)],

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Scopes\OrganizationScope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -42,6 +43,12 @@ class Customer extends Model
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    /** @param Builder<Customer> $query */
+    public function scopeForOrganization(Builder $query, int $organizationId): Builder
+    {
+        return $query->where('organization_id', $organizationId);
     }
 
     protected static function booted(): void

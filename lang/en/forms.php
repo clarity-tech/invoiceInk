@@ -129,6 +129,7 @@ return [
         'reset' => 'Reset:',
         'next_number' => 'Next Number:',
         'current_number_short' => 'Current #',
+        'email_body' => 'Email Body',
     ],
 
     'steps' => [

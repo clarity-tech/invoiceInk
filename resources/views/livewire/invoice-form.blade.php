@@ -47,13 +47,14 @@
                     <div class="max-w-md">
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.location_required') }}</label>
                         <select wire:model.live="organization_location_id"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                aria-describedby="error-organization_location_id">
                             <option value="">{{ __('forms.labels.select_location') }}</option>
                             @foreach($this->organizationLocations as $location)
                                 <option value="{{ $location->id }}">{{ $location->name }} - {{ $location->city }}</option>
                             @endforeach
                         </select>
-                        @error('organization_location_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        @error('organization_location_id') <span id="error-organization_location_id" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                     </div>
                 @else
                     <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3 max-w-md">
@@ -77,13 +78,14 @@
                                 {{ __('forms.labels.customer_required') }}
                             </label>
                             <select wire:model.live="customer_id"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                    aria-describedby="error-customer_id">
                                 <option value="">{{ __('forms.labels.select_customer') }}</option>
                                 @foreach($this->customers as $customer)
                                     <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                                 @endforeach
                             </select>
-                            @error('customer_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('customer_id') <span id="error-customer_id" class="text-red-600 text-sm">{{ $message }}</span> @enderror
 
                             @if($this->customers->count() === 0)
                                 <div class="mt-2 p-3 bg-brand-50 border border-brand-200 rounded-md">
@@ -103,7 +105,8 @@
                                 @if($this->customerLocations->count() > 0)
                                     <div class="mb-3">
                                         <select wire:model.live="customer_location_id"
-                                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                                aria-describedby="error-customer_location_id">
                                             <option value="">{{ __('forms.labels.select_location') }}</option>
                                             @foreach($this->customerLocations as $location)
                                                 @php
@@ -115,7 +118,7 @@
                                                 </option>
                                             @endforeach
                                         </select>
-                                        @error('customer_location_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                        @error('customer_location_id') <span id="error-customer_location_id" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                     </div>
 
                                     @if($customer_location_id)
@@ -174,7 +177,8 @@
                                 @if($this->customerLocations->count() > 0)
                                     <div class="mb-3">
                                         <select wire:model.live="customer_shipping_location_id"
-                                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                                aria-describedby="error-customer_shipping_location_id">
                                             <option value="">{{ __('forms.labels.select_location') }}</option>
                                             @foreach($this->customerLocations as $location)
                                                 @php
@@ -186,7 +190,7 @@
                                                 </option>
                                             @endforeach
                                         </select>
-                                        @error('customer_shipping_location_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                        @error('customer_shipping_location_id') <span id="error-customer_shipping_location_id" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                     </div>
 
                                     @if($customer_shipping_location_id)
@@ -256,19 +260,21 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.status_required') }}</label>
                         <select wire:model="status"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                aria-describedby="error-status">
                             @foreach(\App\Enums\InvoiceStatus::cases() as $statusOption)
                                 <option value="{{ $statusOption->value }}">{{ $statusOption->label() }}</option>
                             @endforeach
                         </select>
-                        @error('status') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        @error('status') <span id="error-status" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                     </div>
 
                     @if($type === 'invoice' && $organization_id && $this->availableNumberingSeries->count() > 0)
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('documents.fields.numbering_series_optional') }}</label>
                             <select wire:model.live="invoice_numbering_series_id"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                    aria-describedby="error-invoice_numbering_series_id">
                                 <option value="">{{ __('forms.labels.auto_select_series') }}</option>
                                 @foreach($this->availableNumberingSeries as $series)
                                     <option value="{{ $series->id }}">
@@ -281,7 +287,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            @error('invoice_numbering_series_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('invoice_numbering_series_id') <span id="error-invoice_numbering_series_id" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                             @if($this->selectedSeriesPreview)
                                 <p class="mt-1 text-sm text-gray-600">
                                     {{ __('forms.hints.next_number_preview') }} <span class="font-mono text-brand-600">{{ $this->selectedSeriesPreview }}</span>
@@ -293,15 +299,17 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('documents.fields.issue_date') }}</label>
                         <input wire:model="issued_at" type="date"
-                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                        @error('issued_at') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                               aria-describedby="error-issued_at">
+                        @error('issued_at') <span id="error-issued_at" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('documents.fields.due_date') }}</label>
                         <input wire:model="due_at" type="date"
-                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                        @error('due_at') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                               aria-describedby="error-due_at">
+                        @error('due_at') <span id="error-due_at" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                     </div>
                 </div>
             </div>
@@ -346,9 +354,10 @@
                                     <td class="px-4 py-3">
                                         <input wire:model.live="items.{{ $index }}.description" type="text"
                                                placeholder="{{ __('forms.placeholders.item_description') }}"
-                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                               aria-describedby="error-items-{{ $index }}-description">
                                         @error("items.{$index}.description")
-                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            <span id="error-items-{{ $index }}-description" class="text-red-600 text-xs">{{ $message }}</span>
                                         @enderror
 
                                         <!-- SAC Code Field -->
@@ -366,25 +375,28 @@
                                     <td class="px-4 py-3">
                                         <input wire:model.live="items.{{ $index }}.quantity" type="number" min="1"
                                                placeholder="1"
-                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                               aria-describedby="error-items-{{ $index }}-quantity">
                                         @error("items.{$index}.quantity")
-                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            <span id="error-items-{{ $index }}-quantity" class="text-red-600 text-xs">{{ $message }}</span>
                                         @enderror
                                     </td>
                                     <td class="px-4 py-3">
                                         <input wire:model.live="items.{{ $index }}.unit_price" type="number" step="0.01" min="0"
                                                placeholder="0.00"
-                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                               aria-describedby="error-items-{{ $index }}-unit_price">
                                         @error("items.{$index}.unit_price")
-                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            <span id="error-items-{{ $index }}-unit_price" class="text-red-600 text-xs">{{ $message }}</span>
                                         @enderror
                                     </td>
                                     <td class="px-4 py-3">
                                         <input wire:model.live="items.{{ $index }}.tax_rate" type="number" step="0.01" min="0" max="100"
                                                placeholder="0"
-                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                               aria-describedby="error-items-{{ $index }}-tax_rate">
                                         @error("items.{$index}.tax_rate")
-                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            <span id="error-items-{{ $index }}-tax_rate" class="text-red-600 text-xs">{{ $message }}</span>
                                         @enderror
                                     </td>
                                     <td class="px-4 py-3 text-right">
@@ -437,8 +449,9 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('documents.headers.customer_notes') }}</label>
                     <textarea wire:model="notes" rows="4"
                               placeholder="{{ __('forms.placeholders.enter_notes') }}"
-                              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
-                    @error('notes') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                              aria-describedby="error-notes"></textarea>
+                    @error('notes') <span id="error-notes" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                     <p class="text-xs text-gray-500 mt-1">{{ __('forms.hints.displayed_on_pdf') }}</p>
                 </div>
             </div>
@@ -473,8 +486,8 @@
                         </div>
                     </div>
                     <p class="text-xs text-gray-500 mt-1">{{ __('forms.hints.upload_one_at_a_time') }}</p>
-                    @error('uploadedFiles.*') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    @error('newFile') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    @error('uploadedFiles.*') <span id="error-uploadedFiles" class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                    @error('newFile') <span id="error-newFile" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                 </div>
 
                 <!-- Existing Attachments List (Edit Mode) -->
@@ -634,7 +647,7 @@
                                                placeholder="{{ __('forms.placeholders.type_email') }}"
                                                class="flex-1 min-w-[200px] border-none outline-none focus:ring-0 text-sm p-1">
                                     </div>
-                                    @error('selectedRecipients') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
+                                    @error('selectedRecipients') <span id="error-selectedRecipients" class="text-red-600 text-xs mt-1">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         </div>
@@ -707,7 +720,7 @@
                                                placeholder="{{ __('forms.placeholders.type_email') }}"
                                                class="flex-1 min-w-[200px] border-none outline-none focus:ring-0 text-sm p-1">
                                     </div>
-                                    @error('selectedCcRecipients') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
+                                    @error('selectedCcRecipients') <span id="error-selectedCcRecipients" class="text-red-600 text-xs mt-1">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         </div>
@@ -717,9 +730,10 @@
                             <div class="flex items-center">
                                 <label class="text-sm font-medium text-gray-600 w-20">{{ __('forms.labels.subject') }}</label>
                                 <input wire:model="emailSubject" type="text"
-                                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                       class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                       aria-describedby="error-emailSubject">
                             </div>
-                            @error('emailSubject') <span class="text-red-500 text-xs mt-1 ml-20">{{ $message }}</span> @enderror
+                            @error('emailSubject') <span id="error-emailSubject" class="text-red-600 text-xs mt-1 ml-20">{{ $message }}</span> @enderror
                         </div>
 
                         <!-- Email Body with Trix Editor -->
@@ -740,9 +754,10 @@
                                  x-init="setTimeout(() => initTrix(), 100)">
                                 <input x-ref="hiddenInput" id="email-body-{{ $invoice?->id }}" type="hidden" value="{{ $emailBody }}">
                                 <trix-editor x-ref="trixEditor" input="email-body-{{ $invoice?->id }}"
+                                            aria-label="{{ __('forms.labels.email_body') }}"
                                             class="trix-content border border-gray-300 rounded-md min-h-[300px]"></trix-editor>
                             </div>
-                            @error('emailBody') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
+                            @error('emailBody') <span id="error-emailBody" class="text-red-600 text-xs mt-1">{{ $message }}</span> @enderror
                         </div>
 
                         <!-- Attachments Section -->

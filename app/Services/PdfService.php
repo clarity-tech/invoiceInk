@@ -3,8 +3,11 @@
 namespace App\Services;
 
 use App\Models\Invoice;
-use Illuminate\Support\Facades\View;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\View;
 
 class PdfService
 {
@@ -43,10 +46,29 @@ class PdfService
                 return $this->generatePdfViaHttpService($html);
             }
 
-            // Fallback to local generation (if needed for local development)
-            throw new \Exception('PDF generation requires Chrome service to be enabled');
+            throw new \RuntimeException('PDF generation requires Chrome service to be enabled');
+        } catch (ConnectionException $e) {
+            Log::error('PDF generation connection failed', [
+                'filename' => $filename,
+                'error' => $e->getMessage(),
+            ]);
+            throw new \RuntimeException('PDF service is unavailable. Please try again later.');
+        } catch (RequestException $e) {
+            Log::error('PDF generation request failed', [
+                'filename' => $filename,
+                'status' => $e->response?->status(),
+                'error' => $e->getMessage(),
+            ]);
+            throw new \RuntimeException('PDF generation failed: '.$e->getMessage());
+        } catch (\RuntimeException $e) {
+            throw $e;
         } catch (\Exception $e) {
-            throw new \Exception('Failed to generate PDF: '.$e->getMessage());
+            Log::error('Unexpected PDF generation error', [
+                'filename' => $filename,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw new \RuntimeException('Failed to generate PDF: '.$e->getMessage());
         }
     }
 
@@ -56,7 +78,7 @@ class PdfService
     private function generatePdfViaHttpService(string $html): string
     {
         $response = Http::timeout(config('services.chrome.timeout', 30))
-            ->post(config('services.chrome.url') . '/generate-pdf', [
+            ->post(config('services.chrome.url').'/generate-pdf', [
                 'html' => $html,
                 'options' => [
                     'format' => 'A4',
@@ -64,10 +86,10 @@ class PdfService
                         'top' => '10mm',
                         'right' => '10mm',
                         'bottom' => '10mm',
-                        'left' => '10mm'
+                        'left' => '10mm',
                     ],
-                    'printBackground' => true
-                ]
+                    'printBackground' => true,
+                ],
             ]);
 
         if ($response->failed()) {
@@ -85,7 +107,6 @@ class PdfService
     {
         return config('services.chrome.enabled', false);
     }
-
 
     /**
      * Download PDF for an invoice

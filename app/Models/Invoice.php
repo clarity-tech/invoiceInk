@@ -6,6 +6,7 @@ use Akaunting\Money\Money;
 use App\Casts\ExchangeRateCast;
 use App\Enums\InvoiceStatus;
 use App\Models\Scopes\OrganizationScope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -94,6 +95,44 @@ class Invoice extends Model implements HasMedia
     public function isEstimate(): bool
     {
         return $this->type === 'estimate';
+    }
+
+    /** @param Builder<Invoice> $query */
+    public function scopeInvoices(Builder $query): Builder
+    {
+        return $query->where('type', 'invoice');
+    }
+
+    /** @param Builder<Invoice> $query */
+    public function scopeEstimates(Builder $query): Builder
+    {
+        return $query->where('type', 'estimate');
+    }
+
+    /** @param Builder<Invoice> $query */
+    public function scopeDraft(Builder $query): Builder
+    {
+        return $query->where('status', InvoiceStatus::Draft);
+    }
+
+    /** @param Builder<Invoice> $query */
+    public function scopePaid(Builder $query): Builder
+    {
+        return $query->where('status', InvoiceStatus::Paid);
+    }
+
+    /** @param Builder<Invoice> $query */
+    public function scopeOverdue(Builder $query): Builder
+    {
+        return $query->where('status', '!=', InvoiceStatus::Paid)
+            ->where('status', '!=', InvoiceStatus::Void)
+            ->where('due_at', '<', now());
+    }
+
+    /** @param Builder<Invoice> $query */
+    public function scopeForOrganization(Builder $query, int $organizationId): Builder
+    {
+        return $query->where('organization_id', $organizationId);
     }
 
     public function organization(): BelongsTo

@@ -28,14 +28,14 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.customer_name_required') }}</label>
-                            <input wire:model="name" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                            @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            <input wire:model="name" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" aria-describedby="error-name">
+                            @error('name') <span id="error-name" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.phone') }}</label>
-                            <input wire:model="phone" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                            @error('phone') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            <input wire:model="phone" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" aria-describedby="error-phone">
+                            @error('phone') <span id="error-phone" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                         </div>
                     </div>
 
@@ -56,15 +56,17 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <div>
                                             <label class="block text-xs font-medium text-gray-600 mb-1">{{ __('forms.labels.contact_name') }}</label>
-                                            <input wire:model="contacts.{{ $index }}.name" type="text" placeholder="{{ __('forms.placeholders.contact_name_placeholder') }}" 
-                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm">
-                                            @error("contacts.{$index}.name") <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                            <input wire:model="contacts.{{ $index }}.name" type="text" placeholder="{{ __('forms.placeholders.contact_name_placeholder') }}"
+                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                                                   aria-describedby="error-contacts-{{ $index }}-name">
+                                            @error("contacts.{$index}.name") <span id="error-contacts-{{ $index }}-name" class="text-red-600 text-xs">{{ $message }}</span> @enderror
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-gray-600 mb-1">{{ __('forms.labels.email_required') }}</label>
-                                            <input wire:model="contacts.{{ $index }}.email" type="email" placeholder="{{ __('forms.placeholders.contact_email_placeholder') }}" 
-                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm">
-                                            @error("contacts.{$index}.email") <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                            <input wire:model="contacts.{{ $index }}.email" type="email" placeholder="{{ __('forms.placeholders.contact_email_placeholder') }}"
+                                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                                                   aria-describedby="error-contacts-{{ $index }}-email">
+                                            @error("contacts.{$index}.email") <span id="error-contacts-{{ $index }}-email" class="text-red-600 text-xs">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                 </div>
@@ -73,20 +75,20 @@
                         <button type="button" wire:click="addContactField" class="mt-3 text-brand-500 hover:text-brand-700 text-sm font-medium">
                             {{ __('actions.buttons.add_contact') }}
                         </button>
-                        @error('contacts') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        @error('contacts') <span id="error-contacts" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                     </div>
 
                     <!-- Currency Selection -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.currency_required') }}</label>
-                        <select wire:model="currency" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <select wire:model="currency" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" aria-describedby="error-currency">
                             @foreach(\App\Currency::cases() as $currencyOption)
                                 <option value="{{ $currencyOption->value }}">
                                     {{ $currencyOption->name() }} ({{ $currencyOption->symbol() }})
                                 </option>
                             @endforeach
                         </select>
-                        @error('currency') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        @error('currency') <span id="error-currency" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                     </div>
 
                     <!-- Locations Section (only show when editing) -->
@@ -158,7 +160,7 @@
                                     @endforeach
                                 </div>
                             @endif
-                            @error('location') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('location') <span id="error-location" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                         </div>
                     @endif
 
@@ -271,7 +273,7 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.country_required') }}</label>
-                                <select wire:model="country" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <select wire:model="country" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" aria-describedby="error-country">
                                     <option value="">{{ __('forms.placeholders.select_country') }}</option>
                                     @foreach(\App\Enums\Country::cases() as $countryOption)
                                         <option value="{{ $countryOption->value }}">
@@ -279,53 +281,54 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                @error('country') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                @error('country') <span id="error-country" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.location_name_required') }}</label>
                                 <input wire:model="location_name" type="text" placeholder="{{ __('forms.placeholders.location_name_hint') }}"
-                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                                @error('location_name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                       aria-describedby="error-location_name">
+                                @error('location_name') <span id="error-location_name" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                             </div>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.tax_id') }}</label>
-                            <input wire:model="gstin" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                            @error('gstin') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            <input wire:model="gstin" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" aria-describedby="error-gstin">
+                            @error('gstin') <span id="error-gstin" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.address_line_1_required') }}</label>
-                            <input wire:model="address_line_1" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                            @error('address_line_1') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            <input wire:model="address_line_1" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" aria-describedby="error-address_line_1">
+                            @error('address_line_1') <span id="error-address_line_1" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.address_line_2') }}</label>
-                            <input wire:model="address_line_2" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                            @error('address_line_2') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            <input wire:model="address_line_2" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" aria-describedby="error-address_line_2">
+                            @error('address_line_2') <span id="error-address_line_2" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.city_required') }}</label>
-                                <input wire:model="city" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                                @error('city') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                <input wire:model="city" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" aria-describedby="error-city">
+                                @error('city') <span id="error-city" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.state_required') }}</label>
-                                <input wire:model="state" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                                @error('state') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                <input wire:model="state" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" aria-describedby="error-state">
+                                @error('state') <span id="error-state" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                             </div>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.postal_code') }}</label>
-                            <input wire:model="postal_code" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                            @error('postal_code') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            <input wire:model="postal_code" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" aria-describedby="error-postal_code">
+                            @error('postal_code') <span id="error-postal_code" class="text-red-600 text-sm">{{ $message }}</span> @enderror
                         </div>
 
                         <div class="flex items-center">

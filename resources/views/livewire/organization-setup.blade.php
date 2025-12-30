@@ -75,8 +75,9 @@
                                     </label>
                                     <input type="text" id="company_name" wire:model="company_name"
                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
-                                           placeholder="{{ __('forms.placeholders.company_name') }}">
-                                    @error('company_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                           placeholder="{{ __('forms.placeholders.company_name') }}"
+                                           aria-describedby="error-company_name">
+                                    @error('company_name') <p id="error-company_name" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
 
                                 <div>
@@ -85,8 +86,9 @@
                                     </label>
                                     <input type="text" id="tax_number" wire:model="tax_number"
                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
-                                           placeholder="{{ __('forms.placeholders.tax_number') }}">
-                                    @error('tax_number') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                           placeholder="{{ __('forms.placeholders.tax_number') }}"
+                                           aria-describedby="error-tax_number">
+                                    @error('tax_number') <p id="error-tax_number" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
 
                                 <div>
@@ -95,8 +97,9 @@
                                     </label>
                                     <input type="text" id="registration_number" wire:model="registration_number"
                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
-                                           placeholder="{{ __('forms.placeholders.registration_number') }}">
-                                    @error('registration_number') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                           placeholder="{{ __('forms.placeholders.registration_number') }}"
+                                           aria-describedby="error-registration_number">
+                                    @error('registration_number') <p id="error-registration_number" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
 
                                 <div class="md:col-span-2">
@@ -105,8 +108,9 @@
                                     </label>
                                     <input type="url" id="website" wire:model="website"
                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
-                                           placeholder="{{ __('forms.placeholders.website_url') }}">
-                                    @error('website') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                           placeholder="{{ __('forms.placeholders.website_url') }}"
+                                           aria-describedby="error-website">
+                                    @error('website') <p id="error-website" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
 
                                 <div class="md:col-span-2">
@@ -115,8 +119,9 @@
                                     </label>
                                     <textarea id="notes" wire:model="notes" rows="3"
                                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
-                                              placeholder="{{ __('forms.placeholders.additional_notes') }}"></textarea>
-                                    @error('notes') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                              placeholder="{{ __('forms.placeholders.additional_notes') }}"
+                                              aria-describedby="error-notes"></textarea>
+                                    @error('notes') <p id="error-notes" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                         </div>
@@ -136,8 +141,9 @@
                                     </label>
                                     <input type="text" id="location_name" wire:model="location_name"
                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
-                                           placeholder="{{ __('forms.placeholders.location_name_examples') }}">
-                                    @error('location_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                           placeholder="{{ __('forms.placeholders.location_name_examples') }}"
+                                           aria-describedby="error-location_name">
+                                    @error('location_name') <p id="error-location_name" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
 
                                 <div>
@@ -146,8 +152,9 @@
                                     </label>
                                     <input type="text" id="gstin" wire:model="gstin"
                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
-                                           placeholder="{{ __('forms.placeholders.location_tax_id') }}">
-                                    @error('gstin') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                           placeholder="{{ __('forms.placeholders.location_tax_id') }}"
+                                           aria-describedby="error-gstin">
+                                    @error('gstin') <p id="error-gstin" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
 
                                 <div class="md:col-span-2">
@@ -156,8 +163,9 @@
                                     </label>
                                     <input type="text" id="address_line_1" wire:model="address_line_1"
                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
-                                           placeholder="{{ __('forms.placeholders.street_address') }}">
-                                    @error('address_line_1') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                           placeholder="{{ __('forms.placeholders.street_address') }}"
+                                           aria-describedby="error-address_line_1">
+                                    @error('address_line_1') <p id="error-address_line_1" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
 
                                 <div class="md:col-span-2">
@@ -166,8 +174,9 @@
                                     </label>
                                     <input type="text" id="address_line_2" wire:model="address_line_2"
                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
-                                           placeholder="{{ __('forms.placeholders.apartment_floor') }}">
-                                    @error('address_line_2') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                           placeholder="{{ __('forms.placeholders.apartment_floor') }}"
+                                           aria-describedby="error-address_line_2">
+                                    @error('address_line_2') <p id="error-address_line_2" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
 
                                 <div>
@@ -176,8 +185,9 @@
                                     </label>
                                     <input type="text" id="city" wire:model="city"
                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
-                                           placeholder="{{ __('forms.placeholders.city_name') }}">
-                                    @error('city') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                           placeholder="{{ __('forms.placeholders.city_name') }}"
+                                           aria-describedby="error-city">
+                                    @error('city') <p id="error-city" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
 
                                 <div>
@@ -186,8 +196,9 @@
                                     </label>
                                     <input type="text" id="state" wire:model="state"
                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
-                                           placeholder="{{ __('forms.placeholders.state_province') }}">
-                                    @error('state') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                           placeholder="{{ __('forms.placeholders.state_province') }}"
+                                           aria-describedby="error-state">
+                                    @error('state') <p id="error-state" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
 
                                 <div>
@@ -196,8 +207,9 @@
                                     </label>
                                     <input type="text" id="postal_code" wire:model="postal_code"
                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
-                                           placeholder="{{ __('forms.placeholders.zip_postal_code') }}">
-                                    @error('postal_code') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                           placeholder="{{ __('forms.placeholders.zip_postal_code') }}"
+                                           aria-describedby="error-postal_code">
+                                    @error('postal_code') <p id="error-postal_code" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                         </div>
@@ -216,13 +228,14 @@
                                         {{ __('forms.labels.country_required') }}
                                     </label>
                                     <select id="country_code" wire:model.live="country_code"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500">
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
+                                            aria-describedby="error-country_code">
                                         <option value="">{{ __('forms.placeholders.select_your_country') }}</option>
                                         @foreach($this->availableCountries as $country)
                                             <option value="{{ $country['value'] }}">{{ $country['label'] }}</option>
                                         @endforeach
                                     </select>
-                                    @error('country_code') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    @error('country_code') <p id="error-country_code" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
 
                                 <div>
@@ -230,13 +243,14 @@
                                         {{ __('forms.labels.currency_required') }}
                                     </label>
                                     <select id="currency" wire:model="currency"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500">
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
+                                            aria-describedby="error-currency">
                                         <option value="">{{ __('forms.placeholders.select_currency') }}</option>
                                         @foreach($this->availableCurrencies as $code => $name)
                                             <option value="{{ $code }}">{{ $name }}</option>
                                         @endforeach
                                     </select>
-                                    @error('currency') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    @error('currency') <p id="error-currency" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
 
                                 @if($this->selectedCountryInfo)
@@ -244,13 +258,14 @@
                                         <label for="financial_year_type" class="block text-sm font-medium text-gray-700 mb-2">
                                             {{ __('forms.labels.financial_year') }}
                                         </label>
-                                        <select id="financial_year_type" wire:model="financial_year_type" 
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500">
+                                        <select id="financial_year_type" wire:model="financial_year_type"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
+                                                aria-describedby="error-financial_year_type">
                                             @foreach($this->selectedCountryInfo['financial_year_options'] as $value => $label)
                                                 <option value="{{ $value }}">{{ $label }}</option>
                                             @endforeach
                                         </select>
-                                        @error('financial_year_type') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                        @error('financial_year_type') <p id="error-financial_year_type" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                     </div>
                                 @endif
 
@@ -282,9 +297,10 @@
                                     </label>
                                     @foreach($emails as $index => $email)
                                         <div class="flex items-center mb-2">
-                                            <input type="email" wire:model="emails.{{ $index }}" 
+                                            <input type="email" wire:model="emails.{{ $index }}"
                                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
-                                                   placeholder="{{ __('forms.placeholders.email_company') }}">
+                                                   placeholder="{{ __('forms.placeholders.email_company') }}"
+                                                   aria-describedby="error-emails-{{ $index }}">
                                             @if($index > 0)
                                                 <button type="button" wire:click="removeEmailField({{ $index }})"
                                                         aria-label="{{ __('actions.buttons.remove') }} email {{ $index + 1 }}"
@@ -295,14 +311,14 @@
                                                 </button>
                                             @endif
                                         </div>
-                                        @error("emails.{$index}") <p class="text-sm text-red-600">{{ $message }}</p> @enderror
+                                        @error("emails.{$index}") <p id="error-emails-{{ $index }}" class="text-sm text-red-600">{{ $message }}</p> @enderror
                                     @endforeach
                                     
                                     <button type="button" wire:click="addEmailField" 
                                             class="mt-2 text-brand-600 hover:text-brand-800 text-sm font-medium">
                                         {{ __('actions.buttons.add_email') }}
                                     </button>
-                                    @error('emails') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    @error('emails') <p id="error-emails" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
 
                                 <div>
@@ -311,8 +327,9 @@
                                     </label>
                                     <input type="tel" id="phone" wire:model="phone"
                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500"
-                                           placeholder="{{ __('forms.placeholders.phone_example') }}">
-                                    @error('phone') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                           placeholder="{{ __('forms.placeholders.phone_example') }}"
+                                           aria-describedby="error-phone">
+                                    @error('phone') <p id="error-phone" class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                         </div>
