@@ -24,33 +24,33 @@ trait InvoiceFormLogic
     public string $type = 'invoice'; // 'invoice' or 'estimate'
 
     // Basic Details
-    #[Rule('required|exists:teams,id')]
+    #[Rule(['required', 'exists:teams,id'])]
     public ?int $organization_id = null;
 
-    #[Rule('required|exists:customers,id')]
+    #[Rule(['required', 'exists:customers,id'])]
     public ?int $customer_id = null;
 
-    #[Rule('required|exists:locations,id')]
+    #[Rule(['required', 'exists:locations,id'])]
     public ?int $organization_location_id = null;
 
-    #[Rule('required|exists:locations,id')]
+    #[Rule(['required', 'exists:locations,id'])]
     public ?int $customer_location_id = null;
 
-    #[Rule('required|exists:locations,id')]
+    #[Rule(['required', 'exists:locations,id'])]
     public ?int $customer_shipping_location_id = null;
 
-    #[Rule('nullable|date')]
+    #[Rule(['nullable', 'date'])]
     public ?string $issued_at = null;
 
-    #[Rule('nullable|date')]
+    #[Rule(['nullable', 'date'])]
     public ?string $due_at = null;
 
-    #[Rule('nullable|exists:invoice_numbering_series,id')]
+    #[Rule(['nullable', 'exists:invoice_numbering_series,id'])]
     public ?int $invoice_numbering_series_id = null;
 
     public string $status = 'draft';
 
-    #[Rule('nullable|string|max:5000')]
+    #[Rule(['nullable', 'string', 'max:5000'])]
     public ?string $notes = null;
 
     // Items
@@ -104,7 +104,7 @@ trait InvoiceFormLogic
     {
         // Security check: Ensure user has access to this invoice's organization
         if (auth()->check() && ! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
-            abort(403, 'Unauthorized access to invoice.');
+            abort(403, __('messages.authorization.unauthorized_invoice'));
         }
 
         $invoice->load(['items', 'organizationLocation', 'customerLocation']);
@@ -209,12 +209,12 @@ trait InvoiceFormLogic
         abort_unless(
             auth()->check() && auth()->user()->allTeams()->contains('id', $this->organization_id),
             403,
-            'Unauthorized access to organization.'
+            __('messages.authorization.unauthorized_organization')
         );
 
         // S4: Org-scoped validation rules to prevent cross-organization data access
         $this->validate([
-            'organization_id' => 'required|exists:teams,id',
+            'organization_id' => ['required', 'exists:teams,id'],
             'customer_id' => [
                 'required',
                 ValidationRule::exists('customers', 'id')
@@ -239,10 +239,10 @@ trait InvoiceFormLogic
                     ->where('locatable_id', $this->customer_id),
             ],
             'status' => ['required', 'string', ValidationRule::enum(InvoiceStatus::class)],
-            'items.*.description' => 'required|string|max:500',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit_price' => 'required|numeric|min:0',
-            'items.*.tax_rate' => 'nullable|numeric|min:0|max:100',
+            'items.*.description' => ['required', 'string', 'max:500'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+            'items.*.tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
         if ($existingInvoice) {
@@ -352,8 +352,8 @@ trait InvoiceFormLogic
 
         $documentType = ucfirst($this->type);
         session()->flash('message', $existingInvoice ?
-            "{$documentType} updated successfully!" :
-            "{$documentType} created successfully!"
+            __('messages.notifications.document_type_updated', ['type' => $documentType]) :
+            __('messages.notifications.document_type_created', ['type' => $documentType])
         );
 
         return $invoice;

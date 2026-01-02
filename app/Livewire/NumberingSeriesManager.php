@@ -21,31 +21,31 @@ class NumberingSeriesManager extends Component
     public ?int $editingId = null;
 
     // Form fields
-    #[Rule('required|exists:teams,id')]
+    #[Rule(['required', 'exists:teams,id'])]
     public ?int $organization_id = null;
 
-    #[Rule('nullable|exists:locations,id')]
+    #[Rule(['nullable', 'exists:locations,id'])]
     public ?int $location_id = null;
 
-    #[Rule('required|string|max:100')]
+    #[Rule(['required', 'string', 'max:100'])]
     public string $name = '';
 
-    #[Rule('required|string|max:20')]
+    #[Rule(['required', 'string', 'max:20'])]
     public string $prefix = '';
 
-    #[Rule('required|string|max:100')]
+    #[Rule(['required', 'string', 'max:100'])]
     public string $format_pattern = '';
 
-    #[Rule('required|integer|min:0')]
+    #[Rule(['required', 'integer', 'min:0'])]
     public int $current_number = 0;
 
-    #[Rule('required')]
+    #[Rule(['required'])]
     public ResetFrequency $reset_frequency = ResetFrequency::YEARLY;
 
-    #[Rule('boolean')]
+    #[Rule(['boolean'])]
     public bool $is_active = true;
 
-    #[Rule('boolean')]
+    #[Rule(['boolean'])]
     public bool $is_default = false;
 
     private InvoiceNumberingService $numberingService;
@@ -72,7 +72,7 @@ class NumberingSeriesManager extends Component
     {
         // Security check: Ensure user has access to this series' organization
         if (! auth()->user()->allTeams()->contains('id', $series->organization_id)) {
-            abort(403, 'Unauthorized access to numbering series.');
+            abort(403, __('messages.authorization.unauthorized_numbering_series'));
         }
 
         $this->editingId = $series->id;
@@ -96,7 +96,7 @@ class NumberingSeriesManager extends Component
         abort_unless(
             auth()->check() && auth()->user()->allTeams()->contains('id', $this->organization_id),
             403,
-            'Unauthorized access to organization.'
+            __('messages.authorization.unauthorized_organization')
         );
 
         $data = [
@@ -118,14 +118,14 @@ class NumberingSeriesManager extends Component
             abort_unless(
                 auth()->user()->allTeams()->contains('id', $series->organization_id),
                 403,
-                'Unauthorized access to numbering series.'
+                __('messages.authorization.unauthorized_numbering_series')
             );
 
             $series->update($data);
-            $message = 'Numbering series updated successfully!';
+            $message = __('messages.notifications.numbering_series_updated');
         } else {
             InvoiceNumberingSeries::create($data);
-            $message = 'Numbering series created successfully!';
+            $message = __('messages.notifications.numbering_series_created');
         }
 
         $this->resetForm();
@@ -138,38 +138,38 @@ class NumberingSeriesManager extends Component
     {
         // Security check: Ensure user has access to this series' organization
         if (! auth()->user()->allTeams()->contains('id', $series->organization_id)) {
-            abort(403, 'Unauthorized access to numbering series.');
+            abort(403, __('messages.authorization.unauthorized_numbering_series'));
         }
 
         // Prevent deletion if series has invoices
         if ($series->invoices()->exists()) {
-            session()->flash('error', 'Cannot delete numbering series that has associated invoices.');
+            session()->flash('error', __('forms.validation.cannot_delete_series_with_invoices'));
 
             return;
         }
 
         $series->delete();
         $this->resetPage();
-        session()->flash('message', 'Numbering series deleted successfully!');
+        session()->flash('message', __('messages.notifications.numbering_series_deleted'));
     }
 
     public function toggleActive(InvoiceNumberingSeries $series): void
     {
         // Security check: Ensure user has access to this series' organization
         if (! auth()->user()->allTeams()->contains('id', $series->organization_id)) {
-            abort(403, 'Unauthorized access to numbering series.');
+            abort(403, __('messages.authorization.unauthorized_numbering_series'));
         }
 
         $series->update(['is_active' => ! $series->is_active]);
         $status = $series->is_active ? 'activated' : 'deactivated';
-        session()->flash('message', "Numbering series {$status} successfully!");
+        session()->flash('message', __('messages.notifications.numbering_series_status_changed', ['status' => $status]));
     }
 
     public function setAsDefault(InvoiceNumberingSeries $series): void
     {
         // Security check: Ensure user has access to this series' organization
         if (! auth()->user()->allTeams()->contains('id', $series->organization_id)) {
-            abort(403, 'Unauthorized access to numbering series.');
+            abort(403, __('messages.authorization.unauthorized_numbering_series'));
         }
 
         // Remove default status from other series in the same organization
@@ -179,7 +179,7 @@ class NumberingSeriesManager extends Component
         // Set this series as default
         $series->update(['is_default' => true]);
 
-        session()->flash('message', 'Default numbering series updated successfully!');
+        session()->flash('message', __('messages.notifications.default_series_updated'));
     }
 
     public function cancel(): void

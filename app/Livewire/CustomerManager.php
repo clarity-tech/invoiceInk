@@ -16,40 +16,40 @@ class CustomerManager extends Component
 {
     use WithPagination;
 
-    #[Rule('required|string|max:255')]
+    #[Rule(['required', 'string', 'max:255'])]
     public string $name = '';
 
-    #[Rule('nullable|string|max:20')]
+    #[Rule(['nullable', 'string', 'max:20'])]
     public string $phone = '';
 
-    #[Rule('required|string|max:3')]
+    #[Rule(['required', 'string', 'max:3'])]
     public string $currency = 'INR';
 
     public array $contacts = [['name' => '', 'email' => '']];
 
     // Location modal fields
-    #[Rule('nullable|string|max:255')]
+    #[Rule(['nullable', 'string', 'max:255'])]
     public string $location_name = '';
 
-    #[Rule('nullable|string|max:50')]
+    #[Rule(['nullable', 'string', 'max:50'])]
     public string $gstin = '';
 
-    #[Rule('required|string|max:500')]
+    #[Rule(['required', 'string', 'max:500'])]
     public string $address_line_1 = '';
 
-    #[Rule('nullable|string|max:500')]
+    #[Rule(['nullable', 'string', 'max:500'])]
     public string $address_line_2 = '';
 
-    #[Rule('required|string|max:100')]
+    #[Rule(['required', 'string', 'max:100'])]
     public string $city = '';
 
-    #[Rule('required|string|max:100')]
+    #[Rule(['required', 'string', 'max:100'])]
     public string $state = '';
 
-    #[Rule('required|string|max:3')]
+    #[Rule(['required', 'string', 'max:3'])]
     public string $country = '';
 
-    #[Rule('nullable|string|max:20')]
+    #[Rule(['nullable', 'string', 'max:20'])]
     public string $postal_code = '';
 
     public bool $is_primary = false;
@@ -86,7 +86,7 @@ class CustomerManager extends Component
         abort_unless(
             auth()->check() && $customer->organization_id === auth()->user()->currentTeam?->id,
             403,
-            'Unauthorized access to customer.'
+            __('messages.authorization.unauthorized_customer')
         );
     }
 
@@ -107,7 +107,7 @@ class CustomerManager extends Component
     public function addLocation(): void
     {
         if (! $this->editingId) {
-            $this->addError('location', 'Please save the customer first before adding locations.');
+            $this->addError('location', __('forms.validation.save_customer_first_locations'));
 
             return;
         }
@@ -120,7 +120,7 @@ class CustomerManager extends Component
     {
         // Verify location belongs to the customer being edited
         if ($location->locatable_type !== Customer::class || $location->locatable_id !== $this->editingId) {
-            abort(403, 'Unauthorized access to location.');
+            abort(403, __('messages.authorization.unauthorized_location'));
         }
 
         // Verify user owns the customer
@@ -146,7 +146,7 @@ class CustomerManager extends Component
     public function saveLocation(): void
     {
         if (! $this->editingId) {
-            $this->addError('location', 'Please save the customer first.');
+            $this->addError('location', __('forms.validation.save_customer_first'));
 
             return;
         }
@@ -156,14 +156,14 @@ class CustomerManager extends Component
         $this->authorizeCustomerAccess($customer);
 
         $this->validate([
-            'location_name' => 'required|string|max:255',
-            'gstin' => 'nullable|string|max:50',
-            'address_line_1' => 'required|string|max:500',
-            'address_line_2' => 'nullable|string|max:500',
-            'city' => 'required|string|max:100',
-            'state' => 'required|string|max:100',
+            'location_name' => ['required', 'string', 'max:255'],
+            'gstin' => ['nullable', 'string', 'max:50'],
+            'address_line_1' => ['required', 'string', 'max:500'],
+            'address_line_2' => ['nullable', 'string', 'max:500'],
+            'city' => ['required', 'string', 'max:100'],
+            'state' => ['required', 'string', 'max:100'],
             'country' => ['required', 'string', ValidationRule::enum(Country::class)],
-            'postal_code' => 'nullable|string|max:20',
+            'postal_code' => ['nullable', 'string', 'max:20'],
         ]);
 
         $customer = Customer::findOrFail($this->editingId);
@@ -210,14 +210,14 @@ class CustomerManager extends Component
         $this->showLocationModal = false;
         $this->resetLocationForm();
 
-        session()->flash('message', $this->editingLocationId ? 'Location updated successfully!' : 'Location added successfully!');
+        session()->flash('message', $this->editingLocationId ? __('messages.notifications.location_updated') : __('messages.notifications.location_added'));
     }
 
     public function deleteLocation(Location $location): void
     {
         // Verify location belongs to the customer being edited
         if ($location->locatable_type !== Customer::class || $location->locatable_id !== $this->editingId) {
-            abort(403, 'Unauthorized access to location.');
+            abort(403, __('messages.authorization.unauthorized_location'));
         }
 
         $customer = Customer::findOrFail($this->editingId);
@@ -225,7 +225,7 @@ class CustomerManager extends Component
 
         // Don't allow deleting the last location
         if ($customer->locations()->count() <= 1) {
-            $this->addError('location', 'Cannot delete the last location. Customer must have at least one location.');
+            $this->addError('location', __('forms.validation.cannot_delete_last_location'));
 
             return;
         }
@@ -238,21 +238,21 @@ class CustomerManager extends Component
 
         $location->delete();
 
-        session()->flash('message', 'Location deleted successfully!');
+        session()->flash('message', __('messages.notifications.location_deleted'));
     }
 
     public function setPrimaryLocation(Location $location): void
     {
         // Verify location belongs to the customer being edited
         if ($location->locatable_type !== Customer::class || $location->locatable_id !== $this->editingId) {
-            abort(403, 'Unauthorized access to location.');
+            abort(403, __('messages.authorization.unauthorized_location'));
         }
 
         $customer = Customer::findOrFail($this->editingId);
         $this->authorizeCustomerAccess($customer);
         $customer->update(['primary_location_id' => $location->id]);
 
-        session()->flash('message', 'Primary location updated successfully!');
+        session()->flash('message', __('messages.notifications.primary_location_updated'));
     }
 
     public function cancelLocation(): void
@@ -279,18 +279,18 @@ class CustomerManager extends Component
     public function save(): void
     {
         $this->validate([
-            'name' => 'required|string|max:255',
+            'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20', 'regex:/^[+]?[\d\s\-().]+$/'],
             'currency' => ['required', 'string', ValidationRule::enum(\App\Currency::class)],
-            'contacts' => 'required|array|min:1',
-            'contacts.*.name' => 'nullable|string|max:255',
-            'contacts.*.email' => 'required|email|max:255',
+            'contacts' => ['required', 'array', 'min:1'],
+            'contacts.*.name' => ['nullable', 'string', 'max:255'],
+            'contacts.*.email' => ['required', 'email', 'max:255'],
         ]);
 
         $filteredContacts = array_filter($this->contacts, fn ($contact) => ! empty(trim($contact['email'])));
 
         if (empty($filteredContacts)) {
-            $this->addError('contacts.0.email', 'At least one contact with email is required.');
+            $this->addError('contacts.0.email', __('forms.validation.at_least_one_contact_email'));
 
             return;
         }
@@ -310,7 +310,7 @@ class CustomerManager extends Component
             $this->showForm = false;
             $this->resetPage();
 
-            session()->flash('message', 'Customer updated successfully!');
+            session()->flash('message', __('messages.notifications.customer_updated'));
         } else {
             $customer = Customer::create([
                 'name' => $this->name,
@@ -323,7 +323,7 @@ class CustomerManager extends Component
             // Stay in edit mode to allow adding locations
             $this->editingId = $customer->id;
 
-            session()->flash('message', 'Customer created successfully! Now add at least one location.');
+            session()->flash('message', __('messages.notifications.customer_created_add_location'));
         }
     }
 
@@ -340,7 +340,7 @@ class CustomerManager extends Component
         $customer->delete();
 
         $this->resetPage();
-        session()->flash('message', 'Customer deleted successfully!');
+        session()->flash('message', __('messages.notifications.customer_deleted'));
     }
 
     public function cancel(): void

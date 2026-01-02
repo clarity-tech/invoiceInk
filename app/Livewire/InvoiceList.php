@@ -18,7 +18,7 @@ class InvoiceList extends Component
     {
         // Security check: Ensure user has access to this invoice's organization
         if (! auth()->check() || ! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
-            abort(403, 'Unauthorized access to invoice.');
+            abort(403, __('messages.authorization.unauthorized_invoice'));
         }
 
         $documentType = $invoice->type;
@@ -27,14 +27,14 @@ class InvoiceList extends Component
         $invoice->delete();
 
         $this->resetPage();
-        session()->flash('message', ucfirst($documentType).' deleted successfully!');
+        session()->flash('message', __('messages.notifications.document_type_deleted', ['type' => ucfirst($documentType)]));
     }
 
     public function downloadPdf(Invoice $invoice)
     {
         // Security check: Ensure user has access to this invoice's organization
         if (! auth()->check() || ! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
-            abort(403, 'Unauthorized access to invoice.');
+            abort(403, __('messages.authorization.unauthorized_invoice'));
         }
 
         $pdfService = new PdfService;
@@ -50,11 +50,11 @@ class InvoiceList extends Component
     {
         // Security check
         if (! auth()->check() || ! auth()->user()->allTeams()->contains('id', $estimate->organization_id)) {
-            abort(403, 'Unauthorized access to estimate.');
+            abort(403, __('messages.authorization.unauthorized_invoice'));
         }
 
         if ($estimate->type !== 'estimate') {
-            session()->flash('error', 'Only estimates can be converted to invoices.');
+            session()->flash('error', __('forms.validation.only_estimates_convertible'));
 
             return null;
         }
@@ -62,7 +62,7 @@ class InvoiceList extends Component
         $converter = app(EstimateToInvoiceConverter::class);
         $invoice = $converter->convert($estimate);
 
-        session()->flash('message', 'Estimate converted to invoice successfully!');
+        session()->flash('message', __('messages.notifications.estimate_converted'));
 
         return redirect()->route('invoices.edit', $invoice->id);
     }
@@ -71,7 +71,7 @@ class InvoiceList extends Component
     {
         // Security check
         if (! auth()->check() || ! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
-            abort(403, 'Unauthorized access to invoice.');
+            abort(403, __('messages.authorization.unauthorized_invoice'));
         }
 
         $invoice->load('items');
@@ -105,7 +105,7 @@ class InvoiceList extends Component
             ]);
         }
 
-        session()->flash('message', ucfirst($invoice->type).' duplicated successfully!');
+        session()->flash('message', __('messages.notifications.document_type_duplicated', ['type' => ucfirst($invoice->type)]));
 
         return redirect()->route('invoices.edit', $newInvoice->id);
     }

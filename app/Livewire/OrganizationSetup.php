@@ -23,47 +23,47 @@ class OrganizationSetup extends Component
     public ?Organization $organization = null;
 
     // Step 1: Company Information
-    #[Rule('required|string|max:255')]
+    #[Rule(['required', 'string', 'max:255'])]
     public string $company_name = '';
 
-    #[Rule('nullable|string|max:255')]
+    #[Rule(['nullable', 'string', 'max:255'])]
     public string $tax_number = '';
 
-    #[Rule('nullable|string|max:255')]
+    #[Rule(['nullable', 'string', 'max:255'])]
     public string $registration_number = '';
 
-    #[Rule('nullable|string|max:255|url')]
+    #[Rule(['nullable', 'string', 'max:255', 'url'])]
     public string $website = '';
 
-    #[Rule('nullable|string|max:1000')]
+    #[Rule(['nullable', 'string', 'max:1000'])]
     public string $notes = '';
 
     // Step 2: Primary Location
-    #[Rule('required|string|max:255')]
+    #[Rule(['required', 'string', 'max:255'])]
     public string $location_name = '';
 
-    #[Rule('nullable|string|max:50')]
+    #[Rule(['nullable', 'string', 'max:50'])]
     public string $gstin = '';
 
-    #[Rule('required|string|max:500')]
+    #[Rule(['required', 'string', 'max:500'])]
     public string $address_line_1 = '';
 
-    #[Rule('nullable|string|max:500')]
+    #[Rule(['nullable', 'string', 'max:500'])]
     public string $address_line_2 = '';
 
-    #[Rule('required|string|max:100')]
+    #[Rule(['required', 'string', 'max:100'])]
     public string $city = '';
 
-    #[Rule('required|string|max:100')]
+    #[Rule(['required', 'string', 'max:100'])]
     public string $state = '';
 
-    #[Rule('required|string|max:20')]
+    #[Rule(['required', 'string', 'max:20'])]
     public string $postal_code = '';
 
     // Step 3: Currency & Financial Year Configuration
     public string $currency = '';
 
-    #[Rule('required|string')]
+    #[Rule(['required', 'string'])]
     public ?string $country_code = null;
 
     public ?string $financial_year_type = null;
@@ -75,7 +75,7 @@ class OrganizationSetup extends Component
     // Step 4: Contact Information
     public array $emails = [''];
 
-    #[Rule('nullable|string|max:20')]
+    #[Rule(['nullable', 'string', 'max:20'])]
     public string $phone = '';
 
     public function mount(?Organization $organization): void
@@ -84,7 +84,7 @@ class OrganizationSetup extends Component
         $this->organization = $organization ?? auth()->user()->currentTeam;
 
         if (! $this->organization) {
-            abort(403, 'No organization context available.');
+            abort(403, __('messages.authorization.no_organization_context'));
         }
 
         // If organization already has setup completed, we'll handle this in the view
@@ -195,20 +195,20 @@ class OrganizationSetup extends Component
     {
         match ($step) {
             1 => $this->validate([
-                'company_name' => 'required|string|max:255',
-                'tax_number' => 'nullable|string|max:255',
-                'registration_number' => 'nullable|string|max:255',
-                'website' => 'nullable|string|max:255|url',
-                'notes' => 'nullable|string|max:1000',
+                'company_name' => ['required', 'string', 'max:255'],
+                'tax_number' => ['nullable', 'string', 'max:255'],
+                'registration_number' => ['nullable', 'string', 'max:255'],
+                'website' => ['nullable', 'string', 'max:255', 'url'],
+                'notes' => ['nullable', 'string', 'max:1000'],
             ]),
             2 => $this->validate([
-                'location_name' => 'required|string|max:255',
-                'gstin' => 'nullable|string|max:50',
-                'address_line_1' => 'required|string|max:500',
-                'address_line_2' => 'nullable|string|max:500',
-                'city' => 'required|string|max:100',
-                'state' => 'required|string|max:100',
-                'postal_code' => 'required|string|max:20',
+                'location_name' => ['required', 'string', 'max:255'],
+                'gstin' => ['nullable', 'string', 'max:50'],
+                'address_line_1' => ['required', 'string', 'max:500'],
+                'address_line_2' => ['nullable', 'string', 'max:500'],
+                'city' => ['required', 'string', 'max:100'],
+                'state' => ['required', 'string', 'max:100'],
+                'postal_code' => ['required', 'string', 'max:20'],
             ]),
             3 => $this->validate([
                 'currency' => ['required', 'string', new CurrencyCode],
@@ -218,8 +218,8 @@ class OrganizationSetup extends Component
                 'financial_year_start_day' => ['nullable', 'integer', 'min:1', 'max:31'],
             ]),
             4 => $this->validate([
-                'emails' => 'required|array|min:1',
-                'phone' => 'nullable|string|max:20',
+                'emails' => ['required', 'array', 'min:1'],
+                'phone' => ['nullable', 'string', 'max:20'],
             ]),
             default => null
         };
@@ -231,7 +231,7 @@ class OrganizationSetup extends Component
         $this->organization = auth()->user()->currentTeam;
 
         if (! $this->organization) {
-            abort(403, 'No organization context available.');
+            abort(403, __('messages.authorization.no_organization_context'));
         }
 
         // Validate all steps
@@ -246,7 +246,7 @@ class OrganizationSetup extends Component
                 $supportedCurrencies = collect($country->getSupportedCurrencies())->pluck('value')->toArray();
 
                 if (! in_array($this->currency, $supportedCurrencies)) {
-                    $this->addError('currency', 'The selected currency is not supported by '.$country->name().'. Supported currencies: '.implode(', ', $supportedCurrencies));
+                    $this->addError('currency', __('forms.validation.currency_not_supported', ['country' => $country->name(), 'currencies' => implode(', ', $supportedCurrencies)]));
                     $this->currentStep = 3;
 
                     return;
@@ -262,7 +262,7 @@ class OrganizationSetup extends Component
             $email = is_string($email) ? trim($email) : '';
             if ($email !== '') {
                 if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    $this->addError("emails.{$index}", 'Please provide a valid email address.');
+                    $this->addError("emails.{$index}", __('forms.validation.valid_email_address'));
                     $this->currentStep = 4;
 
                     return;
@@ -272,7 +272,7 @@ class OrganizationSetup extends Component
         }
 
         if (empty($validEmails)) {
-            $this->addError('emails.0', 'At least one email is required.');
+            $this->addError('emails.0', __('forms.validation.at_least_one_email'));
             $this->currentStep = 4;
 
             return;
@@ -339,7 +339,7 @@ class OrganizationSetup extends Component
         // Mark setup as complete
         $this->organization->markSetupComplete();
 
-        session()->flash('message', 'Organization setup completed successfully! Welcome to your invoicing system.');
+        session()->flash('message', __('messages.notifications.organization_setup_complete'));
 
         // Redirect to dashboard
         $this->redirect(route('dashboard'));

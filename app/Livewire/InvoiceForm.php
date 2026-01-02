@@ -99,7 +99,7 @@ class InvoiceForm extends Component
 
         // Security check: Ensure user has access to this invoice's organization
         if (! auth()->user()->allTeams()->contains('id', $this->invoice->organization_id)) {
-            abort(403, 'Unauthorized access to invoice.');
+            abort(403, __('messages.authorization.unauthorized_invoice'));
         }
 
         // Redirect to the PDF download route
@@ -112,7 +112,7 @@ class InvoiceForm extends Component
     {
         // S7: Validate file MIME type and size before accepting
         $this->validate([
-            'newFile' => 'file|max:10240|mimes:pdf,doc,docx,xls,xlsx,csv,jpg,jpeg,png,gif,webp,zip',
+            'newFile' => ['file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,csv,jpg,jpeg,png,gif,webp,zip'],
         ]);
 
         // When a new file is uploaded, add it to the uploadedFiles array
@@ -136,14 +136,14 @@ class InvoiceForm extends Component
 
         // Security check
         if (! auth()->user()->allTeams()->contains('id', $this->invoice->organization_id)) {
-            abort(403, 'Unauthorized access to invoice.');
+            abort(403, __('messages.authorization.unauthorized_invoice'));
         }
 
         $media = $this->invoice->getMedia('attachments')->where('id', $mediaId)->first();
 
         if ($media) {
             $media->delete();
-            session()->flash('message', 'Attachment deleted successfully.');
+            session()->flash('message', __('messages.notifications.attachment_deleted'));
         }
     }
 
@@ -257,7 +257,7 @@ class InvoiceForm extends Component
 
         // Validate email format
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->addError("additionalRecipients.{$index}", 'Please enter a valid email address.');
+            $this->addError("additionalRecipients.{$index}", __('forms.validation.valid_email_required'));
 
             return;
         }
@@ -301,7 +301,7 @@ class InvoiceForm extends Component
 
         // Validate email format
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->addError("additionalCcRecipients.{$index}", 'Please enter a valid email address.');
+            $this->addError("additionalCcRecipients.{$index}", __('forms.validation.valid_email_required'));
 
             return;
         }
@@ -341,7 +341,7 @@ class InvoiceForm extends Component
         }
 
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->addError('directEmail', 'Please enter a valid email address.');
+            $this->addError('directEmail', __('forms.validation.valid_email_required'));
 
             return;
         }
@@ -360,7 +360,7 @@ class InvoiceForm extends Component
         }
 
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->addError('directCcEmail', 'Please enter a valid email address.');
+            $this->addError('directCcEmail', __('forms.validation.valid_email_required'));
 
             return;
         }
@@ -406,7 +406,7 @@ class InvoiceForm extends Component
         } catch (\Exception $e) {
             \Log::error('Error generating email body: '.$e->getMessage());
 
-            return '<div>Error generating email preview. Please contact support.</div>';
+            return '<div>'.__('forms.validation.email_generation_error').'</div>';
         }
     }
 
@@ -414,23 +414,23 @@ class InvoiceForm extends Component
     {
         // Validate additional recipients
         $validationRules = [
-            'emailSubject' => 'required|string|max:255',
-            'emailBody' => 'required|string',
-            'additionalRecipients.*' => 'nullable|email',
-            'additionalCcRecipients.*' => 'nullable|email',
+            'emailSubject' => ['required', 'string', 'max:255'],
+            'emailBody' => ['required', 'string'],
+            'additionalRecipients.*' => ['nullable', 'email'],
+            'additionalCcRecipients.*' => ['nullable', 'email'],
         ];
 
         $this->validate($validationRules);
 
         if (! $this->invoice) {
-            $this->addError('email', 'Invoice not found. Please refresh the page and try again.');
+            $this->addError('email', __('forms.validation.invoice_not_found'));
 
             return;
         }
 
         // Security check
         if (! auth()->user()->allTeams()->contains('id', $this->invoice->organization_id)) {
-            abort(403, 'Unauthorized access to invoice.');
+            abort(403, __('messages.authorization.unauthorized_invoice'));
         }
 
         // Merge selected recipients with additional recipients
@@ -441,7 +441,7 @@ class InvoiceForm extends Component
 
         // Ensure we have at least one recipient
         if (empty($allRecipients)) {
-            $this->addError('selectedRecipients', 'Please select at least one recipient or add a new email address.');
+            $this->addError('selectedRecipients', __('forms.validation.select_at_least_one_recipient'));
 
             return;
         }
@@ -507,10 +507,10 @@ class InvoiceForm extends Component
 
             Mail::send($mailable);
 
-            session()->flash('message', ucfirst($this->invoice->type).' sent successfully!');
+            session()->flash('message', __('messages.notifications.document_type_sent', ['type' => ucfirst($this->invoice->type)]));
             $this->closeEmailModal();
         } catch (\Exception $e) {
-            $this->addError('email', 'Failed to send email: '.$e->getMessage());
+            $this->addError('email', __('messages.notifications.send_email_failed', ['error' => $e->getMessage()]));
         }
     }
 

@@ -46,7 +46,7 @@ class EnsureOrganizationSetup
         // Check if organization setup is complete
         if ($currentTeam->needsSetup()) {
             // Redirect to setup wizard with a helpful message
-            session()->flash('setup-required', 'Please complete your organization setup to continue using the application.');
+            session()->flash('setup-required', __('messages.authorization.setup_required'));
 
             return redirect()->route('organization.setup');
         }

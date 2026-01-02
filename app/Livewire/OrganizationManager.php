@@ -24,36 +24,36 @@ class OrganizationManager extends Component
 {
     use WithFileUploads, WithPagination;
 
-    #[Rule('required|string|max:255')]
+    #[Rule(['required', 'string', 'max:255'])]
     public string $name = '';
 
-    #[Rule('nullable|string|max:20')]
+    #[Rule(['nullable', 'string', 'max:20'])]
     public string $phone = '';
 
     public array $emails = [''];
 
-    #[Rule('nullable|string|max:255')]
+    #[Rule(['nullable', 'string', 'max:255'])]
     public string $location_name = '';
 
-    #[Rule('nullable|string|max:50')]
+    #[Rule(['nullable', 'string', 'max:50'])]
     public string $gstin = '';
 
-    #[Rule('required|string|max:500')]
+    #[Rule(['required', 'string', 'max:500'])]
     public string $address_line_1 = '';
 
-    #[Rule('nullable|string|max:500')]
+    #[Rule(['nullable', 'string', 'max:500'])]
     public string $address_line_2 = '';
 
-    #[Rule('required|string|max:100')]
+    #[Rule(['required', 'string', 'max:100'])]
     public string $city = '';
 
-    #[Rule('required|string|max:100')]
+    #[Rule(['required', 'string', 'max:100'])]
     public string $state = '';
 
-    #[Rule('required|string|max:3')]
+    #[Rule(['required', 'string', 'max:3'])]
     public string $country = '';
 
-    #[Rule('required|string|max:20')]
+    #[Rule(['required', 'string', 'max:20'])]
     public string $postal_code = '';
 
     public string $currency = '';
@@ -150,14 +150,14 @@ class OrganizationManager extends Component
             // Security check: Ensure user has access to this organization
             if (! $hasAccess) {
                 // Instead of aborting, show a user-friendly error
-                $this->addError('name', 'You do not have permission to edit this organization.');
+                $this->addError('name', __('messages.authorization.no_permission_edit_organization'));
 
                 return;
             }
 
             $organization->load('primaryLocation');
         } catch (Exception $e) {
-            $this->addError('name', 'Failed to load organization for editing: '.$e->getMessage());
+            $this->addError('name', __('forms.validation.failed_load_organization', ['error' => $e->getMessage()]));
 
             return;
         }
@@ -202,7 +202,7 @@ class OrganizationManager extends Component
             $this->showForm = true;
 
         } catch (Exception $e) {
-            $this->addError('name', 'Failed to load organization data: '.$e->getMessage());
+            $this->addError('name', __('forms.validation.failed_load_organization_data', ['error' => $e->getMessage()]));
 
             return;
         }
@@ -229,24 +229,24 @@ class OrganizationManager extends Component
             }
 
             $this->validate([
-                'name' => 'required|string|max:255',
+                'name' => ['required', 'string', 'max:255'],
                 'phone' => ['nullable', 'string', 'max:20', 'regex:/^[+]?[\d\s\-().]+$/'],
                 'currency' => ['required', 'string', new CurrencyCode],
                 'country_code' => ['required', 'string', ValidationRule::enum(Country::class)],
                 'financial_year_type' => ['nullable', 'string', ValidationRule::enum(FinancialYearType::class)],
                 'financial_year_start_month' => ['nullable', 'integer', 'min:1', 'max:12'],
                 'financial_year_start_day' => ['nullable', 'integer', 'min:1', 'max:31'],
-                'location_name' => 'nullable|string|max:255',
-                'gstin' => 'nullable|string|max:50',
-                'address_line_1' => 'required|string|max:500',
-                'address_line_2' => 'nullable|string|max:500',
-                'city' => 'required|string|max:100',
-                'state' => 'required|string|max:100',
+                'location_name' => ['nullable', 'string', 'max:255'],
+                'gstin' => ['nullable', 'string', 'max:50'],
+                'address_line_1' => ['required', 'string', 'max:500'],
+                'address_line_2' => ['nullable', 'string', 'max:500'],
+                'city' => ['required', 'string', 'max:100'],
+                'state' => ['required', 'string', 'max:100'],
                 'country' => ['required', 'string', ValidationRule::enum(Country::class)],
-                'postal_code' => 'required|string|max:20',
-                'emails' => 'required|array|min:1',
-                'emails.*' => 'nullable|email',
-                'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'postal_code' => ['required', 'string', 'max:20'],
+                'emails' => ['required', 'array', 'min:1'],
+                'emails.*' => ['nullable', 'email'],
+                'logo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
             ]);
 
         } catch (ValidationException $e) {
@@ -260,9 +260,7 @@ class OrganizationManager extends Component
                 $supportedCurrencies = collect($country->getSupportedCurrencies())->pluck('value')->toArray();
 
                 if (! in_array($this->currency, $supportedCurrencies)) {
-                    $errorMessage = 'The selected currency is not supported by '.$country->name().'. Supported currencies: '.implode(', ', $supportedCurrencies);
-
-                    $this->addError('currency', $errorMessage);
+                    $this->addError('currency', __('forms.validation.currency_not_supported', ['country' => $country->name(), 'currencies' => implode(', ', $supportedCurrencies)]));
 
                     return;
                 }
@@ -274,7 +272,7 @@ class OrganizationManager extends Component
         $filteredEmails = array_filter($this->emails, fn ($email) => ! empty(trim($email)));
 
         if (empty($filteredEmails)) {
-            $this->addError('emails.0', 'At least one email is required.');
+            $this->addError('emails.0', __('forms.validation.at_least_one_email'));
 
             return;
         }
@@ -285,7 +283,7 @@ class OrganizationManager extends Component
         try {
             $contactCollection = new ContactCollection($contactData);
         } catch (Exception $e) {
-            $this->addError('emails.0', 'Failed to process email addresses: '.$e->getMessage());
+            $this->addError('emails.0', __('forms.validation.failed_process_emails', ['error' => $e->getMessage()]));
 
             return;
         }
@@ -299,7 +297,7 @@ class OrganizationManager extends Component
 
                 // Security check: Ensure user has access to this organization
                 if (! $hasAccess) {
-                    $this->addError('name', 'You do not have permission to update this organization.');
+                    $this->addError('name', __('messages.authorization.no_permission_update_organization'));
 
                     return;
                 }
@@ -354,11 +352,11 @@ class OrganizationManager extends Component
                 });
 
             } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-                $this->addError('name', 'Organization not found. It may have been deleted.');
+                $this->addError('name', __('forms.validation.organization_not_found'));
 
                 return;
             } catch (Exception $e) {
-                $this->addError('name', 'Failed to update organization: '.$e->getMessage());
+                $this->addError('name', __('forms.validation.failed_update_organization', ['error' => $e->getMessage()]));
 
                 return;
             }
@@ -410,7 +408,7 @@ class OrganizationManager extends Component
                 });
 
             } catch (Exception $e) {
-                $this->addError('name', 'Failed to create organization: '.$e->getMessage());
+                $this->addError('name', __('forms.validation.failed_create_organization', ['error' => $e->getMessage()]));
 
                 return;
             }
@@ -437,7 +435,7 @@ class OrganizationManager extends Component
         $this->showForm = false;
         $this->resetPage();
 
-        $successMessage = $this->editingId ? 'Organization updated successfully!' : 'Organization created successfully!';
+        $successMessage = $this->editingId ? __('messages.notifications.organization_updated') : __('messages.notifications.organization_created');
         session()->flash('message', $successMessage);
     }
 
@@ -445,7 +443,7 @@ class OrganizationManager extends Component
     {
         // Security check: Ensure user has access to this organization
         if (! auth()->user()->allTeams()->contains('id', $organization->id)) {
-            abort(403, 'Unauthorized access to organization.');
+            abort(403, __('messages.authorization.unauthorized_organization'));
         }
 
         // Handle foreign key constraint by setting primary_location_id to null first
@@ -457,7 +455,7 @@ class OrganizationManager extends Component
         $organization->delete();
 
         $this->resetPage();
-        session()->flash('message', 'Organization deleted successfully!');
+        session()->flash('message', __('messages.notifications.organization_deleted'));
     }
 
     public function cancel(): void
