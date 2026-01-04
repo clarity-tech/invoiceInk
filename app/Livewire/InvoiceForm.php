@@ -66,6 +66,8 @@ class InvoiceForm extends Component
             if ($this->mode === 'edit' && $invoice) {
                 $this->loadExistingInvoice($invoice);
             }
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            throw $e;
         } catch (\Exception $e) {
             // Set minimal defaults so component doesn't crash
             $this->mode = $invoice ? 'edit' : 'create';
@@ -82,6 +84,10 @@ class InvoiceForm extends Component
         // Only pass existing invoice if we're in edit mode with a persisted invoice
         $existingInvoice = ($this->mode === 'edit' && $this->invoice && $this->invoice->exists) ? $this->invoice : null;
         $invoice = $this->saveInvoice($existingInvoice);
+
+        if (! $invoice) {
+            return null;
+        }
 
         return redirect()->route('invoices.edit', $invoice->id);
     }

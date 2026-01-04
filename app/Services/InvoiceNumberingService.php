@@ -70,11 +70,11 @@ class InvoiceNumberingService
         }
 
         // Choose format pattern and reset frequency based on organization's financial year setup
-        $formatPattern = '{PREFIX}{YEAR}{MONTH}{SEQUENCE:4}';
+        $formatPattern = '{PREFIX}-{YEAR}-{MONTH}-{SEQUENCE:4}';
         $resetFrequency = ResetFrequency::YEARLY;
 
         if ($organization->financial_year_type && $organization->country_code) {
-            $formatPattern = '{PREFIX}{FY}{SEQUENCE:4}';
+            $formatPattern = '{PREFIX}-{FY}-{SEQUENCE:4}';
             $resetFrequency = ResetFrequency::FINANCIAL_YEAR;
         }
 
@@ -226,7 +226,7 @@ class InvoiceNumberingService
             }
 
             $financialYearReplacements = [
-                '{FY}' => $fyStartDate->format('Y'),            // e.g., "2024" - Start year only
+                '{FY}' => $currentFY,                             // e.g., "2024-25" - Full FY format
                 '{FY_START}' => $fyStartDate->format('Y'),      // e.g., "2024"
                 '{FY_END}' => $fyEndDate->format('Y'),          // e.g., "2025"
                 '{FY_FULL}' => $currentFY,                      // e.g., "2024-25" - Full FY format

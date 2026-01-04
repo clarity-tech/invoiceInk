@@ -1,14 +1,10 @@
 <?php
 
-
-
-
-
-test('root route redirects to login when unauthenticated', function () {
+test('root route shows welcome page when unauthenticated', function () {
     $response = $this->get('/');
 
-    $response->assertStatus(302);
-    $response->assertRedirect('/login');
+    $response->assertStatus(200);
+    $response->assertViewIs('welcome');
 });
 
 test('root route redirects to dashboard when authenticated', function () {

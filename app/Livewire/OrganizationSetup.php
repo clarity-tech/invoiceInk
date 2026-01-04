@@ -39,7 +39,7 @@ class OrganizationSetup extends Component
     public string $notes = '';
 
     // Step 2: Primary Location
-    #[Rule(['required', 'string', 'max:255'])]
+    #[Rule(['nullable', 'string', 'max:255'])]
     public string $location_name = '';
 
     #[Rule(['nullable', 'string', 'max:50'])]
@@ -202,7 +202,7 @@ class OrganizationSetup extends Component
                 'notes' => ['nullable', 'string', 'max:1000'],
             ]),
             2 => $this->validate([
-                'location_name' => ['required', 'string', 'max:255'],
+                'location_name' => ['nullable', 'string', 'max:255'],
                 'gstin' => ['nullable', 'string', 'max:50'],
                 'address_line_1' => ['required', 'string', 'max:500'],
                 'address_line_2' => ['nullable', 'string', 'max:500'],
@@ -219,6 +219,7 @@ class OrganizationSetup extends Component
             ]),
             4 => $this->validate([
                 'emails' => ['required', 'array', 'min:1'],
+                'emails.*' => ['required', 'email'],
                 'phone' => ['nullable', 'string', 'max:20'],
             ]),
             default => null
@@ -234,9 +235,15 @@ class OrganizationSetup extends Component
             abort(403, __('messages.authorization.no_organization_context'));
         }
 
-        // Validate all steps
+        // Validate all steps (set currentStep on failure for UX)
         for ($i = 1; $i <= $this->totalSteps; $i++) {
-            $this->validateStep($i);
+            try {
+                $this->validateStep($i);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                $this->currentStep = $i;
+
+                throw $e;
+            }
         }
 
         // Additional validation for currency and country compatibility
@@ -246,10 +253,11 @@ class OrganizationSetup extends Component
                 $supportedCurrencies = collect($country->getSupportedCurrencies())->pluck('value')->toArray();
 
                 if (! in_array($this->currency, $supportedCurrencies)) {
-                    $this->addError('currency', __('forms.validation.currency_not_supported', ['country' => $country->name(), 'currencies' => implode(', ', $supportedCurrencies)]));
                     $this->currentStep = 3;
 
-                    return;
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'currency' => __('forms.validation.currency_not_supported', ['country' => $country->name(), 'currencies' => implode(', ', $supportedCurrencies)]),
+                    ]);
                 }
             } catch (\ValueError $e) {
                 // Invalid country code, but this will be caught by country_code validation above
@@ -257,28 +265,18 @@ class OrganizationSetup extends Component
         }
 
         // Filter out empty emails and validate formats
-        $validEmails = [];
-        foreach ($this->emails as $index => $email) {
-            $email = is_string($email) ? trim($email) : '';
-            if ($email !== '') {
-                if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    $this->addError("emails.{$index}", __('forms.validation.valid_email_address'));
-                    $this->currentStep = 4;
+        $filteredEmails = array_filter(
+            array_map(fn ($email) => is_string($email) ? trim($email) : '', $this->emails),
+            fn ($email) => $email !== ''
+        );
 
-                    return;
-                }
-                $validEmails[] = $email;
-            }
-        }
-
-        if (empty($validEmails)) {
-            $this->addError('emails.0', __('forms.validation.at_least_one_email'));
+        if (empty($filteredEmails)) {
             $this->currentStep = 4;
 
-            return;
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'emails.0' => __('forms.validation.at_least_one_email'),
+            ]);
         }
-
-        $filteredEmails = $validEmails;
 
         // Convert simple emails to ContactCollection format (email with empty name)
         $contactData = array_map(fn ($email) => ['name' => '', 'email' => $email], $filteredEmails);

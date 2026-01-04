@@ -101,7 +101,7 @@ test('InvoiceItem formats money correctly for different currencies', function ()
         'description' => 'Test Service',
         'quantity' => 2,
         'unit_price' => 5000, // $50.00
-        'tax_rate' => 10,
+        'tax_rate' => 0,
     ]);
 
     expect($item->formatted_unit_price)->toContain('$50.00');

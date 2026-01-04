@@ -1,22 +1,21 @@
 <?php
 
 use App\Models\User;
-use App\ValueObjects\ContactCollection;
 use Livewire\Livewire;
 
 test('user can go to organizations page and update location details including GSTIN', function () {
     // Create a user with a business organization (not personal team)
     $user = User::factory()->withBusinessOrganization()->create([
-        'email' => 'business@example.test'
+        'email' => 'business@example.test',
     ]);
-    
+
     $organization = $user->ownedTeams()->first();
-    
+
     // Simulate the exact user workflow: go to organizations page
     $response = $this->actingAs($user)->get('/organizations');
     $response->assertStatus(200);
     $response->assertSee('Organizations');
-    
+
     // User clicks edit on their organization and updates location details
     Livewire::actingAs($user)
         ->test(\App\Livewire\OrganizationManager::class)
@@ -41,15 +40,15 @@ test('user can go to organizations page and update location details including GS
         ->call('save') // User clicks Update Organization
         ->assertHasNoErrors()
         ->assertSet('showForm', false);
-    
+
     // Verify all updates were saved correctly
     $organization->refresh();
-    
+
     // Organization fields
     expect($organization->name)->toBe('Updated Business Name');
     expect($organization->phone)->toBe('+91-9876543210');
     expect($organization->emails->getEmails())->toBe(['updated@business.test']);
-    
+
     // Location fields
     $location = $organization->primaryLocation;
     expect($location)->not->toBeNull();
@@ -65,22 +64,23 @@ test('user can go to organizations page and update location details including GS
 test('user can update organization via new Manage Your Business flow with location details', function () {
     // Test the new direct edit route
     $user = User::factory()->withPersonalTeam()->create([
-        'email' => 'personal@example.test'
+        'email' => 'personal@example.test',
     ]);
-    
+
     $organization = $user->currentTeam;
-    
+
     // User goes directly to /organization/edit (Manage Your Business)
     $response = $this->actingAs($user)->get('/organization/edit');
     $response->assertStatus(200);
     $response->assertSee('Manage Your Business');
-    
+
     // Update organization and location details in auto-edit mode
     Livewire::actingAs($user)
         ->test(\App\Livewire\OrganizationManager::class)
         ->set('autoEdit', true) // Simulate auto-edit mode
         ->call('edit', $organization)
         ->set('name', 'My Updated Personal Business')
+        ->set('emails', ['personal@example.test'])
         ->set('currency', 'INR')
         ->set('country_code', 'IN')
         ->set('location_name', 'Home Office')
@@ -92,11 +92,11 @@ test('user can update organization via new Manage Your Business flow with locati
         ->set('postal_code', '400001')
         ->call('save')
         ->assertHasNoErrors();
-    
+
     // Verify updates
     $organization->refresh();
     expect($organization->name)->toBe('My Updated Personal Business');
-    
+
     $location = $organization->primaryLocation;
     expect($location->name)->toBe('Home Office');
     expect($location->gstin)->toBe('27AABCU9603R1ZX');
@@ -109,15 +109,16 @@ test('user can update organization via new Manage Your Business flow with locati
 test('GSTIN updates are reflected immediately in database', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $organization = $user->currentTeam;
-    
+
     // Initial state - no GSTIN
     expect($organization->primaryLocation)->toBeNull();
-    
+
     // Update with GSTIN via Livewire
     Livewire::actingAs($user)
         ->test(\App\Livewire\OrganizationManager::class)
         ->call('edit', $organization)
         ->set('name', 'Test Business')
+        ->set('emails', ['test@example.test'])
         ->set('currency', 'INR')
         ->set('country_code', 'IN')
         ->set('location_name', 'Test Office')
@@ -129,22 +130,23 @@ test('GSTIN updates are reflected immediately in database', function () {
         ->set('postal_code', '500001')
         ->call('save')
         ->assertHasNoErrors();
-    
+
     // Immediately check database
     $organization->refresh();
     $location = $organization->primaryLocation;
-    
+
     expect($location)->not->toBeNull();
     expect($location->gstin)->toBe('36AABCU9603R1ZU');
-    
+
     // Update GSTIN again
     Livewire::actingAs($user)
         ->test(\App\Livewire\OrganizationManager::class)
         ->call('edit', $organization)
+        ->set('emails', ['test@example.test'])
         ->set('gstin', 'UPDATED123456789')
         ->call('save')
         ->assertHasNoErrors();
-    
+
     // Verify immediate update
     $organization->refresh();
     expect($organization->primaryLocation->gstin)->toBe('UPDATED123456789');
@@ -153,12 +155,13 @@ test('GSTIN updates are reflected immediately in database', function () {
 test('location updates work with all supported country formats', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $organization = $user->currentTeam;
-    
+
     // Test with US format
     Livewire::actingAs($user)
         ->test(\App\Livewire\OrganizationManager::class)
         ->call('edit', $organization)
         ->set('name', 'US Business')
+        ->set('emails', ['us@example.test'])
         ->set('currency', 'USD')
         ->set('country_code', 'US')
         ->set('location_name', 'US Office')
@@ -169,17 +172,18 @@ test('location updates work with all supported country formats', function () {
         ->set('postal_code', '10001')
         ->call('save')
         ->assertHasNoErrors();
-    
+
     $organization->refresh();
     $location = $organization->primaryLocation;
     expect($location->country)->toBe('US');
     expect($location->postal_code)->toBe('10001');
-    
+
     // Test with German format
     Livewire::actingAs($user)
         ->test(\App\Livewire\OrganizationManager::class)
         ->call('edit', $organization)
         ->set('name', 'German Business')
+        ->set('emails', ['de@example.test'])
         ->set('currency', 'EUR')
         ->set('country_code', 'DE')
         ->set('address_line_1', '123 Main Street') // Keep existing address
@@ -189,7 +193,7 @@ test('location updates work with all supported country formats', function () {
         ->set('postal_code', '10115')
         ->call('save')
         ->assertHasNoErrors();
-    
+
     $organization->refresh();
     $location = $organization->primaryLocation;
     expect($location->country)->toBe('DE');

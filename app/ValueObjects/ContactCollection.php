@@ -13,7 +13,16 @@ class ContactCollection implements Arrayable, Jsonable, JsonSerializable
 
     public function __construct(array $contacts = [])
     {
-        $this->contacts = array_values(array_filter($contacts, fn($contact) => $this->isValidContact($contact)));
+        // Convert legacy simple email strings to contact format
+        $contacts = array_map(function ($contact) {
+            if (is_string($contact) && filter_var($contact, FILTER_VALIDATE_EMAIL)) {
+                return ['name' => '', 'email' => $contact];
+            }
+
+            return $contact;
+        }, $contacts);
+
+        $this->contacts = array_values(array_filter($contacts, fn ($contact) => $this->isValidContact($contact)));
         $this->validate();
     }
 
@@ -54,7 +63,7 @@ class ContactCollection implements Arrayable, Jsonable, JsonSerializable
 
     public function remove(string $email): self
     {
-        $contacts = array_filter($this->contacts, fn($contact) => $contact['email'] !== trim($email));
+        $contacts = array_filter($this->contacts, fn ($contact) => $contact['email'] !== trim($email));
 
         return new self($contacts);
     }
@@ -62,12 +71,14 @@ class ContactCollection implements Arrayable, Jsonable, JsonSerializable
     public function hasEmail(string $email): bool
     {
         $email = trim($email);
+
         return collect($this->contacts)->contains('email', $email);
     }
 
     public function getByEmail(string $email): ?array
     {
         $email = trim($email);
+
         return collect($this->contacts)->firstWhere('email', $email);
     }
 
@@ -99,17 +110,19 @@ class ContactCollection implements Arrayable, Jsonable, JsonSerializable
     public function getFirstEmail(): ?string
     {
         $first = $this->first();
+
         return $first ? $first['email'] : null;
     }
 
     public function getDisplayName(string $email): string
     {
         $contact = $this->getByEmail($email);
-        if (!$contact) {
+        if (! $contact) {
             return $email;
         }
 
         $name = trim($contact['name']);
+
         return $name ? "{$name} ({$email})" : $email;
     }
 
@@ -131,23 +144,23 @@ class ContactCollection implements Arrayable, Jsonable, JsonSerializable
     public function __toString(): string
     {
         return collect($this->contacts)
-            ->map(fn($contact) => $this->getDisplayName($contact['email']))
+            ->map(fn ($contact) => $this->getDisplayName($contact['email']))
             ->join(', ');
     }
 
     private function isValidContact($contact): bool
     {
-        return is_array($contact) 
-            && isset($contact['name'], $contact['email']) 
-            && is_string($contact['name']) 
+        return is_array($contact)
+            && isset($contact['name'], $contact['email'])
+            && is_string($contact['name'])
             && is_string($contact['email'])
-            && !empty(trim($contact['email']));
+            && ! empty(trim($contact['email']));
     }
 
     private function validate(): void
     {
         foreach ($this->contacts as $contact) {
-            if (!$this->isValidContact($contact)) {
+            if (! $this->isValidContact($contact)) {
                 throw new InvalidArgumentException('Invalid contact structure. Must have name and email keys.');
             }
 

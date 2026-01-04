@@ -166,6 +166,7 @@ if (! function_exists('createInvoiceWithItems')) {
             'organization_location_id' => $organization->primary_location_id,
             'customer_id' => $customer->id,
             'customer_location_id' => $customer->primary_location_id,
+            'customer_shipping_location_id' => $customer->primary_location_id,
             'invoice_number' => 'INV-'.fake()->unique()->numerify('########'),
             'status' => 'draft',
             'currency' => $organization->currency ?? 'INR',

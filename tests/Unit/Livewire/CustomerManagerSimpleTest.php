@@ -41,11 +41,14 @@ test('loads customers through computed property', function () {
 });
 
 test('can populate form for editing', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
     $customer = createCustomerWithLocation([
         'name' => 'Edit Customer',
         'phone' => '+9876543210',
         'emails' => new ContactCollection([['name' => 'Edit Contact', 'email' => 'edit@customer.com']]),
-    ]);
+    ], [], $organization);
 
     Livewire::test(CustomerManager::class)
         ->call('edit', $customer)
@@ -103,10 +106,13 @@ test('can create customer with valid data', function () {
 });
 
 test('can delete customer', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
     $customer = createCustomerWithLocation([
         'name' => 'Delete Me',
         'emails' => new ContactCollection([['name' => 'Delete Contact', 'email' => 'delete@customer.com']]),
-    ]);
+    ], [], $organization);
 
     $initialCount = Customer::count();
 

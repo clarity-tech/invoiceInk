@@ -37,7 +37,7 @@ class InvoiceList extends Component
             abort(403, __('messages.authorization.unauthorized_invoice'));
         }
 
-        $pdfService = new PdfService;
+        $pdfService = app(PdfService::class);
 
         if ($invoice->type === 'invoice') {
             return $pdfService->downloadInvoicePdf($invoice);

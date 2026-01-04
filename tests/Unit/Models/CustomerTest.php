@@ -7,7 +7,7 @@ use App\ValueObjects\ContactCollection;
 test('can create customer with contacts', function () {
     $contacts = new ContactCollection([
         ['name' => 'John Doe', 'email' => 'customer@test.com'],
-        ['name' => 'Jane Smith', 'email' => 'billing@test.com']
+        ['name' => 'Jane Smith', 'email' => 'billing@test.com'],
     ]);
 
     $customer = createCustomerWithLocation([
@@ -108,6 +108,7 @@ test('customer has correct fillable attributes', function () {
     $expectedFillable = [
         'name',
         'phone',
+        'currency',
         'emails',
         'primary_location_id',
         'organization_id',
@@ -186,7 +187,7 @@ test('customer contacts cast handles array input', function () {
         'name' => 'Array Contact Customer',
         'emails' => [
             ['name' => 'John Doe', 'email' => 'array@customer.com'],
-            ['name' => 'Jane Smith', 'email' => 'test@customer.com']
+            ['name' => 'Jane Smith', 'email' => 'test@customer.com'],
         ],
     ]);
 

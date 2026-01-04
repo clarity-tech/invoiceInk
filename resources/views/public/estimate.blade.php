@@ -40,7 +40,7 @@
                         @if($logoUrl)
                             <img src="{{ $logoUrl }}" alt="{{ $organization->name }}" class="h-14 mb-4 object-contain" style="max-width: 180px;">
                         @endif
-                        <h2 class="text-xl font-bold text-gray-900 mb-1">{{ $organization->name }}</h2>
+                        <h2 class="text-xl font-bold text-gray-900 mb-1">{{ $organization->company_name ?? $organization->name }}</h2>
                         <div class="text-sm text-gray-600 space-y-0.5">
                             <p>{{ $estimate->organizationLocation->name }}</p>
                             <p>{{ $estimate->organizationLocation->address_line_1 }}</p>

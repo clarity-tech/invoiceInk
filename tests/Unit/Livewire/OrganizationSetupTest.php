@@ -147,7 +147,7 @@ class OrganizationSetupTest extends TestCase
             ->call('nextStep') // Go to step 2
             ->call('nextStep'); // Try to go to step 3
 
-        $component->assertHasErrors(['location_name', 'address_line_1', 'city', 'state', 'postal_code']);
+        $component->assertHasErrors(['address_line_1', 'city', 'state', 'postal_code']);
 
         // Set valid data
         $component->set('location_name', 'Test Location')
@@ -463,7 +463,7 @@ class OrganizationSetupTest extends TestCase
         $component->call('completeSetup');
 
         // Verify setup completion sets the session message
-        $this->assertEquals('Organization setup completed successfully! Welcome to your invoicing system.', session('message'));
+        $this->assertEquals(__('messages.notifications.organization_setup_complete'), session('message'));
     }
 
     public function test_handles_invalid_country_code_gracefully(): void

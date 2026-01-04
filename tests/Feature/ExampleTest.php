@@ -1,8 +1,8 @@
 <?php
 
-it('redirects unauthenticated users to login', function () {
+it('shows welcome page to unauthenticated users', function () {
     $response = $this->get('/');
 
-    $response->assertStatus(302)
-        ->assertRedirect('/login');
+    $response->assertStatus(200)
+        ->assertViewIs('welcome');
 });

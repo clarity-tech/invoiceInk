@@ -207,13 +207,13 @@ class NumberingSeriesManagerTest extends TestCase
 
         $preview = $component->get('nextNumberPreview');
 
-        // Preview should show the actual financial year start year only, not {FY}
+        // Preview should show the actual financial year range, not {FY}
         $this->assertStringContainsString('INV', $preview);
         $this->assertStringNotContainsString('{FY}', $preview);
         $this->assertStringContainsString('0006', $preview);
 
-        // Verify it contains a valid format with just the start year (e.g., "INV20250006")
-        $this->assertMatchesRegularExpression('/INV\d{4}0006/', $preview);
+        // Verify it contains a valid format with FY range (e.g., "INV2025-260006")
+        $this->assertMatchesRegularExpression('/INV\d{4}-\d{2}0006/', $preview);
     }
 
     public function test_financial_year_token_formats(): void
@@ -229,14 +229,14 @@ class NumberingSeriesManagerTest extends TestCase
 
         $component = Livewire::test(\App\Livewire\NumberingSeriesManager::class);
 
-        // Test {FY} - should show only start year
+        // Test {FY} - should show full FY range (e.g., "2025-26")
         $component->call('create')
             ->set('organization_id', $organization->id)
             ->set('prefix', 'INV')
             ->set('format_pattern', '{PREFIX}{FY}{SEQUENCE:4}')
             ->set('current_number', 0);
         $preview1 = $component->get('nextNumberPreview');
-        $this->assertMatchesRegularExpression('/INV\d{4}0001/', $preview1);
+        $this->assertMatchesRegularExpression('/INV\d{4}-\d{2}0001/', $preview1);
 
         // Test {FY_FULL} - should show short format (2024-25) - includes dash in token value
         $component->set('format_pattern', '{PREFIX}{FY_FULL}{SEQUENCE:4}');

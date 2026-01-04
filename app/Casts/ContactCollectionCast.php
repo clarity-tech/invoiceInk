@@ -69,7 +69,16 @@ class ContactCollectionCast implements CastsAttributes
         }
 
         if (is_string($value)) {
-            return (new ContactCollection([['name' => '', 'email' => $value]]))->toJson();
+            if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                return (new ContactCollection([['name' => '', 'email' => $value]]))->toJson();
+            }
+
+            // Try parsing as JSON string
+            try {
+                return ContactCollection::fromJson($value)->toJson();
+            } catch (InvalidArgumentException) {
+                return json_encode([]);
+            }
         }
 
         return json_encode([]);
