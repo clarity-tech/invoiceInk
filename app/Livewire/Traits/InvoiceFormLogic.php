@@ -492,8 +492,6 @@ trait InvoiceFormLogic
      */
     public function formatAmount(int $amount): string
     {
-        $currency = $this->currentCurrency;
-
-        return Money::{$currency}($amount)->format();
+        return \App\Currency::from($this->currentCurrency)->formatAmount($amount);
     }
 }

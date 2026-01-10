@@ -155,9 +155,7 @@ class Invoice extends Model implements HasMedia
      */
     public function formatMoney(int $amount): string
     {
-        $currency = $this->currency->value;
-
-        return Money::{$currency}($amount)->format();
+        return $this->currency->formatAmount($amount);
     }
 
     /**

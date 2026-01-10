@@ -56,6 +56,49 @@ enum Currency: string
             ->toArray();
     }
 
+    /**
+     * Format a monetary amount in cents using the correct grouping for this currency.
+     *
+     * INR uses Indian grouping (lakh/crore): 1,00,00,000.00
+     * All other currencies use standard 3-digit grouping via Money::format().
+     */
+    public function formatAmount(int $amountInCents): string
+    {
+        if ($this !== self::INR) {
+            return \Akaunting\Money\Money::{$this->value}($amountInCents)->format();
+        }
+
+        $isNegative = $amountInCents < 0;
+        $absoluteCents = abs($amountInCents);
+
+        $integerPart = intdiv($absoluteCents, 100);
+        $decimalPart = $absoluteCents % 100;
+
+        $formatted = sprintf('%02d', $decimalPart);
+
+        if ($integerPart <= 999) {
+            $formatted = $integerPart.'.'.$formatted;
+        } else {
+            // Last 3 digits as first group, then groups of 2
+            $lastThree = $integerPart % 1000;
+            $remaining = intdiv($integerPart, 1000);
+            $groups = [sprintf('%03d', $lastThree)];
+
+            while ($remaining > 0) {
+                $groups[] = sprintf('%02d', $remaining % 100);
+                $remaining = intdiv($remaining, 100);
+            }
+
+            // Reverse and trim leading zeros on the leftmost group
+            $groups = array_reverse($groups);
+            $groups[0] = ltrim($groups[0], '0') ?: '0';
+
+            $formatted = implode(',', $groups).'.'.$formatted;
+        }
+
+        return ($isNegative ? '-' : '').'₹'.$formatted;
+    }
+
     public static function isValid(string $code): bool
     {
         $currencies = \Akaunting\Money\Currency::getCurrencies();

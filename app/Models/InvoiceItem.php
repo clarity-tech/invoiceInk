@@ -61,9 +61,7 @@ class InvoiceItem extends Model
      */
     public function formatMoney(int $amount): string
     {
-        $currency = $this->invoice->currency->value;
-
-        return Money::{$currency}($amount)->format();
+        return $this->invoice->currency->formatAmount($amount);
     }
 
     /**
@@ -80,6 +78,7 @@ class InvoiceItem extends Model
     public function getFormattedLineTotalAttribute(): string
     {
         $lineTotal = $this->getLineTotal() + $this->getTaxAmount();
+
         return $this->formatMoney($lineTotal);
     }
 

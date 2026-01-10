@@ -152,14 +152,14 @@ class InvoiceTotalsTest extends TestCase
 
     public function test_formatting_handles_large_values(): void
     {
-        // ₹100,000.00 subtotal, ₹18,000.00 tax, ₹118,000.00 total
+        // ₹1,00,000.00 subtotal, ₹18,000.00 tax, ₹1,18,000.00 total (Indian grouping)
         $totals = new InvoiceTotals(10000000, 1800000, 11800000);
 
         $formatted = $totals->formatAll();
 
-        $this->assertStringContainsString('100,000', $formatted['subtotal']);
+        $this->assertStringContainsString('1,00,000', $formatted['subtotal']);
         $this->assertStringContainsString('18,000', $formatted['tax']);
-        $this->assertStringContainsString('118,000', $formatted['total']);
+        $this->assertStringContainsString('1,18,000', $formatted['total']);
     }
 
     public function test_formatting_handles_small_fractional_values(): void
