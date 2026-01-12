@@ -16,6 +16,7 @@ return [
         'estimate' => 'Estimate',
         'invoice_upper' => 'INVOICE',
         'estimate_upper' => 'ESTIMATE',
+        'tax_invoice_upper' => 'TAX INVOICE',
         'from' => 'From:',
         'to' => 'To:',
         'bill_to' => 'Bill To:',
@@ -74,6 +75,9 @@ return [
         'notes' => 'Notes',
         'terms' => 'Terms',
         'currency' => 'Currency',
+        'place_of_supply' => 'Place of Supply',
+        'terms_and_conditions' => 'Terms & Conditions',
+        'bank_details' => 'Bank Details',
     ],
 
     'financial' => [
@@ -85,10 +89,13 @@ return [
         'grand_total' => 'Grand Total',
         'amount_due' => 'Amount Due',
         'balance_due' => 'Balance Due',
+        'total_in_words' => 'Total In Words',
     ],
 
     'table' => [
         'line_items' => 'Line Items',
+        'row_number' => '#',
+        'item_and_description' => 'Item & Description',
         'items' => 'Items',
         'description' => 'Description',
         'qty' => 'Qty',

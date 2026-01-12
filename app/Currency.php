@@ -99,6 +99,40 @@ enum Currency: string
         return ($isNegative ? '-' : '').'₹'.$formatted;
     }
 
+    public function subunitName(): string
+    {
+        return match ($this) {
+            self::INR => 'Paise',
+            self::USD, self::AUD, self::CAD, self::SGD => 'Cents',
+            self::EUR => 'Cents',
+            self::GBP => 'Pence',
+            self::JPY => '',
+            self::AED => 'Fils',
+        };
+    }
+
+    public function amountToWords(int $amountInCents): string
+    {
+        $formatter = new \NumberFormatter('en', \NumberFormatter::SPELLOUT);
+        $majorUnit = intdiv(abs($amountInCents), 100);
+        $minorUnit = abs($amountInCents) % 100;
+        $majorWords = ucwords($formatter->format($majorUnit), ' -');
+        $currencyName = $this->name();
+
+        if ($this === self::JPY) {
+            // JPY has no subunit
+            return "{$currencyName} {$majorWords} Only";
+        }
+
+        if ($minorUnit > 0) {
+            $minorWords = ucwords($formatter->format($minorUnit), ' -');
+
+            return "{$currencyName} {$majorWords} and {$minorWords} {$this->subunitName()} Only";
+        }
+
+        return "{$currencyName} {$majorWords} Only";
+    }
+
     public static function isValid(string $code): bool
     {
         $currencies = \Akaunting\Money\Currency::getCurrencies();

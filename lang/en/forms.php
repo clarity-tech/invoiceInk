@@ -130,6 +130,14 @@ return [
         'next_number' => 'Next Number:',
         'current_number_short' => 'Current #',
         'email_body' => 'Email Body',
+        'bank_details' => 'Bank Details',
+        'bank_account_name' => 'Account Name',
+        'bank_account_number' => 'Account Number',
+        'bank_name' => 'Bank Name',
+        'bank_ifsc' => 'IFSC Code',
+        'bank_branch' => 'Branch',
+        'bank_swift' => 'SWIFT Code',
+        'bank_pan' => 'PAN',
     ],
 
     'steps' => [

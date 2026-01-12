@@ -530,3 +530,60 @@ test('organization currency enum integration works correctly', function () {
         expect($organization->currency->name())->toBe($currency->name());
     }
 });
+
+test('organization hasBankDetails returns true when bank details with bank_name exist', function () {
+    $organization = createOrganizationWithLocation([
+        'bank_details' => [
+            'account_name' => 'Test Company',
+            'account_number' => '1234567890',
+            'bank_name' => 'Test Bank',
+            'ifsc' => 'TEST0001',
+        ],
+    ]);
+
+    expect($organization->hasBankDetails())->toBeTrue();
+});
+
+test('organization hasBankDetails returns false when bank details is null', function () {
+    $organization = createOrganizationWithLocation([
+        'bank_details' => null,
+    ]);
+
+    expect($organization->hasBankDetails())->toBeFalse();
+});
+
+test('organization hasBankDetails returns false when bank_name is missing', function () {
+    $organization = createOrganizationWithLocation([
+        'bank_details' => [
+            'account_name' => 'Test Company',
+            'account_number' => '1234567890',
+        ],
+    ]);
+
+    expect($organization->hasBankDetails())->toBeFalse();
+});
+
+test('organization bank_details is cast to BankDetails value object', function () {
+    $bankDetails = [
+        'account_name' => 'Clarity Technologies',
+        'account_number' => '123456 0000 7890',
+        'bank_name' => 'Bank of Baroda',
+        'ifsc' => 'BARB0MGROAD',
+        'branch' => 'MG ROAD',
+        'swift' => 'BARBINBBXXX',
+        'pan' => 'ABCPE1234F',
+    ];
+
+    $organization = createOrganizationWithLocation([
+        'bank_details' => $bankDetails,
+    ]);
+
+    expect($organization->bank_details)->toBeInstanceOf(\App\ValueObjects\BankDetails::class);
+    expect($organization->bank_details->bankName)->toBe('Bank of Baroda');
+    expect($organization->bank_details->ifsc)->toBe('BARB0MGROAD');
+    expect($organization->bank_details->accountName)->toBe('Clarity Technologies');
+    expect($organization->bank_details->accountNumber)->toBe('123456 0000 7890');
+    expect($organization->bank_details->branch)->toBe('MG ROAD');
+    expect($organization->bank_details->swift)->toBe('BARBINBBXXX');
+    expect($organization->bank_details->pan)->toBe('ABCPE1234F');
+});

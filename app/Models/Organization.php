@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\BankDetailsCast;
 use App\Casts\ContactCollectionCast;
 use App\Currency;
 use App\Enums\Country;
@@ -55,6 +56,7 @@ class Organization extends JetstreamTeam implements HasMedia
         'website',
         'currency',
         'notes',
+        'bank_details',
         'primary_location_id',
         'custom_domain',
         'country_code',
@@ -93,6 +95,7 @@ class Organization extends JetstreamTeam implements HasMedia
             'financial_year_type' => FinancialYearType::class,
             'financial_year_start_month' => 'integer',
             'financial_year_start_day' => 'integer',
+            'bank_details' => BankDetailsCast::class,
             'setup_completed_at' => 'datetime',
         ];
     }
@@ -333,6 +336,14 @@ class Organization extends JetstreamTeam implements HasMedia
         }
 
         return $this->country_code->getTaxSystemInfo();
+    }
+
+    /**
+     * Check if the organization has bank details configured.
+     */
+    public function hasBankDetails(): bool
+    {
+        return $this->bank_details->isConfigured();
     }
 
     /**

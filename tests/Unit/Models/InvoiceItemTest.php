@@ -3,9 +3,6 @@
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 
-
-
-
 test('can create invoice item with all fields', function () {
     $invoice = createInvoiceWithItems([
         'invoice_number' => 'INV-001',
@@ -526,4 +523,25 @@ test('invoice item business logic methods work with edge cases', function () {
 
     $expectedTax = (int) round((9999 * 18.33) / 100);
     expect($item2->getTaxAmount())->toBe($expectedTax);
+});
+
+test('invoice item formatted_pre_tax_line_total returns pre-tax amount', function () {
+    $invoice = createInvoiceWithItems();
+
+    $item = InvoiceItem::create([
+        'invoice_id' => $invoice->id,
+        'description' => 'Pre-tax test',
+        'quantity' => 2,
+        'unit_price' => 5000,
+        'tax_rate' => 1800, // 18% in basis points
+    ]);
+
+    // Pre-tax line total = quantity * unit_price = 2 * 5000 = 10000 cents
+    $preTaxTotal = $item->formatted_pre_tax_line_total;
+    $lineTotal = $item->formatted_line_total; // includes tax
+
+    // Pre-tax should be different from post-tax
+    expect($preTaxTotal)->not->toBe($lineTotal);
+    // Pre-tax should equal formatted version of getLineTotal()
+    expect($preTaxTotal)->toBe($item->formatMoney($item->getLineTotal()));
 });

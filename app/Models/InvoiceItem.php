@@ -83,6 +83,14 @@ class InvoiceItem extends Model
     }
 
     /**
+     * Format the pre-tax line total (quantity × unit_price, without tax)
+     */
+    public function getFormattedPreTaxLineTotalAttribute(): string
+    {
+        return $this->formatMoney($this->getLineTotal());
+    }
+
+    /**
      * Format the tax amount for this line item
      */
     public function getFormattedTaxAmountAttribute(): string

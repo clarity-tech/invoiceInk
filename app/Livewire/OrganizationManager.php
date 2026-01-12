@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Currency;
 use App\Enums\Country;
 use App\Enums\FinancialYearType;
+use App\Livewire\Traits\ManagesBankDetails;
 use App\Models\Location;
 use App\Models\Organization;
 use App\Rules\CurrencyCode;
@@ -22,7 +23,7 @@ use ValueError;
 
 class OrganizationManager extends Component
 {
-    use WithFileUploads, WithPagination;
+    use ManagesBankDetails, WithFileUploads, WithPagination;
 
     #[Rule(['required', 'string', 'max:255'])]
     public string $name = '';
@@ -196,6 +197,9 @@ class OrganizationManager extends Component
                 $this->postal_code = '';
             }
 
+            // Load bank details
+            $this->fillBankDetails($organization->bank_details);
+
             // Load existing logo
             $this->existingLogoUrl = $organization->logo_url;
 
@@ -313,6 +317,7 @@ class OrganizationManager extends Component
                         'financial_year_type' => $this->financial_year_type,
                         'financial_year_start_month' => $this->financial_year_start_month,
                         'financial_year_start_day' => $this->financial_year_start_day,
+                        'bank_details' => $this->buildBankDetails(),
                     ];
 
                     $organization->update($updateData);
@@ -396,6 +401,7 @@ class OrganizationManager extends Component
                         'financial_year_type' => $defaultFinancialYearType,
                         'financial_year_start_month' => $this->financial_year_start_month,
                         'financial_year_start_day' => $this->financial_year_start_day,
+                        'bank_details' => $this->buildBankDetails(),
                     ];
 
                     $organization = Organization::create($organizationData);
@@ -483,6 +489,7 @@ class OrganizationManager extends Component
         $this->financial_year_type = null;
         $this->financial_year_start_month = 4;
         $this->financial_year_start_day = 1;
+        $this->resetBankDetails();
         $this->logo = null;
         $this->existingLogoUrl = null;
         $this->resetValidation();
