@@ -2,11 +2,11 @@
 
 namespace App\Actions\Jetstream;
 
+use App\Contracts\Teams\UpdatesTeamNames;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
-use Laravel\Jetstream\Contracts\UpdatesTeamNames;
 
 class UpdateTeamName implements UpdatesTeamNames
 {

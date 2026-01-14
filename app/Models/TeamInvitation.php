@@ -4,13 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Laravel\Jetstream\Jetstream;
-use Laravel\Jetstream\TeamInvitation as JetstreamTeamInvitation;
 
-class TeamInvitation extends JetstreamTeamInvitation
+class TeamInvitation extends \Illuminate\Database\Eloquent\Model
 {
     /** @use HasFactory<\Database\Factories\TeamInvitationFactory> */
     use HasFactory;
+
+    /**
+     * The table associated with the model.
+     */
+    protected $table = 'team_invitations';
 
     /**
      * The attributes that are mass assignable.
@@ -27,6 +30,6 @@ class TeamInvitation extends JetstreamTeamInvitation
      */
     public function team(): BelongsTo
     {
-        return $this->belongsTo(Jetstream::teamModel(), 'team_id');
+        return $this->belongsTo(Organization::class, 'team_id');
     }
 }

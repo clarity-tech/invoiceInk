@@ -2,8 +2,8 @@
 
 namespace App\Actions\Jetstream;
 
+use App\Contracts\Teams\DeletesTeams;
 use App\Models\Organization;
-use Laravel\Jetstream\Contracts\DeletesTeams;
 
 class DeleteTeam implements DeletesTeams
 {

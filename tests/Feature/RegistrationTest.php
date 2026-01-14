@@ -2,8 +2,8 @@
 
 use App\Models\Organization;
 use App\Models\User;
+use App\Support\Jetstream;
 use Laravel\Fortify\Features;
-use Laravel\Jetstream\Jetstream;
 use Livewire\Livewire;
 
 test('registration screen can be rendered', function () {

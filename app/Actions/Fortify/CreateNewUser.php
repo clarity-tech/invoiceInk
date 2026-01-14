@@ -5,11 +5,11 @@ namespace App\Actions\Fortify;
 use App\Currency;
 use App\Models\Organization;
 use App\Models\User;
+use App\Support\Jetstream;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
-use Laravel\Jetstream\Jetstream;
 
 class CreateNewUser implements CreatesNewUsers
 {

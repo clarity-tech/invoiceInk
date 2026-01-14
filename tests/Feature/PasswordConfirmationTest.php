@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use Laravel\Jetstream\Features;
+use App\Support\JetstreamFeatures as Features;
 
 test('confirm password screen can be rendered', function () {
     $user = Features::hasTeamFeatures()

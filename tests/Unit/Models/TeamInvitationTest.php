@@ -3,9 +3,6 @@
 use App\Models\Organization;
 use App\Models\TeamInvitation;
 
-
-
-
 beforeEach(function () {
     $this->organization = Organization::factory()->create();
     $this->invitation = TeamInvitation::factory()->create(['team_id' => $this->organization->id]);
@@ -35,8 +32,8 @@ it('belongs to a team', function () {
     expect($this->invitation->team->id)->toBe($this->organization->id);
 });
 
-it('extends JetstreamTeamInvitation', function () {
-    expect($this->invitation)->toBeInstanceOf(\Laravel\Jetstream\TeamInvitation::class);
+it('extends Eloquent Model', function () {
+    expect($this->invitation)->toBeInstanceOf(\Illuminate\Database\Eloquent\Model::class);
 });
 
 it('can have different roles', function () {
@@ -78,5 +75,5 @@ it('has team relationship using Jetstream model', function () {
     $relationship = $this->invitation->team();
 
     expect($relationship)->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
-    expect($relationship->getRelated())->toBeInstanceOf(\Laravel\Jetstream\Team::class);
+    expect($relationship->getRelated())->toBeInstanceOf(\App\Models\Organization::class);
 });

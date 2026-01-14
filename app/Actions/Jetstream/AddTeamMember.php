@@ -2,16 +2,16 @@
 
 namespace App\Actions\Jetstream;
 
+use App\Contracts\Teams\AddsTeamMembers;
+use App\Events\AddingTeamMember;
+use App\Events\TeamMemberAdded;
 use App\Models\Organization;
 use App\Models\User;
+use App\Rules\Role;
+use App\Support\Jetstream;
 use Closure;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
-use Laravel\Jetstream\Contracts\AddsTeamMembers;
-use Laravel\Jetstream\Events\AddingTeamMember;
-use Laravel\Jetstream\Events\TeamMemberAdded;
-use Laravel\Jetstream\Jetstream;
-use Laravel\Jetstream\Rules\Role;
 
 class AddTeamMember implements AddsTeamMembers
 {

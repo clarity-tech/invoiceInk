@@ -4,10 +4,10 @@ namespace Database\Factories;
 
 use App\Models\Organization;
 use App\Models\User;
+use App\Support\JetstreamFeatures as Features;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Laravel\Jetstream\Features;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>

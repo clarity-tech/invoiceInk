@@ -2,9 +2,6 @@
 
 use App\Models\Membership;
 
-
-
-
 beforeEach(function () {
     $this->membership = new Membership;
 });
@@ -13,8 +10,8 @@ it('has auto-incrementing IDs enabled', function () {
     expect($this->membership->incrementing)->toBeTrue();
 });
 
-it('extends JetstreamMembership', function () {
-    expect($this->membership)->toBeInstanceOf(\Laravel\Jetstream\Membership::class);
+it('extends Pivot', function () {
+    expect($this->membership)->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\Pivot::class);
 });
 
 it('inherits fillable attributes from parent', function () {

@@ -18,12 +18,12 @@
             </div>
 
             <!-- Token Permissions -->
-            @if (Laravel\Jetstream\Jetstream::hasPermissions())
+            @if (App\Support\Jetstream::hasPermissions())
                 <div class="col-span-6">
                     <x-label for="permissions" value="{{ __('Permissions') }}" />
 
                     <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        @foreach (Laravel\Jetstream\Jetstream::$permissions as $permission)
+                        @foreach (App\Support\Jetstream::$permissions as $permission)
                             <label class="flex items-center">
                                 <x-checkbox wire:model="createApiTokenForm.permissions" :value="$permission"/>
                                 <span class="ms-2 text-sm text-gray-600">{{ $permission }}</span>
@@ -75,7 +75,7 @@
                                         </div>
                                     @endif
 
-                                    @if (Laravel\Jetstream\Jetstream::hasPermissions())
+                                    @if (App\Support\Jetstream::hasPermissions())
                                         <button class="cursor-pointer ms-6 text-sm text-gray-400 underline" wire:click="manageApiTokenPermissions({{ $token->id }})">
                                             {{ __('Permissions') }}
                                         </button>
@@ -126,7 +126,7 @@
 
         <x-slot name="content">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                @foreach (Laravel\Jetstream\Jetstream::$permissions as $permission)
+                @foreach (App\Support\Jetstream::$permissions as $permission)
                     <label class="flex items-center">
                         <x-checkbox wire:model="updateApiTokenForm.permissions" :value="$permission"/>
                         <span class="ms-2 text-sm text-gray-600">{{ $permission }}</span>

@@ -1,8 +1,8 @@
 <?php
 
+use App\Livewire\Api\ApiTokenManager;
 use App\Models\User;
-use Laravel\Jetstream\Features;
-use Laravel\Jetstream\Http\Livewire\ApiTokenManager;
+use App\Support\JetstreamFeatures as Features;
 use Livewire\Livewire;
 
 test('api tokens can be created', function () {

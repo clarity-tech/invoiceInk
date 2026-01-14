@@ -1,8 +1,8 @@
 <?php
 
+use App\Livewire\Profile\DeleteUserForm;
 use App\Models\User;
-use Laravel\Jetstream\Features;
-use Laravel\Jetstream\Http\Livewire\DeleteUserForm;
+use App\Support\JetstreamFeatures as Features;
 use Livewire\Livewire;
 
 test('user accounts can be deleted', function () {

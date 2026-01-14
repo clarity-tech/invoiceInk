@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Teams;
 
+use App\Contracts\Teams\UpdatesTeamNames;
 use Illuminate\Support\Facades\Auth;
-use Laravel\Jetstream\Contracts\UpdatesTeamNames;
 use Livewire\Component;
 
 class UpdateTeamNameForm extends Component
@@ -38,7 +38,6 @@ class UpdateTeamNameForm extends Component
     /**
      * Update the team's name.
      *
-     * @param  \Laravel\Jetstream\Contracts\UpdatesTeamNames  $updater
      * @return void
      */
     public function updateTeamName(UpdatesTeamNames $updater)

@@ -26,9 +26,9 @@ test('can create organization with required fields', function () {
     expect($organization->personal_team)->toBeFalse();
 });
 
-test('organization extends jetstream team', function () {
+test('organization extends eloquent model', function () {
     $organization = new Organization;
-    expect($organization)->toBeInstanceOf(\Laravel\Jetstream\Team::class);
+    expect($organization)->toBeInstanceOf(\Illuminate\Database\Eloquent\Model::class);
 });
 
 test('organization uses teams table', function () {
@@ -405,9 +405,9 @@ test('organization dispatches jetstream events', function () {
     $property->setAccessible(true);
     $events = $property->getValue($organization);
 
-    expect($events['created'])->toBe(\Laravel\Jetstream\Events\TeamCreated::class);
-    expect($events['updated'])->toBe(\Laravel\Jetstream\Events\TeamUpdated::class);
-    expect($events['deleted'])->toBe(\Laravel\Jetstream\Events\TeamDeleted::class);
+    expect($events['created'])->toBe(\App\Events\TeamCreated::class);
+    expect($events['updated'])->toBe(\App\Events\TeamUpdated::class);
+    expect($events['deleted'])->toBe(\App\Events\TeamDeleted::class);
 });
 
 test('organization uses HasFactory trait', function () {
@@ -440,7 +440,7 @@ test('organization can have team invitations relationship', function () {
     $organization = Organization::factory()->create(['user_id' => $user->id]);
 
     // Create a team invitation with proper attributes
-    $invitationModel = \Laravel\Jetstream\Jetstream::teamInvitationModel();
+    $invitationModel = \App\Support\Jetstream::teamInvitationModel();
     $invitation = $invitationModel::forceCreate([
         'team_id' => $organization->id,
         'email' => 'invite@example.com',

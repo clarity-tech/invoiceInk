@@ -37,8 +37,6 @@ COPY vite.config.js postcss.config.js tailwind.config.js ./
 # Vendor blade files for Tailwind class scanning (referenced in app.css @source)
 COPY --from=php-deps /var/www/html/vendor/laravel/framework/src/Illuminate/Pagination/resources/views/ \
     vendor/laravel/framework/src/Illuminate/Pagination/resources/views/
-COPY --from=php-deps /var/www/html/vendor/laravel/jetstream/ \
-    vendor/laravel/jetstream/
 
 RUN mkdir -p storage/framework/views
 

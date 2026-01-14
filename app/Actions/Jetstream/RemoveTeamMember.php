@@ -2,13 +2,13 @@
 
 namespace App\Actions\Jetstream;
 
+use App\Contracts\Teams\RemovesTeamMembers;
+use App\Events\TeamMemberRemoved;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
-use Laravel\Jetstream\Contracts\RemovesTeamMembers;
-use Laravel\Jetstream\Events\TeamMemberRemoved;
 
 class RemoveTeamMember implements RemovesTeamMembers
 {

@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasProfilePhoto;
+use App\Traits\HasTeams;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
-use Laravel\Jetstream\HasProfilePhoto;
-use Laravel\Jetstream\HasTeams;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -67,39 +67,5 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
-    }
-
-    /**
-     * Get all of the teams the user belongs to.
-     *
-     * Override the HasTeams trait method to specify correct foreign key names.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
-     */
-    public function teams()
-    {
-        return $this->belongsToMany(
-            \Laravel\Jetstream\Jetstream::teamModel(),
-            \Laravel\Jetstream\Jetstream::membershipModel(),
-            'user_id',     // Foreign key on pivot table for User model
-            'team_id'      // Foreign key on pivot table for Team/Organization model
-        )->select('teams.*')  // Explicitly select all columns from teams table to avoid ambiguous column error
-            ->withPivot('role')
-            ->withTimestamps()
-            ->as('membership');
-    }
-
-    /**
-     * Get all of the teams the user belongs to or owns.
-     *
-     * Override the HasTeams trait method to fix PostgreSQL ambiguous column issue.
-     *
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
-    public function allTeams()
-    {
-        // Get collections from relationships and merge them
-        // Use get() to ensure we get collections, not relationships
-        return $this->ownedTeams()->get()->merge($this->teams()->get());
     }
 }

@@ -7,19 +7,18 @@ use App\Casts\ContactCollectionCast;
 use App\Currency;
 use App\Enums\Country;
 use App\Enums\FinancialYearType;
+use App\Events\TeamCreated;
+use App\Events\TeamDeleted;
+use App\Events\TeamUpdated;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Laravel\Jetstream\Events\TeamCreated;
-use Laravel\Jetstream\Events\TeamDeleted;
-use Laravel\Jetstream\Events\TeamUpdated;
-use Laravel\Jetstream\Team as JetstreamTeam;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Organization extends JetstreamTeam implements HasMedia
+class Organization extends \Illuminate\Database\Eloquent\Model implements HasMedia
 {
     /** @use HasFactory<\Database\Factories\OrganizationFactory> */
     use HasFactory, InteractsWithMedia;
@@ -98,6 +97,78 @@ class Organization extends JetstreamTeam implements HasMedia
             'bank_details' => BankDetailsCast::class,
             'setup_completed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Get the owner of the team.
+     */
+    public function owner(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id');
+    }
+
+    /**
+     * Get all of the team's users including its owner.
+     */
+    public function allUsers(): \Illuminate\Support\Collection
+    {
+        return $this->users->merge([$this->owner]);
+    }
+
+    /**
+     * Determine if the given user belongs to the team.
+     */
+    public function hasUser($user): bool
+    {
+        return $this->users->contains($user) || $user->ownsTeam($this);
+    }
+
+    /**
+     * Determine if the given email address belongs to a user on the team.
+     */
+    public function hasUserWithEmail(string $email): bool
+    {
+        return $this->allUsers()->contains(function ($user) use ($email) {
+            return $user->email === $email;
+        });
+    }
+
+    /**
+     * Determine if the given user has the given permission on the team.
+     */
+    public function userHasPermission($user, $permission): bool
+    {
+        return $user->hasTeamPermission($this, $permission);
+    }
+
+    /**
+     * Remove the given user from the team.
+     */
+    public function removeUser($user): void
+    {
+        if ($user->current_team_id === $this->id) {
+            $user->forceFill([
+                'current_team_id' => null,
+            ])->save();
+        }
+
+        $this->users()->detach($user);
+    }
+
+    /**
+     * Purge all of the team's resources.
+     */
+    public function purge(): void
+    {
+        $this->owner()->where('current_team_id', $this->id)
+            ->update(['current_team_id' => null]);
+
+        $this->users()->where('current_team_id', $this->id)
+            ->update(['current_team_id' => null]);
+
+        $this->users()->detach();
+
+        $this->delete();
     }
 
     /**
@@ -200,8 +271,8 @@ class Organization extends JetstreamTeam implements HasMedia
     public function users()
     {
         return $this->belongsToMany(
-            \Laravel\Jetstream\Jetstream::userModel(),
-            \Laravel\Jetstream\Jetstream::membershipModel(),
+            \App\Models\User::class,
+            \App\Models\Membership::class,
             'team_id',     // Foreign key on pivot table for Team/Organization model
             'user_id'      // Foreign key on pivot table for User model
         )->withPivot('role')
@@ -218,7 +289,7 @@ class Organization extends JetstreamTeam implements HasMedia
      */
     public function teamInvitations()
     {
-        return $this->hasMany(\Laravel\Jetstream\Jetstream::teamInvitationModel(), 'team_id');
+        return $this->hasMany(\App\Models\TeamInvitation::class, 'team_id');
     }
 
     /**

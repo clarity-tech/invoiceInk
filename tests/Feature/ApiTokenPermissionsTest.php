@@ -1,9 +1,9 @@
 <?php
 
+use App\Livewire\Api\ApiTokenManager;
 use App\Models\User;
+use App\Support\JetstreamFeatures as Features;
 use Illuminate\Support\Str;
-use Laravel\Jetstream\Features;
-use Laravel\Jetstream\Http\Livewire\ApiTokenManager;
 use Livewire\Livewire;
 
 test('api token permissions can be updated', function () {

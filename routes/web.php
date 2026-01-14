@@ -1,6 +1,12 @@
 <?php
 
+use App\Http\Controllers\CurrentTeamController;
+use App\Http\Controllers\PrivacyPolicyController;
 use App\Http\Controllers\PublicViewController;
+use App\Http\Controllers\TeamController;
+use App\Http\Controllers\TeamInvitationController;
+use App\Http\Controllers\TermsOfServiceController;
+use App\Http\Controllers\UserProfileController;
 use App\Livewire\CustomerManager;
 use App\Livewire\InvoiceForm;
 use App\Livewire\InvoiceList;
@@ -18,6 +24,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Terms and Privacy Policy
+Route::get('/terms-of-service', [TermsOfServiceController::class, 'show'])->name('terms.show');
+Route::get('/privacy-policy', [PrivacyPolicyController::class, 'show'])->name('policy.show');
+
 // Public view routes for invoices and estimates (no authentication required, rate limited)
 Route::middleware('throttle:60,1')->group(function () {
     Route::get('/invoices/view/{ulid}', [PublicViewController::class, 'showInvoice'])->name('invoices.public');
@@ -33,9 +43,22 @@ Route::middleware('throttle:10,1')->group(function () {
 // Protected application routes
 Route::middleware([
     'auth:sanctum',
-    config('jetstream.auth_session'),
+    \App\Http\Middleware\AuthenticateSession::class,
     'verified',
 ])->group(function () {
+    // Profile management
+    Route::get('/user/profile', [UserProfileController::class, 'show'])->name('profile.show');
+
+    // Team management
+    Route::get('/teams/create', [TeamController::class, 'create'])->name('teams.create');
+    Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
+    Route::put('/current-team', [CurrentTeamController::class, 'update'])->name('current-team.update');
+
+    // Team invitations (signed URL)
+    Route::get('/team-invitations/{invitation}', [TeamInvitationController::class, 'accept'])
+        ->middleware(['signed'])
+        ->name('team-invitations.accept');
+
     // Organization setup wizard (should be accessible before main app features)
     Route::get('/organization/setup', OrganizationSetup::class)->name('organization.setup');
 
