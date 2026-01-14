@@ -320,6 +320,7 @@ class OrganizationSetup extends Component
 
         // Update organization with all setup data
         $this->organization->update([
+            'name' => $this->company_name,
             'company_name' => $this->company_name,
             'tax_number' => $this->tax_number ?: null,
             'registration_number' => $this->registration_number ?: null,

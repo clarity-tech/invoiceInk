@@ -42,5 +42,5 @@ it('shows the organization name on dashboard', function () {
 
     $page = $this->visit('/dashboard');
 
-    $page->assertSee($organization->name);
+    $page->assertSee($organization->displayName);
 });

@@ -274,7 +274,7 @@
                                         <h4 class="text-sm font-medium text-brand-900 mb-2">{{ __('forms.labels.country_info') }}</h4>
                                         <div class="text-sm text-brand-800 space-y-1">
                                             <p><strong>{{ __('forms.labels.tax_system') }}</strong> {{ $this->selectedCountryInfo['tax_system']['name'] }}</p>
-                                            <p><strong>{{ __('forms.labels.common_rates') }}</strong> {{ implode(', ', $this->selectedCountryInfo['tax_system']['rates']) }}%</p>
+                                            <p><strong>{{ __('forms.labels.common_rates') }}</strong> {{ implode(', ', $this->selectedCountryInfo['tax_system']['rates']) }}</p>
                                             <p><strong>{{ __('forms.labels.recommended_format') }}</strong> {{ $this->selectedCountryInfo['recommended_numbering'] }}</p>
                                         </div>
                                     </div>

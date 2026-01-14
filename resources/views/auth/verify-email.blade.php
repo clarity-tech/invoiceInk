@@ -14,28 +14,28 @@
             </div>
         @endif
 
-        <div class="mt-4 flex items-center justify-between">
+        <div class="mt-4 space-y-4">
             <form method="POST" action="{{ route('verification.send') }}">
                 @csrf
 
                 <div>
-                    <x-button type="submit">
+                    <x-button type="submit" class="w-full justify-center">
                         {{ __('Resend Verification Email') }}
                     </x-button>
                 </div>
             </form>
 
-            <div>
+            <div class="flex items-center justify-between text-sm">
                 <a
                     href="{{ route('profile.show') }}"
-                    class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"
+                    class="underline text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"
                 >
                     {{ __('Edit Profile') }}</a>
 
                 <form method="POST" action="{{ route('logout') }}" class="inline">
                     @csrf
 
-                    <button type="submit" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 ms-2">
+                    <button type="submit" class="underline text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500">
                         {{ __('Log Out') }}
                     </button>
                 </form>

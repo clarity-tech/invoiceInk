@@ -7,9 +7,10 @@ use App\Models\User;
  *
  * @return array{0: User, 1: \App\Models\Organization}
  */
-function createSetupUser(string $email): array
+function createSetupUser(string $email, string $name = 'Maya Sharma'): array
 {
     $user = User::factory()->withPersonalTeam()->create([
+        'name' => $name,
         'email' => $email,
         'password' => 'password',
     ]);
@@ -39,8 +40,8 @@ it('completes full registration flow', function () {
     $page->assertSee('Register')
         ->screenshot(fullPage: true, filename: 'demo/12-register-form');
 
-    $page->fill('#name', 'John Doe')
-        ->fill('#email', 'john-register@example.test')
+    $page->fill('#name', 'Maya Sharma')
+        ->fill('#email', 'accounts@claritytech.io')
         ->fill('#password', 'Password123!')
         ->fill('#password_confirmation', 'Password123!')
         ->check('#terms')
@@ -53,7 +54,7 @@ it('completes full registration flow', function () {
 // ─── Test 2: Non-personal team redirects to setup wizard ───
 
 it('redirects non-personal team to setup wizard', function () {
-    [$user] = createSetupUser('setup-redirect@example.test');
+    [$user] = createSetupUser('setup-redirect@example.test', 'Priya Sharma');
 
     $this->actingAs($user);
 
@@ -66,7 +67,7 @@ it('redirects non-personal team to setup wizard', function () {
 // ─── Test 3: Full Indian company setup with all fields ───
 
 it('completes Indian company setup with all fields', function () {
-    [$user] = createSetupUser('setup-india@example.test');
+    [$user] = createSetupUser('setup-india@example.test', 'Maya Sharma');
 
     $this->actingAs($user);
 
@@ -122,7 +123,7 @@ it('completes Indian company setup with all fields', function () {
 // ─── Test 4: UAE company setup with different currency ───
 
 it('completes UAE company setup with different currency', function () {
-    [$user] = createSetupUser('setup-uae@example.test');
+    [$user] = createSetupUser('setup-uae@example.test', 'Ahmed Al Maktoum');
 
     $this->actingAs($user);
 
@@ -162,7 +163,7 @@ it('completes UAE company setup with different currency', function () {
 // ─── Test 5: Minimal setup with only required fields ───
 
 it('completes minimal setup with only required fields', function () {
-    [$user] = createSetupUser('setup-minimal@example.test');
+    [$user] = createSetupUser('setup-minimal@example.test', 'Sarah Chen');
 
     $this->actingAs($user);
 
@@ -194,7 +195,7 @@ it('completes minimal setup with only required fields', function () {
 // ─── Test 6: Organization visible after setup completion ───
 
 it('adds additional location after setup completion', function () {
-    [$user] = createSetupUser('setup-locations@example.test');
+    [$user] = createSetupUser('setup-locations@example.test', 'David Miller');
 
     $this->actingAs($user);
 
@@ -223,7 +224,7 @@ it('adds additional location after setup completion', function () {
 // ─── Test 7: Validates required fields on each step ───
 
 it('validates required fields on each step', function () {
-    [$user] = createSetupUser('setup-validation@example.test');
+    [$user] = createSetupUser('setup-validation@example.test', 'Emily Johnson');
 
     $this->actingAs($user);
 
@@ -248,7 +249,7 @@ it('validates required fields on each step', function () {
 // ─── Test 8: Back navigation preserves form data ───
 
 it('navigates back and preserves data', function () {
-    [$user] = createSetupUser('setup-nav@example.test');
+    [$user] = createSetupUser('setup-nav@example.test', 'Raj Patel');
 
     $this->actingAs($user);
 

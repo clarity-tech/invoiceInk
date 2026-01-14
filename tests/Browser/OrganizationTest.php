@@ -42,5 +42,5 @@ it('shows organization details', function () {
 
     $page = $this->visit('/organizations');
 
-    $page->assertSee($organization->name);
+    $page->assertSee($organization->displayName);
 });

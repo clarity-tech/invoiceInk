@@ -38,7 +38,7 @@
                             <x-slot name="trigger">
                                 <span class="inline-flex rounded-md">
                                     <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150">
-                                        {{ Auth::user()->currentTeam->name }}
+                                        {{ Auth::user()->currentTeam->displayName }}
                                         
                                         @if(Auth::user()->currentTeam && !Auth::user()->currentTeam->personal_team && Auth::user()->currentTeam->needsSetup())
                                             <span class="ml-1 flex h-2 w-2">

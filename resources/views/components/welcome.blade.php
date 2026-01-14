@@ -8,7 +8,7 @@ $currentTeam = auth()->user()->currentTeam;
     <h1 class="mt-8 text-2xl font-medium text-gray-900">
         Welcome to your Invoicing Dashboard
         @if($currentTeam)
-            <span class="text-lg text-gray-600 font-normal">- {{ $currentTeam->name }}</span>
+            <span class="text-lg text-gray-600 font-normal">- {{ $currentTeam->displayName }}</span>
         @endif
     </h1>
 
@@ -114,7 +114,7 @@ $currentTeam = auth()->user()->currentTeam;
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white rounded-lg p-4">
                     <div class="text-sm text-gray-600">Organization</div>
-                    <div class="text-lg font-semibold text-gray-900">{{ $currentTeam->name }}</div>
+                    <div class="text-lg font-semibold text-gray-900">{{ $currentTeam->displayName }}</div>
                 </div>
                 @if($currentTeam->currency)
                     <div class="bg-white rounded-lg p-4">

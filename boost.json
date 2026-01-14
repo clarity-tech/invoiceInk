@@ -5,9 +5,14 @@
     "guidelines": true,
     "herd_mcp": false,
     "mcp": true,
+    "nightwatch_mcp": false,
+    "packages": [
+        "spatie/laravel-medialibrary"
+    ],
     "sail": true,
     "skills": [
         "livewire-development",
-        "pest-testing"
+        "pest-testing",
+        "medialibrary-development"
     ]
 }
