@@ -28,7 +28,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
 
             // Country and financial year configuration
-            $table->string('country_code', 3)->nullable();
+            $table->char('country_code', 2)->nullable();
             $table->string('financial_year_type', 20)->nullable();
             $table->smallInteger('financial_year_start_month')->nullable();
             $table->smallInteger('financial_year_start_day')->nullable();

@@ -84,7 +84,7 @@ class CustomerManager extends Component
     private function authorizeCustomerAccess(Customer $customer): void
     {
         abort_unless(
-            auth()->check() && $customer->organization_id === auth()->user()->currentTeam?->id,
+            auth()->check() && auth()->user()->allTeams()->contains('id', $customer->organization_id),
             403,
             __('messages.authorization.unauthorized_customer')
         );

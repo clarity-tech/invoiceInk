@@ -20,7 +20,7 @@ class CustomerPolicy
      */
     public function view(User $user, Customer $customer): bool
     {
-        return $customer->organization_id === $user->currentTeam?->id;
+        return $user->allTeams()->contains('id', $customer->organization_id);
     }
 
     /**
@@ -36,7 +36,7 @@ class CustomerPolicy
      */
     public function update(User $user, Customer $customer): bool
     {
-        return $customer->organization_id === $user->currentTeam?->id;
+        return $user->allTeams()->contains('id', $customer->organization_id);
     }
 
     /**
@@ -44,6 +44,6 @@ class CustomerPolicy
      */
     public function delete(User $user, Customer $customer): bool
     {
-        return $customer->organization_id === $user->currentTeam?->id;
+        return $user->allTeams()->contains('id', $customer->organization_id);
     }
 }
