@@ -7,12 +7,14 @@
     "mcp": true,
     "nightwatch_mcp": false,
     "packages": [
-        "spatie/laravel-medialibrary"
+        "spatie/laravel-medialibrary",
+        "laravel/fortify"
     ],
     "sail": true,
     "skills": [
         "livewire-development",
         "pest-testing",
+        "developing-with-fortify",
         "medialibrary-development"
     ]
 }
