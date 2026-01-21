@@ -19,18 +19,16 @@ test('get returns BankDetails from JSON string', function () {
     expect($result->ifsc)->toBe('TEST0001');
 });
 
-test('get returns empty BankDetails from null', function () {
+test('get returns null from null', function () {
     $result = $this->cast->get($this->model, 'bank_details', null, []);
 
-    expect($result)->toBeInstanceOf(BankDetails::class);
-    expect($result->isEmpty())->toBeTrue();
+    expect($result)->toBeNull();
 });
 
-test('get returns empty BankDetails from invalid JSON', function () {
+test('get returns null from invalid JSON', function () {
     $result = $this->cast->get($this->model, 'bank_details', 'not-json', []);
 
-    expect($result)->toBeInstanceOf(BankDetails::class);
-    expect($result->isEmpty())->toBeTrue();
+    expect($result)->toBeNull();
 });
 
 test('get returns BankDetails from array', function () {

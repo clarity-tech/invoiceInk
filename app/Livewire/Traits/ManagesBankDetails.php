@@ -23,8 +23,12 @@ trait ManagesBankDetails
     /**
      * Populate bank detail properties from a BankDetails value object.
      */
-    protected function fillBankDetails(BankDetails $bankDetails): void
+    protected function fillBankDetails(?BankDetails $bankDetails): void
     {
+        if (! $bankDetails) {
+            return;
+        }
+
         $this->bank_account_name = $bankDetails->accountName;
         $this->bank_account_number = $bankDetails->accountNumber;
         $this->bank_name = $bankDetails->bankName;

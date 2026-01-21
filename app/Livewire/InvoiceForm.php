@@ -48,34 +48,22 @@ class InvoiceForm extends Component
 
     public function mount(?Invoice $invoice, string $type = 'invoice'): void
     {
-        try {
-            // Determine mode and type from route - check for actual persisted invoice
-            $this->mode = ($invoice && $invoice->exists) ? 'edit' : 'create';
-            $this->type = $type;
-            $this->invoice = $invoice;
+        // Determine mode and type from route - check for actual persisted invoice
+        $this->mode = ($invoice && $invoice->exists) ? 'edit' : 'create';
+        $this->type = $type;
+        $this->invoice = $invoice;
 
-            // Set document type from route parameter for estimates
-            if (request()->routeIs('estimates.create')) {
-                $this->type = 'estimate';
-            }
+        // Set document type from route parameter for estimates
+        if (request()->routeIs('estimates.create')) {
+            $this->type = 'estimate';
+        }
 
-            // Initialize form defaults
-            $this->initializeFormDefaults();
+        // Initialize form defaults
+        $this->initializeFormDefaults();
 
-            // Load existing invoice data if editing
-            if ($this->mode === 'edit' && $invoice) {
-                $this->loadExistingInvoice($invoice);
-            }
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
-            throw $e;
-        } catch (\Exception $e) {
-            // Set minimal defaults so component doesn't crash
-            $this->mode = $invoice ? 'edit' : 'create';
-            $this->type = $type ?: 'invoice';
-            $this->currentStep = 1;
-            $this->items = [['description' => '', 'quantity' => 1, 'unit_price' => 0, 'tax_rate' => 0]];
-            $this->issued_at = now()->format('Y-m-d');
-            $this->due_at = now()->addDays(30)->format('Y-m-d');
+        // Load existing invoice data if editing
+        if ($this->mode === 'edit' && $invoice) {
+            $this->loadExistingInvoice($invoice);
         }
     }
 

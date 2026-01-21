@@ -29,6 +29,9 @@ class LogoutOtherBrowserSessionsForm extends Component
     public function logoutOtherBrowserSessions(StatefulGuard $guard): void
     {
         if (config('session.driver') !== 'database') {
+            $this->confirmingLogout = false;
+            session()->flash('error', __('This feature requires database sessions to be enabled.'));
+
             return;
         }
 

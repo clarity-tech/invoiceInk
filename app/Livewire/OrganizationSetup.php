@@ -87,8 +87,12 @@ class OrganizationSetup extends Component
             abort(403, __('messages.authorization.no_organization_context'));
         }
 
-        // If organization already has setup completed, we'll handle this in the view
-        // Cannot redirect from mount method due to void return type
+        // Redirect to dashboard if setup is already complete
+        if ($this->organization->isSetupComplete()) {
+            $this->redirect(route('dashboard'));
+
+            return;
+        }
 
         $this->loadExistingData();
     }
@@ -103,7 +107,7 @@ class OrganizationSetup extends Component
             $this->website = $this->organization->website ?? '';
             $this->notes = $this->organization->notes ?? '';
             $this->phone = $this->organization->phone ?? '';
-            $emails = $this->organization->emails ? array_column($this->organization->emails->toArray(), 'email') : [];
+            $emails = $this->organization->emails ? $this->organization->emails->getEmails() : [];
             $this->emails = ! empty($emails) ? $emails : [''];
             $this->currency = $this->organization->currency?->value ?? '';
             $this->country_code = $this->organization->country_code?->value ?? null;
@@ -442,12 +446,6 @@ class OrganizationSetup extends Component
 
     public function render()
     {
-        if ($this->organization && $this->organization->isSetupComplete()) {
-            $this->redirect(route('dashboard'));
-
-            return;
-        }
-
         return view('livewire.organization-setup')
             ->layout('layouts.app', [
                 'title' => 'Organization Setup - Step '.$this->currentStep.' of '.$this->totalSteps,

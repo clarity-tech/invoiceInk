@@ -99,6 +99,20 @@ class NumberingSeriesManager extends Component
             __('messages.authorization.unauthorized_organization')
         );
 
+        // Verify location belongs to selected organization
+        if ($this->location_id) {
+            $locationBelongsToOrg = Location::where('id', $this->location_id)
+                ->where('locatable_type', Organization::class)
+                ->where('locatable_id', $this->organization_id)
+                ->exists();
+
+            if (! $locationBelongsToOrg) {
+                $this->addError('location_id', __('forms.validation.location_must_belong_to_organization'));
+
+                return;
+            }
+        }
+
         $data = [
             'organization_id' => $this->organization_id,
             'location_id' => $this->location_id,

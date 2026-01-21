@@ -414,7 +414,7 @@ class Organization extends \Illuminate\Database\Eloquent\Model implements HasMed
      */
     public function hasBankDetails(): bool
     {
-        return $this->bank_details->isConfigured();
+        return $this->bank_details?->isConfigured() ?? false;
     }
 
     /**

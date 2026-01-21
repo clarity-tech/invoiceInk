@@ -249,6 +249,7 @@ return [
         'select_at_least_one_recipient' => 'Please select at least one recipient or add a new email address.',
         'only_estimates_convertible' => 'Only estimates can be converted to invoices.',
         'cannot_delete_series_with_invoices' => 'Cannot delete numbering series that has associated invoices.',
+        'location_must_belong_to_organization' => 'The selected location does not belong to the selected organization.',
         'email_generation_error' => 'Error generating email preview. Please contact support.',
         'invalid_format_pattern' => 'Invalid format pattern',
     ],
