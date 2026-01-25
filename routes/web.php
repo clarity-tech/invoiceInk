@@ -32,13 +32,13 @@ Route::get('/privacy-policy', [PrivacyPolicyController::class, 'show'])->name('p
 Route::middleware('throttle:60,1')->group(function () {
     Route::get('/invoices/view/{ulid}', [PublicViewController::class, 'showInvoice'])->name('invoices.public');
     Route::get('/estimates/view/{ulid}', [PublicViewController::class, 'showEstimate'])->name('estimates.public');
-});
+})->whereAlphaNumeric('ulid');
 
 // PDF download routes (no authentication required, stricter rate limit due to resource cost)
 Route::middleware('throttle:10,1')->group(function () {
     Route::get('/invoices/{ulid}/pdf', [PublicViewController::class, 'downloadInvoicePdf'])->name('invoices.pdf');
     Route::get('/estimates/{ulid}/pdf', [PublicViewController::class, 'downloadEstimatePdf'])->name('estimates.pdf');
-});
+})->whereAlphaNumeric('ulid');
 
 // Protected application routes
 Route::middleware([
