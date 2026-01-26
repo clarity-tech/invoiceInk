@@ -67,8 +67,8 @@ sail artisan migrate:fresh --seed
 ### 7. Install frontend dependencies and build assets
 
 ```bash
-sail bun install
-sail bun run dev
+sail npm install
+sail npm run dev
 ```
 
 The application will be available at http://localhost.
@@ -90,8 +90,8 @@ docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/htm
 ./vendor/bin/sail up -d
 sail artisan key:generate
 sail artisan migrate:fresh --seed
-sail bun install
-sail bun run dev
+sail npm install
+sail npm run dev
 ```
 
 ## Services

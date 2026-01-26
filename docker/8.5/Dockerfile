@@ -67,8 +67,6 @@ RUN apt-get update && apt-get upgrade -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-COPY --from=oven/bun:1.2 /usr/local/bin/bun /usr/local/bin/bun
-
 # Playwright: system deps only (fast, ~10s). Browser binaries are opt-in.
 # Run `sail composer browser-setup` to download Chromium when needed.
 ENV PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers

@@ -1,5 +1,5 @@
 # Production Dockerfile with ServerSideUp FPM + Nginx
-# Optimized: separate PHP deps, frontend build (bun), clean app assembly
+# Optimized: separate PHP deps, frontend build (npm), clean app assembly
 
 # ========================================
 # Stage 1: PHP Dependencies
@@ -21,14 +21,14 @@ RUN composer install \
     --classmap-authoritative
 
 # ========================================
-# Stage 2: Frontend Build (bun, no Node.js)
+# Stage 2: Frontend Build (Node.js + npm)
 # ========================================
-FROM oven/bun:1.2-slim AS frontend
+FROM node:24-slim AS frontend
 
 WORKDIR /build
 
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+COPY package.json package-lock.json ./
+RUN npm ci
 
 # Copy only what Tailwind @source + Vite needs
 COPY resources/ resources/
@@ -41,7 +41,7 @@ COPY --from=php-deps /var/www/html/vendor/laravel/framework/src/Illuminate/Pagin
 RUN mkdir -p storage/framework/views
 
 ARG VITE_APP_NAME="Clarity Invoicing"
-RUN bun run build
+RUN npm run build
 
 # ========================================
 # Stage 3: Clean Application Assembly
@@ -57,7 +57,7 @@ COPY --from=frontend /build/public/build public/build/
 
 # Remove non-runtime files
 RUN rm -rf node_modules tests docker .git .github .agents .claude .gemini \
-    docs *.md phpunit.xml phpunit.dusk.xml bun.lock package.json boost.json \
+    docs *.md phpunit.xml phpunit.dusk.xml package-lock.json package.json boost.json \
     .env .env.* .editorconfig .gitignore .gitattributes .gitmodules \
     .mcp.json postcss.config.js tailwind.config.js vite.config.js \
     resources/css resources/js
