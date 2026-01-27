@@ -7,9 +7,6 @@ use App\Casts\ContactCollectionCast;
 use App\Currency;
 use App\Enums\Country;
 use App\Enums\FinancialYearType;
-use App\Events\TeamCreated;
-use App\Events\TeamDeleted;
-use App\Events\TeamUpdated;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -63,17 +60,6 @@ class Organization extends \Illuminate\Database\Eloquent\Model implements HasMed
         'financial_year_start_month',
         'financial_year_start_day',
         'setup_completed_at',
-    ];
-
-    /**
-     * The event map for the model.
-     *
-     * @var array<string, class-string>
-     */
-    protected $dispatchesEvents = [
-        'created' => TeamCreated::class,
-        'updated' => TeamUpdated::class,
-        'deleted' => TeamDeleted::class,
     ];
 
     /**

@@ -13,17 +13,17 @@ class BankDetailsCast implements CastsAttributes
      *
      * @param  array<string, mixed>  $attributes
      */
-    public function get(Model $model, string $key, mixed $value, array $attributes): ?BankDetails
+    public function get(Model $model, string $key, mixed $value, array $attributes): BankDetails
     {
         if ($value === null) {
-            return null;
+            return BankDetails::empty();
         }
 
         if (is_string($value)) {
             $decoded = json_decode($value, true);
 
             if (json_last_error() !== JSON_ERROR_NONE || ! is_array($decoded)) {
-                return null;
+                return BankDetails::empty();
             }
 
             return BankDetails::fromArray($decoded);
@@ -33,7 +33,7 @@ class BankDetailsCast implements CastsAttributes
             return BankDetails::fromArray($value);
         }
 
-        return null;
+        return BankDetails::empty();
     }
 
     /**

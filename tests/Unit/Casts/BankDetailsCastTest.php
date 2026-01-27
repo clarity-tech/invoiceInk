@@ -19,16 +19,18 @@ test('get returns BankDetails from JSON string', function () {
     expect($result->ifsc)->toBe('TEST0001');
 });
 
-test('get returns null from null', function () {
+test('get returns empty BankDetails from null', function () {
     $result = $this->cast->get($this->model, 'bank_details', null, []);
 
-    expect($result)->toBeNull();
+    expect($result)->toBeInstanceOf(BankDetails::class);
+    expect($result->isEmpty())->toBeTrue();
 });
 
-test('get returns null from invalid JSON', function () {
+test('get returns empty BankDetails from invalid JSON', function () {
     $result = $this->cast->get($this->model, 'bank_details', 'not-json', []);
 
-    expect($result)->toBeNull();
+    expect($result)->toBeInstanceOf(BankDetails::class);
+    expect($result->isEmpty())->toBeTrue();
 });
 
 test('get returns BankDetails from array', function () {
@@ -111,4 +113,22 @@ test('roundtrip: set then get preserves data', function () {
     expect($restored->branch)->toBe($original->branch);
     expect($restored->swift)->toBe($original->swift);
     expect($restored->pan)->toBe($original->pan);
+});
+
+test('roundtrip: null value returns consistent empty BankDetails', function () {
+    $stored = $this->cast->set($this->model, 'bank_details', BankDetails::empty(), []);
+    expect($stored)->toBeNull();
+
+    $restored = $this->cast->get($this->model, 'bank_details', $stored, []);
+    expect($restored)->toBeInstanceOf(BankDetails::class);
+    expect($restored->isEmpty())->toBeTrue();
+    expect($restored->accountName)->toBe('');
+    expect($restored->bankName)->toBe('');
+});
+
+test('get returns empty BankDetails from unsupported type', function () {
+    $result = $this->cast->get($this->model, 'bank_details', 42, []);
+
+    expect($result)->toBeInstanceOf(BankDetails::class);
+    expect($result->isEmpty())->toBeTrue();
 });

@@ -398,16 +398,14 @@ test('organization casts method returns correct array', function () {
     expect($casts['currency'])->toBe(\App\Currency::class);
 });
 
-test('organization dispatches jetstream events', function () {
+test('organization does not dispatch unused model events', function () {
     $organization = new Organization;
     $reflectionClass = new \ReflectionClass($organization);
     $property = $reflectionClass->getProperty('dispatchesEvents');
     $property->setAccessible(true);
     $events = $property->getValue($organization);
 
-    expect($events['created'])->toBe(\App\Events\TeamCreated::class);
-    expect($events['updated'])->toBe(\App\Events\TeamUpdated::class);
-    expect($events['deleted'])->toBe(\App\Events\TeamDeleted::class);
+    expect($events)->toBeEmpty();
 });
 
 test('organization uses HasFactory trait', function () {

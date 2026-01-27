@@ -110,8 +110,8 @@ trait InvoiceFormLogic
         $invoice->load(['items', 'organizationLocation', 'customerLocation']);
 
         $this->type = $invoice->type ?? 'invoice';
-        $this->organization_id = $invoice->organizationLocation->locatable_id;
-        $this->customer_id = $invoice->customerLocation->locatable_id;
+        $this->organization_id = $invoice->organizationLocation?->locatable_id ?? $invoice->organization_id;
+        $this->customer_id = $invoice->customerLocation?->locatable_id ?? $invoice->customer_id;
         $this->organization_location_id = $invoice->organization_location_id;
         $this->customer_location_id = $invoice->customer_location_id;
         $this->customer_shipping_location_id = $invoice->customer_shipping_location_id;
