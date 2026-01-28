@@ -7,6 +7,7 @@ use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamInvitationController;
 use App\Http\Controllers\TermsOfServiceController;
 use App\Http\Controllers\UserProfileController;
+use App\Http\Middleware\AuthenticateSession;
 use App\Livewire\CustomerManager;
 use App\Livewire\InvoiceForm;
 use App\Livewire\InvoiceList;
@@ -32,18 +33,18 @@ Route::get('/privacy-policy', [PrivacyPolicyController::class, 'show'])->name('p
 Route::middleware('throttle:60,1')->group(function () {
     Route::get('/invoices/view/{ulid}', [PublicViewController::class, 'showInvoice'])->name('invoices.public');
     Route::get('/estimates/view/{ulid}', [PublicViewController::class, 'showEstimate'])->name('estimates.public');
-})->whereAlphaNumeric('ulid');
+})->where('ulid', '[0-9A-HJ-KM-NP-TV-Za-hj-km-np-tv-z]{26}');
 
 // PDF download routes (no authentication required, stricter rate limit due to resource cost)
 Route::middleware('throttle:10,1')->group(function () {
     Route::get('/invoices/{ulid}/pdf', [PublicViewController::class, 'downloadInvoicePdf'])->name('invoices.pdf');
     Route::get('/estimates/{ulid}/pdf', [PublicViewController::class, 'downloadEstimatePdf'])->name('estimates.pdf');
-})->whereAlphaNumeric('ulid');
+})->where('ulid', '[0-9A-HJ-KM-NP-TV-Za-hj-km-np-tv-z]{26}');
 
 // Protected application routes
 Route::middleware([
     'auth:sanctum',
-    \App\Http\Middleware\AuthenticateSession::class,
+    AuthenticateSession::class,
     'verified',
 ])->group(function () {
     // Profile management

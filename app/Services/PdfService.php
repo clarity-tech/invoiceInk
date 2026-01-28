@@ -2,14 +2,16 @@
 
 namespace App\Services;
 
+use App\Contracts\Services\PdfServiceInterface;
 use App\Models\Invoice;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
+use Symfony\Component\HttpFoundation\Response;
 
-class PdfService
+class PdfService implements PdfServiceInterface
 {
     /**
      * Generate PDF for an invoice
@@ -111,7 +113,7 @@ class PdfService
     /**
      * Download PDF for an invoice
      */
-    public function downloadInvoicePdf(Invoice $invoice): \Symfony\Component\HttpFoundation\Response
+    public function downloadInvoicePdf(Invoice $invoice): Response
     {
         $pdfContent = $this->generateInvoicePdf($invoice);
         $filename = "invoice-{$invoice->invoice_number}.pdf";
@@ -124,7 +126,7 @@ class PdfService
     /**
      * Download PDF for an estimate
      */
-    public function downloadEstimatePdf(Invoice $estimate): \Symfony\Component\HttpFoundation\Response
+    public function downloadEstimatePdf(Invoice $estimate): Response
     {
         $pdfContent = $this->generateEstimatePdf($estimate);
         $filename = "estimate-{$estimate->invoice_number}.pdf";

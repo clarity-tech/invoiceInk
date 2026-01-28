@@ -2,15 +2,15 @@
 
 namespace App\Services;
 
+use App\Contracts\Services\InvoiceNumberingServiceInterface;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
-use App\Models\Location;
 
 class EstimateToInvoiceConverter
 {
     public function __construct(
         private InvoiceCalculator $invoiceCalculator,
-        private InvoiceNumberingService $numberingService
+        private InvoiceNumberingServiceInterface $numberingService
     ) {}
 
     public function convert(Invoice $estimate): Invoice
@@ -23,7 +23,7 @@ class EstimateToInvoiceConverter
 
         // Generate invoice number using new numbering service
         $invoiceNumberData = $this->numberingService->generateInvoiceNumber(
-            $estimate->organization, 
+            $estimate->organization,
             $estimate->organizationLocation
         );
 
@@ -63,5 +63,4 @@ class EstimateToInvoiceConverter
 
         return $invoice;
     }
-
 }

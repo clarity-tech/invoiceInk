@@ -2,11 +2,12 @@
 
 namespace App\Livewire;
 
+use App\Contracts\Services\PdfServiceInterface;
+use App\Currency;
 use App\Livewire\Traits\InvoiceFormLogic;
 use App\Mail\DocumentMailer;
 use App\Models\Customer;
 use App\Models\Invoice;
-use App\Services\PdfService;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
@@ -378,7 +379,7 @@ class InvoiceForm extends Component
             $organizationName = strtoupper($organization->company_name ?? $organization->name);
 
             // Format amount safely
-            $currencyCode = $this->invoice->currency instanceof \App\Currency ? $this->invoice->currency->value : $this->invoice->currency;
+            $currencyCode = $this->invoice->currency instanceof Currency ? $this->invoice->currency->value : $this->invoice->currency;
             $formattedAmount = money($this->invoice->total, $currencyCode);
 
             // Create email body - use only tags Trix preserves
@@ -468,7 +469,7 @@ class InvoiceForm extends Component
 
             // Attach PDF if requested
             if ($this->attachPdf) {
-                $pdfService = new PdfService;
+                $pdfService = app(PdfServiceInterface::class);
                 $pdfContent = $this->invoice->type === 'invoice'
                     ? $pdfService->generateInvoicePdf($this->invoice)
                     : $pdfService->generateEstimatePdf($this->invoice);

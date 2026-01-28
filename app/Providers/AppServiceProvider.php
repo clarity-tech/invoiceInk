@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Contracts\Services\InvoiceNumberingServiceInterface;
+use App\Contracts\Services\PdfServiceInterface;
+use App\Services\InvoiceNumberingService;
+use App\Services\PdfService;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -12,7 +16,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(PdfServiceInterface::class, PdfService::class);
+        $this->app->bind(InvoiceNumberingServiceInterface::class, InvoiceNumberingService::class);
     }
 
     /**

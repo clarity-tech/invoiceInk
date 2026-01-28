@@ -2,11 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Contracts\Services\InvoiceNumberingServiceInterface;
 use App\Enums\ResetFrequency;
 use App\Models\InvoiceNumberingSeries;
 use App\Models\Location;
 use App\Models\Organization;
-use App\Services\InvoiceNumberingService;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
@@ -48,9 +48,9 @@ class NumberingSeriesManager extends Component
     #[Rule(['boolean'])]
     public bool $is_default = false;
 
-    private InvoiceNumberingService $numberingService;
+    private InvoiceNumberingServiceInterface $numberingService;
 
-    public function boot(InvoiceNumberingService $numberingService): void
+    public function boot(InvoiceNumberingServiceInterface $numberingService): void
     {
         $this->numberingService = $numberingService;
     }
@@ -253,7 +253,7 @@ class NumberingSeriesManager extends Component
         }
 
         $organization = auth()->user()->currentTeam;
-        $numberingService = new InvoiceNumberingService;
+        $numberingService = app(InvoiceNumberingServiceInterface::class);
 
         // Create a temporary series object to show what would be auto-created
         $tempSeries = new InvoiceNumberingSeries([

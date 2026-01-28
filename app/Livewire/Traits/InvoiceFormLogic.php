@@ -3,6 +3,8 @@
 namespace App\Livewire\Traits;
 
 use Akaunting\Money\Money;
+use App\Contracts\Services\InvoiceNumberingServiceInterface;
+use App\Currency;
 use App\Enums\InvoiceStatus;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -11,7 +13,6 @@ use App\Models\InvoiceNumberingSeries;
 use App\Models\Location;
 use App\Models\Organization;
 use App\Services\InvoiceCalculator;
-use App\Services\InvoiceNumberingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule as ValidationRule;
 use InvalidArgumentException;
@@ -78,7 +79,7 @@ trait InvoiceFormLogic
 
                 // Auto-select default/first numbering series for invoices
                 if ($this->type === 'invoice') {
-                    $numberingService = new InvoiceNumberingService;
+                    $numberingService = app(InvoiceNumberingServiceInterface::class);
                     $availableSeries = $numberingService->getSeriesForOrganization($organization);
 
                     if ($availableSeries->isNotEmpty()) {
@@ -272,7 +273,7 @@ trait InvoiceFormLogic
             if ($this->type === 'invoice') {
                 $organization = Organization::find($this->organization_id);
                 $location = Location::find($this->organization_location_id);
-                $numberingService = new InvoiceNumberingService;
+                $numberingService = app(InvoiceNumberingServiceInterface::class);
 
                 try {
                     // Use specific series if selected, otherwise let the service choose
@@ -465,7 +466,7 @@ trait InvoiceFormLogic
             return collect();
         }
 
-        $numberingService = new InvoiceNumberingService;
+        $numberingService = app(InvoiceNumberingServiceInterface::class);
 
         return $numberingService->getSeriesForOrganization($organization);
     }
@@ -482,7 +483,7 @@ trait InvoiceFormLogic
             return '';
         }
 
-        $numberingService = new InvoiceNumberingService;
+        $numberingService = app(InvoiceNumberingServiceInterface::class);
 
         return $numberingService->previewNextNumber($series);
     }
@@ -492,6 +493,6 @@ trait InvoiceFormLogic
      */
     public function formatAmount(int $amount): string
     {
-        return \App\Currency::from($this->currentCurrency)->formatAmount($amount);
+        return Currency::from($this->currentCurrency)->formatAmount($amount);
     }
 }

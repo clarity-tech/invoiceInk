@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\Services\PdfServiceInterface;
 use App\Models\Invoice;
-use App\Services\PdfService;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -31,7 +31,7 @@ class PublicViewController extends Controller
         return view('public.estimate', compact('estimate'));
     }
 
-    public function downloadInvoicePdf(string $ulid, PdfService $pdfService): Response
+    public function downloadInvoicePdf(string $ulid, PdfServiceInterface $pdfService): Response
     {
         $invoice = Invoice::withoutGlobalScopes()
             ->with(['items', 'organizationLocation.locatable', 'customerLocation.locatable'])
@@ -42,7 +42,7 @@ class PublicViewController extends Controller
         return $pdfService->downloadInvoicePdf($invoice);
     }
 
-    public function downloadEstimatePdf(string $ulid, PdfService $pdfService): Response
+    public function downloadEstimatePdf(string $ulid, PdfServiceInterface $pdfService): Response
     {
         $estimate = Invoice::withoutGlobalScopes()
             ->with(['items', 'organizationLocation.locatable', 'customerLocation.locatable'])

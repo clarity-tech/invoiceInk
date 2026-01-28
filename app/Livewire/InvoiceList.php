@@ -2,10 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Contracts\Services\PdfServiceInterface;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Services\EstimateToInvoiceConverter;
-use App\Services\PdfService;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -37,7 +37,7 @@ class InvoiceList extends Component
             abort(403, __('messages.authorization.unauthorized_invoice'));
         }
 
-        $pdfService = app(PdfService::class);
+        $pdfService = app(PdfServiceInterface::class);
 
         if ($invoice->type === 'invoice') {
             return $pdfService->downloadInvoicePdf($invoice);

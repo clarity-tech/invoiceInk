@@ -34,4 +34,12 @@ class CreateTeam implements CreatesTeams
 
         return $team;
     }
+
+    /**
+     * Get the redirect URL after team creation.
+     */
+    public function redirectTo(): string
+    {
+        return route('organization.setup');
+    }
 }

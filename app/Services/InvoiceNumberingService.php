@@ -2,15 +2,17 @@
 
 namespace App\Services;
 
+use App\Contracts\Services\InvoiceNumberingServiceInterface;
 use App\Enums\ResetFrequency;
 use App\Models\Invoice;
 use App\Models\InvoiceNumberingSeries;
 use App\Models\Location;
 use App\Models\Organization;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
-class InvoiceNumberingService
+class InvoiceNumberingService implements InvoiceNumberingServiceInterface
 {
     /**
      * Generate a new invoice number for the given organization and location.
@@ -268,7 +270,7 @@ class InvoiceNumberingService
     /**
      * Get all active series for an organization.
      */
-    public function getSeriesForOrganization(Organization $organization): \Illuminate\Database\Eloquent\Collection
+    public function getSeriesForOrganization(Organization $organization): Collection
     {
         return InvoiceNumberingSeries::forOrganization($organization->id)
             ->active()
