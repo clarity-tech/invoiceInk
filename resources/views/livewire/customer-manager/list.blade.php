@@ -44,7 +44,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @php
-                                $locationCount = $customer->locations()->count();
+                                $locationCount = $customer->locations_count;
                             @endphp
                             @if($customer->primaryLocation)
                                 <div class="text-sm text-gray-900">{{ $customer->primaryLocation->name }}</div>

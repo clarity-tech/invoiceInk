@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Currency;
 use App\Enums\Country;
 use App\Models\Customer;
 use App\Models\Location;
@@ -281,7 +282,7 @@ class CustomerManager extends Component
         $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20', 'regex:/^[+]?[\d\s\-().]+$/'],
-            'currency' => ['required', 'string', ValidationRule::enum(\App\Currency::class)],
+            'currency' => ['required', 'string', ValidationRule::enum(Currency::class)],
             'contacts' => ['required', 'array', 'min:1'],
             'contacts.*.name' => ['nullable', 'string', 'max:255'],
             'contacts.*.email' => ['required', 'email', 'max:255'],
@@ -374,7 +375,7 @@ class CustomerManager extends Component
     #[Computed]
     public function customers()
     {
-        $query = Customer::with('primaryLocation');
+        $query = Customer::with('primaryLocation')->withCount('locations');
 
         // Scope to current organization if user is authenticated
         if (auth()->check() && auth()->user()->currentTeam) {
