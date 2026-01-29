@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Akaunting\Money\Money;
 use App\Casts\ExchangeRateCast;
+use App\Currency;
 use App\Enums\InvoiceStatus;
 use App\Models\Scopes\OrganizationScope;
 use Illuminate\Database\Eloquent\Builder;
@@ -37,6 +38,7 @@ class Invoice extends Model implements HasMedia
         'subtotal',
         'tax',
         'total',
+        'amount_paid',
         'tax_type',
         'tax_breakdown',
         'email_recipients',
@@ -50,7 +52,7 @@ class Invoice extends Model implements HasMedia
             'issued_at' => 'datetime',
             'due_at' => 'datetime',
             'exchange_rate' => ExchangeRateCast::class,
-            'currency' => \App\Currency::class,
+            'currency' => Currency::class,
             'status' => InvoiceStatus::class,
             'tax_breakdown' => 'json',
             'email_recipients' => 'json',
@@ -85,6 +87,11 @@ class Invoice extends Model implements HasMedia
     public function items(): HasMany
     {
         return $this->hasMany(InvoiceItem::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
     }
 
     public function isInvoice(): bool
@@ -127,6 +134,19 @@ class Invoice extends Model implements HasMedia
         return $query->where('status', '!=', InvoiceStatus::Paid)
             ->where('status', '!=', InvoiceStatus::Void)
             ->where('due_at', '<', now());
+    }
+
+    /** @param Builder<Invoice> $query */
+    public function scopePartiallyPaid(Builder $query): Builder
+    {
+        return $query->whereColumn('amount_paid', '>', 0)
+            ->whereColumn('amount_paid', '<', 'total');
+    }
+
+    /** @param Builder<Invoice> $query */
+    public function scopeUnpaid(Builder $query): Builder
+    {
+        return $query->where('amount_paid', 0);
     }
 
     /** @param Builder<Invoice> $query */
@@ -180,6 +200,40 @@ class Invoice extends Model implements HasMedia
     public function getFormattedTotalAttribute(): string
     {
         return $this->formatMoney($this->total);
+    }
+
+    public function getRemainingBalanceAttribute(): int
+    {
+        return max(0, $this->total - $this->amount_paid);
+    }
+
+    public function getFormattedAmountPaidAttribute(): string
+    {
+        return $this->formatMoney($this->amount_paid);
+    }
+
+    public function getFormattedRemainingBalanceAttribute(): string
+    {
+        return $this->formatMoney($this->remaining_balance);
+    }
+
+    public function isFullyPaid(): bool
+    {
+        return $this->amount_paid >= $this->total;
+    }
+
+    public function isPartiallyPaid(): bool
+    {
+        return $this->amount_paid > 0 && $this->amount_paid < $this->total;
+    }
+
+    public function getPaymentPercentageAttribute(): float
+    {
+        if ($this->total === 0) {
+            return 100.0;
+        }
+
+        return round(($this->amount_paid / $this->total) * 100, 1);
     }
 
     /**

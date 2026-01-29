@@ -7,6 +7,7 @@ enum InvoiceStatus: string
     case DRAFT = 'draft';
     case SENT = 'sent';
     case ACCEPTED = 'accepted';
+    case PARTIALLY_PAID = 'partially_paid';
     case PAID = 'paid';
     case VOID = 'void';
 
@@ -16,6 +17,7 @@ enum InvoiceStatus: string
             self::DRAFT => 'Draft',
             self::SENT => 'Sent',
             self::ACCEPTED => 'Accepted',
+            self::PARTIALLY_PAID => 'Partially Paid',
             self::PAID => 'Paid',
             self::VOID => 'Void',
         };
@@ -27,6 +29,7 @@ enum InvoiceStatus: string
             self::DRAFT => 'gray',
             self::SENT => 'brand',
             self::ACCEPTED => 'yellow',
+            self::PARTIALLY_PAID => 'amber',
             self::PAID => 'green',
             self::VOID => 'red',
         };
@@ -38,6 +41,7 @@ enum InvoiceStatus: string
             'gray' => 'bg-gray-100 text-gray-800',
             'brand' => 'bg-brand-100 text-brand-800',
             'yellow' => 'bg-yellow-100 text-yellow-800',
+            'amber' => 'bg-amber-100 text-amber-800',
             'green' => 'bg-green-100 text-green-800',
             'red' => 'bg-red-100 text-red-800',
         ];
