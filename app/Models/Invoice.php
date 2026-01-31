@@ -119,20 +119,20 @@ class Invoice extends Model implements HasMedia
     /** @param Builder<Invoice> $query */
     public function scopeDraft(Builder $query): Builder
     {
-        return $query->where('status', InvoiceStatus::Draft);
+        return $query->where('status', InvoiceStatus::DRAFT);
     }
 
     /** @param Builder<Invoice> $query */
     public function scopePaid(Builder $query): Builder
     {
-        return $query->where('status', InvoiceStatus::Paid);
+        return $query->where('status', InvoiceStatus::PAID);
     }
 
     /** @param Builder<Invoice> $query */
     public function scopeOverdue(Builder $query): Builder
     {
-        return $query->where('status', '!=', InvoiceStatus::Paid)
-            ->where('status', '!=', InvoiceStatus::Void)
+        return $query->where('status', '!=', InvoiceStatus::PAID)
+            ->where('status', '!=', InvoiceStatus::VOID)
             ->where('due_at', '<', now());
     }
 

@@ -9,6 +9,7 @@ use App\Http\Controllers\TermsOfServiceController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Middleware\AuthenticateSession;
 use App\Livewire\CustomerManager;
+use App\Livewire\Dashboard;
 use App\Livewire\InvoiceForm;
 use App\Livewire\InvoiceList;
 use App\Livewire\NumberingSeriesManager;
@@ -66,9 +67,7 @@ Route::middleware([
     // Routes that require organization setup completion
     Route::middleware(['organization.setup'])->group(function () {
         // Dashboard
-        Route::get('/dashboard', function () {
-            return view('dashboard');
-        })->name('dashboard');
+        Route::get('/dashboard', Dashboard::class)->name('dashboard');
 
         // Main application routes (protected)
         Route::get('/organizations', OrganizationManager::class)->name('organizations.index');

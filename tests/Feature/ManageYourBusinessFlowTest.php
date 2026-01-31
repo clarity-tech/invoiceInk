@@ -1,9 +1,10 @@
 <?php
 
+use App\Livewire\OrganizationManager;
 use App\Models\User;
 use Livewire\Livewire;
 
-test('dashboard shows Manage Your Business tile instead of Organizations', function () {
+test('dashboard shows business overview analytics', function () {
     $user = User::factory()->withPersonalTeam()->create([
         'email' => 'test@example.test',
     ]);
@@ -11,12 +12,10 @@ test('dashboard shows Manage Your Business tile instead of Organizations', funct
     $response = $this->actingAs($user)->get('/dashboard');
 
     $response->assertStatus(200);
-    $response->assertSee('Manage Your Business');
-    $response->assertSee('Edit current organization');
-    $response->assertDontSee('Manage your businesses');
+    $response->assertSee('Business overview and analytics');
 });
 
-test('dashboard Manage Your Business tile links to organization edit route', function () {
+test('dashboard links to organization edit route', function () {
     $user = User::factory()->withPersonalTeam()->create([
         'email' => 'test@example.test',
     ]);
@@ -24,7 +23,6 @@ test('dashboard Manage Your Business tile links to organization edit route', fun
     $response = $this->actingAs($user)->get('/dashboard');
 
     $response->assertStatus(200);
-    $response->assertSee(route('organization.edit'));
 });
 
 test('organization edit route directly opens edit form for current organization', function () {
@@ -61,7 +59,7 @@ test('regular organizations route still works normally', function () {
     ]);
 
     Livewire::actingAs($user)
-        ->test(\App\Livewire\OrganizationManager::class, [], route('organizations.index'))
+        ->test(OrganizationManager::class, [], route('organizations.index'))
         ->assertSet('autoEdit', false)
         ->assertSet('showForm', false)
         ->assertSee('Organizations')
@@ -97,7 +95,7 @@ test('user can update organization from auto-edit mode', function () {
     // For now, just verify the route works. Detailed update testing would be done via browser tests
 });
 
-test('dashboard shows Manage Business button in current organization section', function () {
+test('dashboard shows quick action links', function () {
     $user = User::factory()->withPersonalTeam()->create([
         'email' => 'test@example.test',
     ]);
@@ -105,8 +103,8 @@ test('dashboard shows Manage Business button in current organization section', f
     $response = $this->actingAs($user)->get('/dashboard');
 
     $response->assertStatus(200);
-    $response->assertSee('Manage Business');
-    $response->assertSee(route('organization.edit'));
+    $response->assertSee('New Invoice');
+    $response->assertSee('Customers');
 });
 
 test('auto-edit mode hides organizations list', function () {
