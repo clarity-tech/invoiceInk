@@ -467,24 +467,14 @@ class InvoiceForm extends Component
                 $this->emailBody
             );
 
-            // Attach PDF if requested
+            // Attach PDF if requested (use attachData to avoid temp files and queue issues)
             if ($this->attachPdf) {
                 $pdfService = app(PdfServiceInterface::class);
                 $pdfContent = $this->invoice->type === 'invoice'
                     ? $pdfService->generateInvoicePdf($this->invoice)
                     : $pdfService->generateEstimatePdf($this->invoice);
 
-                // Save PDF to temporary file
-                $tempPath = storage_path('app/temp');
-                if (! file_exists($tempPath)) {
-                    mkdir($tempPath, 0755, true);
-                }
-
-                $pdfFilePath = $tempPath.'/'.$this->invoice->invoice_number.'-'.time().'.pdf';
-                file_put_contents($pdfFilePath, $pdfContent);
-
-                $mailable->attach($pdfFilePath, [
-                    'as' => "{$this->invoice->invoice_number}.pdf",
+                $mailable->attachData($pdfContent, "{$this->invoice->invoice_number}.pdf", [
                     'mime' => 'application/pdf',
                 ]);
             }

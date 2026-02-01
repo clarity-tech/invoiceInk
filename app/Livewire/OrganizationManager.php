@@ -11,6 +11,7 @@ use App\Models\Organization;
 use App\Rules\CurrencyCode;
 use App\ValueObjects\ContactCollection;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\Rule as ValidationRule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
@@ -356,7 +357,7 @@ class OrganizationManager extends Component
                     }
                 });
 
-            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            } catch (ModelNotFoundException $e) {
                 $this->addError('name', __('forms.validation.organization_not_found'));
 
                 return;
@@ -447,16 +448,23 @@ class OrganizationManager extends Component
 
     public function delete(Organization $organization): void
     {
-        // Security check: Ensure user has access to this organization
-        if (! auth()->user()->allTeams()->contains('id', $organization->id)) {
+        // Security check: Only the owner can delete an organization
+        if (! auth()->user()->ownsTeam($organization)) {
             abort(403, __('messages.authorization.unauthorized_organization'));
+        }
+
+        // Prevent deleting personal teams
+        if ($organization->personal_team) {
+            session()->flash('error', 'Personal organizations cannot be deleted.');
+
+            return;
         }
 
         // Handle foreign key constraint by setting primary_location_id to null first
         $organization->primary_location_id = null;
         $organization->save();
 
-        // Then delete locations and organization
+        // Then delete locations and organization (DB cascades handle customers, invoices, etc.)
         $organization->locations()->delete();
         $organization->delete();
 
@@ -542,7 +550,7 @@ class OrganizationManager extends Component
                 'tax_system' => $country->getTaxSystemInfo(),
                 'recommended_numbering' => $country->getRecommendedNumberingFormat(),
             ];
-        } catch (\ValueError $e) {
+        } catch (ValueError $e) {
             return null;
         }
     }
@@ -564,7 +572,7 @@ class OrganizationManager extends Component
                     $currency->value => $currency->name().' ('.$currency->symbol().')',
                 ])
                 ->toArray();
-        } catch (\ValueError $e) {
+        } catch (ValueError $e) {
             // Invalid country code, fallback to all currencies
             return Currency::options();
         }

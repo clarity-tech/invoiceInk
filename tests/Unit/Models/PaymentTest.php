@@ -192,4 +192,74 @@ describe('PaymentService', function () {
             ->and($invoice->status)->toBe(InvoiceStatus::PAID)
             ->and($invoice->remaining_balance)->toBe(0);
     });
+
+    it('rejects payment on void invoice', function () {
+        $this->invoice->update(['status' => InvoiceStatus::VOID]);
+
+        $service = new PaymentService;
+
+        expect(fn () => $service->recordPayment($this->invoice->fresh(), [
+            'amount' => 10000,
+            'payment_date' => '2026-03-17',
+        ]))->toThrow(InvalidArgumentException::class, 'Void');
+    });
+
+    it('rejects payment on draft invoice', function () {
+        $this->invoice->update(['status' => InvoiceStatus::DRAFT]);
+
+        $service = new PaymentService;
+
+        expect(fn () => $service->recordPayment($this->invoice->fresh(), [
+            'amount' => 10000,
+            'payment_date' => '2026-03-17',
+        ]))->toThrow(InvalidArgumentException::class, 'Draft');
+    });
+
+    it('rejects payment on estimates', function () {
+        $estimate = createInvoiceWithItems([
+            'type' => 'estimate',
+            'status' => InvoiceStatus::SENT,
+            'total' => 100000,
+        ]);
+
+        $service = new PaymentService;
+
+        expect(fn () => $service->recordPayment($estimate, [
+            'amount' => 10000,
+            'payment_date' => '2026-03-17',
+        ]))->toThrow(InvalidArgumentException::class, 'estimates');
+    });
+
+    it('rejects zero amount payment', function () {
+        $service = new PaymentService;
+
+        expect(fn () => $service->recordPayment($this->invoice, [
+            'amount' => 0,
+            'payment_date' => '2026-03-17',
+        ]))->toThrow(InvalidArgumentException::class, 'greater than zero');
+    });
+
+    it('rejects negative amount payment', function () {
+        $service = new PaymentService;
+
+        expect(fn () => $service->recordPayment($this->invoice, [
+            'amount' => -5000,
+            'payment_date' => '2026-03-17',
+        ]))->toThrow(InvalidArgumentException::class, 'greater than zero');
+    });
+
+    it('reverts status to sent when all payments deleted', function () {
+        $service = new PaymentService;
+
+        $payment = $service->recordPayment($this->invoice, [
+            'amount' => 50000,
+            'payment_date' => '2026-03-17',
+        ]);
+
+        expect($this->invoice->fresh()->status)->toBe(InvoiceStatus::PARTIALLY_PAID);
+
+        $service->deletePayment($payment);
+
+        expect($this->invoice->fresh()->status)->toBe(InvoiceStatus::SENT);
+    });
 });
