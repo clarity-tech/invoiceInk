@@ -9,7 +9,7 @@ use App\Models\InvoiceNumberingSeries;
 use App\Models\Location;
 use App\Models\Organization;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use InvalidArgumentException;
 
 class InvoiceNumberingService implements InvoiceNumberingServiceInterface
@@ -22,12 +22,18 @@ class InvoiceNumberingService implements InvoiceNumberingServiceInterface
         ?Location $location = null,
         ?string $seriesName = null
     ): array {
-        return DB::transaction(function () use ($organization, $location, $seriesName) {
-            // Find the appropriate numbering series
-            $series = $this->getNumberingSeries($organization, $location, $seriesName);
+        // Find the series outside the lock to avoid holding it during lookups
+        $series = $this->getNumberingSeries($organization, $location, $seriesName);
 
-            // Validate financial year setup for FY-based series
-            $this->validateFinancialYearSetup($series, $organization);
+        // Validate financial year setup for FY-based series
+        $this->validateFinancialYearSetup($series, $organization);
+
+        // Use atomic lock to prevent concurrent number generation for the same series
+        $lockKey = "invoice-numbering-series-{$series->id}";
+
+        return Cache::lock($lockKey, 10)->block(5, function () use ($series, $organization) {
+            // Refresh the series inside the lock to get the latest current_number
+            $series->refresh();
 
             // Get the next number
             $sequenceNumber = $this->getNextNumber($series);
@@ -153,7 +159,8 @@ class InvoiceNumberingService implements InvoiceNumberingServiceInterface
      */
     public function validateNumberUniqueness(string $invoiceNumber, Organization $organization): bool
     {
-        $exists = Invoice::where('organization_id', $organization->id)
+        $exists = Invoice::withoutGlobalScopes()
+            ->where('organization_id', $organization->id)
             ->where('invoice_number', $invoiceNumber)
             ->where('type', 'invoice') // Only check invoices, not estimates
             ->exists();
