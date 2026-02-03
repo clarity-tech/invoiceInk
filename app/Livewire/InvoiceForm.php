@@ -92,10 +92,7 @@ class InvoiceForm extends Component
             return null;
         }
 
-        // Security check: Ensure user has access to this invoice's organization
-        if (! auth()->user()->allTeams()->contains('id', $this->invoice->organization_id)) {
-            abort(403, __('messages.authorization.unauthorized_invoice'));
-        }
+        $this->authorize('downloadPdf', $this->invoice);
 
         // Redirect to the PDF download route
         $routeName = $this->invoice->type === 'invoice' ? 'invoices.pdf' : 'estimates.pdf';
@@ -129,10 +126,7 @@ class InvoiceForm extends Component
             return;
         }
 
-        // Security check
-        if (! auth()->user()->allTeams()->contains('id', $this->invoice->organization_id)) {
-            abort(403, __('messages.authorization.unauthorized_invoice'));
-        }
+        $this->authorize('update', $this->invoice);
 
         $media = $this->invoice->getMedia('attachments')->where('id', $mediaId)->first();
 
@@ -423,10 +417,7 @@ class InvoiceForm extends Component
             return;
         }
 
-        // Security check
-        if (! auth()->user()->allTeams()->contains('id', $this->invoice->organization_id)) {
-            abort(403, __('messages.authorization.unauthorized_invoice'));
-        }
+        $this->authorize('send', $this->invoice);
 
         // Merge selected recipients with additional recipients
         $allRecipients = array_merge(

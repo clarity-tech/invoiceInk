@@ -5,8 +5,10 @@ namespace App\Livewire;
 use App\Currency;
 use App\Enums\Country;
 use App\Models\Customer;
+use App\Models\Invoice;
 use App\Models\Location;
 use App\ValueObjects\ContactCollection;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule as ValidationRule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Rule;
@@ -82,18 +84,9 @@ class CustomerManager extends Component
         $this->showForm = true;
     }
 
-    private function authorizeCustomerAccess(Customer $customer): void
-    {
-        abort_unless(
-            auth()->check() && auth()->user()->allTeams()->contains('id', $customer->organization_id),
-            403,
-            __('messages.authorization.unauthorized_customer')
-        );
-    }
-
     public function edit(Customer $customer): void
     {
-        $this->authorizeCustomerAccess($customer);
+        $this->authorize('update', $customer);
         $customer->load('locations');
 
         $this->editingId = $customer->id;
@@ -126,7 +119,7 @@ class CustomerManager extends Component
 
         // Verify user owns the customer
         $customer = Customer::findOrFail($this->editingId);
-        $this->authorizeCustomerAccess($customer);
+        $this->authorize('update', $customer);
 
         $this->editingLocationId = $location->id;
         $this->location_name = $location->name;
@@ -154,7 +147,7 @@ class CustomerManager extends Component
 
         // Verify user owns the customer
         $customer = Customer::findOrFail($this->editingId);
-        $this->authorizeCustomerAccess($customer);
+        $this->authorize('update', $customer);
 
         $this->validate([
             'location_name' => ['required', 'string', 'max:255'],
@@ -222,7 +215,7 @@ class CustomerManager extends Component
         }
 
         $customer = Customer::findOrFail($this->editingId);
-        $this->authorizeCustomerAccess($customer);
+        $this->authorize('update', $customer);
 
         // Don't allow deleting the last location
         if ($customer->locations()->count() <= 1) {
@@ -250,7 +243,7 @@ class CustomerManager extends Component
         }
 
         $customer = Customer::findOrFail($this->editingId);
-        $this->authorizeCustomerAccess($customer);
+        $this->authorize('update', $customer);
         $customer->update(['primary_location_id' => $location->id]);
 
         session()->flash('message', __('messages.notifications.primary_location_updated'));
@@ -330,7 +323,18 @@ class CustomerManager extends Component
 
     public function delete(Customer $customer): void
     {
-        $this->authorizeCustomerAccess($customer);
+        $this->authorize('delete', $customer);
+
+        // Prevent deletion if customer has invoices or estimates
+        $invoiceCount = Invoice::withoutGlobalScopes()
+            ->where('customer_id', $customer->id)
+            ->count();
+
+        if ($invoiceCount > 0) {
+            session()->flash('error', "Cannot delete customer with {$invoiceCount} existing ".Str::plural('invoice', $invoiceCount).'. Delete or reassign the invoices first.');
+
+            return;
+        }
 
         // Handle foreign key constraint by setting primary_location_id to null first
         $customer->primary_location_id = null;

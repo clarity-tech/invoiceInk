@@ -24,6 +24,7 @@ test('can render invoice form component for creation', function () {
 
 test('can render invoice form component for editing', function () {
     $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
     $customer = createCustomerWithLocation();
 
     $invoice = createInvoiceWithItems([
@@ -59,6 +60,7 @@ test('initializes with estimate type for estimate route', function () {
 
 test('loads existing invoice data for editing', function () {
     $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
     $customer = createCustomerWithLocation();
 
     $invoice = createInvoiceWithItems([
@@ -395,6 +397,7 @@ test('page title property works correctly for create mode', function () {
 
 test('page title property works correctly for edit mode', function () {
     $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
     $customer = createCustomerWithLocation();
 
     $invoice = createInvoiceWithItems([

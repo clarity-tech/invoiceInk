@@ -16,10 +16,7 @@ class InvoiceList extends Component
 
     public function delete(Invoice $invoice): void
     {
-        // Security check: Ensure user has access to this invoice's organization
-        if (! auth()->check() || ! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
-            abort(403, __('messages.authorization.unauthorized_invoice'));
-        }
+        $this->authorize('delete', $invoice);
 
         $documentType = $invoice->type;
 
@@ -32,10 +29,7 @@ class InvoiceList extends Component
 
     public function downloadPdf(Invoice $invoice)
     {
-        // Security check: Ensure user has access to this invoice's organization
-        if (! auth()->check() || ! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
-            abort(403, __('messages.authorization.unauthorized_invoice'));
-        }
+        $this->authorize('downloadPdf', $invoice);
 
         $pdfService = app(PdfServiceInterface::class);
 
@@ -48,10 +42,7 @@ class InvoiceList extends Component
 
     public function convertToInvoice(Invoice $estimate)
     {
-        // Security check
-        if (! auth()->check() || ! auth()->user()->allTeams()->contains('id', $estimate->organization_id)) {
-            abort(403, __('messages.authorization.unauthorized_invoice'));
-        }
+        $this->authorize('update', $estimate);
 
         if ($estimate->type !== 'estimate') {
             session()->flash('error', __('forms.validation.only_estimates_convertible'));
@@ -69,10 +60,7 @@ class InvoiceList extends Component
 
     public function duplicate(Invoice $invoice)
     {
-        // Security check
-        if (! auth()->check() || ! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
-            abort(403, __('messages.authorization.unauthorized_invoice'));
-        }
+        $this->authorize('view', $invoice);
 
         $invoice->load('items');
 

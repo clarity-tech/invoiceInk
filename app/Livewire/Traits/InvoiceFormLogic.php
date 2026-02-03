@@ -14,6 +14,7 @@ use App\Models\Location;
 use App\Models\Organization;
 use App\Services\InvoiceCalculator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule as ValidationRule;
 use InvalidArgumentException;
 use Livewire\Attributes\Computed;
@@ -103,10 +104,7 @@ trait InvoiceFormLogic
 
     public function loadExistingInvoice(Invoice $invoice): void
     {
-        // Security check: Ensure user has access to this invoice's organization
-        if (auth()->check() && ! auth()->user()->allTeams()->contains('id', $invoice->organization_id)) {
-            abort(403, __('messages.authorization.unauthorized_invoice'));
-        }
+        Gate::authorize('view', $invoice);
 
         $invoice->load(['items', 'organizationLocation', 'customerLocation']);
 
