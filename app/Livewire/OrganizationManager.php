@@ -370,7 +370,28 @@ class OrganizationManager extends Component
             try {
                 // Use database transaction to ensure data consistency
                 $organization = \DB::transaction(function () use ($contactCollection) {
-                    $locationData = [
+                    // Get smart defaults based on country
+                    $country = Country::from($this->country_code);
+                    $defaultFinancialYearType = $this->financial_year_type ?: $country->getDefaultFinancialYearType()->value;
+                    $defaultCurrency = $this->currency ?: $country->getDefaultCurrency()->value;
+
+                    // Create organization first (without location)
+                    $organization = Organization::create([
+                        'name' => $this->name,
+                        'user_id' => auth()->id(),
+                        'personal_team' => false,
+                        'phone' => $this->phone ?: null,
+                        'emails' => $contactCollection,
+                        'currency' => $defaultCurrency,
+                        'country_code' => $this->country_code,
+                        'financial_year_type' => $defaultFinancialYearType,
+                        'financial_year_start_month' => $this->financial_year_start_month,
+                        'financial_year_start_day' => $this->financial_year_start_day,
+                        'bank_details' => $this->buildBankDetails(),
+                    ]);
+
+                    // Then create location with valid locatable_id
+                    $location = Location::create([
                         'name' => $this->location_name ?: ($this->name ?: 'Main Office'),
                         'gstin' => $this->gstin ?: null,
                         'address_line_1' => $this->address_line_1,
@@ -380,36 +401,11 @@ class OrganizationManager extends Component
                         'country' => $this->country,
                         'postal_code' => $this->postal_code,
                         'locatable_type' => Organization::class,
-                        'locatable_id' => 0,
-                    ];
-
-                    $location = Location::create($locationData);
-
-                    // Get smart defaults based on country
-                    $country = Country::from($this->country_code);
-                    $defaultFinancialYearType = $this->financial_year_type ?: $country->getDefaultFinancialYearType()->value;
-                    $defaultCurrency = $this->currency ?: $country->getDefaultCurrency()->value;
-
-                    $organizationData = [
-                        'name' => $this->name,
-                        'user_id' => auth()->id(),
-                        'personal_team' => false,
-                        'phone' => $this->phone ?: null,
-                        'emails' => $contactCollection,
-                        'primary_location_id' => $location->id,
-                        'currency' => $defaultCurrency,
-                        'country_code' => $this->country_code,
-                        'financial_year_type' => $defaultFinancialYearType,
-                        'financial_year_start_month' => $this->financial_year_start_month,
-                        'financial_year_start_day' => $this->financial_year_start_day,
-                        'bank_details' => $this->buildBankDetails(),
-                    ];
-
-                    $organization = Organization::create($organizationData);
-
-                    $location->update([
                         'locatable_id' => $organization->id,
                     ]);
+
+                    // Link location to organization
+                    $organization->update(['primary_location_id' => $location->id]);
 
                     return $organization;
                 });
