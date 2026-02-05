@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Payment;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -30,6 +31,9 @@ class Dashboard extends Component
         };
     }
 
+    /**
+     * Aggregate stats + status breakdown in a single query.
+     */
     #[Computed]
     public function stats(): array
     {
@@ -40,22 +44,28 @@ class Dashboard extends Component
             return $this->emptyStats();
         }
 
-        $invoices = Invoice::invoices()
-            ->whereBetween('issued_at', [$range['start'], $range['end']]);
+        // Single query for all KPI stats
+        $result = Invoice::invoices()
+            ->whereBetween('issued_at', [$range['start'], $range['end']])
+            ->selectRaw('
+                count(*) as invoice_count,
+                coalesce(sum(total), 0) as total_revenue,
+                coalesce(sum(amount_paid), 0) as total_collected,
+                count(case when status = ? then 1 end) as paid_count
+            ', [InvoiceStatus::PAID->value])
+            ->first();
 
-        $totalRevenue = (clone $invoices)->sum('total');
-        $totalCollected = (clone $invoices)->sum('amount_paid');
-        $totalOutstanding = $totalRevenue - $totalCollected;
-        $invoiceCount = (clone $invoices)->count();
-        $paidCount = (clone $invoices)->where('status', InvoiceStatus::PAID)->count();
         $overdueCount = Invoice::invoices()->overdue()->count();
+
+        $totalRevenue = (int) $result->total_revenue;
+        $totalCollected = (int) $result->total_collected;
 
         return [
             'total_revenue' => $totalRevenue,
             'total_collected' => $totalCollected,
-            'total_outstanding' => $totalOutstanding,
-            'invoice_count' => $invoiceCount,
-            'paid_count' => $paidCount,
+            'total_outstanding' => $totalRevenue - $totalCollected,
+            'invoice_count' => (int) $result->invoice_count,
+            'paid_count' => (int) $result->paid_count,
             'overdue_count' => $overdueCount,
             'collection_rate' => $totalRevenue > 0 ? round(($totalCollected / $totalRevenue) * 100, 1) : 0,
             'currency' => $organization->currency,
@@ -69,7 +79,7 @@ class Dashboard extends Component
 
         $counts = Invoice::invoices()
             ->whereBetween('issued_at', [$range['start'], $range['end']])
-            ->selectRaw('status, count(*) as count, sum(total) as total_amount')
+            ->selectRaw('status, count(*) as count, coalesce(sum(total), 0) as total_amount')
             ->groupBy('status')
             ->get()
             ->keyBy('status');
@@ -124,7 +134,7 @@ class Dashboard extends Component
             return collect();
         }
 
-        return Payment::whereHas('invoice', fn ($q) => $q->where('organization_id', $orgId))
+        return Payment::whereHas('invoice', fn ($q) => $q->withoutGlobalScopes()->where('organization_id', $orgId))
             ->with(['invoice.customer'])
             ->latest('payment_date')
             ->limit(5)
@@ -138,7 +148,7 @@ class Dashboard extends Component
 
         return Invoice::invoices()
             ->whereBetween('issued_at', [$range['start'], $range['end']])
-            ->selectRaw('customer_id, count(*) as invoice_count, sum(total) as total_amount, sum(amount_paid) as total_paid')
+            ->selectRaw('customer_id, count(*) as invoice_count, coalesce(sum(total), 0) as total_amount, coalesce(sum(amount_paid), 0) as total_paid')
             ->groupBy('customer_id')
             ->orderByDesc('total_amount')
             ->limit(5)
@@ -154,33 +164,45 @@ class Dashboard extends Component
             ->toArray();
     }
 
+    /**
+     * 6-month trend in a single query using date grouping.
+     */
     #[Computed]
     public function monthlyTrend(): array
     {
-        $months = collect();
+        $start = now()->subMonths(5)->startOfMonth();
+        $end = now()->endOfMonth();
 
+        // Single query grouped by month
+        $driver = DB::getDriverName();
+        $monthExpr = $driver === 'sqlite'
+            ? "strftime('%Y-%m', issued_at)"
+            : "to_char(issued_at, 'YYYY-MM')";
+
+        $rows = Invoice::invoices()
+            ->whereBetween('issued_at', [$start, $end])
+            ->selectRaw("{$monthExpr} as month_key, coalesce(sum(total), 0) as invoiced, coalesce(sum(amount_paid), 0) as collected")
+            ->groupByRaw($monthExpr)
+            ->get()
+            ->keyBy('month_key');
+
+        // Build result with all 6 months (fill zeros for empty months)
+        $months = [];
         for ($i = 5; $i >= 0; $i--) {
             $date = now()->subMonths($i);
-            $start = $date->copy()->startOfMonth();
-            $end = $date->copy()->endOfMonth();
+            $key = $date->format('Y-m');
 
-            $invoiced = Invoice::invoices()
-                ->whereBetween('issued_at', [$start, $end])
-                ->sum('total');
+            $row = $rows->get($key);
 
-            $collected = Invoice::invoices()
-                ->whereBetween('issued_at', [$start, $end])
-                ->sum('amount_paid');
-
-            $months->push([
+            $months[] = [
                 'label' => $date->format('M Y'),
                 'short' => $date->format('M'),
-                'invoiced' => $invoiced,
-                'collected' => $collected,
-            ]);
+                'invoiced' => (int) ($row?->invoiced ?? 0),
+                'collected' => (int) ($row?->collected ?? 0),
+            ];
         }
 
-        return $months->toArray();
+        return $months;
     }
 
     #[Computed]
@@ -189,18 +211,27 @@ class Dashboard extends Component
         return Customer::count();
     }
 
+    /**
+     * Estimate stats in a single query.
+     */
     #[Computed]
     public function estimateStats(): array
     {
         $range = $this->dateRange();
 
-        $estimates = Invoice::estimates()
-            ->whereBetween('issued_at', [$range['start'], $range['end']]);
+        $result = Invoice::estimates()
+            ->whereBetween('issued_at', [$range['start'], $range['end']])
+            ->selectRaw('
+                count(*) as count,
+                coalesce(sum(total), 0) as total,
+                count(case when status = ? then 1 end) as accepted
+            ', [InvoiceStatus::ACCEPTED->value])
+            ->first();
 
         return [
-            'count' => (clone $estimates)->count(),
-            'total' => (clone $estimates)->sum('total'),
-            'accepted' => (clone $estimates)->where('status', InvoiceStatus::ACCEPTED)->count(),
+            'count' => (int) $result->count,
+            'total' => (int) $result->total,
+            'accepted' => (int) $result->accepted,
         ];
     }
 
