@@ -38,7 +38,7 @@ trait InvoiceFormLogic
     #[Rule(['required', 'exists:locations,id'])]
     public ?int $customer_location_id = null;
 
-    #[Rule(['required', 'exists:locations,id'])]
+    #[Rule(['nullable', 'exists:locations,id'])]
     public ?int $customer_shipping_location_id = null;
 
     #[Rule(['nullable', 'date'])]
