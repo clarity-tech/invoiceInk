@@ -69,7 +69,8 @@ class InvoiceNumberingService implements InvoiceNumberingServiceInterface
     public function createDefaultSeries(Organization $organization): InvoiceNumberingSeries
     {
         // Check if default series already exists
-        $existingDefault = InvoiceNumberingSeries::forOrganization($organization->id)
+        $existingDefault = InvoiceNumberingSeries::withoutGlobalScopes()
+            ->forOrganization($organization->id)
             ->default()
             ->first();
 
@@ -180,7 +181,8 @@ class InvoiceNumberingService implements InvoiceNumberingServiceInterface
         ?Location $location = null,
         ?string $seriesName = null
     ): InvoiceNumberingSeries {
-        $query = InvoiceNumberingSeries::forOrganization($organization->id)
+        $query = InvoiceNumberingSeries::withoutGlobalScopes()
+            ->forOrganization($organization->id)
             ->active();
 
         // If a specific series name is requested
@@ -279,7 +281,8 @@ class InvoiceNumberingService implements InvoiceNumberingServiceInterface
      */
     public function getSeriesForOrganization(Organization $organization): Collection
     {
-        return InvoiceNumberingSeries::forOrganization($organization->id)
+        return InvoiceNumberingSeries::withoutGlobalScopes()
+            ->forOrganization($organization->id)
             ->active()
             ->orderBy('is_default', 'desc')
             ->orderBy('name')
