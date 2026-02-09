@@ -1,12 +1,21 @@
 <?php
 
+use App\Casts\ContactCollectionCast;
 use App\Currency;
+use App\Enums\Country;
 use App\Models\Customer;
 use App\Models\Location;
 use App\Models\Organization;
 use App\Models\TaxTemplate;
 use App\Models\User;
+use App\Support\Jetstream;
+use App\ValueObjects\BankDetails;
 use App\ValueObjects\ContactCollection;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 test('can create organization with required fields', function () {
     $user = User::factory()->create();
@@ -28,7 +37,7 @@ test('can create organization with required fields', function () {
 
 test('organization extends eloquent model', function () {
     $organization = new Organization;
-    expect($organization)->toBeInstanceOf(\Illuminate\Database\Eloquent\Model::class);
+    expect($organization)->toBeInstanceOf(Model::class);
 });
 
 test('organization uses teams table', function () {
@@ -394,13 +403,13 @@ test('organization casts method returns correct array', function () {
     $casts = $organization->getCasts();
 
     expect($casts['personal_team'])->toBe('boolean');
-    expect($casts['emails'])->toBe(\App\Casts\ContactCollectionCast::class);
-    expect($casts['currency'])->toBe(\App\Currency::class);
+    expect($casts['emails'])->toBe(ContactCollectionCast::class);
+    expect($casts['currency'])->toBe(Currency::class);
 });
 
 test('organization does not dispatch unused model events', function () {
     $organization = new Organization;
-    $reflectionClass = new \ReflectionClass($organization);
+    $reflectionClass = new ReflectionClass($organization);
     $property = $reflectionClass->getProperty('dispatchesEvents');
     $property->setAccessible(true);
     $events = $property->getValue($organization);
@@ -410,7 +419,7 @@ test('organization does not dispatch unused model events', function () {
 
 test('organization uses HasFactory trait', function () {
     $organization = new Organization;
-    expect(in_array(\Illuminate\Database\Eloquent\Factories\HasFactory::class, class_uses($organization)))->toBeTrue();
+    expect(in_array(HasFactory::class, class_uses($organization)))->toBeTrue();
 });
 
 test('organization factory creates valid instances', function () {
@@ -438,7 +447,7 @@ test('organization can have team invitations relationship', function () {
     $organization = Organization::factory()->create(['user_id' => $user->id]);
 
     // Create a team invitation with proper attributes
-    $invitationModel = \App\Support\Jetstream::teamInvitationModel();
+    $invitationModel = Jetstream::teamInvitationModel();
     $invitation = $invitationModel::forceCreate([
         'team_id' => $organization->id,
         'email' => 'invite@example.com',
@@ -497,19 +506,19 @@ test('organization relationships are correctly configured', function () {
 
     // Test primaryLocation relationship
     $primaryLocationRelation = $organization->primaryLocation();
-    expect($primaryLocationRelation)->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
+    expect($primaryLocationRelation)->toBeInstanceOf(BelongsTo::class);
 
     // Test customers relationship
     $customersRelation = $organization->customers();
-    expect($customersRelation)->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class);
+    expect($customersRelation)->toBeInstanceOf(HasMany::class);
 
     // Test invoices relationship
     $invoicesRelation = $organization->invoices();
-    expect($invoicesRelation)->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class);
+    expect($invoicesRelation)->toBeInstanceOf(HasMany::class);
 
     // Test taxTemplates relationship
     $taxTemplatesRelation = $organization->taxTemplates();
-    expect($taxTemplatesRelation)->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class);
+    expect($taxTemplatesRelation)->toBeInstanceOf(HasMany::class);
 });
 
 test('organization currency enum integration works correctly', function () {
@@ -576,7 +585,7 @@ test('organization bank_details is cast to BankDetails value object', function (
         'bank_details' => $bankDetails,
     ]);
 
-    expect($organization->bank_details)->toBeInstanceOf(\App\ValueObjects\BankDetails::class);
+    expect($organization->bank_details)->toBeInstanceOf(BankDetails::class);
     expect($organization->bank_details->bankName)->toBe('Bank of Baroda');
     expect($organization->bank_details->ifsc)->toBe('BARB0MGROAD');
     expect($organization->bank_details->accountName)->toBe('Clarity Technologies');
@@ -584,4 +593,413 @@ test('organization bank_details is cast to BankDetails value object', function (
     expect($organization->bank_details->branch)->toBe('MG ROAD');
     expect($organization->bank_details->swift)->toBe('BARBINBBXXX');
     expect($organization->bank_details->pan)->toBe('ABCPE1234F');
+});
+
+// --- Setup tracking methods ---
+
+test('isSetupComplete returns true when setup_completed_at is set', function () {
+    $organization = createOrganizationWithLocation([
+        'setup_completed_at' => now(),
+    ]);
+
+    expect($organization->isSetupComplete())->toBeTrue();
+});
+
+test('isSetupComplete returns false when setup_completed_at is null', function () {
+    $organization = createOrganizationWithLocation([
+        'setup_completed_at' => null,
+    ]);
+
+    expect($organization->isSetupComplete())->toBeFalse();
+});
+
+test('needsSetup returns false for personal teams', function () {
+    $user = User::factory()->create();
+    $organization = Organization::create([
+        'name' => 'Personal Team',
+        'user_id' => $user->id,
+        'personal_team' => true,
+        'currency' => 'INR',
+        'setup_completed_at' => null,
+    ]);
+
+    expect($organization->needsSetup())->toBeFalse();
+});
+
+test('needsSetup returns true for non-personal team without setup_completed_at', function () {
+    $organization = createOrganizationWithLocation([
+        'personal_team' => false,
+        'setup_completed_at' => null,
+    ]);
+
+    expect($organization->needsSetup())->toBeTrue();
+});
+
+test('needsSetup returns false when setup is already complete', function () {
+    $organization = createOrganizationWithLocation([
+        'personal_team' => false,
+        'setup_completed_at' => now(),
+    ]);
+
+    expect($organization->needsSetup())->toBeFalse();
+});
+
+test('markSetupComplete sets setup_completed_at', function () {
+    $organization = createOrganizationWithLocation([
+        'setup_completed_at' => null,
+    ]);
+
+    expect($organization->isSetupComplete())->toBeFalse();
+
+    $organization->markSetupComplete();
+    $organization->refresh();
+
+    expect($organization->isSetupComplete())->toBeTrue();
+    expect($organization->setup_completed_at)->not->toBeNull();
+});
+
+test('getSetupCompletionPercentage returns 100 when setup is complete', function () {
+    $organization = createOrganizationWithLocation([
+        'setup_completed_at' => now(),
+    ]);
+
+    expect($organization->getSetupCompletionPercentage())->toBe(100);
+});
+
+test('getSetupCompletionPercentage calculates percentage based on filled fields', function () {
+    $user = User::factory()->create();
+    $organization = Organization::create([
+        'name' => 'Incomplete Org',
+        'user_id' => $user->id,
+        'personal_team' => false,
+        'currency' => 'INR',
+        'setup_completed_at' => null,
+    ]);
+
+    // Only currency is filled out of 6 required fields => ~17%
+    $percentage = $organization->getSetupCompletionPercentage();
+    expect($percentage)->toBeGreaterThan(0);
+    expect($percentage)->toBeLessThan(100);
+});
+
+test('getSetupCompletionPercentage returns higher percentage with more fields filled', function () {
+    $organization = createOrganizationWithLocation([
+        'setup_completed_at' => null,
+        'company_name' => 'Test Corp',
+        'currency' => 'INR',
+        'country_code' => 'IN',
+        'financial_year_type' => 'april_march',
+    ]);
+
+    // Has company_name, emails, primary_location, currency, country_code, financial_year_type = all 6
+    expect($organization->getSetupCompletionPercentage())->toBe(100);
+});
+
+test('getMissingSetupFields returns empty array when setup is complete', function () {
+    $organization = createOrganizationWithLocation([
+        'setup_completed_at' => now(),
+    ]);
+
+    expect($organization->getMissingSetupFields())->toBe([]);
+});
+
+test('getMissingSetupFields lists all missing fields for bare organization', function () {
+    $user = User::factory()->create();
+    $organization = Organization::create([
+        'name' => 'Bare Org',
+        'user_id' => $user->id,
+        'personal_team' => false,
+        'currency' => 'INR',
+        'setup_completed_at' => null,
+    ]);
+
+    $missing = $organization->getMissingSetupFields();
+
+    expect($missing)->toContain('Company Information');
+    expect($missing)->toContain('Contact Emails');
+    expect($missing)->toContain('Primary Location');
+    expect($missing)->toContain('Country');
+    expect($missing)->toContain('Financial Year Configuration');
+});
+
+test('getMissingSetupFields does not list fields that are present', function () {
+    $organization = createOrganizationWithLocation([
+        'setup_completed_at' => null,
+    ]);
+
+    $missing = $organization->getMissingSetupFields();
+
+    expect($missing)->not->toContain('Company Information');
+    expect($missing)->not->toContain('Currency');
+    expect($missing)->not->toContain('Country');
+    expect($missing)->not->toContain('Primary Location');
+});
+
+// --- Financial year methods ---
+
+test('getCurrentFinancialYear returns financial year string', function () {
+    $organization = createOrganizationWithLocation([
+        'financial_year_type' => 'april_march',
+    ]);
+
+    $fy = $organization->getCurrentFinancialYear();
+
+    expect($fy)->toBeString();
+    expect($fy)->not->toBeEmpty();
+});
+
+test('getCurrentFinancialYear uses default when financial_year_type is null', function () {
+    $organization = createOrganizationWithLocation([
+        'financial_year_type' => null,
+    ]);
+
+    $fy = $organization->getCurrentFinancialYear();
+
+    expect($fy)->toBeString();
+    expect($fy)->not->toBeEmpty();
+});
+
+test('getCurrentFinancialYear accepts a custom date', function () {
+    $organization = createOrganizationWithLocation([
+        'financial_year_type' => 'april_march',
+    ]);
+
+    $fy = $organization->getCurrentFinancialYear(Carbon::create(2025, 1, 15));
+
+    expect($fy)->toBeString();
+    // Jan 2025 is in FY 2024-25 for April-March
+    expect($fy)->toContain('2024');
+});
+
+test('hasFinancialYearChanged detects year change', function () {
+    $organization = createOrganizationWithLocation([
+        'financial_year_type' => 'april_march',
+    ]);
+
+    // Last reset was April 2024, current date is April 2025 => FY changed
+    $changed = $organization->hasFinancialYearChanged(
+        Carbon::create(2024, 4, 1),
+        Carbon::create(2025, 4, 1)
+    );
+
+    expect($changed)->toBeTrue();
+});
+
+test('hasFinancialYearChanged returns false within same FY', function () {
+    $organization = createOrganizationWithLocation([
+        'financial_year_type' => 'april_march',
+    ]);
+
+    // Both dates in same FY (April 2024 - March 2025)
+    $changed = $organization->hasFinancialYearChanged(
+        Carbon::create(2024, 5, 1),
+        Carbon::create(2024, 12, 1)
+    );
+
+    expect($changed)->toBeFalse();
+});
+
+test('getFinancialYearLabel returns a label string', function () {
+    $organization = createOrganizationWithLocation([
+        'financial_year_type' => 'april_march',
+    ]);
+
+    $label = $organization->getFinancialYearLabel();
+
+    expect($label)->toBeString();
+    expect($label)->not->toBeEmpty();
+});
+
+test('getFinancialYearStartDate returns a Carbon instance', function () {
+    $organization = createOrganizationWithLocation([
+        'financial_year_type' => 'april_march',
+    ]);
+
+    $startDate = $organization->getFinancialYearStartDate(2024);
+
+    expect($startDate)->toBeInstanceOf(Carbon::class);
+    expect($startDate->month)->toBe(4);
+    expect($startDate->day)->toBe(1);
+});
+
+test('getFinancialYearEndDate returns a Carbon instance', function () {
+    $organization = createOrganizationWithLocation([
+        'financial_year_type' => 'april_march',
+    ]);
+
+    $endDate = $organization->getFinancialYearEndDate(2024);
+
+    expect($endDate)->toBeInstanceOf(Carbon::class);
+    expect($endDate->month)->toBe(3);
+    expect($endDate->year)->toBe(2025);
+});
+
+test('getNextFinancialYearResetDate returns a future Carbon date', function () {
+    $organization = createOrganizationWithLocation([
+        'financial_year_type' => 'april_march',
+    ]);
+
+    $nextReset = $organization->getNextFinancialYearResetDate();
+
+    expect($nextReset)->toBeInstanceOf(Carbon::class);
+});
+
+// --- Country-based methods ---
+
+test('getCountryAttribute returns Country enum', function () {
+    $organization = createOrganizationWithLocation([
+        'country_code' => 'IN',
+    ]);
+
+    expect($organization->country)->toBe(Country::IN);
+});
+
+test('getCountryAttribute returns null when no country set', function () {
+    $organization = createOrganizationWithLocation([
+        'country_code' => null,
+    ]);
+
+    expect($organization->country)->toBeNull();
+});
+
+test('getSetupRecommendations returns recommendations for a country', function () {
+    $organization = createOrganizationWithLocation([
+        'country_code' => 'IN',
+    ]);
+
+    $recommendations = $organization->getSetupRecommendations();
+
+    expect($recommendations)->toBeArray();
+    expect($recommendations)->toHaveKey('currency');
+    expect($recommendations)->toHaveKey('financial_year_type');
+    expect($recommendations)->toHaveKey('tax_system');
+    expect($recommendations)->toHaveKey('common_tax_rates');
+    expect($recommendations)->toHaveKey('recommended_numbering_format');
+    expect($recommendations)->toHaveKey('financial_year_options');
+    expect($recommendations)->toHaveKey('default_financial_year_option');
+});
+
+test('getSetupRecommendations returns empty array when no country set', function () {
+    $organization = createOrganizationWithLocation([
+        'country_code' => null,
+    ]);
+
+    expect($organization->getSetupRecommendations())->toBe([]);
+});
+
+test('getTaxSystemInfo returns tax info for organization country', function () {
+    $organization = createOrganizationWithLocation([
+        'country_code' => 'IN',
+    ]);
+
+    $taxInfo = $organization->getTaxSystemInfo();
+
+    expect($taxInfo)->toBeArray();
+    expect($taxInfo)->toHaveKey('name');
+    expect($taxInfo)->toHaveKey('rates');
+});
+
+test('getTaxSystemInfo returns empty array when no country set', function () {
+    $organization = createOrganizationWithLocation([
+        'country_code' => null,
+    ]);
+
+    expect($organization->getTaxSystemInfo())->toBe([]);
+});
+
+// --- Numbering series relationship ---
+
+test('organization has numbering series relationship', function () {
+    $organization = new Organization;
+    $relation = $organization->numberingSeries();
+
+    expect($relation)->toBeInstanceOf(HasMany::class);
+});
+
+// --- allUsers, hasUser, hasUserWithEmail, userHasPermission, removeUser ---
+
+test('allUsers includes owner and team members', function () {
+    $owner = User::factory()->withPersonalTeam()->create();
+    $organization = $owner->currentTeam;
+
+    $member = User::factory()->create();
+    $organization->users()->attach($member, ['role' => 'editor']);
+
+    $allUsers = $organization->allUsers();
+
+    expect($allUsers->pluck('id'))->toContain($owner->id);
+    expect($allUsers->pluck('id'))->toContain($member->id);
+});
+
+test('hasUser returns true for owner', function () {
+    $owner = User::factory()->withPersonalTeam()->create();
+    $organization = $owner->currentTeam;
+
+    expect($organization->hasUser($owner))->toBeTrue();
+});
+
+test('hasUserWithEmail returns true for existing user email', function () {
+    $owner = User::factory()->withPersonalTeam()->create();
+    $organization = $owner->currentTeam;
+
+    expect($organization->hasUserWithEmail($owner->email))->toBeTrue();
+});
+
+test('hasUserWithEmail returns false for non-existing email', function () {
+    $owner = User::factory()->withPersonalTeam()->create();
+    $organization = $owner->currentTeam;
+
+    expect($organization->hasUserWithEmail('nonexistent@example.test'))->toBeFalse();
+});
+
+test('removeUser removes user from organization', function () {
+    $owner = User::factory()->withPersonalTeam()->create();
+    $organization = $owner->currentTeam;
+
+    $member = User::factory()->create();
+    $organization->users()->attach($member, ['role' => 'editor']);
+    $member->update(['current_team_id' => $organization->id]);
+
+    $organization->removeUser($member);
+    $member->refresh();
+
+    expect($organization->users()->where('user_id', $member->id)->exists())->toBeFalse();
+    expect($member->current_team_id)->toBeNull();
+});
+
+// --- Media collections ---
+
+test('registerMediaCollections defines logo collection', function () {
+    $organization = createOrganizationWithLocation();
+    $organization->registerMediaCollections();
+
+    $collections = $organization->mediaCollections;
+
+    expect(collect($collections)->pluck('name'))->toContain('logo');
+});
+
+test('registerMediaConversions can be called without error', function () {
+    $organization = createOrganizationWithLocation();
+
+    // Just verify it doesn't throw — conversions are registered internally
+    $organization->registerMediaConversions(null);
+    expect(true)->toBeTrue();
+});
+
+test('logoUrl returns null when no logo uploaded', function () {
+    $organization = createOrganizationWithLocation();
+
+    expect($organization->logo_url)->toBeNull();
+});
+
+test('logoThumbUrl returns null when no logo uploaded', function () {
+    $organization = createOrganizationWithLocation();
+
+    expect($organization->logo_thumb_url)->toBeNull();
+});
+
+test('logoBase64 returns null when no logo uploaded', function () {
+    $organization = createOrganizationWithLocation();
+
+    expect($organization->logo_base64)->toBeNull();
 });

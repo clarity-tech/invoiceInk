@@ -1,9 +1,11 @@
 <?php
 
+use App\Currency;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Services\PaymentService;
+use Illuminate\Support\Carbon;
 
 beforeEach(function () {
     $this->invoice = createInvoiceWithItems([
@@ -90,6 +92,43 @@ it('formats remaining balance', function () {
 
     expect($this->invoice->fresh()->formatted_remaining_balance)->toBeString()
         ->and($this->invoice->fresh()->formatted_remaining_balance)->toContain('600');
+});
+
+describe('casts and formatting', function () {
+    it('casts currency to Currency enum', function () {
+        $payment = Payment::factory()->forInvoice($this->invoice)->create();
+
+        expect($payment->currency)->toBeInstanceOf(Currency::class);
+    });
+
+    it('casts payment_date to Carbon date', function () {
+        $payment = Payment::factory()->forInvoice($this->invoice)->create([
+            'payment_date' => '2026-03-17',
+        ]);
+
+        expect($payment->payment_date)->toBeInstanceOf(Carbon::class)
+            ->and($payment->payment_date->toDateString())->toBe('2026-03-17');
+    });
+
+    it('formatMoney formats an integer amount using the payment currency', function () {
+        $payment = Payment::factory()->forInvoice($this->invoice)->create([
+            'amount' => 50000,
+        ]);
+
+        $formatted = $payment->formatMoney(50000);
+
+        expect($formatted)->toBeString()
+            ->and($formatted)->toContain('500');
+    });
+
+    it('formatted_amount accessor returns formatted payment amount', function () {
+        $payment = Payment::factory()->forInvoice($this->invoice)->create([
+            'amount' => 75000,
+        ]);
+
+        expect($payment->formatted_amount)->toBeString()
+            ->and($payment->formatted_amount)->toContain('750');
+    });
 });
 
 describe('PaymentService', function () {
