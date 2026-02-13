@@ -114,4 +114,17 @@ return [
 
     'prefix' => env('CACHE_PREFIX', Str::slug((string) env('APP_NAME', 'invoiceink')).'-cache-'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Serializable Classes
+    |--------------------------------------------------------------------------
+    |
+    | This option controls which classes may be unserialized when retrieving
+    | cached data. Setting this to false prevents PHP object unserialization
+    | to protect against deserialization attacks if the APP_KEY is leaked.
+    |
+    */
+
+    'serializable_classes' => false,
+
 ];
