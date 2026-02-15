@@ -1,21 +1,12 @@
 ---
 name: livewire-development
-description: "Develops reactive Livewire 4 components. Activates when creating, updating, or modifying Livewire components; working with wire:model, wire:click, wire:loading, or any wire: directives; adding real-time updates, loading states, or reactivity; debugging component behavior; writing Livewire tests; or when the user mentions Livewire, component, counter, or reactive UI."
+description: "Use for any task or question involving Livewire. Activate if user mentions Livewire, wire: directives, or Livewire-specific concepts like wire:model, wire:click, wire:sort, or islands, invoke this skill. Covers building new components, debugging reactivity issues, real-time form validation, drag-and-drop, loading states, migrating from Livewire 3 to 4, converting component formats (SFC/MFC/class-based), and performance optimization. Do not use for non-Livewire reactive UI (React, Vue, Alpine-only, Inertia.js) or standard Laravel forms without Livewire."
 license: MIT
 metadata:
   author: laravel
 ---
 
 # Livewire Development
-
-## When to Apply
-
-Activate this skill when:
-
-- Creating or modifying Livewire components
-- Using wire: directives (model, click, loading, sort, intersect)
-- Implementing islands or async actions
-- Writing Livewire component tests
 
 ## Documentation
 
@@ -29,24 +20,24 @@ Use `search-docs` for detailed Livewire 4 patterns and documentation.
 
 # Single-file component (default in v4)
 
-php artisan make:livewire create-post
+vendor/bin/sail artisan make:livewire create-post
 
 # Multi-file component
 
-php artisan make:livewire create-post --mfc
+vendor/bin/sail artisan make:livewire create-post --mfc
 
 # Class-based component (v3 style)
 
-php artisan make:livewire create-post --class
+vendor/bin/sail artisan make:livewire create-post --class
 
 # With namespace
 
-php artisan make:livewire Posts/CreatePost
+vendor/bin/sail artisan make:livewire Posts/CreatePost
 ```
 
 ### Converting Between Formats
 
-Use `php artisan livewire:convert create-post` to convert between single-file, multi-file, and class-based formats.
+Use `vendor/bin/sail artisan livewire:convert create-post` to convert between single-file, multi-file, and class-based formats.
 
 ### Choosing a Component Format
 
