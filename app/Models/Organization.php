@@ -8,16 +8,21 @@ use App\Currency;
 use App\Enums\Country;
 use App\Enums\FinancialYearType;
 use Carbon\Carbon;
+use Database\Factories\OrganizationFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Organization extends \Illuminate\Database\Eloquent\Model implements HasMedia
+class Organization extends Model implements HasMedia
 {
-    /** @use HasFactory<\Database\Factories\OrganizationFactory> */
+    /** @use HasFactory<OrganizationFactory> */
     use HasFactory, InteractsWithMedia;
 
     /**
@@ -28,11 +33,11 @@ class Organization extends \Illuminate\Database\Eloquent\Model implements HasMed
     /**
      * Create a new factory instance for the model.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
     protected static function newFactory()
     {
-        return \Database\Factories\OrganizationFactory::new();
+        return OrganizationFactory::new();
     }
 
     /**
@@ -63,6 +68,15 @@ class Organization extends \Illuminate\Database\Eloquent\Model implements HasMed
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'logo_url',
+    ];
+
+    /**
      * The model's default attribute values.
      */
     protected $attributes = [];
@@ -75,7 +89,7 @@ class Organization extends \Illuminate\Database\Eloquent\Model implements HasMed
         return [
             'personal_team' => 'boolean',
             'emails' => ContactCollectionCast::class,
-            'currency' => \App\Currency::class,
+            'currency' => Currency::class,
             'country_code' => Country::class,
             'financial_year_type' => FinancialYearType::class,
             'financial_year_start_month' => 'integer',
@@ -88,15 +102,15 @@ class Organization extends \Illuminate\Database\Eloquent\Model implements HasMed
     /**
      * Get the owner of the team.
      */
-    public function owner(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function owner(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /**
      * Get all of the team's users including its owner.
      */
-    public function allUsers(): \Illuminate\Support\Collection
+    public function allUsers(): Collection
     {
         return $this->users->merge([$this->owner]);
     }
@@ -252,13 +266,13 @@ class Organization extends \Illuminate\Database\Eloquent\Model implements HasMed
      *
      * Override the JetstreamTeam method to specify correct foreign key names.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return BelongsToMany
      */
     public function users()
     {
         return $this->belongsToMany(
-            \App\Models\User::class,
-            \App\Models\Membership::class,
+            User::class,
+            Membership::class,
             'team_id',     // Foreign key on pivot table for Team/Organization model
             'user_id'      // Foreign key on pivot table for User model
         )->withPivot('role')
@@ -271,11 +285,11 @@ class Organization extends \Illuminate\Database\Eloquent\Model implements HasMed
      *
      * Override the JetstreamTeam method to specify correct foreign key names.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function teamInvitations()
     {
-        return $this->hasMany(\App\Models\TeamInvitation::class, 'team_id');
+        return $this->hasMany(TeamInvitation::class, 'team_id');
     }
 
     /**

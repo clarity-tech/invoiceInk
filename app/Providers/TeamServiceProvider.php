@@ -12,7 +12,6 @@ use App\Actions\Jetstream\UpdateTeamName;
 use App\Support\Jetstream;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\ServiceProvider;
-use Livewire\Livewire;
 
 class TeamServiceProvider extends ServiceProvider
 {
@@ -30,7 +29,6 @@ class TeamServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configurePermissions();
-        $this->registerLivewireComponents();
         $this->registerRedirectMacros();
 
         // Configure team/organization actions
@@ -64,30 +62,6 @@ class TeamServiceProvider extends ServiceProvider
             'create',
             'update',
         ])->description('Editor users have the ability to read, create, and update.');
-    }
-
-    /**
-     * Register Livewire components previously provided by Jetstream.
-     */
-    protected function registerLivewireComponents(): void
-    {
-        Livewire::component('navigation-menu', \App\Livewire\NavigationMenu::class);
-        Livewire::component('profile.update-profile-information-form', \App\Livewire\Profile\UpdateProfileInformationForm::class);
-        Livewire::component('profile.update-password-form', \App\Livewire\Profile\UpdatePasswordForm::class);
-        Livewire::component('profile.two-factor-authentication-form', \App\Livewire\Profile\TwoFactorAuthenticationForm::class);
-        Livewire::component('profile.logout-other-browser-sessions-form', \App\Livewire\Profile\LogoutOtherBrowserSessionsForm::class);
-        Livewire::component('profile.delete-user-form', \App\Livewire\Profile\DeleteUserForm::class);
-
-        if (\App\Support\JetstreamFeatures::hasTeamFeatures()) {
-            Livewire::component('teams.create-team-form', \App\Livewire\Teams\CreateTeamForm::class);
-            Livewire::component('teams.update-team-name-form', \App\Livewire\Teams\UpdateTeamNameForm::class);
-            Livewire::component('teams.team-member-manager', \App\Livewire\Teams\TeamMemberManager::class);
-            Livewire::component('teams.delete-team-form', \App\Livewire\Teams\DeleteTeamForm::class);
-        }
-
-        if (\App\Support\JetstreamFeatures::hasApiFeatures()) {
-            Livewire::component('api.api-token-manager', \App\Livewire\Api\ApiTokenManager::class);
-        }
     }
 
     /**

@@ -262,43 +262,46 @@ test('TeamPolicy: non-owner cannot delete organization', function () {
 
 /*
 |--------------------------------------------------------------------------
-| Cross-Tenant Mutation Tests
+| Cross-Tenant Mutation Tests (HTTP)
 |--------------------------------------------------------------------------
 |
-| Verify that Livewire components prevent cross-tenant write operations.
+| Verify that controllers prevent cross-tenant write operations.
 |
 */
 
-test('CustomerManager: user cannot edit another organizations customer', function () {
+test('user cannot update another organizations customer via HTTP', function () {
     $this->actingAs($this->userA);
 
-    Livewire\Livewire::test(\App\Livewire\CustomerManager::class)
-        ->call('edit', $this->customerB)
-        ->assertStatus(403);
+    $response = $this->putJson("/customers/{$this->customerB->id}", [
+        'name' => 'Hacked Name',
+    ]);
+
+    // OrganizationScope filters out cross-tenant records, returning 404
+    expect($response->status())->toBeIn([403, 404]);
 });
 
-test('CustomerManager: user cannot delete another organizations customer', function () {
+test('user cannot delete another organizations customer via HTTP', function () {
     $this->actingAs($this->userA);
 
-    Livewire\Livewire::test(\App\Livewire\CustomerManager::class)
-        ->call('delete', $this->customerB)
-        ->assertStatus(403);
+    $response = $this->deleteJson("/customers/{$this->customerB->id}");
+
+    expect($response->status())->toBeIn([403, 404]);
 });
 
-test('InvoiceList: user cannot delete another organizations invoice', function () {
+test('user cannot delete another organizations invoice via HTTP', function () {
     $this->actingAs($this->userA);
 
-    Livewire\Livewire::test(\App\Livewire\InvoiceList::class)
-        ->call('delete', $this->invoiceB)
-        ->assertStatus(403);
+    $response = $this->deleteJson("/invoices/{$this->invoiceB->id}");
+
+    expect($response->status())->toBeIn([403, 404]);
 });
 
-test('InvoiceList: user cannot download PDF for another organizations invoice', function () {
+test('user cannot download PDF for another organizations invoice via HTTP', function () {
     $this->actingAs($this->userA);
 
-    Livewire\Livewire::test(\App\Livewire\InvoiceList::class)
-        ->call('downloadPdf', $this->invoiceB)
-        ->assertStatus(403);
+    $response = $this->get("/invoices/{$this->invoiceB->id}/download");
+
+    expect($response->status())->toBeIn([403, 404]);
 });
 
 /*
@@ -413,11 +416,11 @@ test('invalid ULID returns 404 for public estimate route', function () {
 
 /*
 |--------------------------------------------------------------------------
-| NumberingSeriesManager Cross-Tenant Tests
+| NumberingSeries Cross-Tenant Tests (HTTP)
 |--------------------------------------------------------------------------
 */
 
-test('NumberingSeriesManager: user cannot edit another organizations series', function () {
+test('user cannot update another organizations numbering series via HTTP', function () {
     $series = InvoiceNumberingSeries::create([
         'organization_id' => $this->orgB->id,
         'name' => 'Org B Series',
@@ -431,12 +434,17 @@ test('NumberingSeriesManager: user cannot edit another organizations series', fu
 
     $this->actingAs($this->userA);
 
-    Livewire\Livewire::test(\App\Livewire\NumberingSeriesManager::class)
-        ->call('edit', $series)
-        ->assertStatus(403);
+    $response = $this->putJson("/numbering-series/{$series->id}", [
+        'name' => 'Hacked Series',
+        'prefix' => 'HACK',
+        'format_pattern' => '{PREFIX}{SEQUENCE:4}',
+        'reset_frequency' => 'yearly',
+    ]);
+
+    expect($response->status())->toBeIn([403, 404]);
 });
 
-test('NumberingSeriesManager: user cannot delete another organizations series', function () {
+test('user cannot delete another organizations numbering series via HTTP', function () {
     $series = InvoiceNumberingSeries::create([
         'organization_id' => $this->orgB->id,
         'name' => 'Org B Series',
@@ -450,12 +458,12 @@ test('NumberingSeriesManager: user cannot delete another organizations series', 
 
     $this->actingAs($this->userA);
 
-    Livewire\Livewire::test(\App\Livewire\NumberingSeriesManager::class)
-        ->call('delete', $series)
-        ->assertStatus(403);
+    $response = $this->deleteJson("/numbering-series/{$series->id}");
+
+    expect($response->status())->toBeIn([403, 404]);
 });
 
-test('NumberingSeriesManager: user cannot toggle another organizations series', function () {
+test('user cannot toggle another organizations numbering series via HTTP', function () {
     $series = InvoiceNumberingSeries::create([
         'organization_id' => $this->orgB->id,
         'name' => 'Org B Series',
@@ -469,29 +477,31 @@ test('NumberingSeriesManager: user cannot toggle another organizations series', 
 
     $this->actingAs($this->userA);
 
-    Livewire\Livewire::test(\App\Livewire\NumberingSeriesManager::class)
-        ->call('toggleActive', $series)
-        ->assertStatus(403);
+    $response = $this->postJson("/numbering-series/{$series->id}/toggle-active");
+
+    expect($response->status())->toBeIn([403, 404]);
 });
 
 /*
 |--------------------------------------------------------------------------
-| OrganizationManager Cross-Tenant Tests
+| Organization Cross-Tenant Tests (HTTP)
 |--------------------------------------------------------------------------
 */
 
-test('OrganizationManager: user cannot edit another users organization', function () {
+test('user cannot update another users organization via HTTP', function () {
     $this->actingAs($this->userA);
 
-    Livewire\Livewire::test(\App\Livewire\OrganizationManager::class)
-        ->call('edit', $this->orgB)
-        ->assertHasErrors('name');
+    $response = $this->putJson("/organizations/{$this->orgB->id}", [
+        'name' => 'Hacked Org',
+    ]);
+
+    $response->assertStatus(403);
 });
 
-test('OrganizationManager: user cannot delete another users organization', function () {
+test('user cannot delete another users organization via HTTP', function () {
     $this->actingAs($this->userA);
 
-    Livewire\Livewire::test(\App\Livewire\OrganizationManager::class)
-        ->call('delete', $this->orgB)
-        ->assertStatus(403);
+    $response = $this->deleteJson("/organizations/{$this->orgB->id}");
+
+    $response->assertStatus(403);
 });

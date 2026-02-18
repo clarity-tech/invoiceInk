@@ -14,7 +14,7 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800,900&display=swap" rel="stylesheet" />
 
         <!-- Styles / Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @vite(['resources/css/app.css'])
     </head>
     <body class="font-sans antialiased overflow-x-hidden bg-gray-950 text-white">
 

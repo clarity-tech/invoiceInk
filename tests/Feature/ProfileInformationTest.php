@@ -1,24 +1,14 @@
 <?php
 
-use App\Livewire\Profile\UpdateProfileInformationForm;
 use App\Models\User;
-use Livewire\Livewire;
-
-test('current profile information is available', function () {
-    $this->actingAs($user = User::factory()->create());
-
-    $component = Livewire::test(UpdateProfileInformationForm::class);
-
-    expect($component->state['name'])->toEqual($user->name);
-    expect($component->state['email'])->toEqual($user->email);
-});
 
 test('profile information can be updated', function () {
     $this->actingAs($user = User::factory()->create());
 
-    Livewire::test(UpdateProfileInformationForm::class)
-        ->set('state', ['name' => 'Test Name', 'email' => 'test@example.com'])
-        ->call('updateProfileInformation');
+    $response = $this->put('/user/profile-information', [
+        'name' => 'Test Name',
+        'email' => 'test@example.com',
+    ]);
 
     expect($user->fresh())
         ->name->toEqual('Test Name')

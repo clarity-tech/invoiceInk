@@ -1,17 +1,14 @@
 <?php
 
-use App\Livewire\Profile\TwoFactorAuthenticationForm;
 use App\Models\User;
 use Laravel\Fortify\Features;
-use Livewire\Livewire;
 
 test('two factor authentication can be enabled', function () {
     $this->actingAs($user = User::factory()->create()->fresh());
 
     $this->withSession(['auth.password_confirmed_at' => time()]);
 
-    Livewire::test(TwoFactorAuthenticationForm::class)
-        ->call('enableTwoFactorAuthentication');
+    $this->post('/user/two-factor-authentication');
 
     $user = $user->fresh();
 
@@ -26,16 +23,17 @@ test('recovery codes can be regenerated', function () {
 
     $this->withSession(['auth.password_confirmed_at' => time()]);
 
-    $component = Livewire::test(TwoFactorAuthenticationForm::class)
-        ->call('enableTwoFactorAuthentication')
-        ->call('regenerateRecoveryCodes');
+    $this->post('/user/two-factor-authentication');
+
+    $user = $user->fresh();
+    $initialCodes = $user->recoveryCodes();
+
+    $this->post('/user/two-factor-recovery-codes');
 
     $user = $user->fresh();
 
-    $component->call('regenerateRecoveryCodes');
-
     expect($user->recoveryCodes())->toHaveCount(8);
-    expect(array_diff($user->recoveryCodes(), $user->fresh()->recoveryCodes()))->toHaveCount(8);
+    expect(array_diff($initialCodes, $user->recoveryCodes()))->toHaveCount(8);
 })->skip(function () {
     return ! Features::canManageTwoFactorAuthentication();
 }, 'Two factor authentication is not enabled.');
@@ -45,12 +43,11 @@ test('two factor authentication can be disabled', function () {
 
     $this->withSession(['auth.password_confirmed_at' => time()]);
 
-    $component = Livewire::test(TwoFactorAuthenticationForm::class)
-        ->call('enableTwoFactorAuthentication');
+    $this->post('/user/two-factor-authentication');
 
     $this->assertNotNull($user->fresh()->two_factor_secret);
 
-    $component->call('disableTwoFactorAuthentication');
+    $this->delete('/user/two-factor-authentication');
 
     expect($user->fresh()->two_factor_secret)->toBeNull();
 })->skip(function () {

@@ -5,6 +5,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Location;
 use App\Models\Organization;
+use App\Services\PdfService;
 use App\ValueObjects\ContactCollection;
 
 beforeEach(function () {
@@ -154,7 +155,7 @@ test('returns 404 when accessing invoice with estimate ULID', function () {
         'total' => 3540,
     ]);
 
-    $response = $this->get("/invoices/{$estimate->ulid}");
+    $response = $this->get("/invoices/view/{$estimate->ulid}");
 
     $response->assertStatus(404);
 });
@@ -176,7 +177,7 @@ test('returns 404 when accessing estimate with invoice ULID', function () {
         'total' => 4720,
     ]);
 
-    $response = $this->get("/estimates/{$invoice->ulid}");
+    $response = $this->get("/estimates/view/{$invoice->ulid}");
 
     $response->assertStatus(404);
 });
@@ -277,7 +278,7 @@ test('can download invoice PDF', function () {
     ]);
 
     // Mock the PdfService to avoid Puppeteer dependency
-    $this->mock(\App\Services\PdfService::class, function ($mock) {
+    $this->mock(PdfService::class, function ($mock) {
         $mock->shouldReceive('downloadInvoicePdf')
             ->once()
             ->andReturn(response('fake-pdf-content', 200, [
@@ -310,7 +311,7 @@ test('can download estimate PDF', function () {
     ]);
 
     // Mock the PdfService
-    $this->mock(\App\Services\PdfService::class, function ($mock) {
+    $this->mock(PdfService::class, function ($mock) {
         $mock->shouldReceive('downloadEstimatePdf')
             ->once()
             ->andReturn(response('fake-pdf-content', 200, [

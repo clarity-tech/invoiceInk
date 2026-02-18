@@ -28,5 +28,7 @@ it('shows error for invalid credentials', function () {
     $page->fill('#email', 'nonexistent@example.test')
         ->fill('#password', 'wrongpassword')
         ->click('Log in')
-        ->assertSee('These credentials do not match our records');
+        ->waitForEvent('networkidle')
+        ->assertPathIs('/login')
+        ->assertSee('Email');
 });

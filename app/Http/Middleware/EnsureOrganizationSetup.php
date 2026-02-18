@@ -11,7 +11,7 @@ class EnsureOrganizationSetup
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -21,7 +21,7 @@ class EnsureOrganizationSetup
         }
 
         $user = auth()->user();
-        $currentTeam = $user->currentTeam;
+        $currentTeam = $user->currentTeam?->fresh();
 
         // Skip middleware if no current team
         if (! $currentTeam) {
