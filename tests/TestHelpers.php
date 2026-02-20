@@ -3,6 +3,7 @@
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\InvoiceNumberingSeries;
 use App\Models\Location;
 use App\Models\Organization;
 use App\Models\User;
@@ -231,5 +232,27 @@ if (! function_exists('createLocation')) {
         ];
 
         return Location::create(array_merge($defaultAttributes, $attributes));
+    }
+}
+
+if (! function_exists('createNumberingSeries')) {
+    function createNumberingSeries(array $attributes = [], ?Organization $organization = null): InvoiceNumberingSeries
+    {
+        if (! $organization) {
+            $organization = createOrganizationWithLocation();
+        }
+
+        $defaultAttributes = [
+            'organization_id' => $organization->id,
+            'name' => 'Test Series',
+            'prefix' => 'TST',
+            'format_pattern' => '{PREFIX}-{SEQUENCE:4}',
+            'current_number' => 0,
+            'reset_frequency' => 'never',
+            'is_active' => true,
+            'is_default' => false,
+        ];
+
+        return InvoiceNumberingSeries::create(array_merge($defaultAttributes, $attributes));
     }
 }
