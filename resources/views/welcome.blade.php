@@ -15,6 +15,40 @@
 
         <!-- Styles / Scripts -->
         @vite(['resources/css/app.css'])
+
+        <style>
+            /* Heights must match translateY steps in their respective keyframes */
+            .hero-line-item { height: 1.25rem; }
+            .hero-total-item { height: 2.5rem; }
+            .hero-line-wrapper { height: 1.25rem; min-width: 7rem; justify-content: flex-end; }
+            .hero-dirham-icon { filter: brightness(0) invert(1); }
+            .hero-dirham-icon-gradient { filter: brightness(0) saturate(100%) invert(70%) sepia(50%) saturate(500%) hue-rotate(200deg); }
+
+            /* Each step = .hero-line-item height (1.25rem) */
+            @keyframes line-cycle {
+                0%, 16% { transform: translateY(0); }
+                20%, 36% { transform: translateY(-1.25rem); }
+                40%, 56% { transform: translateY(-2.5rem); }
+                60%, 76% { transform: translateY(-3.75rem); }
+                80%, 96% { transform: translateY(-5rem); }
+                100% { transform: translateY(0); }
+            }
+            /* Each step = .hero-total-item height (2.5rem) */
+            @keyframes total-cycle {
+                0%, 16% { transform: translateY(0); }
+                20%, 36% { transform: translateY(-2.5rem); }
+                40%, 56% { transform: translateY(-5rem); }
+                60%, 76% { transform: translateY(-7.5rem); }
+                80%, 96% { transform: translateY(-10rem); }
+                100% { transform: translateY(0); }
+            }
+            .hero-line-cycle {
+                animation: line-cycle 10s ease-in-out infinite;
+            }
+            .hero-total-cycle {
+                animation: total-cycle 10s ease-in-out infinite;
+            }
+        </style>
     </head>
     <body class="font-sans antialiased overflow-x-hidden bg-gray-950 text-white">
 
@@ -110,6 +144,24 @@
                 {{-- Hero visual — floating invoice mockup --}}
                 <div class="relative mx-auto max-w-3xl">
                     <div class="absolute -inset-4 bg-gradient-to-r from-brand-600/20 via-violet-500/20 to-fuchsia-500/20 rounded-2xl blur-2xl opacity-60"></div>
+
+                    {{-- Floating currency pills --}}
+                    <div class="absolute -top-3 -left-3 sm:-left-6 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold font-mono animate-bounce [animation-delay:0s] [animation-duration:3s]">
+                        ₹ INR
+                    </div>
+                    <div class="absolute -top-3 right-1/4 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold font-mono animate-bounce [animation-delay:0.5s] [animation-duration:3s]">
+                        $ USD
+                    </div>
+                    <div class="absolute top-1/4 -right-3 sm:-right-6 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-bold font-mono animate-bounce [animation-delay:1s] [animation-duration:3s]">
+                        € EUR
+                    </div>
+                    <div class="absolute bottom-1/3 -left-3 sm:-left-6 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold font-mono animate-bounce [animation-delay:1.5s] [animation-duration:3s]">
+                        <img src="{{ asset('images/dirham-symbol.svg') }}" alt="AED" class="inline h-3 hero-dirham-icon opacity-80"> AED
+                    </div>
+                    <div class="absolute -bottom-3 right-1/3 px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-bold font-mono animate-bounce [animation-delay:2s] [animation-duration:3s]">
+                        £ GBP
+                    </div>
+
                     <div class="relative rounded-xl border border-white/10 bg-gray-900/80 backdrop-blur-xl shadow-2xl overflow-hidden">
                         {{-- Window chrome --}}
                         <div class="flex items-center gap-2 px-4 py-3 border-b border-white/5">
@@ -133,26 +185,59 @@
                                 </div>
                             </div>
 
-                            {{-- Line items --}}
+                            {{-- Line items — all amounts cycle together across currencies --}}
                             <div class="border-t border-white/5">
                                 <div class="flex justify-between py-3 text-sm border-b border-white/5">
                                     <span class="text-gray-300">Web Application Development</span>
-                                    <span class="font-mono text-gray-200">$12,500.00</span>
+                                    <span class="font-mono text-gray-200 relative overflow-hidden inline-flex hero-line-wrapper">
+                                        <span class="hero-line-cycle flex flex-col items-end">
+                                            <span class="hero-line-item flex items-center gap-1">₹10,37,500</span>
+                                            <span class="hero-line-item flex items-center gap-1">$12,500.00</span>
+                                            <span class="hero-line-item flex items-center gap-1">€11,600.00</span>
+                                            <span class="hero-line-item flex items-center gap-1"><img src="{{ asset('images/dirham-symbol.svg') }}" alt="AED" class="h-3 shrink-0 hero-dirham-icon"> 45,900</span>
+                                            <span class="hero-line-item flex items-center gap-1">£9,800.00</span>
+                                        </span>
+                                    </span>
                                 </div>
                                 <div class="flex justify-between py-3 text-sm border-b border-white/5">
                                     <span class="text-gray-300">UI/UX Design &mdash; 40 hrs</span>
-                                    <span class="font-mono text-gray-200">$4,800.00</span>
+                                    <span class="font-mono text-gray-200 relative overflow-hidden inline-flex hero-line-wrapper">
+                                        <span class="hero-line-cycle flex flex-col items-end">
+                                            <span class="hero-line-item flex items-center gap-1">₹3,98,400</span>
+                                            <span class="hero-line-item flex items-center gap-1">$4,800.00</span>
+                                            <span class="hero-line-item flex items-center gap-1">€4,450.00</span>
+                                            <span class="hero-line-item flex items-center gap-1"><img src="{{ asset('images/dirham-symbol.svg') }}" alt="AED" class="h-3 shrink-0 hero-dirham-icon"> 17,600</span>
+                                            <span class="hero-line-item flex items-center gap-1">£3,760.00</span>
+                                        </span>
+                                    </span>
                                 </div>
                                 <div class="flex justify-between py-3 text-sm border-b border-white/5">
                                     <span class="text-gray-300">Cloud Infrastructure Setup</span>
-                                    <span class="font-mono text-gray-200">$2,200.00</span>
+                                    <span class="font-mono text-gray-200 relative overflow-hidden inline-flex hero-line-wrapper">
+                                        <span class="hero-line-cycle flex flex-col items-end">
+                                            <span class="hero-line-item flex items-center gap-1">₹1,82,600</span>
+                                            <span class="hero-line-item flex items-center gap-1">$2,200.00</span>
+                                            <span class="hero-line-item flex items-center gap-1">€2,050.00</span>
+                                            <span class="hero-line-item flex items-center gap-1"><img src="{{ asset('images/dirham-symbol.svg') }}" alt="AED" class="h-3 shrink-0 hero-dirham-icon"> 8,080</span>
+                                            <span class="hero-line-item flex items-center gap-1">£1,720.00</span>
+                                        </span>
+                                    </span>
                                 </div>
                             </div>
 
-                            {{-- Total --}}
+                            {{-- Cycling total --}}
                             <div class="flex justify-between items-center pt-6 mt-2">
                                 <span class="text-sm text-gray-500 uppercase tracking-wide font-semibold">Total</span>
-                                <span class="text-3xl font-black bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">$19,500.00</span>
+                                <div class="hero-total-item relative overflow-hidden">
+                                    <div class="hero-total-cycle flex flex-col items-end">
+                                        <span class="hero-total-item flex items-center text-3xl font-black bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">₹16,18,500</span>
+                                        <span class="hero-total-item flex items-center text-3xl font-black bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">$19,500.00</span>
+                                        <span class="hero-total-item flex items-center text-3xl font-black bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">€18,100.00</span>
+                                        {{-- Dirham uses a separate gradient-tinted filter since bg-clip-text hides the <img> --}}
+                                        <span class="hero-total-item flex items-center gap-1.5 text-3xl font-black"><img src="{{ asset('images/dirham-symbol.svg') }}" alt="AED" class="h-5 shrink-0 hero-dirham-icon-gradient"> <span class="bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">71,580</span></span>
+                                        <span class="hero-total-item flex items-center text-3xl font-black bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">£15,280.00</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
