@@ -6,8 +6,8 @@ vendor/
 .gitmodules
 .github/
 tests/
+coverage/
 phpunit.xml
-phpunit.dusk.xml
 .env
 .env.*
 *.md
@@ -30,5 +30,6 @@ storage/logs/*
 storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*
+docker/8.5/
 .DS_Store
 Thumbs.db

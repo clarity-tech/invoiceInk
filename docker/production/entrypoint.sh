@@ -37,11 +37,6 @@ if [ -n "$REDIS_HOST" ]; then
     fi
 fi
 
-# Ensure proper permissions
-echo "Setting up file permissions..."
-chmod -R 755 /app
-chmod -R 775 /app/storage /app/bootstrap/cache
-
 # Generate application key FIRST if not set
 if [ -z "$APP_KEY" ]; then
     echo "Generating application key..."
@@ -63,15 +58,7 @@ echo "Discovering packages..."
 # composer run-script post-autoload-dump
 
 if [ "$APP_ENV" = "production" ]; then
-    # Clear any existing caches first
-    php artisan optimize:clear
-
-    # Cache configurations in production
-    php artisan config:cache
-    php artisan route:cache
-    php artisan view:cache
-
-    # Run optimizations
+    # Cache configurations in production (optimize handles config, route, view, event caching)
     php artisan optimize
 else
     # Clear caches in non-production environments

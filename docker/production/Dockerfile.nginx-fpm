@@ -1,5 +1,5 @@
 # Production Dockerfile with ServerSideUp FPM + Nginx
-# Optimized: separate PHP deps, frontend build (npm), clean app assembly
+# Optimized: separate PHP deps, frontend build (Bun), clean app assembly
 
 # ========================================
 # Stage 1: PHP Dependencies
@@ -21,18 +21,18 @@ RUN composer install \
     --classmap-authoritative
 
 # ========================================
-# Stage 2: Frontend Build (Node.js + npm)
+# Stage 2: Frontend Build (Bun)
 # ========================================
-FROM node:24-slim AS frontend
+FROM oven/bun:1 AS frontend
 
 WORKDIR /build
 
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json bun.lockb ./
+RUN bun install --frozen-lockfile
 
 # Copy only what Tailwind @source + Vite needs
 COPY resources/ resources/
-COPY vite.config.js postcss.config.js tailwind.config.js ./
+COPY vite.config.ts postcss.config.js tailwind.config.js ./
 
 # Vendor blade files for Tailwind class scanning (referenced in app.css @source)
 COPY --from=php-deps /var/www/html/vendor/laravel/framework/src/Illuminate/Pagination/resources/views/ \
@@ -41,36 +41,16 @@ COPY --from=php-deps /var/www/html/vendor/laravel/framework/src/Illuminate/Pagin
 RUN mkdir -p storage/framework/views
 
 ARG VITE_APP_NAME="Clarity Invoicing"
-RUN npm run build
-
-# ========================================
-# Stage 3: Clean Application Assembly
-# ========================================
-FROM serversideup/php:8.5-cli AS app
-
-USER root
-WORKDIR /var/www/html
-
-COPY . .
-COPY --from=php-deps /var/www/html/vendor vendor/
-COPY --from=frontend /build/public/build public/build/
-
-# Remove non-runtime files
-RUN rm -rf node_modules tests docker .git .github .agents .claude .gemini \
-    docs *.md phpunit.xml phpunit.dusk.xml package-lock.json package.json boost.json \
-    .env .env.* .editorconfig .gitignore .gitattributes .gitmodules \
-    .mcp.json postcss.config.js tailwind.config.js vite.config.js \
-    resources/css resources/js
+RUN bun run build
 
 # ========================================
 # Production Stage - ServerSideUp FPM + Nginx
 # ========================================
 FROM serversideup/php:8.5-fpm-nginx AS production
 
-# Switch to root for PHP extension installation
 USER root
 
-# Install additional PHP extensions needed for Laravel
+# Install PHP extensions + supervisor in one layer (cached independently of app code)
 RUN install-php-extensions \
     pdo_pgsql \
     pgsql \
@@ -78,57 +58,46 @@ RUN install-php-extensions \
     gd \
     bcmath \
     intl \
-    exif
+    exif \
+    && apt-get update && apt-get install -y --no-install-recommends \
+        supervisor \
+        curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /var/log/supervisor
 
-# Set production environment variables
-ENV APP_ENV=production
-ENV APP_DEBUG=false
-ENV LOG_CHANNEL=stderr
-ENV LOG_STDERR_FORMATTER=Monolog\Formatter\JsonFormatter
-ENV SESSION_DRIVER=redis
-ENV CACHE_DRIVER=redis
-ENV QUEUE_CONNECTION=redis
-ENV REDIS_HOST=redis
-ENV REDIS_PORT=6379
-
-# Copy clean application from app stage
-COPY --from=app --chown=www-data:www-data /var/www/html /var/www/html
-
-# Copy H5BP and Laravel nginx configurations
+# Copy nginx and production configuration files (cached before app code)
 COPY --chown=www-data:www-data docker/production/nginx/h5bp/h5bp/ /etc/nginx/h5bp/
 COPY --chown=www-data:www-data docker/production/nginx/h5bp/mime.types /etc/nginx/mime.types
-
-# Copy Laravel customizations
 COPY --chown=www-data:www-data docker/production/nginx/laravel-custom/ /etc/nginx/laravel-custom/
-
-# Copy generated configurations
 COPY --chown=www-data:www-data docker/production/nginx/generated/nginx.conf /etc/nginx/nginx.conf
 COPY --chown=www-data:www-data docker/production/nginx/generated/laravel-site.conf /etc/nginx/conf.d/default.conf
-
-# Copy other production configuration files
 COPY --chown=www-data:www-data docker/production/php.ini /usr/local/etc/php/conf.d/99-production.ini
 COPY --chown=www-data:www-data docker/production/entrypoint-nginx.sh /usr/local/bin/entrypoint.sh
 COPY --chown=www-data:www-data docker/production/supervisor-nginx.conf /etc/supervisor/conf.d/laravel.conf
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Set correct permissions
-RUN chmod +x /usr/local/bin/entrypoint.sh && \
-    chown -R www-data:www-data /var/www/html && \
-    chmod -R 755 /var/www/html && \
-    chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Copy application code (changes most frequently — last for cache efficiency)
+COPY --chown=www-data:www-data . /var/www/html
+COPY --from=php-deps --chown=www-data:www-data /var/www/html/vendor /var/www/html/vendor/
+COPY --from=frontend --chown=www-data:www-data /build/public/build /var/www/html/public/build/
 
-# Switch to root for package installation
-USER root
+# Remove leftover non-runtime files not caught by .dockerignore
+RUN rm -rf /var/www/html/docker /var/www/html/resources/css /var/www/html/resources/js \
+    /var/www/html/postcss.config.js /var/www/html/tailwind.config.js /var/www/html/vite.config.ts \
+    /var/www/html/package.json /var/www/html/bun.lockb
 
-# Install supervisor for background processes
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    supervisor \
-    netcat-openbsd \
-    curl \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# Set correct permissions on writable directories
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Create supervisor log directory
-RUN mkdir -p /var/log/supervisor
+# Set production environment variables
+ENV APP_ENV=production \
+    APP_DEBUG=false \
+    LOG_CHANNEL=stderr \
+    LOG_STDERR_FORMATTER=Monolog\\Formatter\\JsonFormatter \
+    SESSION_DRIVER=redis \
+    CACHE_STORE=redis \
+    QUEUE_CONNECTION=redis
 
 # Expose ports (80 for Nginx)
 EXPOSE 80
