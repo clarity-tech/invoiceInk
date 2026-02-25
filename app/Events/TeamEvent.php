@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Models\Organization;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -13,7 +14,7 @@ abstract class TeamEvent
     /**
      * The team instance.
      *
-     * @var \App\Models\Organization
+     * @var Organization
      */
     public $team;
 

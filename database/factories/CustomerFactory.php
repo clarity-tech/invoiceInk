@@ -4,11 +4,12 @@ namespace Database\Factories;
 
 use App\Models\Customer;
 use App\Models\Location;
+use App\Models\Organization;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Customer>
+ * @extends Factory<Customer>
  */
 class CustomerFactory extends Factory
 {
@@ -31,7 +32,7 @@ class CustomerFactory extends Factory
                 ['name' => fake()->name(), 'email' => fake()->unique()->userName().'@'.fake()->domainName(1).'.test'],
                 fake()->randomFloat() < 0.4 ? ['name' => fake()->name(), 'email' => fake()->unique()->userName().'@'.fake()->domainName(1).'.test'] : null,
             ])),
-            'organization_id' => \App\Models\Organization::factory(),
+            'organization_id' => Organization::factory(),
             'primary_location_id' => null, // Will be set after location creation
         ];
     }
@@ -275,7 +276,7 @@ class CustomerFactory extends Factory
     }
 
     /**
-     * German customer  
+     * German customer
      */
     public function germanCustomer(): static
     {
@@ -382,7 +383,7 @@ class CustomerFactory extends Factory
             ]),
             'emails' => new ContactCollection([
                 ['name' => 'Procurement', 'email' => 'procurement@'.fake()->lexify('????????').'.test'],
-                ['name' => 'Finance', 'email' => 'finance@'.fake()->lexify('????????').'.test'], 
+                ['name' => 'Finance', 'email' => 'finance@'.fake()->lexify('????????').'.test'],
                 ['name' => 'Legal', 'email' => 'legal@'.fake()->lexify('????????').'.test'],
             ]),
             'created_at' => fake()->dateTimeBetween('-5 years', '-1 year'),

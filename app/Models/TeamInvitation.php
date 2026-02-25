@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Database\Factories\TeamInvitationFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class TeamInvitation extends \Illuminate\Database\Eloquent\Model
+class TeamInvitation extends Model
 {
-    /** @use HasFactory<\Database\Factories\TeamInvitationFactory> */
+    /** @use HasFactory<TeamInvitationFactory> */
     use HasFactory;
 
     /**

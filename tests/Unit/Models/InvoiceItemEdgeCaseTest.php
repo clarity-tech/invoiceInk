@@ -1,8 +1,6 @@
 <?php
 
-
-
-
+use App\Models\Invoice;
 
 test('invoice item handles very large numbers', function () {
     $invoice = createInvoiceWithItems([
@@ -110,6 +108,6 @@ test('invoice item belongs to correct invoice after creation', function () {
     $item = $invoice->items->first();
 
     expect($item->invoice_id)->toBe($invoice->id);
-    expect($item->invoice)->toBeInstanceOf(\App\Models\Invoice::class);
+    expect($item->invoice)->toBeInstanceOf(Invoice::class);
     expect($item->invoice->id)->toBe($invoice->id);
 });

@@ -3,11 +3,13 @@
 namespace Database\Factories;
 
 use App\Enums\Country;
+use App\Models\Location;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Organization>
+ * @extends Factory<Organization>
  */
 class OrganizationFactory extends Factory
 {
@@ -68,7 +70,7 @@ class OrganizationFactory extends Factory
                 'locatable_id' => $organization->id,
             ];
 
-            $location = \App\Models\Location::create(array_merge($defaultLocationAttributes, $locationAttributes));
+            $location = Location::create(array_merge($defaultLocationAttributes, $locationAttributes));
 
             $organization->update(['primary_location_id' => $location->id]);
 
@@ -329,7 +331,7 @@ class OrganizationFactory extends Factory
                 'postal_code' => $this->faker->postcode,
             ];
 
-            $location = \App\Models\Location::create([
+            $location = Location::create([
                 ...$defaultAttributes,
                 ...$locationOverrides,
                 'locatable_type' => get_class($organization),
@@ -349,7 +351,7 @@ class OrganizationFactory extends Factory
             $locations = collect();
 
             for ($i = 0; $i < $count; $i++) {
-                $location = \App\Models\Location::create([
+                $location = Location::create([
                     'name' => $i === 0 ? 'Head Office' : "Branch Office {$i}",
                     'address_line_1' => $this->faker->streetAddress,
                     'city' => $this->faker->city,

@@ -13,13 +13,13 @@ abstract class ProductionSafeSeeder extends Seeder
     {
         if (! $this->isLocalEnvironment()) {
             $this->command->error('Seeders can only be run in the local environment for safety.');
-            $this->command->error('Current environment: ' . app()->environment());
+            $this->command->error('Current environment: '.app()->environment());
             $this->command->error('To run seeders, set APP_ENV=local in your .env file.');
-            
+
             return;
         }
 
-        $this->command->info('Running seeder: ' . static::class);
+        $this->command->info('Running seeder: '.static::class);
         $this->seed();
     }
 

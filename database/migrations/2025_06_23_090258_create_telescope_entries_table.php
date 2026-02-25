@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Laravel\Telescope\Telescope;
 
 return new class extends Migration
 {
@@ -16,7 +17,7 @@ return new class extends Migration
 
     protected function skipTelescopeMigrations(): bool
     {
-        if (config('telescope.enabled', true) && class_exists(\Laravel\Telescope\Telescope::class)) {
+        if (config('telescope.enabled', true) && class_exists(Telescope::class)) {
             return false;
         }
 

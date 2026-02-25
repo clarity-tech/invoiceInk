@@ -4,6 +4,7 @@ namespace App\Actions\Jetstream;
 
 use App\Contracts\Teams\DeletesUsers;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -49,7 +50,7 @@ class DeleteUser implements DeletesUsers
      * If an owned organization has other members, the user must transfer
      * ownership before deleting their account.
      */
-    protected function ensureOwnedOrganizationsCanBeDeleted(User $user, \Illuminate\Support\Collection $ownedTeams): void
+    protected function ensureOwnedOrganizationsCanBeDeleted(User $user, Collection $ownedTeams): void
     {
         $organizationsWithMembers = $ownedTeams
             ->filter(fn ($team) => $team->users()->where('user_id', '!=', $user->id)->count() > 0);

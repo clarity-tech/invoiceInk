@@ -1,11 +1,17 @@
 <?php
 
+use App\Casts\ExchangeRateCast;
 use App\Currency;
 use App\Enums\InvoiceStatus;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Organization;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 test('can create invoice with required fields', function () {
     $invoice = createInvoiceWithItems([
@@ -171,8 +177,8 @@ test('invoice dates are cast to Carbon instances', function () {
         'total' => 1180,
     ]);
 
-    expect($invoice->issued_at)->toBeInstanceOf(\Illuminate\Support\Carbon::class);
-    expect($invoice->due_at)->toBeInstanceOf(\Illuminate\Support\Carbon::class);
+    expect($invoice->issued_at)->toBeInstanceOf(Carbon::class);
+    expect($invoice->due_at)->toBeInstanceOf(Carbon::class);
     expect($invoice->issued_at->format('Y-m-d'))->toBe('2025-01-01');
     expect($invoice->due_at->format('Y-m-d'))->toBe('2025-01-31');
 });
@@ -233,7 +239,7 @@ test('invoice uses HasUlids trait', function () {
     $invoice = new Invoice;
     $traits = class_uses($invoice);
 
-    expect($traits)->toHaveKey(\Illuminate\Database\Eloquent\Concerns\HasUlids::class);
+    expect($traits)->toHaveKey(HasUlids::class);
 });
 
 test('invoice unique ids configuration', function () {
@@ -280,14 +286,14 @@ test('invoice casts method returns correct array', function () {
 
     expect($casts['issued_at'])->toBe('datetime');
     expect($casts['due_at'])->toBe('datetime');
-    expect($casts['exchange_rate'])->toBe(\App\Casts\ExchangeRateCast::class);
+    expect($casts['exchange_rate'])->toBe(ExchangeRateCast::class);
     expect($casts['tax_breakdown'])->toBe('json');
     expect($casts['email_recipients'])->toBe('json');
 });
 
 test('invoice uses HasFactory trait', function () {
     $invoice = new Invoice;
-    expect(in_array(\Illuminate\Database\Eloquent\Factories\HasFactory::class, class_uses($invoice)))->toBeTrue();
+    expect(in_array(HasFactory::class, class_uses($invoice)))->toBeTrue();
 });
 
 test('invoice factory creates valid instances', function () {
@@ -337,23 +343,23 @@ test('invoice relationships are correctly configured', function () {
 
     // Test organization relationship
     $organizationRelation = $invoice->organization();
-    expect($organizationRelation)->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
+    expect($organizationRelation)->toBeInstanceOf(BelongsTo::class);
 
     // Test customer relationship
     $customerRelation = $invoice->customer();
-    expect($customerRelation)->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
+    expect($customerRelation)->toBeInstanceOf(BelongsTo::class);
 
     // Test organizationLocation relationship
     $orgLocationRelation = $invoice->organizationLocation();
-    expect($orgLocationRelation)->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
+    expect($orgLocationRelation)->toBeInstanceOf(BelongsTo::class);
 
     // Test customerLocation relationship
     $custLocationRelation = $invoice->customerLocation();
-    expect($custLocationRelation)->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
+    expect($custLocationRelation)->toBeInstanceOf(BelongsTo::class);
 
     // Test items relationship
     $itemsRelation = $invoice->items();
-    expect($itemsRelation)->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class);
+    expect($itemsRelation)->toBeInstanceOf(HasMany::class);
 });
 
 test('invoice exchange rate is cast to decimal', function () {

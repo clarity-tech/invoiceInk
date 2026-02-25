@@ -2,11 +2,8 @@
 
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Models\User;
-
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-
-
 
 beforeEach(function () {
     $this->action = new UpdateUserPassword;

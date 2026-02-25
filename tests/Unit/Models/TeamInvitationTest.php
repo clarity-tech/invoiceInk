@@ -2,6 +2,8 @@
 
 use App\Models\Organization;
 use App\Models\TeamInvitation;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 beforeEach(function () {
     $this->organization = Organization::factory()->create();
@@ -33,7 +35,7 @@ it('belongs to a team', function () {
 });
 
 it('extends Eloquent Model', function () {
-    expect($this->invitation)->toBeInstanceOf(\Illuminate\Database\Eloquent\Model::class);
+    expect($this->invitation)->toBeInstanceOf(Model::class);
 });
 
 it('can have different roles', function () {
@@ -74,6 +76,6 @@ it('can be mass assigned', function () {
 it('has team relationship using Jetstream model', function () {
     $relationship = $this->invitation->team();
 
-    expect($relationship)->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
-    expect($relationship->getRelated())->toBeInstanceOf(\App\Models\Organization::class);
+    expect($relationship)->toBeInstanceOf(BelongsTo::class);
+    expect($relationship->getRelated())->toBeInstanceOf(Organization::class);
 });

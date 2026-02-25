@@ -3,6 +3,7 @@
 use App\Models\Customer;
 use App\Models\Location;
 use App\Models\Organization;
+use App\ValueObjects\ContactCollection;
 
 test('can create location with all fields', function () {
     $location = Location::create([
@@ -50,7 +51,7 @@ test('can create location with minimal required fields', function () {
 test('location belongs to organization through polymorphic relationship', function () {
     $organization = createOrganizationWithLocation([
         'name' => 'Test Organization',
-        'emails' => new \App\ValueObjects\ContactCollection([['name' => 'Test Organization', 'email' => 'test@organization.com']]),
+        'emails' => new ContactCollection([['name' => 'Test Organization', 'email' => 'test@organization.com']]),
     ]);
 
     $location = Location::create([
@@ -71,7 +72,7 @@ test('location belongs to organization through polymorphic relationship', functi
 test('location belongs to customer through polymorphic relationship', function () {
     $customer = createCustomerWithLocation([
         'name' => 'Test Customer',
-        'emails' => new \App\ValueObjects\ContactCollection([['name' => 'Test Customer', 'email' => 'test@customer.com']]),
+        'emails' => new ContactCollection([['name' => 'Test Customer', 'email' => 'test@customer.com']]),
     ]);
 
     $location = Location::create([
@@ -117,7 +118,7 @@ test('location polymorphic relationship works with different models', function (
     // Test with Organization
     $organization = createOrganizationWithLocation([
         'name' => 'Test Organization',
-        'emails' => new \App\ValueObjects\ContactCollection([['name' => 'Organization', 'email' => 'organization@test.com']]),
+        'emails' => new ContactCollection([['name' => 'Organization', 'email' => 'organization@test.com']]),
     ]);
 
     $organizationLocation = Location::create([
@@ -134,7 +135,7 @@ test('location polymorphic relationship works with different models', function (
     // Test with Customer
     $customer = createCustomerWithLocation([
         'name' => 'Test Customer',
-        'emails' => new \App\ValueObjects\ContactCollection([['name' => 'Customer', 'email' => 'customer@test.com']]),
+        'emails' => new ContactCollection([['name' => 'Customer', 'email' => 'customer@test.com']]),
     ]);
 
     $customerLocation = Location::create([

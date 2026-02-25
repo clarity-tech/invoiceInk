@@ -13,6 +13,7 @@ use App\Models\Membership;
 use App\Models\Organization;
 use App\Models\TeamInvitation;
 use App\Models\User;
+use App\Traits\HasTeams;
 use Illuminate\Support\Arr;
 
 class Jetstream
@@ -129,7 +130,7 @@ class Jetstream
      */
     public static function userHasTeamFeatures($user): bool
     {
-        return (array_key_exists(\App\Traits\HasTeams::class, class_uses_recursive($user)) ||
+        return (array_key_exists(HasTeams::class, class_uses_recursive($user)) ||
                 method_exists($user, 'currentTeam')) &&
                 static::hasTeamFeatures();
     }

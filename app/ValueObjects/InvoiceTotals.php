@@ -2,6 +2,8 @@
 
 namespace App\ValueObjects;
 
+use App\Currency;
+
 readonly class InvoiceTotals
 {
     public function __construct(
@@ -29,7 +31,7 @@ readonly class InvoiceTotals
      */
     public function formatSubtotal(string $currency = 'INR'): string
     {
-        return \App\Currency::from($currency)->formatAmount($this->subtotal);
+        return Currency::from($currency)->formatAmount($this->subtotal);
     }
 
     /**
@@ -37,7 +39,7 @@ readonly class InvoiceTotals
      */
     public function formatTax(string $currency = 'INR'): string
     {
-        return \App\Currency::from($currency)->formatAmount($this->tax);
+        return Currency::from($currency)->formatAmount($this->tax);
     }
 
     /**
@@ -45,7 +47,7 @@ readonly class InvoiceTotals
      */
     public function formatTotal(string $currency = 'INR'): string
     {
-        return \App\Currency::from($currency)->formatAmount($this->total);
+        return Currency::from($currency)->formatAmount($this->total);
     }
 
     /**

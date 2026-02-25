@@ -2,6 +2,7 @@
 
 use App\Models\Invoice;
 use App\Services\PdfService;
+use Symfony\Component\HttpFoundation\Response;
 
 test('can generate PDF for invoice', function () {
     $invoice = createInvoiceWithItems([
@@ -25,7 +26,7 @@ test('can generate PDF for invoice', function () {
         // If successful, PDF content should be a string and start with PDF header
         expect($pdfContent)->toBeString();
         expect(substr($pdfContent, 0, 4))->toBe('%PDF');
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         // If Puppeteer is not available or has compatibility issues, skip the test
         if (str_contains($e->getMessage(), 'Failed to launch') ||
             str_contains($e->getMessage(), 'Dynamic loader not found') ||
@@ -57,10 +58,10 @@ test('can generate download response for invoice', function () {
         $response = $pdfService->downloadInvoicePdf($invoice);
 
         // If successful, verify response properties
-        expect($response)->toBeInstanceOf(\Symfony\Component\HttpFoundation\Response::class);
+        expect($response)->toBeInstanceOf(Response::class);
         expect($response->headers->get('Content-Type'))->toBe('application/pdf');
         expect($response->headers->get('Content-Disposition'))->toContain('attachment; filename="invoice-TEST-002.pdf"');
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         // If Puppeteer is not available or has compatibility issues, skip the test
         if (str_contains($e->getMessage(), 'Failed to launch') ||
             str_contains($e->getMessage(), 'Dynamic loader not found') ||
@@ -92,7 +93,7 @@ test('can generate PDF for estimate', function () {
 
         expect($pdfContent)->toBeString();
         expect(substr($pdfContent, 0, 4))->toBe('%PDF');
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         if (str_contains($e->getMessage(), 'Failed to launch') ||
             str_contains($e->getMessage(), 'Dynamic loader not found') ||
             str_contains($e->getMessage(), 'Failed to generate PDF')) {
@@ -121,10 +122,10 @@ test('can generate download response for estimate', function () {
     try {
         $response = $pdfService->downloadEstimatePdf($estimate);
 
-        expect($response)->toBeInstanceOf(\Symfony\Component\HttpFoundation\Response::class);
+        expect($response)->toBeInstanceOf(Response::class);
         expect($response->headers->get('Content-Type'))->toBe('application/pdf');
         expect($response->headers->get('Content-Disposition'))->toContain('attachment; filename="estimate-EST-002.pdf"');
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         if (str_contains($e->getMessage(), 'Failed to launch') ||
             str_contains($e->getMessage(), 'Dynamic loader not found') ||
             str_contains($e->getMessage(), 'Failed to generate PDF')) {
@@ -147,7 +148,7 @@ test('pdf service handles invoice without items gracefully', function () {
         $pdfContent = $pdfService->generateInvoicePdf($invoice);
         expect($pdfContent)->toBeString();
         expect(substr($pdfContent, 0, 4))->toBe('%PDF');
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         if (str_contains($e->getMessage(), 'Failed to launch') ||
             str_contains($e->getMessage(), 'Dynamic loader not found') ||
             str_contains($e->getMessage(), 'Failed to generate PDF')) {
@@ -170,7 +171,7 @@ test('pdf service handles empty invoice items', function () {
         $pdfContent = $pdfService->generateInvoicePdf($invoice);
         expect($pdfContent)->toBeString();
         expect(substr($pdfContent, 0, 4))->toBe('%PDF');
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         if (str_contains($e->getMessage(), 'Failed to launch') ||
             str_contains($e->getMessage(), 'Dynamic loader not found') ||
             str_contains($e->getMessage(), 'Failed to generate PDF')) {
@@ -212,7 +213,7 @@ test('pdf service handles invoice with complex items', function () {
         $pdfContent = $pdfService->generateInvoicePdf($invoice);
         expect($pdfContent)->toBeString();
         expect(substr($pdfContent, 0, 4))->toBe('%PDF');
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         if (str_contains($e->getMessage(), 'Failed to launch') ||
             str_contains($e->getMessage(), 'Dynamic loader not found') ||
             str_contains($e->getMessage(), 'Failed to generate PDF')) {

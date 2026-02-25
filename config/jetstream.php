@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\AuthenticateSession;
+use App\Models\Organization;
 use App\Support\JetstreamFeatures as Features;
 
 return [
@@ -30,7 +32,7 @@ return [
 
     'middleware' => ['web'],
 
-    'auth_session' => \App\Http\Middleware\AuthenticateSession::class,
+    'auth_session' => AuthenticateSession::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -87,6 +89,6 @@ return [
     |
     */
 
-    'team_model' => App\Models\Organization::class,
+    'team_model' => Organization::class,
 
 ];

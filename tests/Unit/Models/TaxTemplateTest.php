@@ -3,6 +3,8 @@
 use App\Models\Organization;
 use App\Models\TaxTemplate;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 test('can create tax template with required fields', function () {
     $organization = createOrganizationWithLocation();
@@ -481,7 +483,7 @@ test('tax template casts method returns correct array', function () {
 
 test('tax template uses HasFactory trait', function () {
     $taxTemplate = new TaxTemplate;
-    expect(in_array(\Illuminate\Database\Eloquent\Factories\HasFactory::class, class_uses($taxTemplate)))->toBeTrue();
+    expect(in_array(HasFactory::class, class_uses($taxTemplate)))->toBeTrue();
 });
 
 test('tax template has organization scope applied globally', function () {
@@ -528,5 +530,5 @@ test('tax template relationship is correctly configured', function () {
 
     // Test organization relationship
     $organizationRelation = $taxTemplate->organization();
-    expect($organizationRelation)->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
+    expect($organizationRelation)->toBeInstanceOf(BelongsTo::class);
 });

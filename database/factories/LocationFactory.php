@@ -3,11 +3,13 @@
 namespace Database\Factories;
 
 use App\Enums\Country;
+use App\Models\Customer;
 use App\Models\Location;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Location>
+ * @extends Factory<Location>
  */
 class LocationFactory extends Factory
 {
@@ -27,7 +29,7 @@ class LocationFactory extends Factory
             'state' => fake()->state(),
             'country' => fake()->randomElement(Country::cases())->value,
             'postal_code' => fake()->postcode(),
-            'locatable_type' => \App\Models\Organization::class, // Default to Organization
+            'locatable_type' => Organization::class, // Default to Organization
             'locatable_id' => 1, // Default value, will be overridden by relationships
         ];
     }
@@ -38,7 +40,7 @@ class LocationFactory extends Factory
     public function forOrganization($organizationId = null): static
     {
         return $this->state(fn (array $attributes) => [
-            'locatable_type' => \App\Models\Organization::class,
+            'locatable_type' => Organization::class,
             'locatable_id' => $organizationId,
             'name' => fake()->company().' Headquarters',
         ]);
@@ -50,7 +52,7 @@ class LocationFactory extends Factory
     public function forCustomer($customerId = null): static
     {
         return $this->state(fn (array $attributes) => [
-            'locatable_type' => \App\Models\Customer::class,
+            'locatable_type' => Customer::class,
             'locatable_id' => $customerId,
             'name' => fake()->company().' Office',
         ]);

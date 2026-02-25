@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Casts\ContactCollectionCast;
+use App\Currency;
 use App\Models\Scopes\OrganizationScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,8 +27,8 @@ class Customer extends Model
     protected function casts(): array
     {
         return [
-            'emails' => \App\Casts\ContactCollectionCast::class,
-            'currency' => \App\Currency::class,
+            'emails' => ContactCollectionCast::class,
+            'currency' => Currency::class,
         ];
     }
 

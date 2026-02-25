@@ -1,8 +1,13 @@
 <?php
 
+use App\Casts\ContactCollectionCast;
 use App\Models\Customer;
 use App\Models\Location;
+use App\Models\Organization;
+use App\Models\Scopes\OrganizationScope;
 use App\ValueObjects\ContactCollection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 test('can create customer with contacts', function () {
     $contacts = new ContactCollection([
@@ -88,18 +93,18 @@ test('customer can be created without phone', function () {
 test('customer emails field uses ContactCollectionCast', function () {
     $casts = (new Customer)->getCasts();
 
-    expect($casts['emails'])->toBe(\App\Casts\ContactCollectionCast::class);
+    expect($casts['emails'])->toBe(ContactCollectionCast::class);
 });
 
 test('customer has organization relationship', function () {
     $customer = createCustomerWithLocation();
 
-    expect($customer->organization)->toBeInstanceOf(\App\Models\Organization::class);
+    expect($customer->organization)->toBeInstanceOf(Organization::class);
     expect($customer->organization_id)->toBe($customer->organization->id);
 });
 
 test('customer uses HasFactory trait', function () {
-    $traits = class_uses(\App\Models\Customer::class);
+    $traits = class_uses(Customer::class);
 
     expect($traits)->toHaveKey('Illuminate\Database\Eloquent\Factories\HasFactory');
 });
@@ -128,7 +133,7 @@ test('customer morphMany locations relationship works', function () {
         'address_line_1' => '456 Branch Ave',
     ]);
 
-    expect($customer->locations())->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphMany::class);
+    expect($customer->locations())->toBeInstanceOf(MorphMany::class);
     expect($customer->locations)->toHaveCount(2); // primary + branch
     expect($customer->locations->pluck('name'))->toContain('Branch Office');
 });
@@ -136,22 +141,22 @@ test('customer morphMany locations relationship works', function () {
 test('customer primary location belongs to relationship works', function () {
     $customer = createCustomerWithLocation();
 
-    expect($customer->primaryLocation())->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
-    expect($customer->primaryLocation)->toBeInstanceOf(\App\Models\Location::class);
+    expect($customer->primaryLocation())->toBeInstanceOf(BelongsTo::class);
+    expect($customer->primaryLocation)->toBeInstanceOf(Location::class);
 });
 
 test('customer organization belongs to relationship works', function () {
     $customer = createCustomerWithLocation();
 
-    expect($customer->organization())->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
-    expect($customer->organization)->toBeInstanceOf(\App\Models\Organization::class);
+    expect($customer->organization())->toBeInstanceOf(BelongsTo::class);
+    expect($customer->organization)->toBeInstanceOf(Organization::class);
 });
 
 test('customer has organization scope applied', function () {
     $customer = new Customer;
     $globalScopes = $customer->getGlobalScopes();
 
-    expect($globalScopes)->toHaveKey(\App\Models\Scopes\OrganizationScope::class);
+    expect($globalScopes)->toHaveKey(OrganizationScope::class);
 });
 
 test('customer can be created with all fillable attributes', function () {
@@ -222,7 +227,7 @@ test('customer casts method returns correct array', function () {
 
     expect($casts)->toBeArray();
     expect($casts)->toHaveKey('emails');
-    expect($casts['emails'])->toBe(\App\Casts\ContactCollectionCast::class);
+    expect($casts['emails'])->toBe(ContactCollectionCast::class);
 });
 
 test('customer locations polymorphic relationship is configured correctly', function () {

@@ -217,7 +217,7 @@ test('converter throws exception when trying to convert non-estimate', function 
     $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
 
     expect(fn () => $converter->convert($invoice))
-        ->toThrow(\InvalidArgumentException::class, 'Only estimates can be converted to invoices');
+        ->toThrow(InvalidArgumentException::class, 'Only estimates can be converted to invoices');
 });
 
 test('converter throws exception when trying to convert invoice type', function () {
@@ -230,7 +230,7 @@ test('converter throws exception when trying to convert invoice type', function 
     $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
 
     expect(fn () => $converter->convert($invoice))
-        ->toThrow(\InvalidArgumentException::class, 'Only estimates can be converted to invoices');
+        ->toThrow(InvalidArgumentException::class, 'Only estimates can be converted to invoices');
 });
 
 test('converter generates sequential invoice numbers for same month', function () {

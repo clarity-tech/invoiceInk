@@ -2,6 +2,8 @@
 
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 test('can create invoice item with all fields', function () {
     $invoice = createInvoiceWithItems([
@@ -183,7 +185,7 @@ test('invoice item casts method returns correct array', function () {
 
 test('invoice item uses HasFactory trait', function () {
     $item = new InvoiceItem;
-    expect(in_array(\Illuminate\Database\Eloquent\Factories\HasFactory::class, class_uses($item)))->toBeTrue();
+    expect(in_array(HasFactory::class, class_uses($item)))->toBeTrue();
 });
 
 test('invoice item factory creates valid instances', function () {
@@ -205,7 +207,7 @@ test('invoice item relationship is correctly configured', function () {
 
     // Test invoice relationship
     $invoiceRelation = $item->invoice();
-    expect($invoiceRelation)->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
+    expect($invoiceRelation)->toBeInstanceOf(BelongsTo::class);
 });
 
 test('invoice item getLineTotal calculates correctly', function () {

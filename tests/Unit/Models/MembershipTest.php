@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Membership;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 
 beforeEach(function () {
     $this->membership = new Membership;
@@ -11,7 +12,7 @@ it('has auto-incrementing IDs enabled', function () {
 });
 
 it('extends Pivot', function () {
-    expect($this->membership)->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\Pivot::class);
+    expect($this->membership)->toBeInstanceOf(Pivot::class);
 });
 
 it('inherits fillable attributes from parent', function () {

@@ -7,7 +7,7 @@ use App\Models\TaxTemplate;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\TaxTemplate>
+ * @extends Factory<TaxTemplate>
  */
 class TaxTemplateFactory extends Factory
 {

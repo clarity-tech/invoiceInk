@@ -1,15 +1,11 @@
 <?php
 
-use App\Models\Invoice;
 use App\Services\PdfService;
-
 use Illuminate\Http\Response;
 use Spatie\Browsershot\Browsershot;
 
-
-
 test('pdf service can be instantiated', function () {
-    $pdfService = new PdfService();
+    $pdfService = new PdfService;
     expect($pdfService)->toBeInstanceOf(PdfService::class);
 });
 
@@ -19,8 +15,8 @@ test('pdf service generates correct filename for invoice', function () {
         'invoice_number' => 'INV-123',
     ]);
 
-    $pdfService = new PdfService();
-    
+    $pdfService = new PdfService;
+
     // Use reflection to test the private method
     $reflection = new ReflectionClass($pdfService);
     $method = $reflection->getMethod('generatePdfFromHtml');
@@ -42,16 +38,16 @@ test('pdf service generates correct filename for invoice', function () {
 });
 
 test('pdf service has correct public methods', function () {
-    $pdfService = new PdfService();
+    $pdfService = new PdfService;
     $reflection = new ReflectionClass($pdfService);
-    
+
     $publicMethods = array_filter(
         $reflection->getMethods(ReflectionMethod::IS_PUBLIC),
-        fn($method) => !$method->isConstructor()
+        fn ($method) => ! $method->isConstructor()
     );
-    
-    $methodNames = array_map(fn($method) => $method->getName(), $publicMethods);
-    
+
+    $methodNames = array_map(fn ($method) => $method->getName(), $publicMethods);
+
     expect($methodNames)->toContain('generateInvoicePdf');
     expect($methodNames)->toContain('generateEstimatePdf');
     expect($methodNames)->toContain('downloadInvoicePdf');
@@ -64,21 +60,21 @@ test('pdf service download methods return response', function () {
         'invoice_number' => 'INV-DOWNLOAD',
     ]);
 
-    $pdfService = new PdfService();
-    
+    $pdfService = new PdfService;
+
     // Since we can't easily mock the PDF generation, let's just verify the methods exist
     // and would return a response object in a real scenario
     expect(method_exists($pdfService, 'downloadInvoicePdf'))->toBeTrue();
     expect(method_exists($pdfService, 'downloadEstimatePdf'))->toBeTrue();
-    
+
     // Test that the methods accept the correct parameters
     $reflection = new ReflectionClass($pdfService);
-    
+
     $downloadInvoiceMethod = $reflection->getMethod('downloadInvoicePdf');
     $parameters = $downloadInvoiceMethod->getParameters();
     expect($parameters)->toHaveCount(1);
     expect($parameters[0]->getType()->getName())->toBe('App\Models\Invoice');
-    
+
     $downloadEstimateMethod = $reflection->getMethod('downloadEstimatePdf');
     $parameters = $downloadEstimateMethod->getParameters();
     expect($parameters)->toHaveCount(1);
@@ -88,7 +84,7 @@ test('pdf service download methods return response', function () {
 // test('pdf service uses browsershot for pdf generation', function () {
 //     $pdfService = new PdfService();
 //     $reflection = new ReflectionClass($pdfService);
-    
+
 //     // Check if the service uses Browsershot for PDF generation
 //     $source = file_get_contents($reflection->getFileName());
 //     expect($source)->toContain('Browsershot');
@@ -96,9 +92,9 @@ test('pdf service download methods return response', function () {
 // });
 
 test('pdf service handles pdf template views', function () {
-    $pdfService = new PdfService();
+    $pdfService = new PdfService;
     $reflection = new ReflectionClass($pdfService);
-    
+
     // Check if the service references the correct view templates
     $source = file_get_contents($reflection->getFileName());
     expect($source)->toContain('pdf.invoice');

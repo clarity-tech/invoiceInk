@@ -1,9 +1,8 @@
 <?php
 
 use App\Models\User;
-
-
-
+use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 
 test('can create user with required fields', function () {
     $user = User::create([
@@ -24,8 +23,8 @@ test('user email must be unique', function () {
         'password' => bcrypt('password'),
     ]);
 
-    $this->expectException(\Illuminate\Database\QueryException::class);
-    
+    $this->expectException(QueryException::class);
+
     User::create([
         'name' => 'Second User',
         'email' => 'test@example.com', // Duplicate email
@@ -39,7 +38,7 @@ test('user has email verified at timestamp', function () {
     ]);
 
     expect($user->email_verified_at)->not->toBeNull();
-    expect($user->email_verified_at)->toBeInstanceOf(\Carbon\Carbon::class);
+    expect($user->email_verified_at)->toBeInstanceOf(Carbon::class);
 });
 
 test('user can have unverified email', function () {
@@ -82,6 +81,6 @@ test('user remember token is hidden from array output', function () {
 test('user timestamps are cast correctly', function () {
     $user = User::factory()->create();
 
-    expect($user->created_at)->toBeInstanceOf(\Carbon\Carbon::class);
-    expect($user->updated_at)->toBeInstanceOf(\Carbon\Carbon::class);
+    expect($user->created_at)->toBeInstanceOf(Carbon::class);
+    expect($user->updated_at)->toBeInstanceOf(Carbon::class);
 });

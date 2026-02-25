@@ -5,6 +5,11 @@ namespace App\Traits;
 use App\Models\Organization;
 use App\Support\Jetstream;
 use App\Support\OwnerRole;
+use App\Support\Role;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -21,7 +26,7 @@ trait HasTeams
     /**
      * Get the current team of the user's context.
      */
-    public function currentTeam(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function currentTeam(): BelongsTo
     {
         if (is_null($this->current_team_id) && $this->id) {
             $this->switchTeam($this->personalTeam());
@@ -51,7 +56,7 @@ trait HasTeams
     /**
      * Get all of the teams the user owns or belongs to.
      */
-    public function allTeams(): \Illuminate\Support\Collection
+    public function allTeams(): Collection
     {
         return $this->ownedTeams()->get()->merge($this->teams()->get());
     }
@@ -59,7 +64,7 @@ trait HasTeams
     /**
      * Get all of the teams the user owns.
      */
-    public function ownedTeams(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function ownedTeams(): HasMany
     {
         return $this->hasMany(Organization::class);
     }
@@ -67,7 +72,7 @@ trait HasTeams
     /**
      * Get all of the teams the user belongs to.
      */
-    public function teams(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function teams(): BelongsToMany
     {
         return $this->belongsToMany(
             Organization::class,
@@ -117,7 +122,7 @@ trait HasTeams
     /**
      * Get the role that the user has on the team.
      */
-    public function teamRole($team): ?\App\Support\Role
+    public function teamRole($team): ?Role
     {
         if ($this->ownsTeam($team)) {
             return new OwnerRole;

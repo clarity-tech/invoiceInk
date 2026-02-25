@@ -9,7 +9,7 @@ use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\InvoiceNumberingSeries>
+ * @extends Factory<InvoiceNumberingSeries>
  */
 class InvoiceNumberingSeriesFactory extends Factory
 {
@@ -23,7 +23,7 @@ class InvoiceNumberingSeriesFactory extends Factory
         return [
             'organization_id' => Organization::factory(),
             'location_id' => null, // Default to organization-wide
-            'name' => fake()->words(2, true) . ' Series',
+            'name' => fake()->words(2, true).' Series',
             'prefix' => fake()->randomElement(['INV', 'BILL', 'DOC']),
             'format_pattern' => '{PREFIX}-{YEAR}-{MONTH}-{SEQUENCE:4}',
             'current_number' => fake()->numberBetween(0, 100),
@@ -53,8 +53,8 @@ class InvoiceNumberingSeriesFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'location_id' => $location->id,
-            'name' => $location->name . ' Series',
-            'prefix' => 'INV-' . strtoupper(substr($location->name, 0, 3)),
+            'name' => $location->name.' Series',
+            'prefix' => 'INV-'.strtoupper(substr($location->name, 0, 3)),
         ]);
     }
 

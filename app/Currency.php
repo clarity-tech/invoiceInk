@@ -2,6 +2,8 @@
 
 namespace App;
 
+use Akaunting\Money\Money;
+
 enum Currency: string
 {
     case INR = 'INR';
@@ -65,7 +67,7 @@ enum Currency: string
     public function formatAmount(int $amountInCents): string
     {
         if ($this !== self::INR) {
-            return \Akaunting\Money\Money::{$this->value}($amountInCents)->format();
+            return Money::{$this->value}($amountInCents)->format();
         }
 
         $isNegative = $amountInCents < 0;

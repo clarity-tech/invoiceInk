@@ -2,6 +2,7 @@
 
 use App\Mail\DocumentMailer;
 use App\ValueObjects\ContactCollection;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
 test('can create document mailer for invoice', function () {
     $invoice = createInvoiceWithItems([
@@ -79,7 +80,7 @@ test('document mailer implements ShouldQueue', function () {
 
     $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'Test', 'email' => 'test@example.com']]));
 
-    expect($mailer)->toBeInstanceOf(\Illuminate\Contracts\Queue\ShouldQueue::class);
+    expect($mailer)->toBeInstanceOf(ShouldQueue::class);
 });
 
 test('document mailer uses correct view for invoice', function () {

@@ -2,13 +2,14 @@
 
 use App\Enums\ResetFrequency;
 use App\Models\InvoiceNumberingSeries;
+use App\Models\Organization;
 use App\Models\TaxTemplate;
 use App\Models\User;
 
 /**
  * Seed rich demo data for screenshot capture.
  *
- * @return array{user: User, org: \App\Models\Organization, customers: array, invoices: array, estimates: array}
+ * @return array{user: User, org: Organization, customers: array, invoices: array, estimates: array}
  */
 function seedDemoData(): array
 {
