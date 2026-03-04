@@ -11,15 +11,15 @@ beforeEach(function () {
     $this->pdfService = new PdfService;
 });
 
-// --- Chrome HTTP service flow tests ---
+// --- Gotenberg HTTP service flow tests ---
 
-test('generates pdf via http service when chrome enabled', function () {
-    Config::set('services.chrome.enabled', true);
-    Config::set('services.chrome.url', 'http://chrome:3000');
-    Config::set('services.chrome.timeout', 30);
+test('generates pdf via gotenberg when enabled', function () {
+    Config::set('services.gotenberg.enabled', true);
+    Config::set('services.gotenberg.url', 'http://gotenberg:3000');
+    Config::set('services.gotenberg.timeout', 30);
 
     Http::fake([
-        'chrome:3000/generate-pdf' => Http::response('fake-pdf-content', 200),
+        'gotenberg:3000/forms/chromium/convert/html' => Http::response('fake-pdf-content', 200),
     ]);
 
     $invoice = createInvoiceWithItems([
@@ -32,18 +32,16 @@ test('generates pdf via http service when chrome enabled', function () {
     expect($pdfContent)->toBe('fake-pdf-content');
 
     Http::assertSent(function (Request $request) {
-        return str_contains($request->url(), '/generate-pdf')
-            && $request['options']['format'] === 'A4'
-            && $request['options']['printBackground'] === true;
+        return str_contains($request->url(), '/forms/chromium/convert/html');
     });
 });
 
-test('generates estimate pdf via http service', function () {
-    Config::set('services.chrome.enabled', true);
-    Config::set('services.chrome.url', 'http://chrome:3000');
+test('generates estimate pdf via gotenberg', function () {
+    Config::set('services.gotenberg.enabled', true);
+    Config::set('services.gotenberg.url', 'http://gotenberg:3000');
 
     Http::fake([
-        'chrome:3000/generate-pdf' => Http::response('fake-estimate-pdf', 200),
+        'gotenberg:3000/forms/chromium/convert/html' => Http::response('fake-estimate-pdf', 200),
     ]);
 
     $estimate = createInvoiceWithItems([
@@ -57,12 +55,12 @@ test('generates estimate pdf via http service', function () {
     expect($pdfContent)->toBe('fake-estimate-pdf');
 });
 
-test('sends html content and correct margins to chrome service', function () {
-    Config::set('services.chrome.enabled', true);
-    Config::set('services.chrome.url', 'http://chrome:3000');
+test('sends html as index.html multipart attachment with A4 options', function () {
+    Config::set('services.gotenberg.enabled', true);
+    Config::set('services.gotenberg.url', 'http://gotenberg:3000');
 
     Http::fake([
-        'chrome:3000/generate-pdf' => Http::response('pdf-bytes', 200),
+        'gotenberg:3000/forms/chromium/convert/html' => Http::response('pdf-bytes', 200),
     ]);
 
     $invoice = createInvoiceWithItems([
@@ -73,18 +71,18 @@ test('sends html content and correct margins to chrome service', function () {
     $this->pdfService->generateInvoicePdf($invoice);
 
     Http::assertSent(function (Request $request) {
-        return ! empty($request['html'])
-            && $request['options']['margin']['top'] === '10mm'
-            && $request['options']['margin']['right'] === '10mm'
-            && $request['options']['margin']['bottom'] === '10mm'
-            && $request['options']['margin']['left'] === '10mm';
+        $body = $request->body();
+
+        return str_contains($request->url(), '/forms/chromium/convert/html')
+            && str_contains($body, 'index.html')
+            && str_contains($body, 'printBackground');
     });
 });
 
 // --- Error handling tests ---
 
-test('throws runtime exception when chrome service disabled', function () {
-    Config::set('services.chrome.enabled', false);
+test('throws runtime exception when gotenberg service disabled', function () {
+    Config::set('services.gotenberg.enabled', false);
 
     $invoice = createInvoiceWithItems([
         'invoice_number' => 'INV-PDF-DISABLED',
@@ -92,12 +90,12 @@ test('throws runtime exception when chrome service disabled', function () {
     ]);
 
     expect(fn () => $this->pdfService->generateInvoicePdf($invoice))
-        ->toThrow(RuntimeException::class, 'PDF generation requires Chrome service to be enabled');
+        ->toThrow(RuntimeException::class, 'PDF generation requires Gotenberg service to be enabled');
 });
 
 test('wraps connection exception as runtime exception', function () {
-    Config::set('services.chrome.enabled', true);
-    Config::set('services.chrome.url', 'http://chrome:3000');
+    Config::set('services.gotenberg.enabled', true);
+    Config::set('services.gotenberg.url', 'http://gotenberg:3000');
 
     Http::fake(function () {
         throw new ConnectionException('Connection refused');
@@ -120,11 +118,11 @@ test('wraps connection exception as runtime exception', function () {
 });
 
 test('wraps http failure as runtime exception', function () {
-    Config::set('services.chrome.enabled', true);
-    Config::set('services.chrome.url', 'http://chrome:3000');
+    Config::set('services.gotenberg.enabled', true);
+    Config::set('services.gotenberg.url', 'http://gotenberg:3000');
 
     Http::fake([
-        'chrome:3000/generate-pdf' => Http::response(['error' => 'Out of memory'], 500),
+        'gotenberg:3000/forms/chromium/convert/html' => Http::response('Internal error', 500),
     ]);
 
     $invoice = createInvoiceWithItems([
@@ -139,11 +137,11 @@ test('wraps http failure as runtime exception', function () {
 // --- Download response tests ---
 
 test('download invoice pdf returns correct response headers', function () {
-    Config::set('services.chrome.enabled', true);
-    Config::set('services.chrome.url', 'http://chrome:3000');
+    Config::set('services.gotenberg.enabled', true);
+    Config::set('services.gotenberg.url', 'http://gotenberg:3000');
 
     Http::fake([
-        'chrome:3000/generate-pdf' => Http::response('pdf-binary-data', 200),
+        'gotenberg:3000/forms/chromium/convert/html' => Http::response('pdf-binary-data', 200),
     ]);
 
     $invoice = createInvoiceWithItems([
@@ -160,11 +158,11 @@ test('download invoice pdf returns correct response headers', function () {
 });
 
 test('download estimate pdf returns correct response headers', function () {
-    Config::set('services.chrome.enabled', true);
-    Config::set('services.chrome.url', 'http://chrome:3000');
+    Config::set('services.gotenberg.enabled', true);
+    Config::set('services.gotenberg.url', 'http://gotenberg:3000');
 
     Http::fake([
-        'chrome:3000/generate-pdf' => Http::response('estimate-pdf-data', 200),
+        'gotenberg:3000/forms/chromium/convert/html' => Http::response('estimate-pdf-data', 200),
     ]);
 
     $estimate = createInvoiceWithItems([
@@ -182,12 +180,12 @@ test('download estimate pdf returns correct response headers', function () {
 // --- Config and timeout tests ---
 
 test('uses configured timeout for http requests', function () {
-    Config::set('services.chrome.enabled', true);
-    Config::set('services.chrome.url', 'http://chrome:3000');
-    Config::set('services.chrome.timeout', 60);
+    Config::set('services.gotenberg.enabled', true);
+    Config::set('services.gotenberg.url', 'http://gotenberg:3000');
+    Config::set('services.gotenberg.timeout', 60);
 
     Http::fake([
-        'chrome:3000/generate-pdf' => Http::response('pdf', 200),
+        'gotenberg:3000/forms/chromium/convert/html' => Http::response('pdf', 200),
     ]);
 
     $invoice = createInvoiceWithItems([
@@ -200,8 +198,8 @@ test('uses configured timeout for http requests', function () {
     Http::assertSentCount(1);
 });
 
-test('chrome disabled by default when config not set', function () {
-    Config::set('services.chrome.enabled', false);
+test('gotenberg disabled by default when config not set', function () {
+    Config::set('services.gotenberg.enabled', false);
 
     $invoice = createInvoiceWithItems([
         'invoice_number' => 'INV-NOCONFIG',
@@ -209,5 +207,5 @@ test('chrome disabled by default when config not set', function () {
     ]);
 
     expect(fn () => $this->pdfService->generateInvoicePdf($invoice))
-        ->toThrow(RuntimeException::class, 'PDF generation requires Chrome service to be enabled');
+        ->toThrow(RuntimeException::class, 'PDF generation requires Gotenberg service to be enabled');
 });

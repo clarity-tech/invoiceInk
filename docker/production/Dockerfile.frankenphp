@@ -1,5 +1,10 @@
-# Multi-stage production Dockerfile with FrankenPHP + Octane
-# Optimized: separate PHP deps, frontend build (Bun), clean app assembly
+# Production Dockerfile: FrankenPHP + Laravel Octane
+# Multi-stage build: PHP deps → Frontend → Final image
+#
+# Docs:
+#   FrankenPHP Docker: https://frankenphp.dev/docs/docker/
+#   FrankenPHP Laravel: https://frankenphp.dev/docs/laravel/
+#   Laravel Octane:     https://laravel.com/docs/octane
 
 # ========================================
 # Stage 1: PHP Dependencies
@@ -9,6 +14,9 @@ FROM serversideup/php:8.5-cli AS php-deps
 USER root
 WORKDIR /var/www/html
 
+# Install extensions required by composer platform checks
+RUN install-php-extensions exif gd intl
+
 COPY composer.json composer.lock ./
 
 RUN composer install \
@@ -17,8 +25,7 @@ RUN composer install \
     --no-progress \
     --no-ansi \
     --no-scripts \
-    --optimize-autoloader \
-    --classmap-authoritative
+    --optimize-autoloader
 
 # ========================================
 # Stage 2: Frontend Build (Bun)
@@ -27,7 +34,7 @@ FROM oven/bun:1 AS frontend
 
 WORKDIR /build
 
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 # Copy only what Tailwind @source + Vite needs
@@ -44,11 +51,12 @@ ARG VITE_APP_NAME="Clarity Invoicing"
 RUN bun run build
 
 # ========================================
-# FrankenPHP Production Stage
+# Stage 3: Production (FrankenPHP + Octane)
 # ========================================
-FROM dunglas/frankenphp:latest-php8.5 AS production
+# Tag format: <major>-php<version>-<os> — see https://frankenphp.dev/docs/docker/#tag-format
+FROM dunglas/frankenphp:1-php8.5-bookworm AS production
 
-# Install PHP extensions + supervisor in one layer (cached independently of app code)
+# Install PHP extensions, supervisor, and create non-root user — single layer
 RUN install-php-extensions \
     pcntl \
     pdo_pgsql \
@@ -62,15 +70,12 @@ RUN install-php-extensions \
     gd \
     && apt-get update && apt-get install -y --no-install-recommends \
         supervisor \
-        curl \
+        netcat-openbsd \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && groupadd -g 1000 www \
+    && useradd -u 1000 -g www -m -s /bin/bash www
 
-# Create non-root user for security
-RUN groupadd -g 1000 www && \
-    useradd -u 1000 -g www -m -s /bin/bash www
-
-# Set working directory
 WORKDIR /app
 
 # Create required directories with correct ownership
@@ -87,20 +92,21 @@ COPY --chown=www:www docker/production/entrypoint.sh /usr/local/bin/entrypoint.s
 COPY --chown=www:www docker/production/supervisor.conf /etc/supervisor/conf.d/laravel.conf
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Copy application code (changes most frequently — last for cache efficiency)
+# Copy application code, vendor deps, and built assets
 COPY --chown=www:www . .
 COPY --from=php-deps --chown=www:www /var/www/html/vendor vendor/
 COPY --from=frontend --chown=www:www /build/public/build public/build/
 
-# Remove leftover non-runtime files not caught by .dockerignore
-RUN rm -rf docker resources/css resources/js \
-    postcss.config.js tailwind.config.js vite.config.ts \
-    package.json bun.lockb
+# Rebuild autoload classmap with full app code, then clean up in a single layer
+COPY --from=php-deps /usr/bin/composer /usr/local/bin/composer
+RUN composer dump-autoload --optimize --classmap-authoritative --no-dev \
+    && rm -f /usr/local/bin/composer \
+    && rm -rf docker resources/css resources/js \
+        postcss.config.js tailwind.config.js vite.config.ts \
+        package.json bun.lock \
+    && chmod -R 775 /app/storage /app/bootstrap/cache
 
-# Set correct permissions on writable directories
-RUN chmod -R 775 /app/storage /app/bootstrap/cache
-
-# Set production environment variables
+# Production defaults (override via docker run -e or compose)
 ENV APP_ENV=production \
     APP_DEBUG=false \
     OCTANE_SERVER=frankenphp \
@@ -110,23 +116,15 @@ ENV APP_ENV=production \
     OCTANE_HOST=0.0.0.0 \
     OCTANE_PORT=8000 \
     LOG_CHANNEL=stderr \
-    SESSION_DRIVER=redis \
-    CACHE_STORE=redis \
-    QUEUE_CONNECTION=redis \
     LARAVEL_STORAGE_PATH=/app/storage
 
-# Expose port
 EXPOSE 8000
 
-# Health check
+# Health check using php instead of curl to avoid extra binary
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/up || exit 1
+    CMD php -r "exit(file_get_contents('http://localhost:8000/up') !== false ? 0 : 1);"
 
-# Switch to non-root user
 USER www
 
-# Set entrypoint
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
-# Default command
 CMD ["frankenphp", "php-server", "--listen", "0.0.0.0:8000"]

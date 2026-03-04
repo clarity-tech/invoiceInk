@@ -35,10 +35,10 @@ return [
         ],
     ],
 
-    'chrome' => [
-        'enabled' => env('CHROME_SERVICE_ENABLED', true),
-        'url' => env('CHROME_SERVICE_URL', 'http://chrome:3000'),
-        'timeout' => env('CHROME_SERVICE_TIMEOUT', 30),
+    'gotenberg' => [
+        'enabled' => env('GOTENBERG_ENABLED', true),
+        'url' => env('GOTENBERG_URL', 'http://gotenberg:3000'),
+        'timeout' => env('GOTENBERG_TIMEOUT', 30),
     ],
 
 ];

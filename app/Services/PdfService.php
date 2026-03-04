@@ -11,6 +11,12 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * PDF generation via Gotenberg (https://gotenberg.dev).
+ *
+ * Renders Blade templates to HTML, sends to Gotenberg's Chromium
+ * endpoint, and returns the PDF content.
+ */
 class PdfService implements PdfServiceInterface
 {
     /**
@@ -43,12 +49,11 @@ class PdfService implements PdfServiceInterface
     private function generatePdfFromHtml(string $html, string $filename): string
     {
         try {
-            // Use Chrome HTTP service when enabled
-            if ($this->shouldUseRemoteChrome()) {
-                return $this->generatePdfViaHttpService($html);
+            if (! $this->isEnabled()) {
+                throw new \RuntimeException('PDF generation requires Gotenberg service to be enabled');
             }
 
-            throw new \RuntimeException('PDF generation requires Chrome service to be enabled');
+            return $this->generatePdfViaGotenberg($html);
         } catch (ConnectionException $e) {
             Log::error('PDF generation connection failed', [
                 'filename' => $filename,
@@ -75,39 +80,41 @@ class PdfService implements PdfServiceInterface
     }
 
     /**
-     * Generate PDF via Chrome HTTP service
+     * Generate PDF via Gotenberg's Chromium HTML endpoint.
+     *
+     * @see https://gotenberg.dev/docs/convert-with-chromium/convert-html-to-pdf
      */
-    private function generatePdfViaHttpService(string $html): string
+    private function generatePdfViaGotenberg(string $html): string
     {
-        $response = Http::timeout(config('services.chrome.timeout', 30))
-            ->post(config('services.chrome.url').'/generate-pdf', [
-                'html' => $html,
-                'options' => [
-                    'format' => 'A4',
-                    'margin' => [
-                        'top' => '10mm',
-                        'right' => '10mm',
-                        'bottom' => '10mm',
-                        'left' => '10mm',
-                    ],
-                    'printBackground' => true,
-                ],
+        $url = config('services.gotenberg.url').'/forms/chromium/convert/html';
+        $timeout = (int) config('services.gotenberg.timeout', 30);
+
+        $response = Http::timeout($timeout)
+            ->attach('files', $html, 'index.html')
+            ->post($url, [
+                'paperWidth' => '8.27',    // A4 width in inches
+                'paperHeight' => '11.7',   // A4 height in inches
+                'marginTop' => '0.39',     // ~10mm
+                'marginBottom' => '0.39',
+                'marginLeft' => '0.39',
+                'marginRight' => '0.39',
+                'printBackground' => 'true',
+                'emulatedMediaType' => 'print',
             ]);
 
         if ($response->failed()) {
-            $errorMessage = $response->json('error') ?? 'PDF generation failed';
-            throw new \Exception("PDF generation failed: {$errorMessage}");
+            throw new \Exception('PDF generation failed with status '.$response->status());
         }
 
         return $response->body();
     }
 
     /**
-     * Check if we should use remote Chrome instance
+     * Check if Gotenberg service is enabled
      */
-    private function shouldUseRemoteChrome(): bool
+    private function isEnabled(): bool
     {
-        return config('services.chrome.enabled', false);
+        return (bool) config('services.gotenberg.enabled', false);
     }
 
     /**

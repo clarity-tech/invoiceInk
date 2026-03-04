@@ -27,7 +27,7 @@ FROM oven/bun:1 AS frontend
 
 WORKDIR /build
 
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 # Copy only what Tailwind @source + Vite needs
@@ -85,7 +85,7 @@ COPY --from=frontend --chown=www-data:www-data /build/public/build /var/www/html
 # Remove leftover non-runtime files not caught by .dockerignore
 RUN rm -rf /var/www/html/docker /var/www/html/resources/css /var/www/html/resources/js \
     /var/www/html/postcss.config.js /var/www/html/tailwind.config.js /var/www/html/vite.config.ts \
-    /var/www/html/package.json /var/www/html/bun.lockb
+    /var/www/html/package.json /var/www/html/bun.lock
 
 # Set correct permissions on writable directories
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache

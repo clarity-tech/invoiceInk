@@ -33,7 +33,7 @@ jobs:
           - target: frankenphp
             dockerfile: docker/production/Dockerfile.frankenphp
             image-suffix: ''
-            build-target: frankenphp
+            build-target: production
           # - target: nginx-fpm
             # dockerfile: docker/production/Dockerfile.nginx-fpm
             # image-suffix: '-nginx'
@@ -54,12 +54,12 @@ jobs:
           submodules: recursive
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
         with:
           driver-opts: network=host
 
       - name: Log in to Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -67,7 +67,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}
           tags: |
@@ -80,7 +80,7 @@ jobs:
 
       - name: Build and push Docker image
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
@@ -97,7 +97,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         continue-on-error: true
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}@${{ steps.build.outputs.digest }}
           format: 'sarif'
@@ -108,7 +108,7 @@ jobs:
         run: ls -al
 
       - name: Upload Trivy scan results to GitHub Security tab
-        if: always() && hashFiles('trivy-results-${{ matrix.target }}.sarif') != ''
+        if: ${{ always() && hashFiles(format('trivy-results-{0}.sarif', matrix.target)) != '' }}
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-results-${{ matrix.target }}.sarif'
@@ -125,7 +125,7 @@ jobs:
         include:
           - target: frankenphp
             image-suffix: ''
-            port: 8000
+            port: 8080
           # - target: nginx-fpm
           #   image-suffix: '-nginx'
           #   port: 80
@@ -143,7 +143,7 @@ jobs:
           submodules: recursive
 
       - name: Log in to Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -151,59 +151,42 @@ jobs:
 
       - name: Test Docker image
         run: |
-          # Create test environment file
-          cat > .env.testing << EOF
-          APP_NAME="Clarity Invoicing Test"
-          APP_ENV=testing
-          APP_KEY=base64:$(openssl rand -base64 32)
-          APP_DEBUG=false
-          APP_URL=http://localhost:${{ matrix.port }}
-          
-          DB_CONNECTION=sqlite
-          DB_DATABASE=:memory:
-          
-          CACHE_DRIVER=array
-          SESSION_DRIVER=array
-          QUEUE_CONNECTION=sync
-          
-          OCTANE_SERVER=frankenphp
-          OCTANE_ENABLED=${{ matrix.target == 'frankenphp' }}
-          OCTANE_HOST=0.0.0.0
-          OCTANE_PORT=8000
-          EOF
+          # Pull the image by digest (guaranteed to exist after build-and-push)
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}:pr-${{ github.event.pull_request.number }}"
+          echo "Testing image: $IMAGE"
 
-          # Start the container
+          # Start the container with ServerSideUp env vars
           docker run -d \
             --name test-container \
-            --env-file .env.testing \
             -p ${{ matrix.port }}:${{ matrix.port }} \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}:${{ github.sha }}
+            -e APP_KEY=base64:$(openssl rand -base64 32) \
+            -e APP_ENV=testing \
+            -e APP_URL=http://localhost:${{ matrix.port }} \
+            -e DB_CONNECTION=sqlite \
+            -e "DB_DATABASE=/var/www/html/storage/database.sqlite" \
+            -e CACHE_STORE=array \
+            -e SESSION_DRIVER=array \
+            -e QUEUE_CONNECTION=sync \
+            -e AUTORUN_ENABLED=true \
+            -e AUTORUN_LARAVEL_MIGRATION=true \
+            -e AUTORUN_LARAVEL_MIGRATION_SKIP_DB_CHECK=true \
+            -e AUTORUN_LARAVEL_OPTIMIZE=false \
+            "$IMAGE"
 
-          # Wait for container to be ready
-          sleep 30
-
-          # Test health endpoint (different for standalone binaries)
-          if [[ "${{ matrix.target }}" == "standalone"* ]]; then
-            # Standalone binaries might need different health check
-            for i in {1..10}; do
-              if docker exec test-container /usr/local/bin/frankenphp-app php -r "echo 'OK';"; then
-                echo "Health check passed for standalone binary"
-                break
-              fi
-              echo "Attempt $i failed, retrying..."
-              sleep 5
-            done
-          else
-            # Regular health check for other variants
-            for i in {1..10}; do
-              if curl -f http://localhost:${{ matrix.port }}/up; then
-                echo "Health check passed"
-                break
-              fi
-              echo "Attempt $i failed, retrying..."
-              sleep 5
-            done
-          fi
+          # Wait for container to be healthy
+          for i in {1..20}; do
+            if curl -sf http://localhost:${{ matrix.port }}/up; then
+              echo "Health check passed"
+              break
+            fi
+            if [ "$i" -eq 20 ]; then
+              echo "Container failed to start"
+              docker logs test-container
+              exit 1
+            fi
+            echo "Attempt $i, retrying..."
+            sleep 3
+          done
 
           # Test main page (should redirect to login)
           curl -I http://localhost:${{ matrix.port }}/ | grep -E "(200|302)"
@@ -226,7 +209,7 @@ jobs:
           # Example: kubectl, docker-compose, or other deployment tools
 
   deploy-production:
-    needs: [build-and-push, test-images]
+    needs: [build-and-push]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     environment: production
@@ -239,7 +222,7 @@ jobs:
           # Example: kubectl, docker-compose, or other deployment tools
 
   notify:
-    needs: [build-and-push, test-images]
+    needs: [build-and-push]
     runs-on: ubuntu-latest
     if: always()
     

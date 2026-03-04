@@ -8,7 +8,7 @@ This directory contains multiple production-ready Docker configurations for the 
 **File**: `Dockerfile.frankenphp`  
 **Image**: `ghcr.io/clarity-tech/invoicing:latest`
 
-- **Technology**: FrankenPHP + Laravel Octane + ServerSideUp base images
+- **Technology**: FrankenPHP (`dunglas/frankenphp:1-php8.5-bookworm`) + Laravel Octane
 - **Performance**: High performance with worker mode and HTTP/2/3 support
 - **Use Case**: Modern production deployments requiring maximum performance
 - **Memory**: ~128-256MB per container
@@ -178,6 +178,29 @@ AWS_BUCKET=your-bucket
 - FrankenPHP for testing production behavior
 - Standalone for resource-constrained environments
 
+### Testing Against the Production Image
+A shared test script validates the production Docker image locally and in CI:
+
+```bash
+# Local (requires Docker + running Sail)
+./docker/production/test-octane.sh
+
+# What it does:
+# 1. Builds the production FrankenPHP image
+# 2. Starts it on port 8001 (avoids Sail conflict on :80)
+# 3. Runs browser tests (Pest Browser + Playwright) against it
+# 4. Cleans up the container on exit
+#
+# The same script runs in CI (.github/workflows/ci.yml → test-octane job)
+# for full local/CI parity.
+```
+
+This catches issues that unit/feature tests miss:
+- Octane singleton leaks and stale state between requests
+- Docker entrypoint, migration, and Caddyfile issues
+- FrankenPHP + OPcache production behavior
+- Static asset serving from the built image
+
 ## Performance Comparison
 
 | Variant | Memory Usage | Startup Time | Request/sec | Container Size |
@@ -219,9 +242,12 @@ The repository includes automated building and testing of all variants:
 ```yaml
 # .github/workflows/docker-build.yml builds:
 - FrankenPHP + Octane (latest)
-- Nginx + PHP-FPM (nginx)  
+- Nginx + PHP-FPM (nginx)
 - Standalone Binary Distroless (standalone)
 - Standalone Binary Alpine (standalone-alpine)
+
+# .github/workflows/ci.yml includes:
+- test-octane: Builds production image, runs browser tests against it
 ```
 
 All images are pushed to GitHub Container Registry with:

@@ -27,7 +27,7 @@ FROM oven/bun:1 AS frontend
 
 WORKDIR /build
 
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 # Copy only what Tailwind @source + Vite needs
@@ -57,7 +57,7 @@ COPY --from=frontend /build/public/build public/build/
 # Remove leftover non-runtime files not caught by .dockerignore
 RUN rm -rf docker resources/css resources/js \
     postcss.config.js tailwind.config.js vite.config.ts \
-    package.json bun.lockb
+    package.json bun.lock
 
 # ========================================
 # Static Binary Build Stage
