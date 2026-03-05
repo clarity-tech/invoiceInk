@@ -71,10 +71,8 @@ done
 echo "==> Running browser tests against production image on :$HOST_PORT..."
 
 if [ -n "$CI" ]; then
-    # CI: PHP + Playwright available on host runner
     APP_URL="http://127.0.0.1:$HOST_PORT" php artisan test tests/Browser --compact
 else
-    # Local: Run via Sail. Playwright inside Sail reaches host via host.docker.internal.
     APP_URL="http://host.docker.internal:$HOST_PORT" \
         vendor/bin/sail php artisan test tests/Browser --compact
 fi

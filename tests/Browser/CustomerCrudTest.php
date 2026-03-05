@@ -13,7 +13,7 @@ it('creates a customer with all fields', function () {
 
     $page = $this->visit('/customers');
 
-    $page->click('button:has-text("Add Customer")')
+    $page->click('button:has-text("Add Customer") >> nth=0')
         ->waitForText('Create Customer')
         ->fill('#customer-name', 'New Test Customer')
         ->fill('#customer-phone', '+91-9876543210')
@@ -36,7 +36,7 @@ it('creates a customer with multiple contacts', function () {
 
     $page = $this->visit('/customers');
 
-    $page->click('button:has-text("Add Customer")')
+    $page->click('button:has-text("Add Customer") >> nth=0')
         ->waitForText('Create Customer')
         ->fill('#customer-name', 'Multi Contact Corp')
         ->fill('[placeholder="Contact name"]', 'Alice Smith')
@@ -131,7 +131,7 @@ it('shows validation errors for blank name and invalid email', function () {
     $page = $this->visit('/customers');
 
     // Blank name
-    $page->click('button:has-text("Add Customer")')
+    $page->click('button:has-text("Add Customer") >> nth=0')
         ->waitForText('Create Customer')
         ->fill('#customer-name', '')
         ->fill('[placeholder="Email *"]', 'valid@customer.test')

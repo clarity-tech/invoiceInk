@@ -29,7 +29,7 @@ it('opens edit form and navigates all tabs', function () {
 
     $page = $this->visit('/organization/edit');
 
-    $page->click('button.text-blue-600:has-text("Edit")')
+    $page->click('button.text-brand-600:has-text("Edit")')
         ->waitForText('Edit Organization')
         ->assertSee('Edit Organization')
         ->assertSee('Name')

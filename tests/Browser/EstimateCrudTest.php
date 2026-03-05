@@ -20,7 +20,7 @@ it('creates an estimate via the estimate create page', function () {
         ->select('select:has(option:text("Select customer"))', (string) $customer->id)
         ->fill('input[placeholder="Item description"]', 'Consulting Service')
         ->fill('input[type="number"][min="1"]', '10')
-        ->fill('input[type="number"][min="0"][placeholder="0"] >> nth=0', '15000')
+        ->fill('input[type="number"][min="0"][placeholder="0.00"] >> nth=0', '15000')
         ->click('button[type="submit"]')
         ->waitForText('Edit Estimate')
         ->assertSee('Edit Estimate');

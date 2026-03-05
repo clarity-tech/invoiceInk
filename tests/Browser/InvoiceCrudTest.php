@@ -19,7 +19,7 @@ it('creates an invoice with a single item', function () {
         ->select('select:has(option:text("Select customer"))', (string) $customer->id)
         ->fill('input[placeholder="Item description"]', 'Web Development Service')
         ->fill('input[type="number"][min="1"]', '5')
-        ->fill('input[type="number"][min="0"][placeholder="0"] >> nth=0', '10000')
+        ->fill('input[type="number"][min="0"][placeholder="0.00"] >> nth=0', '10000')
         ->click('button[type="submit"]')
         ->waitForText('Edit Invoice')
         ->assertSee('Edit Invoice');
@@ -40,11 +40,11 @@ it('creates invoice with multiple items', function () {
     $page->select('select:has(option:text("Select customer"))', (string) $customer->id)
         ->fill('input[placeholder="Item description"] >> nth=0', 'Service One')
         ->fill('input[type="number"][min="1"] >> nth=0', '2')
-        ->fill('input[type="number"][min="0"][placeholder="0"] >> nth=0', '5000')
+        ->fill('input[type="number"][min="0"][placeholder="0.00"] >> nth=0', '5000')
         ->click('button:has-text("Add Item")')
         ->fill('input[placeholder="Item description"] >> nth=1', 'Service Two')
         ->fill('input[type="number"][min="1"] >> nth=1', '3')
-        ->fill('input[type="number"][min="0"][placeholder="0"] >> nth=2', '8000')
+        ->fill('input[type="number"][min="0"][placeholder="0.00"] >> nth=1', '8000')
         ->click('button[type="submit"]')
         ->waitForText('Edit Invoice')
         ->assertSee('Edit Invoice');
@@ -107,7 +107,7 @@ it('shows validation error without selecting a customer', function () {
 
     $page->fill('input[placeholder="Item description"]', 'Some Service')
         ->fill('input[type="number"][min="1"]', '1')
-        ->fill('input[type="number"][min="0"][placeholder="0"] >> nth=0', '5000')
+        ->fill('input[type="number"][min="0"][placeholder="0.00"] >> nth=0', '5000')
         ->click('button[type="submit"]')
         ->waitForText('customer');
 });
