@@ -2,19 +2,20 @@
 version: '3.8'
 
 services:
-  # Main application with FrankenPHP + Octane
+  # Main application with ServerSideUp FrankenPHP + Octane
+  # Docs: https://serversideup.net/open-source/docker-php/docs/framework-guides/laravel/octane
   app:
     build:
       context: ../..
       dockerfile: docker/production/Dockerfile.frankenphp
-      target: frankenphp
+      target: production
       args:
         - BUILDKIT_INLINE_CACHE=1
     image: ghcr.io/clarity-tech/invoicing:latest
     container_name: invoicing-app
     restart: unless-stopped
     ports:
-      - "${APP_PORT:-8000}:8000"
+      - "${APP_PORT:-80}:8080"
     environment:
       # Laravel Configuration
       - APP_NAME=${APP_NAME:-Clarity Invoicing}
@@ -43,14 +44,16 @@ services:
       - CACHE_DRIVER=redis
       - QUEUE_CONNECTION=redis
 
-      # Octane Configuration
-      - OCTANE_SERVER=frankenphp
-      - OCTANE_ENABLED=true
-      - OCTANE_HOST=0.0.0.0
-      - OCTANE_PORT=8000
-      - OCTANE_WORKERS=${OCTANE_WORKERS:-auto}
-      - OCTANE_TASK_WORKERS=${OCTANE_TASK_WORKERS:-auto}
-      - OCTANE_MAX_REQUESTS=${OCTANE_MAX_REQUESTS:-500}
+      # ServerSideUp Autorun (migrate, optimize, storage:link)
+      - AUTORUN_ENABLED=true
+      - AUTORUN_LARAVEL_MIGRATION=true
+      - AUTORUN_LARAVEL_MIGRATION_ISOLATION=true
+      - AUTORUN_LARAVEL_OPTIMIZE=true
+      - AUTORUN_LARAVEL_STORAGE_LINK=true
+      - AUTORUN_LARAVEL_MIGRATION_SEED=${RUN_SEEDERS:-false}
+
+      # PHP / OPcache
+      - PHP_OPCACHE_ENABLE=1
 
       # Mail Configuration
       - MAIL_MAILER=${MAIL_MAILER:-smtp}
@@ -70,24 +73,21 @@ services:
       - AWS_BUCKET=${AWS_BUCKET}
       - AWS_ENDPOINT=${AWS_ENDPOINT}
 
-      # Application Features
-      - RUN_MIGRATIONS=${RUN_MIGRATIONS:-true}
-      - RUN_SEEDERS=${RUN_SEEDERS:-false}
-      - ENABLE_SUPERVISOR=${ENABLE_SUPERVISOR:-true}
-
       # Logging
       - LOG_CHANNEL=stderr
       - LOG_LEVEL=${LOG_LEVEL:-info}
 
     volumes:
-      - app-storage:/app/storage
+      - app-storage:/var/www/html/storage
     networks:
       - invoicing-network
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/up"]
+      test: ["CMD", "healthcheck-octane"]
       interval: 30s
       timeout: 10s
       retries: 3

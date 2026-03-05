@@ -1,9 +1,10 @@
-# Production Dockerfile: FrankenPHP + Laravel Octane
+# Production Dockerfile: ServerSideUp FrankenPHP + Laravel Octane
 # Multi-stage build: PHP deps → Frontend → Final image
 #
 # Docs:
-#   FrankenPHP Docker: https://frankenphp.dev/docs/docker/
-#   FrankenPHP Laravel: https://frankenphp.dev/docs/laravel/
+#   ServerSideUp PHP:   https://serversideup.net/open-source/docker-php/
+#   ServerSideUp Octane: https://serversideup.net/open-source/docker-php/docs/framework-guides/laravel/octane
+#   FrankenPHP Docker:  https://frankenphp.dev/docs/docker/
 #   Laravel Octane:     https://laravel.com/docs/octane
 
 # ========================================
@@ -15,7 +16,7 @@ USER root
 WORKDIR /var/www/html
 
 # Install extensions required by composer platform checks
-RUN install-php-extensions exif gd intl
+RUN install-php-extensions exif gd intl bcmath sockets
 
 COPY composer.json composer.lock ./
 
@@ -51,80 +52,57 @@ ARG VITE_APP_NAME="Clarity Invoicing"
 RUN bun run build
 
 # ========================================
-# Stage 3: Production (FrankenPHP + Octane)
+# Stage 3: Production (ServerSideUp FrankenPHP + Octane)
 # ========================================
-# Tag format: <major>-php<version>-<os> — see https://frankenphp.dev/docs/docker/#tag-format
-FROM dunglas/frankenphp:1-php8.5-bookworm AS production
+# ServerSideUp provides: non-root user (www-data), S6 overlay, composer,
+# pre-installed extensions (opcache, pcntl, pdo_pgsql, redis, zip),
+# Laravel autorun (migrate, optimize, storage:link), health check scripts.
+# See: https://serversideup.net/open-source/docker-php/docs/image-variations/frankenphp
+FROM serversideup/php:8.5-frankenphp AS production
 
-# Install PHP extensions, supervisor, and create non-root user — single layer
-RUN install-php-extensions \
-    pcntl \
-    pdo_pgsql \
-    pgsql \
-    redis \
-    bcmath \
-    exif \
-    opcache \
-    sockets \
-    intl \
-    gd \
-    && apt-get update && apt-get install -y --no-install-recommends \
-        supervisor \
-        netcat-openbsd \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && groupadd -g 1000 www \
-    && useradd -u 1000 -g www -m -s /bin/bash www
+# Install additional PHP extensions not included in base image
+USER root
+RUN install-php-extensions exif gd intl bcmath sockets
+USER www-data
 
-WORKDIR /app
+WORKDIR /var/www/html
 
-# Create required directories with correct ownership
-RUN mkdir -p /app/storage/logs /app/storage/framework/cache \
-    /app/storage/framework/sessions /app/storage/framework/views \
-    /app/bootstrap/cache \
-    /var/run/supervisor /var/log/supervisor \
-    && chown -R www:www /app /var/run/supervisor /var/log/supervisor
-
-# Copy production configuration files (cached before app code)
-COPY --chown=www:www docker/production/Caddyfile /etc/caddy/Caddyfile
-COPY --chown=www:www docker/production/php.ini /usr/local/etc/php/conf.d/99-production.ini
-COPY --chown=www:www docker/production/entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY --chown=www:www docker/production/supervisor.conf /etc/supervisor/conf.d/laravel.conf
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# Copy production PHP configuration
+COPY --chown=www-data:www-data docker/production/php.ini /usr/local/etc/php/conf.d/99-production.ini
 
 # Copy application code, vendor deps, and built assets
-COPY --chown=www:www . .
-COPY --from=php-deps --chown=www:www /var/www/html/vendor vendor/
-COPY --from=frontend --chown=www:www /build/public/build public/build/
+COPY --chown=www-data:www-data . .
+COPY --from=php-deps --chown=www-data:www-data /var/www/html/vendor vendor/
+COPY --from=frontend --chown=www-data:www-data /build/public/build public/build/
 
 # Rebuild autoload classmap with full app code, then clean up in a single layer
-COPY --from=php-deps /usr/bin/composer /usr/local/bin/composer
 RUN composer dump-autoload --optimize --classmap-authoritative --no-dev \
-    && rm -f /usr/local/bin/composer \
     && rm -rf docker resources/css resources/js \
         postcss.config.js tailwind.config.js vite.config.ts \
-        package.json bun.lock \
-    && chmod -R 775 /app/storage /app/bootstrap/cache
+        package.json bun.lock
 
-# Production defaults (override via docker run -e or compose)
-ENV APP_ENV=production \
+# ServerSideUp Laravel automations (runs on container start):
+# - Waits for DB connection
+# - Runs migrations
+# - Caches config, routes, views, events
+# - Creates storage:link
+# See: https://serversideup.net/open-source/docker-php/docs/framework-guides/laravel/automations
+ENV AUTORUN_ENABLED=true \
+    AUTORUN_LARAVEL_MIGRATION=true \
+    AUTORUN_LARAVEL_MIGRATION_ISOLATION=true \
+    AUTORUN_LARAVEL_OPTIMIZE=true \
+    AUTORUN_LARAVEL_STORAGE_LINK=true \
+    PHP_OPCACHE_ENABLE=1 \
+    SSL_MODE=off \
+    APP_ENV=production \
     APP_DEBUG=false \
-    OCTANE_SERVER=frankenphp \
-    OCTANE_WORKERS=auto \
-    OCTANE_TASK_WORKERS=auto \
-    OCTANE_MAX_REQUESTS=500 \
-    OCTANE_HOST=0.0.0.0 \
-    OCTANE_PORT=8000 \
-    LOG_CHANNEL=stderr \
-    LARAVEL_STORAGE_PATH=/app/storage
+    LOG_CHANNEL=stderr
 
-EXPOSE 8000
+EXPOSE 8080
 
-# Health check using php instead of curl to avoid extra binary
+# ServerSideUp provides healthcheck-octane script out of the box
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD php -r "exit(file_get_contents('http://localhost:8000/up') !== false ? 0 : 1);"
+    CMD ["healthcheck-octane"]
 
-USER www
-
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["frankenphp", "php-server", "--listen", "0.0.0.0:8000"]
+# Start Octane with FrankenPHP worker mode (port 8080 for non-root)
+CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=8080", "--workers=auto", "--max-requests=500"]
