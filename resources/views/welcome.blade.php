@@ -14,7 +14,7 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800,900&display=swap" rel="stylesheet" />
 
         <!-- Styles / Scripts -->
-        @vite(['resources/css/app.css'])
+        @vite(['resources/ts/app.ts'])
 
         <style>
             /* Heights must match translateY steps in their respective keyframes */
