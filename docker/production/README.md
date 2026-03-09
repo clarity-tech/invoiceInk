@@ -8,7 +8,7 @@ This directory contains multiple production-ready Docker configurations for the 
 **File**: `Dockerfile.frankenphp`  
 **Image**: `ghcr.io/clarity-tech/invoicing:latest`
 
-- **Technology**: FrankenPHP (`dunglas/frankenphp:1-php8.5-bookworm`) + Laravel Octane
+- **Technology**: ServerSideUp FrankenPHP (`serversideup/php:8.5-frankenphp`) + Laravel Octane
 - **Performance**: High performance with worker mode and HTTP/2/3 support
 - **Use Case**: Modern production deployments requiring maximum performance
 - **Memory**: ~128-256MB per container

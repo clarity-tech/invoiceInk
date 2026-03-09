@@ -13,7 +13,7 @@ Thank you for considering contributing to the CLARITY Laravel Starter Kit! This 
 3. **Install dependencies**:  
    ```bash  
    composer install  
-   npm install  
+   bun install
    ```  
 
 ---

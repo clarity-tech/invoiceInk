@@ -109,5 +109,5 @@ The frontend is built using Blade templates, Tailwind CSS, and Alpine.js.
 *   **Views**: Blade templates are located in `resources/views`.
 *   **Layouts**: The main application layout is `resources/views/layouts/app.blade.php`, and the guest layout is `resources/views/layouts/guest.blade.php`.
 *   **Livewire Views**: The views for the Livewire components are located in `resources/views/livewire`.
-*   **Styling**: Tailwind CSS is used for styling, with the configuration file at `tailwind.config.js`.
-*   **JavaScript**: Application-specific JavaScript is in `resources/js/app.js`.
+*   **Styling**: Tailwind CSS v4 is used for styling, configured via CSS-based `@theme` in `resources/css/app.css`.
+*   **TypeScript**: Application TypeScript is in `resources/ts/app.ts` with Vue 3 + Inertia v3.

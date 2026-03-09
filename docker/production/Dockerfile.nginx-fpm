@@ -32,7 +32,7 @@ RUN bun install --frozen-lockfile
 
 # Copy only what Tailwind @source + Vite needs
 COPY resources/ resources/
-COPY vite.config.ts postcss.config.js tailwind.config.js ./
+COPY vite.config.ts tsconfig.json ./
 
 # Vendor blade files for Tailwind class scanning (referenced in app.css @source)
 COPY --from=php-deps /var/www/html/vendor/laravel/framework/src/Illuminate/Pagination/resources/views/ \
@@ -84,7 +84,7 @@ COPY --from=frontend --chown=www-data:www-data /build/public/build /var/www/html
 
 # Remove leftover non-runtime files not caught by .dockerignore
 RUN rm -rf /var/www/html/docker /var/www/html/resources/css /var/www/html/resources/js \
-    /var/www/html/postcss.config.js /var/www/html/tailwind.config.js /var/www/html/vite.config.ts \
+    /var/www/html/vite.config.ts /var/www/html/tsconfig.json /var/www/html/eslint.config.js /var/www/html/.prettierrc \
     /var/www/html/package.json /var/www/html/bun.lock
 
 # Set correct permissions on writable directories
