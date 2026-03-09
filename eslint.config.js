@@ -1,7 +1,7 @@
 import stylistic from '@stylistic/eslint-plugin';
 import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript';
 import prettier from 'eslint-config-prettier/flat';
-import importPlugin from 'eslint-plugin-import';
+import importPlugin from 'eslint-plugin-import-x';
 import vue from 'eslint-plugin-vue';
 
 const controlStatements = [
@@ -82,10 +82,12 @@ export default defineConfigWithVueTs(
             'bootstrap/ssr',
             'tailwind.config.js',
             'vite.config.ts',
+            'vitest.config.ts',
             'resources/ts/actions/**',
             'resources/ts/components/ui/*',
             'resources/ts/routes/**',
             'resources/ts/wayfinder/**',
+            'resources/js/wayfinder/**',
         ],
     },
     prettier,
