@@ -4,6 +4,7 @@ use App\Http\Controllers\CurrentTeamController;
 use App\Http\Controllers\CurrentUserController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\NumberingSeriesController;
 use App\Http\Controllers\OrganizationController;
@@ -118,5 +119,13 @@ Route::middleware([
         Route::delete('/numbering-series/{series}', [NumberingSeriesController::class, 'destroy'])->name('numbering-series.destroy');
         Route::post('/numbering-series/{series}/toggle-active', [NumberingSeriesController::class, 'toggleActive'])->name('numbering-series.toggle-active');
         Route::post('/numbering-series/{series}/set-default', [NumberingSeriesController::class, 'setDefault'])->name('numbering-series.set-default');
+
+        // Email Templates
+        Route::get('/email-templates', [EmailTemplateController::class, 'index'])->name('email-templates.index');
+        Route::get('/email-templates/{type}', [EmailTemplateController::class, 'edit'])->name('email-templates.edit');
+        Route::put('/email-templates/{type}', [EmailTemplateController::class, 'update'])->name('email-templates.update');
+        Route::delete('/email-templates/{type}', [EmailTemplateController::class, 'destroy'])->name('email-templates.destroy');
+        Route::get('/api/email-templates/resolve', [EmailTemplateController::class, 'resolve'])->name('email-templates.resolve');
+        Route::post('/api/email-templates/preview', [EmailTemplateController::class, 'preview'])->name('email-templates.preview');
     });
 });

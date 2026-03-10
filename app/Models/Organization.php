@@ -211,6 +211,11 @@ class Organization extends Model implements HasMedia
         return $this->hasMany(InvoiceNumberingSeries::class);
     }
 
+    public function emailTemplates(): HasMany
+    {
+        return $this->hasMany(EmailTemplate::class);
+    }
+
     /**
      * Get all locations for this organization.
      */
