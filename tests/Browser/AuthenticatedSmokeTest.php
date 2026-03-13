@@ -14,6 +14,7 @@ dataset('authenticated pages', [
     'customers' => ['/customers', 'Customers'],
     'organizations' => ['/organizations', 'Organizations'],
     'numbering series' => ['/numbering-series', 'Invoicing'],
+    'email templates' => ['/email-templates', 'Email Templates'],
     'profile' => ['/user/profile', 'Profile'],
 ]);
 
