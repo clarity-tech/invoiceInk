@@ -83,7 +83,7 @@ test('document mailer implements ShouldQueue', function () {
     expect($mailer)->toBeInstanceOf(ShouldQueue::class);
 });
 
-test('document mailer uses correct view for invoice', function () {
+test('document mailer always uses custom-document view', function () {
     $invoice = createInvoiceWithItems([
         'invoice_number' => 'INV-005',
         'status' => 'draft',
@@ -95,10 +95,10 @@ test('document mailer uses correct view for invoice', function () {
     $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'Test', 'email' => 'test@example.com']]));
     $content = $mailer->content();
 
-    expect($content->view)->toBe('emails.invoice');
+    expect($content->view)->toBe('emails.custom-document');
 });
 
-test('document mailer uses correct view for estimate', function () {
+test('document mailer uses custom-document view for estimate', function () {
     $estimate = createInvoiceWithItems([
         'type' => 'estimate',
         'invoice_number' => 'EST-002',
@@ -111,7 +111,7 @@ test('document mailer uses correct view for estimate', function () {
     $mailer = new DocumentMailer($estimate, new ContactCollection([['name' => 'Test', 'email' => 'test@example.com']]));
     $content = $mailer->content();
 
-    expect($content->view)->toBe('emails.estimate');
+    expect($content->view)->toBe('emails.custom-document');
 });
 
 test('document mailer passes correct data to view', function () {

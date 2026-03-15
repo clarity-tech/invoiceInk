@@ -84,10 +84,11 @@ test('uses default invoice view when no custom body', function () {
     $mailer = new DocumentMailer($invoice, $recipients);
     $content = $mailer->content();
 
-    expect($content->view)->toBe('emails.invoice');
+    expect($content->view)->toBe('emails.custom-document');
+    expect($content->with)->toHaveKey('customBody');
 });
 
-test('uses estimate view for estimates', function () {
+test('uses custom-document view for estimates', function () {
     $estimate = createInvoiceWithItems([
         'type' => 'estimate',
         'invoice_number' => 'EST-VIEW-001',
@@ -99,7 +100,8 @@ test('uses estimate view for estimates', function () {
     $mailer = new DocumentMailer($estimate, $recipients);
     $content = $mailer->content();
 
-    expect($content->view)->toBe('emails.estimate');
+    expect($content->view)->toBe('emails.custom-document');
+    expect($content->with)->toHaveKey('customBody');
 });
 
 // --- Multiple recipients tests ---

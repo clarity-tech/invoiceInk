@@ -2,6 +2,8 @@
 
 namespace App\Mail;
 
+use App\Enums\EmailTemplateType;
+use App\Mail\Templates\EmailTemplateService;
 use App\Models\Invoice;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Bus\Queueable;
@@ -43,24 +45,25 @@ class DocumentMailer extends Mailable implements ShouldQueue
 
     public function content(): Content
     {
-        // If custom body is provided, use a simple text email
-        if ($this->customBody) {
-            return new Content(
-                view: 'emails.custom-document',
-                with: [
-                    'customBody' => $this->customBody,
-                    'invoice' => $this->invoice,
-                    'viewUrl' => $this->getPublicViewUrl(),
-                ],
-            );
+        // Render via custom-document template (handles both custom and default bodies).
+        // If no custom body provided, resolve the default template with variables.
+        $body = $this->customBody;
+
+        if (! $body) {
+            $type = $this->invoice->isInvoice()
+                ? EmailTemplateType::InvoiceInitial
+                : EmailTemplateType::EstimateInitial;
+
+            $rendered = app(EmailTemplateService::class)
+                ->render($this->invoice, $type);
+
+            $body = $rendered['body'];
         }
 
-        // Otherwise use the default template
-        $view = $this->invoice->isInvoice() ? 'emails.invoice' : 'emails.estimate';
-
         return new Content(
-            view: $view,
+            view: 'emails.custom-document',
             with: [
+                'customBody' => $body,
                 'invoice' => $this->invoice,
                 'viewUrl' => $this->getPublicViewUrl(),
             ],
