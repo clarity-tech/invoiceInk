@@ -12,6 +12,7 @@ use App\Models\InvoiceItem;
 use App\Models\InvoiceNumberingSeries;
 use App\Models\Location;
 use App\Models\Organization;
+use App\Models\Payment;
 use App\Services\EstimateToInvoiceConverter;
 use App\Services\InvoiceCalculator;
 use App\ValueObjects\ContactCollection;
@@ -238,7 +239,7 @@ class InvoiceController extends Controller
     {
         $this->authorize('update', $invoice);
 
-        $invoice->load(['items', 'organizationLocation', 'customerLocation', 'customerShippingLocation', 'customer.locations', 'organization']);
+        $invoice->load(['items', 'organizationLocation', 'customerLocation', 'customerShippingLocation', 'customer.locations', 'organization', 'payments']);
 
         $user = $request->user();
         $organization = $invoice->organization ?? $user->currentTeam;
@@ -483,6 +484,59 @@ class InvoiceController extends Controller
         }
 
         return $pdfService->downloadEstimatePdf($invoice);
+    }
+
+    public function recordPayment(Request $request, Invoice $invoice): RedirectResponse
+    {
+        $this->authorize('update', $invoice);
+
+        $validated = $request->validate([
+            'amount' => ['required', 'integer', 'min:1'],
+            'payment_date' => ['required', 'date'],
+            'payment_method' => ['nullable', 'string', 'max:100'],
+            'reference' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        DB::transaction(function () use ($invoice, $validated) {
+            $invoice->payments()->create([
+                'amount' => $validated['amount'],
+                'currency' => $invoice->currency,
+                'payment_date' => $validated['payment_date'],
+                'payment_method' => $validated['payment_method'] ?? null,
+                'reference' => $validated['reference'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            $totalPaid = $invoice->payments()->sum('amount');
+            $invoice->update([
+                'amount_paid' => $totalPaid,
+                'status' => $totalPaid >= $invoice->total
+                    ? InvoiceStatus::PAID
+                    : InvoiceStatus::PARTIALLY_PAID,
+            ]);
+        });
+
+        return back()->with('success', 'Payment recorded.');
+    }
+
+    public function deletePayment(Invoice $invoice, Payment $payment): RedirectResponse
+    {
+        $this->authorize('update', $invoice);
+
+        DB::transaction(function () use ($invoice, $payment) {
+            $payment->delete();
+
+            $totalPaid = $invoice->payments()->sum('amount');
+            $invoice->update([
+                'amount_paid' => $totalPaid,
+                'status' => $totalPaid <= 0
+                    ? InvoiceStatus::SENT
+                    : ($totalPaid >= $invoice->total ? InvoiceStatus::PAID : InvoiceStatus::PARTIALLY_PAID),
+            ]);
+        });
+
+        return back()->with('success', 'Payment deleted.');
     }
 
     private function generateFallbackNumber(string $type, int $organizationId): string

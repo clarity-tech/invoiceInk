@@ -110,6 +110,8 @@ Route::middleware([
         Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
         Route::get('/estimates/create', [InvoiceController::class, 'create'])->name('estimates.create');
         Route::post('/invoices/{invoice}/send-email', [InvoiceController::class, 'sendEmail'])->name('invoices.send-email');
+        Route::post('/invoices/{invoice}/payments', [InvoiceController::class, 'recordPayment'])->name('invoices.payments.store');
+        Route::delete('/invoices/{invoice}/payments/{payment}', [InvoiceController::class, 'deletePayment'])->name('invoices.payments.destroy');
 
         // Numbering series management
         Route::get('/numbering-series', [NumberingSeriesController::class, 'index'])->name('numbering-series.index');
