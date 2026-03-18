@@ -508,13 +508,7 @@ class InvoiceController extends Controller
                 'notes' => $validated['notes'] ?? null,
             ]);
 
-            $totalPaid = $invoice->payments()->sum('amount');
-            $invoice->update([
-                'amount_paid' => $totalPaid,
-                'status' => $totalPaid >= $invoice->total
-                    ? InvoiceStatus::PAID
-                    : InvoiceStatus::PARTIALLY_PAID,
-            ]);
+            $invoice->recalculatePaymentStatus();
         });
 
         return back()->with('success', 'Payment recorded.');
@@ -526,14 +520,7 @@ class InvoiceController extends Controller
 
         DB::transaction(function () use ($invoice, $payment) {
             $payment->delete();
-
-            $totalPaid = $invoice->payments()->sum('amount');
-            $invoice->update([
-                'amount_paid' => $totalPaid,
-                'status' => $totalPaid <= 0
-                    ? InvoiceStatus::SENT
-                    : ($totalPaid >= $invoice->total ? InvoiceStatus::PAID : InvoiceStatus::PARTIALLY_PAID),
-            ]);
+            $invoice->recalculatePaymentStatus();
         });
 
         return back()->with('success', 'Payment deleted.');

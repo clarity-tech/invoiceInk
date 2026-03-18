@@ -227,6 +227,25 @@ class Invoice extends Model implements HasMedia
         return $this->amount_paid > 0 && $this->amount_paid < $this->total;
     }
 
+    /**
+     * Recalculate amount_paid from payments and update status accordingly.
+     */
+    public function recalculatePaymentStatus(): void
+    {
+        $totalPaid = $this->payments()->sum('amount');
+
+        $status = match (true) {
+            $totalPaid >= $this->total => InvoiceStatus::PAID,
+            $totalPaid > 0 => InvoiceStatus::PARTIALLY_PAID,
+            default => InvoiceStatus::SENT,
+        };
+
+        $this->update([
+            'amount_paid' => $totalPaid,
+            'status' => $status,
+        ]);
+    }
+
     public function getPaymentPercentageAttribute(): float
     {
         if ($this->total === 0) {
