@@ -173,16 +173,13 @@ class InvoiceController extends Controller
                 $numberingService = app(InvoiceNumberingServiceInterface::class);
 
                 try {
-                    if (! empty($validated['invoice_numbering_series_id'])) {
-                        $series = InvoiceNumberingSeries::find($validated['invoice_numbering_series_id']);
-                        if ($series) {
-                            $data = $numberingService->generateInvoiceNumber($organization, $location, $series->name);
-                        } else {
-                            $data = $numberingService->generateInvoiceNumber($organization, $location);
-                        }
-                    } else {
-                        $data = $numberingService->generateInvoiceNumber($organization, $location);
-                    }
+                    $series = ! empty($validated['invoice_numbering_series_id'])
+                        ? InvoiceNumberingSeries::find($validated['invoice_numbering_series_id'])
+                        : null;
+
+                    $data = $series
+                        ? $numberingService->generateInvoiceNumber($organization, $location, $series->name)
+                        : $numberingService->generateInvoiceNumber($organization, $location);
                     $invoiceNumber = $data['invoice_number'];
                     $seriesId = $data['series_id'];
                 } catch (InvalidArgumentException) {
@@ -392,7 +389,7 @@ class InvoiceController extends Controller
 
         if ($validated['attach_pdf'] ?? false) {
             $pdfService = app(PdfServiceInterface::class);
-            $pdfContent = $invoice->type === 'invoice'
+            $pdfContent = $invoice->isInvoice()
                 ? $pdfService->generateInvoicePdf($invoice)
                 : $pdfService->generateEstimatePdf($invoice);
 
@@ -479,11 +476,9 @@ class InvoiceController extends Controller
 
         $pdfService = app(PdfServiceInterface::class);
 
-        if ($invoice->type === 'invoice') {
-            return $pdfService->downloadInvoicePdf($invoice);
-        }
-
-        return $pdfService->downloadEstimatePdf($invoice);
+        return $invoice->isInvoice()
+            ? $pdfService->downloadInvoicePdf($invoice)
+            : $pdfService->downloadEstimatePdf($invoice);
     }
 
     public function recordPayment(Request $request, Invoice $invoice): RedirectResponse
@@ -529,7 +524,10 @@ class InvoiceController extends Controller
     private function generateFallbackNumber(string $type, int $organizationId): string
     {
         return DB::transaction(function () use ($type, $organizationId) {
-            $prefix = $type === 'invoice' ? 'INV' : 'EST';
+            $prefix = match ($type) {
+                'invoice' => 'INV',
+                default => 'EST',
+            };
             $year = now()->year;
             $month = now()->format('m');
 

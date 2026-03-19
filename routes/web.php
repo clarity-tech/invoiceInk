@@ -19,14 +19,7 @@ use App\Http\Controllers\UserProfileController;
 use App\Http\Middleware\AuthenticateSession;
 use Illuminate\Support\Facades\Route;
 
-// Homepage (public landing for guests, redirect to dashboard for authenticated users)
-Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect('/dashboard');
-    }
-
-    return view('welcome');
-});
+Route::get('/', fn () => auth()->check() ? redirect('/dashboard') : view('welcome'));
 
 // Terms and Privacy Policy
 Route::get('/terms-of-service', [TermsOfServiceController::class, 'show'])->name('terms.show');

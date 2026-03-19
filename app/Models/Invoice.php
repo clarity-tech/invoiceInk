@@ -170,33 +170,21 @@ class Invoice extends Model implements HasMedia
         static::addGlobalScope(new OrganizationScope);
     }
 
-    /**
-     * Format a monetary amount using the invoice's currency
-     */
     public function formatMoney(int $amount): string
     {
         return $this->currency->formatAmount($amount);
     }
 
-    /**
-     * Format the invoice subtotal
-     */
     public function getFormattedSubtotalAttribute(): string
     {
         return $this->formatMoney($this->subtotal);
     }
 
-    /**
-     * Format the invoice tax amount
-     */
     public function getFormattedTaxAttribute(): string
     {
         return $this->formatMoney($this->tax);
     }
 
-    /**
-     * Format the invoice total
-     */
     public function getFormattedTotalAttribute(): string
     {
         return $this->formatMoney($this->total);
@@ -255,17 +243,11 @@ class Invoice extends Model implements HasMedia
         return round(($this->amount_paid / $this->total) * 100, 1);
     }
 
-    /**
-     * Get the currency symbol for this invoice
-     */
     public function getCurrencySymbolAttribute(): string
     {
         return Money::{$this->currency->value}(0)->getCurrency()->getSymbol();
     }
 
-    /**
-     * Register media collections for invoice attachments
-     */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('attachments')

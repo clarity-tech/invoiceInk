@@ -26,20 +26,16 @@ class TemplateVariableResolver
         $subtotal = $invoice->items->sum(fn ($item) => $item->quantity * $item->unit_price);
         $tax = $total - $subtotal;
 
-        $orgEmail = '';
-        if ($invoice->organization?->emails) {
-            $emails = $invoice->organization->emails;
-            $orgEmail = $emails->first()['email'] ?? '';
-        }
+        $orgEmail = $invoice->organization?->emails?->first()['email'] ?? '';
 
         $daysOverdue = 0;
         if ($invoice->due_at && $invoice->due_at->isPast()) {
             $daysOverdue = (int) $invoice->due_at->diffInDays(now());
         }
 
-        $viewRoute = $invoice->type === 'estimate'
-            ? route('estimates.public', $invoice->ulid)
-            : route('invoices.public', $invoice->ulid);
+        $viewRoute = $invoice->isInvoice()
+            ? route('invoices.public', $invoice->ulid)
+            : route('estimates.public', $invoice->ulid);
 
         return [
             '{{customer_name}}' => e($invoice->customer?->name ?? 'Customer'),

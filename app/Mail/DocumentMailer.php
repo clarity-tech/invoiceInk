@@ -35,7 +35,6 @@ class DocumentMailer extends Mailable implements ShouldQueue
             subject: $subject,
         );
 
-        // Add Cc if provided
         if (! empty($this->ccEmails)) {
             $envelope->cc($this->ccEmails);
         }
@@ -45,20 +44,7 @@ class DocumentMailer extends Mailable implements ShouldQueue
 
     public function content(): Content
     {
-        // Render via custom-document template (handles both custom and default bodies).
-        // If no custom body provided, resolve the default template with variables.
-        $body = $this->customBody;
-
-        if (! $body) {
-            $type = $this->invoice->isInvoice()
-                ? EmailTemplateType::InvoiceInitial
-                : EmailTemplateType::EstimateInitial;
-
-            $rendered = app(EmailTemplateService::class)
-                ->render($this->invoice, $type);
-
-            $body = $rendered['body'];
-        }
+        $body = $this->customBody ?? $this->resolveDefaultBody();
 
         return new Content(
             view: 'emails.custom-document',
@@ -75,10 +61,20 @@ class DocumentMailer extends Mailable implements ShouldQueue
         return [];
     }
 
+    private function resolveDefaultBody(): string
+    {
+        $type = $this->invoice->isInvoice()
+            ? EmailTemplateType::InvoiceInitial
+            : EmailTemplateType::EstimateInitial;
+
+        return app(EmailTemplateService::class)
+            ->render($this->invoice, $type)['body'];
+    }
+
     private function getPublicViewUrl(): string
     {
-        $type = $this->invoice->isInvoice() ? 'invoices' : 'estimates';
+        $routeName = $this->invoice->isInvoice() ? 'invoices.public' : 'estimates.public';
 
-        return url("/{$type}/view/{$this->invoice->ulid}");
+        return route($routeName, $this->invoice->ulid);
     }
 }
