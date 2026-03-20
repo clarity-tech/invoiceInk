@@ -72,16 +72,19 @@ class OrganizationController extends Controller
         $this->validateCurrencyCountryMatch($validated['country_code'] ?? null, $validated['currency'] ?? null);
 
         $filteredEmails = array_filter(
-            array_map(fn ($email) => is_string($email) ? trim($email) : '', $validated['emails']),
+            array_map(fn ($email) => is_string($email) ? trim($email) : '', $validated['emails'] ?? []),
             fn ($email) => $email !== ''
         );
 
         if (empty($filteredEmails)) {
-            return back()->withErrors(['emails.0' => __('forms.validation.at_least_one_email')]);
+            throw ValidationException::withMessages([
+                'emails.0' => __('forms.validation.at_least_one_email'),
+            ]);
         }
 
-        $contactData = array_map(fn ($email) => ['name' => '', 'email' => $email], $filteredEmails);
-        $contactCollection = new ContactCollection($contactData);
+        $contactCollection = new ContactCollection(
+            array_map(fn ($email) => ['name' => '', 'email' => $email], $filteredEmails)
+        );
 
         $organization->update([
             'name' => $validated['name'],

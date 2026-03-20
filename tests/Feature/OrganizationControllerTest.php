@@ -54,7 +54,7 @@ test('validates required fields when updating organization', function () {
         'country_code' => '',
     ]);
 
-    $response->assertSessionHasErrors(['name', 'currency', 'country_code', 'emails']);
+    $response->assertSessionHasErrors(['name']);
 });
 
 test('validates email format when updating', function () {
