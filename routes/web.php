@@ -76,7 +76,8 @@ Route::middleware([
 
         // Organization management
         Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
-        Route::get('/organization/edit', [OrganizationController::class, 'index'])->name('organization.edit');
+        Route::get('/organizations/{organization}', [OrganizationController::class, 'show'])->name('organizations.show');
+        Route::get('/organizations/{organization}/edit', [OrganizationController::class, 'edit'])->name('organizations.edit');
         Route::put('/organizations/{organization}', [OrganizationController::class, 'update'])->name('organizations.update');
         Route::put('/organizations/{organization}/location', [OrganizationController::class, 'updateLocation'])->name('organizations.update-location');
         Route::put('/organizations/{organization}/bank-details', [OrganizationController::class, 'updateBankDetails'])->name('organizations.update-bank-details');
@@ -106,8 +107,8 @@ Route::middleware([
         Route::post('/invoices/{invoice}/payments', [InvoiceController::class, 'recordPayment'])->name('invoices.payments.store');
         Route::delete('/invoices/{invoice}/payments/{payment}', [InvoiceController::class, 'deletePayment'])->name('invoices.payments.destroy');
 
-        // Numbering series management
-        Route::get('/numbering-series', [NumberingSeriesController::class, 'index'])->name('numbering-series.index');
+        // Numbering series management (index redirects to email-templates, CRUD routes kept)
+        Route::redirect('/numbering-series', '/email-templates');
         Route::post('/numbering-series', [NumberingSeriesController::class, 'store'])->name('numbering-series.store');
         Route::post('/numbering-series/preview', [NumberingSeriesController::class, 'preview'])->name('numbering-series.preview');
         Route::put('/numbering-series/{series}', [NumberingSeriesController::class, 'update'])->name('numbering-series.update');

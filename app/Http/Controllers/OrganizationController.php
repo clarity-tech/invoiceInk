@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Currency;
 use App\Enums\Country;
 use App\Enums\FinancialYearType;
+use App\Enums\ResetFrequency;
 use App\Models\Location;
 use App\Models\Organization;
 use App\Rules\CurrencyCode;
@@ -12,6 +13,7 @@ use App\ValueObjects\BankDetails;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule as ValidationRule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -19,33 +21,61 @@ use Inertia\Response;
 
 class OrganizationController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
-        $userTeamIds = $user->allTeams()->pluck('id');
+        $teams = $user->allTeams();
+
+        // Smart redirect: if user has exactly one org, go straight to show
+        if ($teams->count() === 1) {
+            return redirect()->route('organizations.show', $teams->first()->id);
+        }
 
         $organizations = Organization::with('primaryLocation')
-            ->whereIn('id', $userTeamIds)
+            ->whereIn('id', $teams->pluck('id'))
             ->latest()
             ->paginate(10);
 
-        $countries = collect(Country::cases())->map(fn ($country) => [
-            'value' => $country->value,
-            'label' => $country->flag().' '.$country->name(),
-            'currency' => $country->getDefaultCurrency()->value,
-            'financial_year_options' => $country->getFinancialYearOptions(),
-            'default_financial_year' => $country->getDefaultFinancialYearType()->value,
-            'supported_currencies' => collect($country->getSupportedCurrencies())
-                ->mapWithKeys(fn ($c) => [$c->value => $c->name().' ('.$c->symbol().')'])
-                ->toArray(),
-            'tax_system' => $country->getTaxSystemInfo(),
-            'recommended_numbering' => $country->getRecommendedNumberingFormat(),
-        ]);
-
         return Inertia::render('Organizations/Index', [
             'organizations' => $organizations,
-            'countries' => $countries,
+        ]);
+    }
+
+    public function show(Request $request, Organization $organization): Response
+    {
+        $this->authorizeAccess($request, $organization);
+
+        $organization->load('primaryLocation');
+
+        $numberingSeries = $organization->numberingSeries()
+            ->orderByDesc('is_default')
+            ->orderBy('name')
+            ->get();
+
+        return Inertia::render('Organizations/Show', [
+            'organization' => $organization,
+            'numberingSeries' => $numberingSeries,
+        ]);
+    }
+
+    public function edit(Request $request, Organization $organization): Response
+    {
+        $this->authorizeAccess($request, $organization);
+
+        $organization->load('primaryLocation');
+
+        $numberingSeries = $organization->numberingSeries()
+            ->orderByDesc('is_default')
+            ->orderBy('name')
+            ->get();
+
+        return Inertia::render('Organizations/Edit', [
+            'organization' => $organization,
+            'countries' => $this->getCountryOptions(),
             'currencies' => Currency::options(),
+            'tab' => $request->query('tab', 'basics'),
+            'numberingSeries' => $numberingSeries,
+            'resetFrequencyOptions' => ResetFrequency::getOptions(),
         ]);
     }
 
@@ -214,6 +244,25 @@ class OrganizationController extends Controller
 
         return redirect()->route('organizations.index')
             ->with('message', __('messages.notifications.organization_deleted'));
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function getCountryOptions(): Collection
+    {
+        return collect(Country::cases())->map(fn ($country) => [
+            'value' => $country->value,
+            'label' => $country->flag().' '.$country->name(),
+            'currency' => $country->getDefaultCurrency()->value,
+            'financial_year_options' => $country->getFinancialYearOptions(),
+            'default_financial_year' => $country->getDefaultFinancialYearType()->value,
+            'supported_currencies' => collect($country->getSupportedCurrencies())
+                ->mapWithKeys(fn ($c) => [$c->value => $c->name().' ('.$c->symbol().')'])
+                ->toArray(),
+            'tax_system' => $country->getTaxSystemInfo(),
+            'recommended_numbering' => $country->getRecommendedNumberingFormat(),
+        ]);
     }
 
     private function authorizeAccess(Request $request, Organization $organization): void
