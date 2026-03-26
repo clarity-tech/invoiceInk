@@ -12,7 +12,14 @@ class PublicViewController extends Controller
     public function showInvoice(string $ulid): View
     {
         $invoice = Invoice::withoutGlobalScopes()
-            ->with(['items', 'organizationLocation.locatable', 'customerLocation.locatable'])
+            ->with([
+                'items',
+                'organization',
+                'customer' => fn ($q) => $q->withoutGlobalScopes(),
+                'organizationLocation',
+                'customerLocation',
+                'payments',
+            ])
             ->where('ulid', $ulid)
             ->where('type', 'invoice')
             ->firstOrFail();
@@ -23,7 +30,14 @@ class PublicViewController extends Controller
     public function showEstimate(string $ulid): View
     {
         $estimate = Invoice::withoutGlobalScopes()
-            ->with(['items', 'organizationLocation.locatable', 'customerLocation.locatable'])
+            ->with([
+                'items',
+                'organization',
+                'customer' => fn ($q) => $q->withoutGlobalScopes(),
+                'organizationLocation',
+                'customerLocation',
+                'payments',
+            ])
             ->where('ulid', $ulid)
             ->where('type', 'estimate')
             ->firstOrFail();
@@ -34,7 +48,14 @@ class PublicViewController extends Controller
     public function downloadInvoicePdf(string $ulid, PdfServiceInterface $pdfService): Response
     {
         $invoice = Invoice::withoutGlobalScopes()
-            ->with(['items', 'organizationLocation.locatable', 'customerLocation.locatable'])
+            ->with([
+                'items',
+                'organization',
+                'customer' => fn ($q) => $q->withoutGlobalScopes(),
+                'organizationLocation',
+                'customerLocation',
+                'payments',
+            ])
             ->where('ulid', $ulid)
             ->where('type', 'invoice')
             ->firstOrFail();
@@ -45,7 +66,14 @@ class PublicViewController extends Controller
     public function downloadEstimatePdf(string $ulid, PdfServiceInterface $pdfService): Response
     {
         $estimate = Invoice::withoutGlobalScopes()
-            ->with(['items', 'organizationLocation.locatable', 'customerLocation.locatable'])
+            ->with([
+                'items',
+                'organization',
+                'customer' => fn ($q) => $q->withoutGlobalScopes(),
+                'organizationLocation',
+                'customerLocation',
+                'payments',
+            ])
             ->where('ulid', $ulid)
             ->where('type', 'estimate')
             ->firstOrFail();
