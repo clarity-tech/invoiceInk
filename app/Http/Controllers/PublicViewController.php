@@ -17,7 +17,7 @@ class PublicViewController extends Controller
                 'organization',
                 'customer' => fn ($q) => $q->withoutGlobalScopes(),
                 'organizationLocation',
-                'customerLocation',
+                'customerLocation', 'customerShippingLocation',
                 'payments',
             ])
             ->where('ulid', $ulid)
@@ -35,7 +35,7 @@ class PublicViewController extends Controller
                 'organization',
                 'customer' => fn ($q) => $q->withoutGlobalScopes(),
                 'organizationLocation',
-                'customerLocation',
+                'customerLocation', 'customerShippingLocation',
                 'payments',
             ])
             ->where('ulid', $ulid)
@@ -53,7 +53,7 @@ class PublicViewController extends Controller
                 'organization',
                 'customer' => fn ($q) => $q->withoutGlobalScopes(),
                 'organizationLocation',
-                'customerLocation',
+                'customerLocation', 'customerShippingLocation',
                 'payments',
             ])
             ->where('ulid', $ulid)
@@ -71,7 +71,7 @@ class PublicViewController extends Controller
                 'organization',
                 'customer' => fn ($q) => $q->withoutGlobalScopes(),
                 'organizationLocation',
-                'customerLocation',
+                'customerLocation', 'customerShippingLocation',
                 'payments',
             ])
             ->where('ulid', $ulid)

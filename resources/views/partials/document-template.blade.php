@@ -36,6 +36,30 @@
     // Payment info (invoices only)
     $showPaymentInfo = $isInvoice && $document->amount_paid > 0;
     $remainingBalance = $isInvoice ? $document->remaining_balance : $document->total;
+
+    // Derive payment terms from date difference
+    $paymentTerms = null;
+    if ($document->issued_at && $document->due_at) {
+        $daysDiff = (int) $document->issued_at->diffInDays($document->due_at);
+        $paymentTerms = match($daysDiff) {
+            0 => 'Due on Receipt',
+            7 => 'Net 7',
+            15 => 'Net 15',
+            30 => 'Net 30',
+            45 => 'Net 45',
+            60 => 'Net 60',
+            90 => 'Net 90',
+            default => "Due in {$daysDiff} days",
+        };
+    }
+
+    // Shipping location (if different from billing)
+    $shipLocation = $document->customerShippingLocation;
+    $hasShipping = $shipLocation && $shipLocation->id !== $custLocation?->id;
+
+    // Organization contact info
+    $orgEmails = $organization->emails;
+    $orgPhone = $organization->phone;
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -461,6 +485,12 @@
                         @if($orgLocation->gstin)
                             <div class="gstin">{{ __('documents.fields.gstin') }} {{ $orgLocation->gstin }}</div>
                         @endif
+                        @if($orgEmails && $orgEmails->count() > 0)
+                            <div style="margin-top: 4px;">{{ $orgEmails->getEmails()[0] ?? '' }}</div>
+                        @endif
+                        @if($orgPhone)
+                            <div>{{ $orgPhone }}</div>
+                        @endif
                     </div>
                 </div>
 
@@ -515,9 +545,34 @@
                                 <td class="dt-value nums">{{ $document->due_at->format('d M Y') }}</td>
                             </tr>
                         @endif
+                        @if($paymentTerms)
+                            <tr>
+                                <td class="dt-label">Terms</td>
+                                <td class="dt-value">{{ $paymentTerms }}</td>
+                            </tr>
+                        @endif
                     </table>
                 </div>
             </div>
+
+            {{-- B2. Ship To (if different from Bill To) ────── --}}
+            @if($hasShipping)
+                <div class="meta-row" style="margin-top: -8px; padding-top: 0;">
+                    <div class="meta-col">
+                        <div class="section-label">Ship To</div>
+                        <div class="customer-name">{{ $shipLocation->name ?? '' }}</div>
+                        <div class="address-text">
+                            {{ $shipLocation->address_line_1 }}<br>
+                            @if($shipLocation->address_line_2)
+                                {{ $shipLocation->address_line_2 }}<br>
+                            @endif
+                            {{ $shipLocation->city }}<br>
+                            {{ $shipLocation->postal_code }} {{ $shipLocation->state }}<br>
+                            {{ $shipLocation->country }}
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             {{-- C. Line Items ──────────────────────────────── --}}
             <table class="items-table">
