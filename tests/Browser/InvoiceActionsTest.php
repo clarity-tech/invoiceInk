@@ -44,6 +44,5 @@ it('shows action buttons on invoice edit page', function () {
         ->assertNoJavascriptErrors()
         ->assertSee('Send Email')
         ->assertSee('View Public')
-        ->assertSee('Download PDF')
-        ->assertSee('Back to Invoices');
+        ->assertSee('Download PDF');
 });

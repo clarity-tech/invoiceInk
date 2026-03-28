@@ -126,7 +126,7 @@ it('shows create page UI elements and back navigation', function () {
     $page->assertNoJavascriptErrors()
         ->assertSee('Add Item')
         ->assertSee('Line Items')
-        ->click('a:has-text("Back to Invoices")')
+        ->click('button:has-text("Cancel")')
         ->assertPathIs('/invoices');
 });
 

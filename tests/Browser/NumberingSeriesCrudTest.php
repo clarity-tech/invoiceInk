@@ -11,18 +11,15 @@ it('creates a numbering series', function () {
 
     $this->actingAs($user);
 
-    $page = $this->visit('/numbering-series');
+    $page = $this->visit("/organizations/{$organization->id}/edit?tab=numbering");
 
-    $page->assertPathIs('/numbering-series')
-        ->assertNoJavascriptErrors()
-        ->click('text=Create New Series')
-        ->select('#organization_id', $organization->id)
-        ->fill('#name', 'Monthly Invoice Series')
-        ->fill('#prefix', 'MINV')
-        ->fill('#format_pattern', '{PREFIX}-{YEAR}-{MONTH}-{SEQUENCE:4}')
-        ->fill('#current_number', '0')
-        ->select('#reset_frequency', 'monthly')
-        ->click('button:has-text("Create Series")')
+    $page->assertNoJavascriptErrors()
+        ->click('text=Add Series')
+        ->fill('#ns-name', 'Monthly Invoice Series')
+        ->fill('#ns-prefix', 'MINV')
+        ->fill('#ns-format_pattern', '{PREFIX}-{YEAR}-{MONTH}-{SEQUENCE:4}')
+        ->select('#ns-reset_frequency', 'monthly')
+        ->click('button:has-text("Create")')
         ->waitForText('Monthly Invoice Series')
         ->assertSee('Monthly Invoice Series');
 });
@@ -37,12 +34,10 @@ it('opens edit form for a numbering series', function () {
 
     $this->actingAs($user);
 
-    $page = $this->visit('/numbering-series');
+    $page = $this->visit("/organizations/{$organization->id}/edit?tab=numbering");
 
     $page->assertSee('Edit Me Series')
-        ->click('button.text-brand-600:has-text("Edit")')
-        ->waitForText('Edit Numbering Series')
-        ->assertSee('Edit Numbering Series')
+        ->click('button:has-text("Edit")')
         ->assertSee('EDT');
 });
 
@@ -56,13 +51,12 @@ it('toggles series active status', function () {
 
     $this->actingAs($user);
 
-    $page = $this->visit('/numbering-series');
+    $page = $this->visit("/organizations/{$organization->id}/edit?tab=numbering");
 
     $page->assertSee('Toggle Series')
-        ->assertSee('Active')
         ->click('button:has-text("Deactivate")')
-        ->waitForText('Inactive')
-        ->assertSee('Inactive');
+        ->waitForText('Activate')
+        ->assertSee('Activate');
 });
 
 it('sets series as default', function () {
@@ -75,7 +69,7 @@ it('sets series as default', function () {
 
     $this->actingAs($user);
 
-    $page = $this->visit('/numbering-series');
+    $page = $this->visit("/organizations/{$organization->id}/edit?tab=numbering");
 
     $page->assertSee('Make Default Series')
         ->click('button:has-text("Set Default")')
@@ -93,12 +87,12 @@ it('shows delete confirmation modal for series', function () {
 
     $this->actingAs($user);
 
-    $page = $this->visit('/numbering-series');
+    $page = $this->visit("/organizations/{$organization->id}/edit?tab=numbering");
 
     $page->assertSee('Delete Me Series')
-        ->click('button.text-red-600:has-text("Delete")')
+        ->click('button:has-text("Delete")')
         ->waitForText('Delete Numbering Series')
-        ->assertSee('Are you sure you want to delete this numbering series');
+        ->assertSee('Delete Numbering Series');
 });
 
 it('cannot delete series with invoices', function () {
@@ -112,12 +106,12 @@ it('cannot delete series with invoices', function () {
 
     $this->actingAs($user);
 
-    $page = $this->visit('/numbering-series');
+    $page = $this->visit("/organizations/{$organization->id}/edit?tab=numbering");
 
     $page->assertSee('Has Invoices Series')
-        ->click('button.text-red-600:has-text("Delete")')
+        ->click('button:has-text("Delete")')
         ->waitForText('Delete Numbering Series')
-        ->click('button.bg-red-600')
+        ->click('.bg-red-600')
         ->waitForText('Has Invoices Series')
         ->assertSee('Has Invoices Series');
 });
@@ -127,13 +121,13 @@ it('shows validation errors on create', function () {
         'email' => 'ns-validation@example.test',
     ]);
 
-    createOrganizationWithLocation([], [], $user);
+    $organization = createOrganizationWithLocation([], [], $user);
 
     $this->actingAs($user);
 
-    $page = $this->visit('/numbering-series');
+    $page = $this->visit("/organizations/{$organization->id}/edit?tab=numbering");
 
-    $page->click('text=Create New Series')
-        ->click('button:has-text("Create Series")')
-        ->waitForText('name');
+    $page->click('text=Add Series')
+        ->click('button:has-text("Create")')
+        ->waitForText('Name');
 });

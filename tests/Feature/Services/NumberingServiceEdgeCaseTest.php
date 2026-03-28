@@ -20,7 +20,7 @@ test('monthly reset triggers when month changes', function () {
         'organization_id' => $organization->id,
         'current_number' => 50,
         'reset_frequency' => ResetFrequency::MONTHLY,
-        'last_reset_at' => now()->subMonth(),
+        'last_reset_at' => now()->subMonthNoOverflow(),
         'is_default' => true,
         'is_active' => true,
     ]);

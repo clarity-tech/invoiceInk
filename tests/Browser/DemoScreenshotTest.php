@@ -295,8 +295,8 @@ it('captures authenticated page screenshots', function () {
         ->assertPathIs('/estimates/create')
         ->screenshot(fullPage: true, filename: 'demo/08-estimate-create');
 
-    $this->visit('/numbering-series')
-        ->assertPathIs('/numbering-series')
+    $this->visit("/organizations/{$org->id}/edit?tab=numbering")
+        ->assertPathIs("/organizations/{$org->id}/edit")
         ->screenshot(fullPage: true, filename: 'demo/09-numbering-series');
 });
 

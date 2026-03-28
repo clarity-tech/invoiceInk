@@ -103,10 +103,10 @@ test('should reset method works correctly', function () {
     ]);
     expect($series->shouldReset())->toBe(false);
 
-    // Monthly reset - should reset
+    // Monthly reset - should reset (use subMonthsNoOverflow to avoid Carbon day overflow on 29-31)
     $series = InvoiceNumberingSeries::factory()->create([
         'reset_frequency' => ResetFrequency::MONTHLY,
-        'last_reset_at' => now()->subMonth()->startOfMonth(),
+        'last_reset_at' => now()->subMonthNoOverflow()->startOfMonth(),
     ]);
     expect($series->shouldReset())->toBe(true);
 

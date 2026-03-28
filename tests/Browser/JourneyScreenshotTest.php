@@ -236,8 +236,9 @@ it('captures numbering series management', function () {
     $data = seedDemoData();
     $this->actingAs($data['user']);
 
-    $this->visit('/numbering-series')
-        ->assertPathIs('/numbering-series')
+    $org = $data['org'];
+    $this->visit("/organizations/{$org->id}/edit?tab=numbering")
+        ->assertPathIs("/organizations/{$org->id}/edit")
         ->screenshot(fullPage: true, filename: 'journeys/09-numbering-series/01-numbering-series-list');
 });
 
