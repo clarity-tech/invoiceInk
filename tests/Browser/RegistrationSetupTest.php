@@ -227,9 +227,10 @@ it('adds additional location after setup completion', function () {
     $this->visit('/dashboard')
         ->assertPathIs('/dashboard');
 
-    // Navigate to organizations page - verify setup data persisted
+    // Navigate to organizations page - single org redirects to show page
+    $org = $user->fresh()->currentTeam;
     $this->visit('/organizations')
-        ->assertPathIs('/organizations')
+        ->assertPathIs("/organizations/{$org->id}")
         ->assertSee('Multi-Location Corp')
         ->screenshot(fullPage: true, filename: 'demo/24-org-with-locations');
 });

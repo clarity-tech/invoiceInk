@@ -85,12 +85,13 @@ it('captures organization management journey', function () {
     $data = seedDemoData();
     $this->actingAs($data['user']);
 
-    $this->visit('/organizations')
-        ->assertPathIs('/organizations')
-        ->screenshot(fullPage: true, filename: 'journeys/03-organization-management/01-organization-list');
+    $org = $data['org'];
+    $this->visit("/organizations/{$org->id}")
+        ->assertPathIs("/organizations/{$org->id}")
+        ->screenshot(fullPage: true, filename: 'journeys/03-organization-management/01-organization-show');
 
-    $this->visit('/organization/edit')
-        ->assertPathIs('/organization/edit')
+    $this->visit("/organizations/{$org->id}/edit")
+        ->assertPathIs("/organizations/{$org->id}/edit")
         ->screenshot(fullPage: true, filename: 'journeys/03-organization-management/02-organization-edit');
 });
 

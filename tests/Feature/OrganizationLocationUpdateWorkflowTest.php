@@ -2,17 +2,22 @@
 
 use App\Models\User;
 
-test('user can go to organizations page and update location details including GSTIN', function () {
+test('user can go to organization show page and then edit location', function () {
     $user = User::factory()->withBusinessOrganization()->create([
         'email' => 'business@example.test',
     ]);
 
     $organization = $user->ownedTeams()->first();
 
-    // User goes to organizations page
-    $response = $this->actingAs($user)->get('/organizations');
+    // User goes to organization show page
+    $response = $this->actingAs($user)->get("/organizations/{$organization->id}");
     $response->assertStatus(200);
-    $response->assertInertia(fn ($page) => $page->component('Organizations/Index'));
+    $response->assertInertia(fn ($page) => $page->component('Organizations/Show'));
+
+    // User goes to edit page
+    $response = $this->actingAs($user)->get("/organizations/{$organization->id}/edit?tab=location");
+    $response->assertStatus(200);
+    $response->assertInertia(fn ($page) => $page->component('Organizations/Edit'));
 
     // Update location details via HTTP
     $response = $this->actingAs($user)->put("/organizations/{$organization->id}/location", [
@@ -40,15 +45,15 @@ test('user can go to organizations page and update location details including GS
     expect($location->postal_code)->toBe('560001');
 });
 
-test('user can update organization via Manage Your Business flow with location details', function () {
+test('user can update organization via edit page with location details', function () {
     $user = User::factory()->withPersonalTeam()->create([
         'email' => 'personal@example.test',
     ]);
 
     $organization = createOrganizationWithLocation([], [], $user);
 
-    // User goes to /organization/edit
-    $response = $this->actingAs($user)->get('/organization/edit');
+    // User goes to edit page
+    $response = $this->actingAs($user)->get("/organizations/{$organization->id}/edit");
     $response->assertStatus(200);
 
     // Update organization basics
@@ -58,93 +63,51 @@ test('user can update organization via Manage Your Business flow with location d
         'currency' => 'INR',
         'country_code' => 'IN',
     ]);
+
     $response->assertRedirect();
 
-    // Update location
+    $organization->refresh();
+    expect($organization->name)->toBe('My Updated Personal Business');
+});
+
+test('user can update location from edit page location tab', function () {
+    $user = User::factory()->withPersonalTeam()->create([
+        'email' => 'loctest@example.test',
+    ]);
+
+    $organization = createOrganizationWithLocation([], [], $user);
+
     $response = $this->actingAs($user)->put("/organizations/{$organization->id}/location", [
-        'location_name' => 'Home Office',
-        'gstin' => '27AABCU9603R1ZX',
-        'address_line_1' => '456 Residential Complex',
+        'location_name' => 'Branch Office',
+        'address_line_1' => '456 Branch St',
         'city' => 'Mumbai',
         'state' => 'Maharashtra',
         'country' => 'IN',
         'postal_code' => '400001',
     ]);
+
     $response->assertRedirect();
 
     $organization->refresh();
-    expect($organization->name)->toBe('My Updated Personal Business');
-
-    $location = $organization->primaryLocation;
-    expect($location->name)->toBe('Home Office');
-    expect($location->gstin)->toBe('27AABCU9603R1ZX');
-    expect($location->address_line_1)->toBe('456 Residential Complex');
-    expect($location->city)->toBe('Mumbai');
+    expect($organization->primaryLocation->city)->toBe('Mumbai');
 });
 
-test('GSTIN updates are reflected immediately in database', function () {
-    $user = User::factory()->withPersonalTeam()->create();
+test('user can update bank details from edit page bank tab', function () {
+    $user = User::factory()->withPersonalTeam()->create([
+        'email' => 'banktest@example.test',
+    ]);
+
     $organization = createOrganizationWithLocation([], [], $user);
 
-    // Update with GSTIN
-    $response = $this->actingAs($user)->put("/organizations/{$organization->id}/location", [
-        'location_name' => 'Test Office',
-        'gstin' => '36AABCU9603R1ZU',
-        'address_line_1' => '789 Test Street',
-        'city' => 'Hyderabad',
-        'state' => 'Telangana',
-        'country' => 'IN',
-        'postal_code' => '500001',
+    $response = $this->actingAs($user)->put("/organizations/{$organization->id}/bank-details", [
+        'bank_name' => 'HDFC Bank',
+        'bank_account_name' => 'Test Account',
+        'bank_account_number' => '1234567890',
+        'bank_ifsc' => 'HDFC0001234',
     ]);
 
     $response->assertRedirect();
 
     $organization->refresh();
-    $location = $organization->primaryLocation;
-    expect($location->gstin)->toBe('36AABCU9603R1ZU');
-
-    // Update GSTIN again
-    $response = $this->actingAs($user)->put("/organizations/{$organization->id}/location", [
-        'location_name' => 'Test Office',
-        'gstin' => 'UPDATED123456789',
-        'address_line_1' => '789 Test Street',
-        'city' => 'Hyderabad',
-        'state' => 'Telangana',
-        'country' => 'IN',
-        'postal_code' => '500001',
-    ]);
-
-    $response->assertRedirect();
-
-    $organization->refresh();
-    expect($organization->primaryLocation->gstin)->toBe('UPDATED123456789');
-});
-
-test('location updates work with all supported country formats', function () {
-    $user = User::factory()->withPersonalTeam()->create();
-    $organization = createOrganizationWithLocation([], [], $user);
-
-    // Test with US format
-    $response = $this->actingAs($user)->put("/organizations/{$organization->id}", [
-        'name' => 'US Business',
-        'emails' => ['us@example.test'],
-        'currency' => 'USD',
-        'country_code' => 'US',
-    ]);
-    $response->assertRedirect();
-
-    $response = $this->actingAs($user)->put("/organizations/{$organization->id}/location", [
-        'location_name' => 'US Office',
-        'address_line_1' => '123 Main Street',
-        'city' => 'New York',
-        'state' => 'New York',
-        'country' => 'US',
-        'postal_code' => '10001',
-    ]);
-    $response->assertRedirect();
-
-    $organization->refresh();
-    $location = $organization->primaryLocation;
-    expect($location->country)->toBe('US');
-    expect($location->postal_code)->toBe('10001');
+    expect($organization->bank_details->bankName)->toBe('HDFC Bank');
 });

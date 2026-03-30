@@ -275,8 +275,9 @@ it('captures authenticated page screenshots', function () {
         ->assertPathIs('/dashboard')
         ->screenshot(fullPage: true, filename: 'demo/03-dashboard');
 
-    $this->visit('/organizations')
-        ->assertPathIs('/organizations')
+    $org = $data['org'];
+    $this->visit("/organizations/{$org->id}")
+        ->assertPathIs("/organizations/{$org->id}")
         ->screenshot(fullPage: true, filename: 'demo/04-organizations');
 
     $this->visit('/customers')

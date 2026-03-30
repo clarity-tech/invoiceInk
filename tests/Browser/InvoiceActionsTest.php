@@ -19,7 +19,7 @@ it('duplicates an invoice from the list', function () {
     $page = $this->visit('/invoices');
 
     $page->assertSee('INV-DUP-001')
-        ->click('text=Duplicate')
+        ->click('button:has-text("Duplicate")')
         ->waitForText('Edit Invoice')
         ->assertSee('Edit Invoice');
 });

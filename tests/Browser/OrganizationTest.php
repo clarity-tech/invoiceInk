@@ -18,9 +18,9 @@ it('loads the organizations page for authenticated users', function () {
 
     $this->actingAs($user);
 
-    $page = $this->visit('/organizations');
+    $page = $this->visit("/organizations/{$organization->id}");
 
-    $page->assertPathIs('/organizations')
+    $page->assertPathIs("/organizations/{$organization->id}")
         ->assertNoJavascriptErrors();
 });
 
@@ -40,7 +40,7 @@ it('shows organization details', function () {
 
     $this->actingAs($user);
 
-    $page = $this->visit('/organizations');
+    $page = $this->visit("/organizations/{$organization->id}");
 
     $page->assertSee($organization->displayName);
 });

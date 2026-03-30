@@ -10,7 +10,7 @@ export default defineConfig({
         include: ['resources/ts/**/*.{test,spec}.ts'],
         coverage: {
             provider: 'v8',
-            include: ['resources/ts/composables/**', 'resources/ts/lib/**', 'resources/ts/Components/**'],
+            include: ['resources/ts/composables/**', 'resources/ts/lib/**', 'resources/ts/Components/**', 'resources/ts/Pages/**', 'resources/ts/Layouts/**'],
         },
     },
     resolve: {

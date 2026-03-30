@@ -12,10 +12,10 @@
         "skipLibCheck": true,
         "noEmit": true,
         "paths": {
-            "@/*": ["./resources/ts/*"]
+            "@/*": ["./resources/js/*"]
         },
-        "types": ["node", "vite/client"]
+        "types": ["vite/client"]
     },
-    "include": ["resources/ts/**/*.ts", "resources/ts/**/*.vue"],
+    "include": ["resources/js/**/*.ts", "resources/js/**/*.d.ts", "resources/js/**/*.vue"],
     "exclude": ["node_modules"]
 }

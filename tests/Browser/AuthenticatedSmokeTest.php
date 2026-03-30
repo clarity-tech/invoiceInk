@@ -7,13 +7,12 @@ use App\Models\User;
 // --- Datasets ---
 
 dataset('authenticated pages', [
-    'dashboard' => ['/dashboard', 'Invoicing'],
+    'dashboard' => ['/dashboard', 'InvoiceInk'],
     'invoices' => ['/invoices', 'Invoices'],
     'invoice create' => ['/invoices/create', 'Create Invoice'],
     'estimate create' => ['/estimates/create', 'Create Estimate'],
     'customers' => ['/customers', 'Customers'],
-    'organizations' => ['/organizations', 'Organizations'],
-    'numbering series' => ['/numbering-series', 'Invoicing'],
+    'numbering series' => ['/numbering-series', 'InvoiceInk'],
     'email templates' => ['/email-templates', 'Email Templates'],
     'profile' => ['/user/profile', 'Profile'],
 ]);
@@ -85,7 +84,7 @@ it('renders dashboard for different org configurations without JS errors', funct
     $page->assertNoJavascriptErrors();
 
     // Nav bar should always be visible regardless of org config
-    $page->assertSee('Invoicing')
+    $page->assertSee('InvoiceInk')
         ->assertSee('Dashboard');
 })->with('org configurations');
 
@@ -130,7 +129,7 @@ it('navigation bar is visible on all authenticated pages', function (string $pat
     $this->actingAs($user);
 
     $this->visit($path)
-        ->assertSee('Invoicing')
+        ->assertSee('InvoiceInk')
         ->assertSee('Dashboard')
         ->assertSee('Customers')
         ->assertNoJavascriptErrors();

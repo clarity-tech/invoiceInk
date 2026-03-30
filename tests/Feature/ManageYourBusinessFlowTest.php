@@ -13,39 +13,48 @@ test('dashboard shows business overview', function () {
     $response->assertInertia(fn ($page) => $page->component('Dashboard'));
 });
 
-test('organization edit route renders organizations page', function () {
+test('organizations index redirects single-org user to show page', function () {
     $user = User::factory()->withPersonalTeam()->create([
         'email' => 'test@example.test',
     ]);
 
-    $response = $this->actingAs($user)->get('/organization/edit');
-    $response->assertStatus(200);
-    $response->assertInertia(fn ($page) => $page->component('Organizations/Index'));
+    $org = $user->currentTeam;
+
+    $response = $this->actingAs($user)->get('/organizations');
+    $response->assertRedirect("/organizations/{$org->id}");
 });
 
-test('organization edit route shows organizations with data', function () {
+test('organization show page renders for owner', function () {
     $user = User::factory()->withPersonalTeam()->create([
         'email' => 'test@example.test',
     ]);
 
-    $response = $this->actingAs($user)->get('/organization/edit');
+    $organization = createOrganizationWithLocation([], [], $user);
+
+    $response = $this->actingAs($user)->get("/organizations/{$organization->id}");
     $response->assertStatus(200);
     $response->assertInertia(fn ($page) => $page
-        ->component('Organizations/Index')
-        ->has('organizations')
-        ->has('countries')
-        ->has('currencies')
+        ->component('Organizations/Show')
+        ->has('organization')
     );
 });
 
-test('user can navigate to organizations page', function () {
+test('organization edit page renders with tabs', function () {
     $user = User::factory()->withPersonalTeam()->create([
         'email' => 'test@example.test',
     ]);
 
-    $response = $this->actingAs($user)->get('/organizations');
+    $organization = createOrganizationWithLocation([], [], $user);
+
+    $response = $this->actingAs($user)->get("/organizations/{$organization->id}/edit");
     $response->assertStatus(200);
-    $response->assertInertia(fn ($page) => $page->component('Organizations/Index'));
+    $response->assertInertia(fn ($page) => $page
+        ->component('Organizations/Edit')
+        ->has('organization')
+        ->has('countries')
+        ->has('currencies')
+        ->where('tab', 'basics')
+    );
 });
 
 test('user can update organization via PUT request', function () {
@@ -78,17 +87,4 @@ test('dashboard renders with Inertia', function () {
     $response = $this->actingAs($user)->get('/dashboard');
 
     $response->assertStatus(200);
-});
-
-test('organizations index page shows organizations list', function () {
-    $user = User::factory()->withPersonalTeam()->create([
-        'email' => 'test@example.test',
-    ]);
-
-    $response = $this->actingAs($user)->get('/organization/edit');
-    $response->assertStatus(200);
-    $response->assertInertia(fn ($page) => $page
-        ->component('Organizations/Index')
-        ->has('organizations.data')
-    );
 });

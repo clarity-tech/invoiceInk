@@ -3,19 +3,13 @@
 use App\Models\InvoiceNumberingSeries;
 use App\Models\User;
 
-test('can render numbering series index page', function () {
+test('numbering series index redirects to email templates', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $this->actingAs($user);
 
     $response = $this->get('/numbering-series');
 
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->component('NumberingSeries/Index')
-        ->has('series')
-        ->has('organizations')
-        ->has('resetFrequencyOptions')
-    );
+    $response->assertRedirect('/email-templates');
 });
 
 test('can create numbering series', function () {

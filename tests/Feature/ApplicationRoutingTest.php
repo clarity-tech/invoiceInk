@@ -29,8 +29,13 @@ test('protected routes require authentication', function () {
 test('protected routes load successfully when authenticated', function () {
     $user = createUserWithTeam();
 
+    // /organizations redirects single-org users to show page
+    $org = $user->currentTeam;
+    $response = $this->actingAs($user)->get('/organizations');
+    $response->assertRedirect("/organizations/{$org->id}");
+
+    // Other routes load directly
     $routes = [
-        '/organizations' => 'Organizations',
         '/customers' => 'Customers',
         '/invoices' => 'Invoices',
     ];

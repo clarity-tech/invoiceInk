@@ -250,7 +250,6 @@ class Invoice extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('attachments')
-            ->useDisk('local');
+        $this->addMediaCollection('attachments');
     }
 }

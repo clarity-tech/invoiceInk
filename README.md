@@ -1,7 +1,7 @@
 ![CLARITY Logo](.github/clarity-logo.png)
-# Clarity Invoicing Application
+# InvoiceInk
 
-A modern Laravel-based invoicing system with organization-centric architecture, multi-currency support, and comprehensive document management.
+A modern invoicing application built with Laravel 13, Inertia.js v3, Vue 3, and TypeScript. Features multi-currency support, organization-centric architecture, and comprehensive document management.
 
 ## Prerequisites
 
@@ -10,34 +10,12 @@ A modern Laravel-based invoicing system with organization-centric architecture, 
 
 ## Getting Started
 
-### 1. Clone the repository
+### 1. Clone and install PHP dependencies
 
 ```bash
 git clone <repository-url>
 cd invoicing
-git submodule update --init --recursive
-```
 
-### 2. Environment setup
-
-```bash
-cp .env.example .env
-```
-
-Update `.env` with the PostgreSQL configuration:
-
-```dotenv
-DB_CONNECTION=pgsql
-DB_HOST=pgsql
-DB_PORT=5432
-DB_DATABASE=laravel
-DB_USERNAME=sail
-DB_PASSWORD=secret
-```
-
-### 3. Install PHP dependencies
-
-```bash
 docker run --rm \
     -u "$(id -u):$(id -g)" \
     -v "$(pwd):/var/www/html" \
@@ -46,161 +24,131 @@ docker run --rm \
     composer install --ignore-platform-reqs
 ```
 
-### 4. Start the development environment
+### 2. Environment setup
+
+```bash
+cp .env.example .env
+```
+
+### 3. Start services and run setup
 
 ```bash
 ./vendor/bin/sail up -d
-```
-
-### 5. Generate application key
-
-```bash
-sail artisan key:generate
-```
-
-### 6. Run migrations and seed the database
-
-```bash
-sail artisan migrate:fresh --seed
-```
-
-### 7. Install frontend dependencies and build assets
-
-```bash
+sail php artisan app:setup --seed
 sail bun install
-sail bun run dev
+sail bun run build
 ```
+
+The `app:setup` command handles everything: key generation, migrations, database seeding, S3 bucket creation on RustFS, and cache clearing.
 
 The application will be available at http://localhost.
 
-### 8. (Optional) Set up browser testing
+### 4. (Optional) Start Vite dev server for HMR
+
+```bash
+sail bun run dev
+```
+
+### 5. (Optional) Set up browser testing
 
 ```bash
 sail composer browser-setup
 ```
 
-Downloads Chromium for Pest Browser tests (~60s, one-time). Persists across container restarts — only cleared by `sail down -v`.
-
-### Quick Start (all-in-one)
-
-After cloning and setting up `.env`:
-
-```bash
-docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php85-composer:latest composer install --ignore-platform-reqs
-./vendor/bin/sail up -d
-sail artisan key:generate
-sail artisan migrate:fresh --seed
-sail bun install
-sail bun run dev
-```
+Downloads Chromium for Pest Browser tests (~60s, one-time).
 
 ## Services
 
-Once `sail up -d` is running, the following services are available:
+| Service        | URL                    | Description                    |
+|----------------|------------------------|--------------------------------|
+| Application    | http://localhost       | Main application               |
+| Vite           | http://localhost:5173  | Vite dev server (HMR)          |
+| Mailpit        | http://localhost:8025  | Email testing dashboard         |
+| pgweb          | http://localhost:8081  | Web-based PostgreSQL browser    |
+| RustFS Console | http://localhost:9001  | S3-compatible object storage    |
 
-| Service       | URL                      | Description                        |
-|---------------|--------------------------|------------------------------------|
-| Application   | http://localhost         | Main application                   |
-| Vite          | http://localhost:5173    | Vite dev server (HMR)             |
-| Mailpit       | http://localhost:8025    | Email testing dashboard            |
-| pgweb         | http://localhost:8081    | Web-based PostgreSQL browser       |
-| RustFS Console| http://localhost:9001    | S3-compatible object storage       |
-
-Ports can be customized via `.env` (e.g. `APP_PORT`, `FORWARD_PGWEB_PORT`, `FORWARD_RUSTFS_CONSOLE_PORT`).
+Ports can be customized via `.env` (e.g., `APP_PORT`, `FORWARD_PGWEB_PORT`, `FORWARD_RUSTFS_CONSOLE_PORT`).
 
 ## Running Tests
 
 ```bash
 # Run all tests
-sail artisan test
+sail php artisan test
 
 # Run tests in parallel
-sail artisan test --parallel
+sail php artisan test --parallel
 
-# Run browser tests (Pest Browser)
-sail artisan test tests/Browser
+# Run with coverage
+sail php artisan test --coverage
 
-# Run browser tests with visible browser
-sail pest --headed tests/Browser
+# Run browser tests (Pest Browser + Playwright)
+sail php artisan test tests/Browser
 
 # Format code before committing
-sail pint --dirty
+sail pint --dirty && sail bun run lint && sail bun run format
 ```
 
 ## Useful Commands
 
 ```bash
-# Start all services
-sail up -d
-
-# Stop all services
-sail down
-
-# View logs
-sail logs -f
-
-# Run artisan commands
-sail artisan <command>
-
-# Run composer commands
-sail composer <command>
-
-# Access the database CLI
-sail psql
-
-# Clear caches
-sail artisan config:clear && sail artisan cache:clear
-
-# Run the dev server with queue, logs, and vite concurrently
-sail composer dev
+sail up -d                    # Start all services
+sail down                     # Stop all services
+sail composer dev             # Dev server with queue, logs, and vite
+sail psql                     # Access PostgreSQL CLI
+sail php artisan app:setup-storage  # Recreate S3 bucket (local dev only)
 ```
+
+See `CLAUDE.md` for the full command reference (testing, formatting, database, frontend).
 
 ## Technology Stack
 
-- **Backend:** Laravel 12 with PHP 8.5 + Laravel Octane + Jetstream
-- **Database:** PostgreSQL 17
-- **Frontend:** Livewire 3 + Alpine.js + luvi-ui/laravel-luvi (shadcn for Livewire) + Tailwind CSS 4
-- **Testing:** Pest + Pest Browser (Playwright)
-- **PDF Generation:** Headless Chrome service
-- **Cache/Queue:** Valkey (Redis-compatible)
-- **Object Storage:** RustFS (S3-compatible)
-- **Email:** Mailpit (development)
-- **Containerization:** Laravel Sail (development)
+| Layer          | Technology                                                    |
+|----------------|---------------------------------------------------------------|
+| **Backend**    | Laravel 13, PHP 8.5, Laravel Octane (FrankenPHP)              |
+| **Frontend**   | Vue 3 (Composition API), Inertia.js v3, TypeScript            |
+| **Styling**    | Tailwind CSS v4, lucide-vue-next icons                        |
+| **Routing**    | Laravel Wayfinder (type-safe frontend route generation)       |
+| **Database**   | PostgreSQL 17                                                 |
+| **Testing**    | Pest 4, Pest Browser (Playwright), 957+ tests, 83% coverage  |
+| **PDF**        | Gotenberg (HTML-to-PDF via Docker sidecar)                    |
+| **Storage**    | RustFS (local S3-compatible), S3/Spaces (production)          |
+| **Cache/Queue**| Valkey (Redis-compatible)                                     |
+| **Auth**       | Laravel Fortify (login, register, 2FA, email verification)    |
+| **Email**      | Mailpit (development)                                         |
+| **Container**  | Laravel Sail (dev), ServerSideUp FrankenPHP + Octane (prod)   |
 
 ## Project Structure
 
 ```
-app/                  # Application code (Models, Livewire, Services, etc.)
-database/
-  migrations/         # Database migrations
-  seeders/            # Database seeders
-  factories/          # Model factories
+app/
+  Http/Controllers/       # Inertia controllers (Dashboard, Invoice, Customer, etc.)
+  Models/                 # Eloquent models (Organization, Invoice, Customer, etc.)
+  Services/               # Business logic (InvoiceCalculator, PdfService, etc.)
+  Enums/                  # PHP enums (Currency, Country, InvoiceStatus, etc.)
 resources/
-  views/              # Blade & Livewire views
-  css/                # Stylesheets
-  js/                 # JavaScript
+  ts/                     # TypeScript + Vue 3 frontend
+    Pages/                # Inertia page components
+    Components/           # Shared Vue components
+    Layouts/              # App, Guest, NavigationMenu layouts
+    composables/          # useFormatMoney, useInvoiceCalculator, useFlash
+    types/                # TypeScript interfaces for all models
+    routes/               # Wayfinder-generated typed route functions
+  views/                  # Blade templates (PDF, email, public views, welcome)
+  css/                    # Tailwind CSS
 tests/
-  Unit/               # Unit tests
-  Feature/            # Feature tests
-  Browser/            # Pest browser tests (Playwright)
+  Unit/                   # Unit tests (models, services, value objects)
+  Feature/                # Feature tests (controllers, HTTP assertions)
+  Browser/                # Pest Browser tests (Playwright)
 docker/
-  8.5/                # Sail PHP 8.5 Dockerfile
-  chrome/             # Chrome PDF service
-  pgsql/              # PostgreSQL init scripts
-  production/         # Production Docker configurations
+  8.5/                    # Sail PHP 8.5 Dockerfile
+  production/             # Production Docker configurations
 ```
 
 ## Production Deployment
 
-The application includes production Docker configurations with multiple deployment options:
-
 ```bash
 # FrankenPHP + Laravel Octane (Recommended)
 docker-compose -f docker/production/docker-compose.prod.yml up -d
-
-# Traditional Nginx + PHP-FPM
-docker build -f docker/production/Dockerfile.nginx-fpm -t invoicing-nginx:latest .
-docker run -d -p 80:80 -e APP_KEY=your-key invoicing-nginx:latest
 ```
 
 See [docker/production/README.md](docker/production/README.md) for the complete deployment guide.

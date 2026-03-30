@@ -67,7 +67,7 @@ return [
 
         'paths' => [
 
-            resource_path('ts/Pages'),
+            resource_path('js/Pages'),
 
         ],
 

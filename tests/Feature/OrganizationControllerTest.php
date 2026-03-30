@@ -1,24 +1,54 @@
 <?php
 
 use App\Models\Organization;
+use Illuminate\Http\UploadedFile;
 
 beforeEach(function () {
     $this->user = createUserWithTeam();
     $this->actingAs($this->user);
 });
 
-test('can render organizations index page', function () {
+test('organizations index redirects to show for single org user', function () {
     $organization = createOrganizationWithLocation([], [], $this->user);
 
     $response = $this->get('/organizations');
 
+    $response->assertRedirect("/organizations/{$organization->id}");
+});
+
+test('can render organization show page', function () {
+    $organization = createOrganizationWithLocation([], [], $this->user);
+
+    $response = $this->get("/organizations/{$organization->id}");
+
     $response->assertStatus(200);
     $response->assertInertia(fn ($page) => $page
-        ->component('Organizations/Index')
-        ->has('organizations')
+        ->component('Organizations/Show')
+        ->has('organization')
+    );
+});
+
+test('can render organization edit page', function () {
+    $organization = createOrganizationWithLocation([], [], $this->user);
+
+    $response = $this->get("/organizations/{$organization->id}/edit");
+
+    $response->assertStatus(200);
+    $response->assertInertia(fn ($page) => $page
+        ->component('Organizations/Edit')
+        ->has('organization')
         ->has('countries')
         ->has('currencies')
+        ->where('tab', 'basics')
     );
+});
+
+test('edit page respects tab query param', function () {
+    $organization = createOrganizationWithLocation([], [], $this->user);
+
+    $response = $this->get("/organizations/{$organization->id}/edit?tab=bank");
+
+    $response->assertInertia(fn ($page) => $page->where('tab', 'bank'));
 });
 
 test('can update organization basics', function () {
@@ -211,4 +241,76 @@ test('filters empty emails when updating', function () {
     expect($organization->emails->count())->toBe(2);
     expect($organization->emails->getEmails())->toContain('valid@test.com');
     expect($organization->emails->getEmails())->toContain('another@test.com');
+});
+
+test('can upload organization logo', function () {
+    $organization = createOrganizationWithLocation([], [], $this->user);
+
+    $file = UploadedFile::fake()->image('logo.png', 200, 200);
+
+    $response = $this->post("/organizations/{$organization->id}/logo", [
+        'logo' => $file,
+    ]);
+
+    $response->assertRedirect();
+
+    $organization->refresh();
+    expect($organization->getFirstMedia('logo'))->not->toBeNull();
+    expect($organization->logo_url)->not->toBeNull();
+});
+
+test('validates logo file type', function () {
+    $organization = createOrganizationWithLocation([], [], $this->user);
+
+    $file = UploadedFile::fake()->create('document.pdf', 100);
+
+    $response = $this->post("/organizations/{$organization->id}/logo", [
+        'logo' => $file,
+    ]);
+
+    $response->assertSessionHasErrors(['logo']);
+});
+
+test('validates logo file size', function () {
+    $organization = createOrganizationWithLocation([], [], $this->user);
+
+    $file = UploadedFile::fake()->image('large.png')->size(3000);
+
+    $response = $this->post("/organizations/{$organization->id}/logo", [
+        'logo' => $file,
+    ]);
+
+    $response->assertSessionHasErrors(['logo']);
+});
+
+test('can remove organization logo', function () {
+    $organization = createOrganizationWithLocation([], [], $this->user);
+
+    // First upload a logo
+    $file = UploadedFile::fake()->image('logo.png', 100, 100);
+    $this->post("/organizations/{$organization->id}/logo", ['logo' => $file]);
+
+    $organization->refresh();
+    expect($organization->getFirstMedia('logo'))->not->toBeNull();
+
+    // Then remove it
+    $response = $this->delete("/organizations/{$organization->id}/logo");
+
+    $response->assertRedirect();
+
+    $organization->refresh();
+    expect($organization->getFirstMedia('logo'))->toBeNull();
+});
+
+test('cannot upload logo for organization user does not own', function () {
+    $otherUser = createUserWithTeam();
+    $otherOrg = createOrganizationWithLocation([], [], $otherUser);
+
+    $file = UploadedFile::fake()->image('logo.png', 100, 100);
+
+    $response = $this->post("/organizations/{$otherOrg->id}/logo", [
+        'logo' => $file,
+    ]);
+
+    $response->assertStatus(403);
 });

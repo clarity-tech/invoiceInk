@@ -459,8 +459,7 @@ class Organization extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('logo')
-            ->singleFile()
-            ->useDisk('public');
+            ->singleFile();
     }
 
     /**
@@ -468,6 +467,10 @@ class Organization extends Model implements HasMedia
      */
     public function registerMediaConversions(?Media $media = null): void
     {
+        if (! extension_loaded('gd')) {
+            return;
+        }
+
         $this->addMediaConversion('thumb')
             ->width(100)
             ->height(100)
