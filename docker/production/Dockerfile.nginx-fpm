@@ -40,7 +40,7 @@ COPY --from=php-deps /var/www/html/vendor/laravel/framework/src/Illuminate/Pagin
 
 RUN mkdir -p storage/framework/views
 
-ARG VITE_APP_NAME="Clarity Invoicing"
+ARG VITE_APP_NAME="Clarity InvoiceInk"
 RUN bun run build
 
 # ========================================

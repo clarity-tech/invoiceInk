@@ -109,7 +109,7 @@ docker-compose -f docker/production/docker-compose.standalone.yml up -d
 ### Required Variables
 ```bash
 # Application
-APP_NAME="Clarity Invoicing"
+APP_NAME="Clarity InvoiceInk"
 APP_KEY=base64:your-secret-key
 APP_URL=https://your-domain.com
 

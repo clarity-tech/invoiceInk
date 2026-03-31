@@ -9,17 +9,17 @@ services:
     build:
       context: ../..
       dockerfile: docker/production/Dockerfile.standalone
-      target: runtime  # or standalone-alpine for even smaller image
+      target: runtime # or standalone-alpine for even smaller image
       args:
         - BUILDKIT_INLINE_CACHE=1
     image: ghcr.io/clarity-tech/invoicing-standalone:latest
     container_name: invoicing-standalone
     restart: unless-stopped
     ports:
-      - "${APP_PORT:-8000}:8000"
+      - '${APP_PORT:-8000}:8000'
     environment:
       # Laravel Configuration
-      - APP_NAME=${APP_NAME:-Clarity Invoicing}
+      - APP_NAME=${APP_NAME:-Clarity InvoiceInk}
       - APP_ENV=production
       - APP_KEY=${APP_KEY}
       - APP_DEBUG=false
@@ -53,7 +53,7 @@ services:
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - MAIL_ENCRYPTION=${MAIL_ENCRYPTION:-tls}
       - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS}
-      - MAIL_FROM_NAME="${MAIL_FROM_NAME:-Clarity Invoicing}"
+      - MAIL_FROM_NAME="${MAIL_FROM_NAME:-Clarity InvoiceInk}"
 
       # File Storage
       - FILESYSTEM_DISK=${FILESYSTEM_DISK:-s3}
@@ -73,20 +73,20 @@ services:
     # Note: For standalone binaries, external storage is recommended
     # since the container is immutable
     volumes:
-      - app-storage:/app/storage/logs  # Only for logs, everything else should be external
+      - app-storage:/app/storage/logs # Only for logs, everything else should be external
     networks:
       - invoicing-network
     healthcheck:
-      test: ["CMD", "/usr/local/bin/frankenphp-app", "php", "-r", "echo 'OK';"]
+      test: ['CMD', '/usr/local/bin/frankenphp-app', 'php', '-r', "echo 'OK';"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
     deploy:
-      replicas: 3  # Easy horizontal scaling with standalone binaries
+      replicas: 3 # Easy horizontal scaling with standalone binaries
       resources:
         limits:
-          memory: 128M  # Standalone binaries are very memory efficient
+          memory: 128M # Standalone binaries are very memory efficient
         reservations:
           memory: 64M
 
@@ -96,8 +96,8 @@ services:
     container_name: invoicing-lb
     restart: unless-stopped
     ports:
-      - "${NGINX_HTTP_PORT:-80}:80"
-      - "${NGINX_HTTPS_PORT:-443}:443"
+      - '${NGINX_HTTP_PORT:-80}:80'
+      - '${NGINX_HTTPS_PORT:-443}:443'
     volumes:
       - ./nginx/nginx-lb.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
@@ -106,7 +106,15 @@ services:
     depends_on:
       - app
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      test:
+        [
+          'CMD',
+          'wget',
+          '--quiet',
+          '--tries=1',
+          '--spider',
+          'http://localhost/health',
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -122,7 +130,7 @@ services:
     restart: unless-stopped
     environment:
       # Same environment as main app
-      - APP_NAME=${APP_NAME:-Clarity Invoicing}
+      - APP_NAME=${APP_NAME:-Clarity InvoiceInk}
       - APP_ENV=production
       - APP_KEY=${APP_KEY}
       - APP_DEBUG=false
@@ -138,7 +146,16 @@ services:
       - QUEUE_CONNECTION=database
       - LOG_CHANNEL=stderr
       - LOG_LEVEL=${LOG_LEVEL:-info}
-    command: ["/usr/local/bin/frankenphp-app", "php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--max-time=3600"]
+    command:
+      [
+        '/usr/local/bin/frankenphp-app',
+        'php',
+        'artisan',
+        'queue:work',
+        '--sleep=3',
+        '--tries=3',
+        '--max-time=3600',
+      ]
     networks:
       - invoicing-network
     deploy:
@@ -160,7 +177,7 @@ services:
     restart: unless-stopped
     environment:
       # Same environment as main app
-      - APP_NAME=${APP_NAME:-Clarity Invoicing}
+      - APP_NAME=${APP_NAME:-Clarity InvoiceInk}
       - APP_ENV=production
       - APP_KEY=${APP_KEY}
       - APP_DEBUG=false

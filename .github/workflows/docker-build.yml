@@ -24,7 +24,7 @@ jobs:
       contents: read
       packages: write
       security-events: write
-    
+
     strategy:
       matrix:
         target: [frankenphp]
@@ -35,17 +35,17 @@ jobs:
             image-suffix: ''
             build-target: production
           # - target: nginx-fpm
-            # dockerfile: docker/production/Dockerfile.nginx-fpm
-            # image-suffix: '-nginx'
-            # build-target: production
+          # dockerfile: docker/production/Dockerfile.nginx-fpm
+          # image-suffix: '-nginx'
+          # build-target: production
           # - target: standalone
-            # dockerfile: docker/production/Dockerfile.standalone
-            # image-suffix: '-standalone'
-            # build-target: runtime
+          # dockerfile: docker/production/Dockerfile.standalone
+          # image-suffix: '-standalone'
+          # build-target: runtime
           # - target: standalone-alpine
-            # dockerfile: docker/production/Dockerfile.standalone
-            # image-suffix: '-standalone-alpine'
-            # build-target: standalone-alpine
+          # dockerfile: docker/production/Dockerfile.standalone
+          # image-suffix: '-standalone-alpine'
+          # build-target: standalone-alpine
 
     steps:
       - name: Checkout repository
@@ -93,7 +93,7 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             BUILDKIT_INLINE_CACHE=1
-            VITE_APP_NAME=Clarity Invoicing
+            VITE_APP_NAME=Clarity InvoiceInk
 
       - name: Run Trivy vulnerability scanner
         continue-on-error: true
@@ -117,7 +117,7 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    
+
     strategy:
       matrix:
         target: [frankenphp]
@@ -200,7 +200,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/develop'
     environment: staging
-    
+
     steps:
       - name: Deploy to staging
         run: |
@@ -213,7 +213,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     environment: production
-    
+
     steps:
       - name: Deploy to production
         run: |
@@ -225,7 +225,7 @@ jobs:
     needs: [build-and-push]
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
       - name: Notify on success
         if: ${{ needs.build-and-push.result == 'success' }}

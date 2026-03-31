@@ -35,20 +35,18 @@ FROM oven/bun:1 AS frontend
 
 WORKDIR /build
 
+# Copy application code, vendor deps, and built assets
+COPY --chown=www-data:www-data . .
+COPY --from=php-deps --chown=www-data:www-data /var/www/html /build
+
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
-# Copy only what Tailwind @source + Vite needs
-COPY resources/ resources/
 COPY vite.config.ts tsconfig.json ./
-
-# Vendor blade files for Tailwind class scanning (referenced in app.css @source)
-COPY --from=php-deps /var/www/html/vendor/laravel/framework/src/Illuminate/Pagination/resources/views/ \
-    vendor/laravel/framework/src/Illuminate/Pagination/resources/views/
 
 RUN mkdir -p storage/framework/views
 
-ARG VITE_APP_NAME="Clarity Invoicing"
+ARG VITE_APP_NAME="Clarity InvoiceInk"
 RUN bun run build
 
 # ========================================
@@ -71,9 +69,7 @@ WORKDIR /var/www/html
 COPY --chown=www-data:www-data docker/production/php.ini /usr/local/etc/php/conf.d/99-production.ini
 
 # Copy application code, vendor deps, and built assets
-COPY --chown=www-data:www-data . .
-COPY --from=php-deps --chown=www-data:www-data /var/www/html/vendor vendor/
-COPY --from=frontend --chown=www-data:www-data /build/public/build public/build/
+COPY --from=frontend --chown=www-data:www-data /build /var/www/html
 
 # Rebuild autoload classmap with full app code, then clean up in a single layer
 RUN composer dump-autoload --optimize --classmap-authoritative --no-dev \

@@ -15,10 +15,10 @@ services:
     container_name: invoicing-app
     restart: unless-stopped
     ports:
-      - "${APP_PORT:-80}:8080"
+      - '${APP_PORT:-80}:8080'
     environment:
       # Laravel Configuration
-      - APP_NAME=${APP_NAME:-Clarity Invoicing}
+      - APP_NAME=${APP_NAME:-Clarity InvoiceInk}
       - APP_ENV=production
       - APP_KEY=${APP_KEY}
       - APP_DEBUG=false
@@ -63,7 +63,7 @@ services:
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - MAIL_ENCRYPTION=${MAIL_ENCRYPTION:-tls}
       - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS}
-      - MAIL_FROM_NAME="${MAIL_FROM_NAME:-Clarity Invoicing}"
+      - MAIL_FROM_NAME="${MAIL_FROM_NAME:-Clarity InvoiceInk}"
 
       # File Storage
       - FILESYSTEM_DISK=${FILESYSTEM_DISK:-s3}
@@ -87,7 +87,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "healthcheck-octane"]
+      test: ['CMD', 'healthcheck-octane']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -108,7 +108,11 @@ services:
     networks:
       - invoicing-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_DATABASE:-invoicing}"]
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_DATABASE:-invoicing}',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -125,7 +129,7 @@ services:
     networks:
       - invoicing-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 3s
       retries: 3
@@ -136,8 +140,8 @@ services:
     container_name: invoicing-nginx
     restart: unless-stopped
     ports:
-      - "${NGINX_HTTP_PORT:-80}:80"
-      - "${NGINX_HTTPS_PORT:-443}:443"
+      - '${NGINX_HTTP_PORT:-80}:80'
+      - '${NGINX_HTTPS_PORT:-443}:443'
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
@@ -190,7 +194,7 @@ services:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     ports:
-      - "${PROMETHEUS_PORT:-9090}:9090"
+      - '${PROMETHEUS_PORT:-9090}:9090'
     networks:
       - invoicing-network
     profiles:
