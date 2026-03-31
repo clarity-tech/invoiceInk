@@ -221,7 +221,10 @@ const flash = computed(() => (page.props as any).flash ?? {});
 <template>
     <div class="px-4 py-6 sm:px-0">
         <!-- Action buttons (edit mode only) -->
-        <div v-if="mode === 'edit' && invoice?.ulid" class="mb-6 flex justify-end">
+        <div
+            v-if="mode === 'edit' && invoice?.ulid"
+            class="mb-6 flex justify-end"
+        >
             <div class="flex space-x-2">
                 <button
                     type="button"

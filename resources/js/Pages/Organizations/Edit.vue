@@ -61,9 +61,7 @@ function switchTab(key: string) {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                    <BreadcrumbLink
-                        :href="`/organizations/${organization.id}`"
-                    >
+                    <BreadcrumbLink :href="`/organizations/${organization.id}`">
                         {{ organization.name }}
                     </BreadcrumbLink>
                 </BreadcrumbItem>
@@ -75,7 +73,6 @@ function switchTab(key: string) {
         </template>
 
         <div class="px-4 py-4 sm:px-0">
-
             <!-- Tab Navigation + Content -->
             <div class="flex flex-col gap-6 lg:flex-row">
                 <!-- Sidebar Tabs -->

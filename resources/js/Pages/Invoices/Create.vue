@@ -40,9 +40,7 @@ defineProps<{
         <template #header>
             <Breadcrumb>
                 <BreadcrumbItem>
-                    <BreadcrumbLink href="/invoices">
-                        Invoices
-                    </BreadcrumbLink>
+                    <BreadcrumbLink href="/invoices"> Invoices </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>

@@ -117,8 +117,7 @@ function mountComponent(propsOverride = {}) {
         global: {
             stubs: {
                 AppLayout: {
-                    template:
-                        '<div><slot name="header" /><slot /></div>',
+                    template: '<div><slot name="header" /><slot /></div>',
                 },
                 EditBasicsForm: {
                     template: '<div data-testid="basics-form">Basics</div>',

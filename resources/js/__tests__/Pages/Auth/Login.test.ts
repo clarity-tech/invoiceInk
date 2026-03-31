@@ -7,7 +7,8 @@ vi.mock('@inertiajs/vue3', () => ({
     useForm: () => ({}),
     Head: { template: '<div />' },
     Form: {
-        template: '<form @submit.prevent><slot :errors="{}" :processing="false" /></form>',
+        template:
+            '<form @submit.prevent><slot :errors="{}" :processing="false" /></form>',
         props: ['method', 'action', 'resetOnSuccess'],
     },
     Link: { template: '<a><slot /></a>' },

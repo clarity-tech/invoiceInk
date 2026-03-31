@@ -73,7 +73,20 @@ function previewNumber(series: NumberingSeries): string {
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+    ];
     const nextNum = series.current_number + 1;
 
     let result = series.format_pattern;
@@ -87,10 +100,16 @@ function previewNumber(series: NumberingSeries): string {
     // Financial year: Apr-Mar by default
     const fyStartYear = now.getMonth() >= 3 ? year : year - 1;
     const fyEndYear = fyStartYear + 1;
-    result = result.replace('{FY}', `${fyStartYear}-${String(fyEndYear).slice(-2)}`);
+    result = result.replace(
+        '{FY}',
+        `${fyStartYear}-${String(fyEndYear).slice(-2)}`,
+    );
     result = result.replace('{FY_START}', String(fyStartYear));
     result = result.replace('{FY_END}', String(fyEndYear));
-    result = result.replace('{FY_FULL}', `${fyStartYear}-${String(fyEndYear).slice(-2)}`);
+    result = result.replace(
+        '{FY_FULL}',
+        `${fyStartYear}-${String(fyEndYear).slice(-2)}`,
+    );
     result = result.replace('{FY_RANGE}', `${fyStartYear}-${fyEndYear}`);
 
     // Sequence with padding
@@ -320,9 +339,7 @@ function previewNumber(series: NumberingSeries): string {
                 </section>
 
                 <!-- Numbering Series -->
-                <section
-                    class="rounded-xl border border-gray-200 bg-white p-6"
-                >
+                <section class="rounded-xl border border-gray-200 bg-white p-6">
                     <div class="mb-4 flex items-center justify-between">
                         <h2
                             class="text-sm font-semibold tracking-wider text-gray-400 uppercase"
@@ -336,10 +353,7 @@ function previewNumber(series: NumberingSeries): string {
                             Manage
                         </Link>
                     </div>
-                    <div
-                        v-if="numberingSeries.length"
-                        class="space-y-3"
-                    >
+                    <div v-if="numberingSeries.length" class="space-y-3">
                         <div
                             v-for="series in numberingSeries"
                             :key="series.id"
@@ -347,7 +361,9 @@ function previewNumber(series: NumberingSeries): string {
                         >
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-sm font-medium text-gray-900">
+                                    <span
+                                        class="text-sm font-medium text-gray-900"
+                                    >
                                         {{ series.name }}
                                     </span>
                                     <span
@@ -363,7 +379,9 @@ function previewNumber(series: NumberingSeries): string {
                                         Inactive
                                     </span>
                                 </div>
-                                <p class="mt-1 font-mono text-xs text-brand-600">
+                                <p
+                                    class="mt-1 font-mono text-xs text-brand-600"
+                                >
                                     Next: {{ previewNumber(series) }}
                                 </p>
                             </div>
@@ -371,10 +389,7 @@ function previewNumber(series: NumberingSeries): string {
                                 <p class="text-xs text-gray-400">
                                     Resets:
                                     {{
-                                        series.reset_frequency.replace(
-                                            '_',
-                                            ' ',
-                                        )
+                                        series.reset_frequency.replace('_', ' ')
                                     }}
                                 </p>
                             </div>

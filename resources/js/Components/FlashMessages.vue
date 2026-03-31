@@ -20,10 +20,7 @@ watch(
 </script>
 
 <template>
-    <div
-        v-if="visible && hasFlash"
-        class="mb-4 px-4 sm:px-0"
-    >
+    <div v-if="visible && hasFlash" class="mb-4 px-4 sm:px-0">
         <div v-if="flash.success" class="rounded-md bg-green-50 p-4">
             <p class="text-sm font-medium text-green-800">
                 {{ flash.success }}

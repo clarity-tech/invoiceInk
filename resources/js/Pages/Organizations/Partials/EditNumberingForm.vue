@@ -189,7 +189,9 @@ const formatTokens = [
 <template>
     <div class="rounded-xl border border-gray-200 bg-white">
         <!-- Header -->
-        <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+        <div
+            class="flex items-center justify-between border-b border-gray-200 px-6 py-4"
+        >
             <div>
                 <h3 class="text-base font-semibold text-gray-900">
                     Numbering Series
@@ -210,14 +212,20 @@ const formatTokens = [
 
         <div class="p-6">
             <!-- Create/Edit Form -->
-            <div v-if="showForm" class="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-5">
+            <div
+                v-if="showForm"
+                class="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-5"
+            >
                 <h4 class="mb-4 text-sm font-semibold text-gray-900">
                     {{ editingSeries ? 'Edit Series' : 'New Series' }}
                 </h4>
                 <form class="space-y-4" @submit.prevent="submitForm">
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Name *</label>
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Name *</label
+                            >
                             <input
                                 id="ns-name"
                                 v-model="form.name"
@@ -225,10 +233,18 @@ const formatTokens = [
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
                                 placeholder="e.g. Default Invoice Series"
                             />
-                            <p v-if="form.errors.name" class="mt-1 text-xs text-red-600">{{ form.errors.name }}</p>
+                            <p
+                                v-if="form.errors.name"
+                                class="mt-1 text-xs text-red-600"
+                            >
+                                {{ form.errors.name }}
+                            </p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Prefix *</label>
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Prefix *</label
+                            >
                             <input
                                 id="ns-prefix"
                                 v-model="form.prefix"
@@ -236,10 +252,18 @@ const formatTokens = [
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
                                 placeholder="INV"
                             />
-                            <p v-if="form.errors.prefix" class="mt-1 text-xs text-red-600">{{ form.errors.prefix }}</p>
+                            <p
+                                v-if="form.errors.prefix"
+                                class="mt-1 text-xs text-red-600"
+                            >
+                                {{ form.errors.prefix }}
+                            </p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Format Pattern *</label>
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Format Pattern *</label
+                            >
                             <input
                                 id="ns-format_pattern"
                                 v-model="form.format_pattern"
@@ -247,17 +271,27 @@ const formatTokens = [
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
                                 placeholder="{PREFIX}-{FY}-{SEQUENCE:4}"
                             />
-                            <p v-if="form.errors.format_pattern" class="mt-1 text-xs text-red-600">{{ form.errors.format_pattern }}</p>
+                            <p
+                                v-if="form.errors.format_pattern"
+                                class="mt-1 text-xs text-red-600"
+                            >
+                                {{ form.errors.format_pattern }}
+                            </p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Reset Frequency *</label>
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Reset Frequency *</label
+                            >
                             <select
                                 id="ns-reset_frequency"
                                 v-model="form.reset_frequency"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
                             >
                                 <option
-                                    v-for="(label, value) in resetFrequencyOptions"
+                                    v-for="(
+                                        label, value
+                                    ) in resetFrequencyOptions"
                                     :key="value"
                                     :value="value"
                                 >
@@ -266,7 +300,10 @@ const formatTokens = [
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Current Number</label>
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Current Number</label
+                            >
                             <input
                                 v-model.number="form.current_number"
                                 type="number"
@@ -281,7 +318,9 @@ const formatTokens = [
                                     type="checkbox"
                                     class="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-500 focus:ring-brand-500"
                                 />
-                                <span class="ml-2 text-sm text-gray-600">Active</span>
+                                <span class="ml-2 text-sm text-gray-600"
+                                    >Active</span
+                                >
                             </label>
                             <label class="inline-flex items-center">
                                 <input
@@ -289,28 +328,43 @@ const formatTokens = [
                                     type="checkbox"
                                     class="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-500 focus:ring-brand-500"
                                 />
-                                <span class="ml-2 text-sm text-gray-600">Default</span>
+                                <span class="ml-2 text-sm text-gray-600"
+                                    >Default</span
+                                >
                             </label>
                         </div>
                     </div>
 
                     <!-- Preview -->
-                    <div v-if="previewNumber" class="rounded-md bg-white p-3 ring-1 ring-gray-200">
-                        <span class="text-xs font-medium text-gray-500">Next number preview:</span>
-                        <span class="ml-2 font-mono text-sm text-brand-600">{{ previewNumber }}</span>
+                    <div
+                        v-if="previewNumber"
+                        class="rounded-md bg-white p-3 ring-1 ring-gray-200"
+                    >
+                        <span class="text-xs font-medium text-gray-500"
+                            >Next number preview:</span
+                        >
+                        <span class="ml-2 font-mono text-sm text-brand-600">{{
+                            previewNumber
+                        }}</span>
                     </div>
 
                     <!-- Token Reference -->
                     <details class="rounded-md border border-gray-200 text-sm">
-                        <summary class="cursor-pointer px-3 py-2 font-medium text-gray-700">Format Tokens</summary>
-                        <div class="flex flex-wrap gap-2 px-3 pb-3 pt-1">
+                        <summary
+                            class="cursor-pointer px-3 py-2 font-medium text-gray-700"
+                        >
+                            Format Tokens
+                        </summary>
+                        <div class="flex flex-wrap gap-2 px-3 pt-1 pb-3">
                             <span
                                 v-for="t in formatTokens"
                                 :key="t.token"
                                 class="text-xs"
                                 :title="t.description"
                             >
-                                <code class="rounded bg-gray-100 px-1">{{ t.token }}</code>
+                                <code class="rounded bg-gray-100 px-1">{{
+                                    t.token
+                                }}</code>
                             </span>
                         </div>
                     </details>
@@ -343,7 +397,9 @@ const formatTokens = [
                 >
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="text-sm font-medium text-gray-900">{{ s.name }}</span>
+                            <span class="text-sm font-medium text-gray-900">{{
+                                s.name
+                            }}</span>
                             <span
                                 v-if="s.is_default"
                                 class="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700"
@@ -395,7 +451,8 @@ const formatTokens = [
                 </div>
             </div>
             <p v-else class="text-sm text-gray-400 italic">
-                No numbering series configured. A default will be created with your first invoice.
+                No numbering series configured. A default will be created with
+                your first invoice.
             </p>
         </div>
 
@@ -403,7 +460,9 @@ const formatTokens = [
             :show="confirmingToggle"
             :title="`${seriesToToggle?.is_active ? 'Deactivate' : 'Activate'} Numbering Series`"
             :message="`Are you sure you want to ${seriesToToggle?.is_active ? 'deactivate' : 'activate'} '${seriesToToggle?.name}'?`"
-            :confirm-label="seriesToToggle?.is_active ? 'Deactivate' : 'Activate'"
+            :confirm-label="
+                seriesToToggle?.is_active ? 'Deactivate' : 'Activate'
+            "
             :destructive="seriesToToggle?.is_active ?? false"
             @confirm="toggleActive"
             @cancel="confirmingToggle = false"

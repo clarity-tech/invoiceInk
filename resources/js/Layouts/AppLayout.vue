@@ -21,7 +21,9 @@ defineProps<{
 
         <!-- Page Heading -->
         <header v-if="$slots.header" class="bg-white shadow">
-            <div class="mx-auto flex min-h-17 w-full max-w-7xl items-center px-4 py-4 sm:px-6 lg:px-8">
+            <div
+                class="mx-auto flex min-h-17 w-full max-w-7xl items-center px-4 py-4 sm:px-6 lg:px-8"
+            >
                 <div class="w-full">
                     <slot name="header" />
                 </div>

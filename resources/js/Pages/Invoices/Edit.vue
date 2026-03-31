@@ -58,18 +58,14 @@ function deletePayment(paymentId: number) {
         <template #header>
             <Breadcrumb>
                 <BreadcrumbItem>
-                    <BreadcrumbLink href="/invoices">
-                        Invoices
-                    </BreadcrumbLink>
+                    <BreadcrumbLink href="/invoices"> Invoices </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                     <BreadcrumbPage>
                         Edit
                         {{
-                            invoice.type === 'estimate'
-                                ? 'Estimate'
-                                : 'Invoice'
+                            invoice.type === 'estimate' ? 'Estimate' : 'Invoice'
                         }}
                     </BreadcrumbPage>
                 </BreadcrumbItem>

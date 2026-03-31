@@ -57,7 +57,11 @@ function makeOrg(overrides = {}) {
 
 function mountComponent(propsOverride = {}) {
     return mount(Show, {
-        props: { organization: makeOrg(), numberingSeries: [], ...propsOverride },
+        props: {
+            organization: makeOrg(),
+            numberingSeries: [],
+            ...propsOverride,
+        },
         global: {
             stubs: {
                 AppLayout: { template: '<div><slot /></div>' },
