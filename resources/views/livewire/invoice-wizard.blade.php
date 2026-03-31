@@ -73,6 +73,8 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <a href="{{ route($invoice->type === 'invoice' ? 'invoices.public' : 'estimates.public', $invoice->ulid) }}" 
                                        target="_blank" class="text-green-600 hover:text-green-900 mr-3">View</a>
+                                    <a href="{{ route($invoice->type === 'invoice' ? 'invoices.pdf' : 'estimates.pdf', $invoice->ulid) }}" 
+                                       class="text-red-600 hover:text-red-900 mr-3">PDF</a>
                                     <button wire:click="edit({{ $invoice->id }})" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
                                     <button wire:click="delete({{ $invoice->id }})" 
                                             wire:confirm="Are you sure you want to delete this {{ $invoice->type }}?"

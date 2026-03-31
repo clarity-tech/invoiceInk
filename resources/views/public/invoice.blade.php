@@ -13,11 +13,14 @@
 </head>
 <body class="bg-gray-50">
     <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <!-- Print Button -->
-        <div class="mb-6 no-print">
+        <!-- Action Buttons -->
+        <div class="mb-6 no-print flex space-x-3">
             <button onclick="window.print()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                 Print Invoice
             </button>
+            <a href="{{ route('invoices.pdf', $invoice->ulid) }}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-block">
+                Download PDF
+            </a>
         </div>
 
         <!-- Invoice Document -->

@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
+use App\Services\PdfService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class PublicViewController extends Controller
 {
@@ -26,5 +28,25 @@ class PublicViewController extends Controller
             ->firstOrFail();
 
         return view('public.estimate', compact('estimate'));
+    }
+
+    public function downloadInvoicePdf(string $ulid, PdfService $pdfService): Response
+    {
+        $invoice = Invoice::with(['items', 'companyLocation', 'customerLocation'])
+            ->where('ulid', $ulid)
+            ->where('type', 'invoice')
+            ->firstOrFail();
+
+        return $pdfService->downloadInvoicePdf($invoice);
+    }
+
+    public function downloadEstimatePdf(string $ulid, PdfService $pdfService): Response
+    {
+        $estimate = Invoice::with(['items', 'companyLocation', 'customerLocation'])
+            ->where('ulid', $ulid)
+            ->where('type', 'estimate')
+            ->firstOrFail();
+
+        return $pdfService->downloadEstimatePdf($estimate);
     }
 }

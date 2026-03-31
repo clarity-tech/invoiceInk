@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Location;
 use App\Services\InvoiceCalculator;
+use App\Services\PdfService;
 use App\ValueObjects\EmailCollection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Rule;
@@ -229,6 +230,17 @@ class InvoiceWizard extends Component
         
         $this->resetPage();
         session()->flash('message', ucfirst($invoice->type) . ' deleted successfully!');
+    }
+
+    public function downloadPdf(Invoice $invoice)
+    {
+        $pdfService = new PdfService();
+        
+        if ($invoice->type === 'invoice') {
+            return $pdfService->downloadInvoicePdf($invoice);
+        } else {
+            return $pdfService->downloadEstimatePdf($invoice);
+        }
     }
 
     public function cancel(): void
