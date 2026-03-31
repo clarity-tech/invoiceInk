@@ -84,182 +84,126 @@ function sendEmailVerification(): void {
 </script>
 
 <template>
-    <div class="md:grid md:grid-cols-3 md:gap-6">
-        <div class="md:col-span-1">
-            <div class="px-4 sm:px-0">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">
-                    Profile Information
-                </h3>
-                <p class="mt-1 text-sm text-gray-600">
-                    Update your account's profile information and email address.
-                </p>
-            </div>
-        </div>
+    <section class="rounded-xl border border-gray-200 bg-white p-6">
+        <h2 class="mb-1 text-sm font-semibold tracking-wider text-gray-400 uppercase">
+            Profile Information
+        </h2>
+        <p class="mb-6 text-sm text-gray-500">
+            Update your account's profile information and email address.
+        </p>
 
-        <div class="mt-5 md:col-span-2 md:mt-0">
-            <form @submit.prevent="updateProfileInformation">
-                <div class="overflow-hidden bg-white shadow sm:rounded-md">
-                    <div class="px-4 py-5 sm:p-6">
-                        <div class="grid grid-cols-6 gap-6">
-                            <!-- Profile Photo -->
-                            <div
-                                v-if="managesProfilePhotos"
-                                class="col-span-6 sm:col-span-4"
+        <form @submit.prevent="updateProfileInformation">
+            <div class="space-y-5">
+                <!-- Profile Photo -->
+                <div v-if="managesProfilePhotos">
+                    <input
+                        ref="photoInput"
+                        type="file"
+                        class="hidden"
+                        accept="image/*"
+                        @change="updatePhotoPreview"
+                    />
+
+                    <label class="mb-2 block text-sm font-medium text-gray-700">Photo</label>
+
+                    <div class="flex items-center gap-4">
+                        <img
+                            v-show="!photoPreview"
+                            :src="user.profile_photo_url"
+                            :alt="user.name"
+                            class="size-16 rounded-full object-cover ring-2 ring-gray-100"
+                        />
+                        <span
+                            v-show="photoPreview"
+                            class="block size-16 rounded-full bg-cover bg-center bg-no-repeat ring-2 ring-gray-100"
+                            :style="'background-image: url(\'' + photoPreview + '\');'"
+                        />
+                        <div class="flex gap-2">
+                            <button
+                                type="button"
+                                class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+                                @click.prevent="selectNewPhoto"
                             >
-                                <input
-                                    ref="photoInput"
-                                    type="file"
-                                    class="hidden"
-                                    accept="image/*"
-                                    @change="updatePhotoPreview"
-                                />
-
-                                <label
-                                    class="block text-sm font-medium text-gray-700"
-                                    >Photo</label
-                                >
-
-                                <!-- Current Profile Photo -->
-                                <div v-show="!photoPreview" class="mt-2">
-                                    <img
-                                        :src="user.profile_photo_url"
-                                        :alt="user.name"
-                                        class="size-20 rounded-full object-cover"
-                                    />
-                                </div>
-
-                                <!-- New Profile Photo Preview -->
-                                <div v-show="photoPreview" class="mt-2">
-                                    <span
-                                        class="block size-20 rounded-full bg-cover bg-center bg-no-repeat"
-                                        :style="
-                                            'background-image: url(\'' +
-                                            photoPreview +
-                                            '\');'
-                                        "
-                                    />
-                                </div>
-
-                                <button
-                                    type="button"
-                                    class="me-2 mt-2 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs font-semibold tracking-widest text-gray-700 uppercase shadow-sm hover:bg-gray-50"
-                                    @click.prevent="selectNewPhoto"
-                                >
-                                    Select A New Photo
-                                </button>
-
-                                <button
-                                    v-if="user.profile_photo_path"
-                                    type="button"
-                                    class="mt-2 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs font-semibold tracking-widest text-gray-700 uppercase shadow-sm hover:bg-gray-50"
-                                    @click.prevent="deleteProfilePhoto"
-                                >
-                                    Remove Photo
-                                </button>
-
-                                <div
-                                    v-if="form.errors.photo"
-                                    class="mt-2 text-sm text-red-600"
-                                >
-                                    {{ form.errors.photo }}
-                                </div>
-                            </div>
-
-                            <!-- Name -->
-                            <div class="col-span-6 sm:col-span-4">
-                                <label
-                                    for="name"
-                                    class="block text-sm font-medium text-gray-700"
-                                    >Name</label
-                                >
-                                <input
-                                    id="name"
-                                    v-model="form.name"
-                                    type="text"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
-                                    required
-                                    autocomplete="name"
-                                />
-                                <div
-                                    v-if="form.errors.name"
-                                    class="mt-2 text-sm text-red-600"
-                                >
-                                    {{ form.errors.name }}
-                                </div>
-                            </div>
-
-                            <!-- Email -->
-                            <div class="col-span-6 sm:col-span-4">
-                                <label
-                                    for="email"
-                                    class="block text-sm font-medium text-gray-700"
-                                    >Email</label
-                                >
-                                <input
-                                    id="email"
-                                    v-model="form.email"
-                                    type="email"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
-                                    required
-                                    autocomplete="username"
-                                />
-                                <div
-                                    v-if="form.errors.email"
-                                    class="mt-2 text-sm text-red-600"
-                                >
-                                    {{ form.errors.email }}
-                                </div>
-
-                                <div
-                                    v-if="!user.email_verified_at"
-                                    class="mt-2"
-                                >
-                                    <p class="text-sm">
-                                        Your email address is unverified.
-                                        <button
-                                            type="button"
-                                            class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none"
-                                            @click.prevent="
-                                                sendEmailVerification
-                                            "
-                                        >
-                                            Click here to re-send the
-                                            verification email.
-                                        </button>
-                                    </p>
-
-                                    <p
-                                        v-if="verificationLinkSent"
-                                        class="mt-2 text-sm font-medium text-green-600"
-                                    >
-                                        A new verification link has been sent to
-                                        your email address.
-                                    </p>
-                                </div>
-                            </div>
+                                Change Photo
+                            </button>
+                            <button
+                                v-if="user.profile_photo_path"
+                                type="button"
+                                class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+                                @click.prevent="deleteProfilePhoto"
+                            >
+                                Remove
+                            </button>
                         </div>
                     </div>
 
-                    <div
-                        class="flex items-center justify-end bg-gray-50 px-4 py-3 text-end sm:px-6"
-                    >
-                        <span
-                            v-show="recentlySuccessful"
-                            class="me-3 text-sm text-gray-600"
-                        >
-                            Saved.
-                        </span>
-
-                        <button
-                            type="submit"
-                            class="inline-flex items-center rounded-md border border-transparent bg-gray-800 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase hover:bg-gray-700 focus:bg-gray-700 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none active:bg-gray-900"
-                            :disabled="form.processing"
-                        >
-                            Save
-                        </button>
+                    <div v-if="form.errors.photo" class="mt-2 text-sm text-red-600">
+                        {{ form.errors.photo }}
                     </div>
                 </div>
-            </form>
-        </div>
-    </div>
+
+                <!-- Name -->
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                    <input
+                        id="name"
+                        v-model="form.name"
+                        type="text"
+                        class="mt-1 block w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        required
+                        autocomplete="name"
+                    />
+                    <div v-if="form.errors.name" class="mt-2 text-sm text-red-600">
+                        {{ form.errors.name }}
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input
+                        id="email"
+                        v-model="form.email"
+                        type="email"
+                        class="mt-1 block w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        required
+                        autocomplete="username"
+                    />
+                    <div v-if="form.errors.email" class="mt-2 text-sm text-red-600">
+                        {{ form.errors.email }}
+                    </div>
+
+                    <div v-if="!user.email_verified_at" class="mt-2">
+                        <p class="text-sm text-gray-600">
+                            Your email address is unverified.
+                            <button
+                                type="button"
+                                class="rounded text-sm text-brand-600 underline hover:text-brand-800 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none"
+                                @click.prevent="sendEmailVerification"
+                            >
+                                Re-send verification email.
+                            </button>
+                        </p>
+                        <p
+                            v-if="verificationLinkSent"
+                            class="mt-2 text-sm font-medium text-green-600"
+                        >
+                            A new verification link has been sent to your email address.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex items-center gap-3">
+                <button
+                    type="submit"
+                    class="inline-flex items-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none disabled:opacity-60"
+                    :disabled="form.processing"
+                >
+                    Save Changes
+                </button>
+                <span v-show="recentlySuccessful" class="text-sm text-gray-500">Saved.</span>
+            </div>
+        </form>
+    </section>
 </template>

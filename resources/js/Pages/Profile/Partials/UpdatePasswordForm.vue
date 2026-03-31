@@ -34,109 +34,75 @@ function updatePassword(): void {
 </script>
 
 <template>
-    <div class="md:grid md:grid-cols-3 md:gap-6">
-        <div class="md:col-span-1">
-            <div class="px-4 sm:px-0">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">
-                    Update Password
-                </h3>
-                <p class="mt-1 text-sm text-gray-600">
-                    Ensure your account is using a long, random password to stay
-                    secure.
-                </p>
-            </div>
-        </div>
+    <section class="rounded-xl border border-gray-200 bg-white p-6">
+        <h2 class="mb-1 text-sm font-semibold tracking-wider text-gray-400 uppercase">
+            Update Password
+        </h2>
+        <p class="mb-6 text-sm text-gray-500">
+            Ensure your account is using a long, random password to stay secure.
+        </p>
 
-        <div class="mt-5 md:col-span-2 md:mt-0">
-            <form @submit.prevent="updatePassword">
-                <div class="overflow-hidden bg-white shadow sm:rounded-md">
-                    <div class="px-4 py-5 sm:p-6">
-                        <div class="grid grid-cols-6 gap-6">
-                            <div class="col-span-6 sm:col-span-4">
-                                <label
-                                    for="current_password"
-                                    class="block text-sm font-medium text-gray-700"
-                                    >Current Password</label
-                                >
-                                <input
-                                    id="current_password"
-                                    v-model="form.current_password"
-                                    type="password"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
-                                    autocomplete="current-password"
-                                />
-                                <div
-                                    v-if="form.errors.current_password"
-                                    class="mt-2 text-sm text-red-600"
-                                >
-                                    {{ form.errors.current_password }}
-                                </div>
-                            </div>
-
-                            <div class="col-span-6 sm:col-span-4">
-                                <label
-                                    for="password"
-                                    class="block text-sm font-medium text-gray-700"
-                                    >New Password</label
-                                >
-                                <input
-                                    id="password"
-                                    v-model="form.password"
-                                    type="password"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
-                                    autocomplete="new-password"
-                                />
-                                <div
-                                    v-if="form.errors.password"
-                                    class="mt-2 text-sm text-red-600"
-                                >
-                                    {{ form.errors.password }}
-                                </div>
-                            </div>
-
-                            <div class="col-span-6 sm:col-span-4">
-                                <label
-                                    for="password_confirmation"
-                                    class="block text-sm font-medium text-gray-700"
-                                    >Confirm Password</label
-                                >
-                                <input
-                                    id="password_confirmation"
-                                    v-model="form.password_confirmation"
-                                    type="password"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
-                                    autocomplete="new-password"
-                                />
-                                <div
-                                    v-if="form.errors.password_confirmation"
-                                    class="mt-2 text-sm text-red-600"
-                                >
-                                    {{ form.errors.password_confirmation }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        class="flex items-center justify-end bg-gray-50 px-4 py-3 text-end sm:px-6"
-                    >
-                        <span
-                            v-show="recentlySuccessful"
-                            class="me-3 text-sm text-gray-600"
-                        >
-                            Saved.
-                        </span>
-
-                        <button
-                            type="submit"
-                            class="inline-flex items-center rounded-md border border-transparent bg-gray-800 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase hover:bg-gray-700 focus:bg-gray-700 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none active:bg-gray-900"
-                            :disabled="form.processing"
-                        >
-                            Save
-                        </button>
+        <form @submit.prevent="updatePassword">
+            <div class="space-y-5">
+                <div>
+                    <label for="current_password" class="block text-sm font-medium text-gray-700">
+                        Current Password
+                    </label>
+                    <input
+                        id="current_password"
+                        v-model="form.current_password"
+                        type="password"
+                        class="mt-1 block w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        autocomplete="current-password"
+                    />
+                    <div v-if="form.errors.current_password" class="mt-2 text-sm text-red-600">
+                        {{ form.errors.current_password }}
                     </div>
                 </div>
-            </form>
-        </div>
-    </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">
+                        New Password
+                    </label>
+                    <input
+                        id="password"
+                        v-model="form.password"
+                        type="password"
+                        class="mt-1 block w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        autocomplete="new-password"
+                    />
+                    <div v-if="form.errors.password" class="mt-2 text-sm text-red-600">
+                        {{ form.errors.password }}
+                    </div>
+                </div>
+
+                <div>
+                    <label for="password_confirmation" class="block text-sm font-medium text-gray-700">
+                        Confirm Password
+                    </label>
+                    <input
+                        id="password_confirmation"
+                        v-model="form.password_confirmation"
+                        type="password"
+                        class="mt-1 block w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        autocomplete="new-password"
+                    />
+                    <div v-if="form.errors.password_confirmation" class="mt-2 text-sm text-red-600">
+                        {{ form.errors.password_confirmation }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex items-center gap-3">
+                <button
+                    type="submit"
+                    class="inline-flex items-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none disabled:opacity-60"
+                    :disabled="form.processing"
+                >
+                    Update Password
+                </button>
+                <span v-show="recentlySuccessful" class="text-sm text-gray-500">Saved.</span>
+            </div>
+        </form>
+    </section>
 </template>

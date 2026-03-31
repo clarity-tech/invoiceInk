@@ -40,74 +40,35 @@ defineProps<{
 <template>
     <AppLayout title="Profile">
         <template #header>
-            <h2 class="text-xl leading-tight font-semibold text-gray-800">
-                Profile
-            </h2>
+            <h2 class="text-xl leading-tight font-semibold text-gray-800">Profile</h2>
         </template>
 
-        <div>
-            <div class="mx-auto max-w-7xl py-10 sm:px-6 lg:px-8">
-                <UpdateProfileInformationForm
-                    v-if="canUpdateProfileInformation"
-                    :user="user"
-                    :manages-profile-photos="managesProfilePhotos"
-                />
-
-                <template v-if="canUpdateProfileInformation">
-                    <div class="hidden sm:block">
-                        <div class="py-8">
-                            <div class="border-t border-gray-200" />
-                        </div>
-                    </div>
-                </template>
-
-                <div v-if="canUpdatePassword" class="mt-10 sm:mt-0">
-                    <UpdatePasswordForm />
-                </div>
-
-                <template v-if="canUpdatePassword">
-                    <div class="hidden sm:block">
-                        <div class="py-8">
-                            <div class="border-t border-gray-200" />
-                        </div>
-                    </div>
-                </template>
-
-                <div
-                    v-if="canManageTwoFactorAuthentication"
-                    class="mt-10 sm:mt-0"
-                >
-                    <TwoFactorAuthenticationForm
+        <div class="px-4 py-4 sm:px-0">
+            <div class="space-y-6">
+                <!-- Row 1: Profile Information | Update Password -->
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <UpdateProfileInformationForm
+                        v-if="canUpdateProfileInformation"
                         :user="user"
-                        :confirms-two-factor-authentication="
-                            confirmsTwoFactorAuthentication
-                        "
+                        :manages-profile-photos="managesProfilePhotos"
                     />
+                    <UpdatePasswordForm v-if="canUpdatePassword" />
                 </div>
 
-                <template v-if="canManageTwoFactorAuthentication">
-                    <div class="hidden sm:block">
-                        <div class="py-8">
-                            <div class="border-t border-gray-200" />
-                        </div>
-                    </div>
-                </template>
-
-                <div v-if="sessionsEnabled" class="mt-10 sm:mt-0">
-                    <LogoutOtherSessionsForm :sessions="sessions" />
+                <!-- Row 2: Two-Factor Authentication | Browser Sessions -->
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <TwoFactorAuthenticationForm
+                        v-if="canManageTwoFactorAuthentication"
+                        :user="user"
+                        :confirms-two-factor-authentication="confirmsTwoFactorAuthentication"
+                    />
+                    <LogoutOtherSessionsForm v-if="sessionsEnabled" :sessions="sessions" />
                 </div>
 
-                <template v-if="hasAccountDeletionFeatures">
-                    <div class="hidden sm:block">
-                        <div class="py-8">
-                            <div class="border-t border-gray-200" />
-                        </div>
-                    </div>
-
-                    <div class="mt-10 sm:mt-0">
-                        <DeleteUserForm />
-                    </div>
-                </template>
+                <!-- Row 3: Delete Account -->
+                <div v-if="hasAccountDeletionFeatures" class="max-w-2xl">
+                    <DeleteUserForm />
+                </div>
             </div>
         </div>
     </AppLayout>

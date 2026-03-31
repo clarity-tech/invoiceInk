@@ -110,13 +110,13 @@ describe('UpdateProfileInformationForm', () => {
         const wrapper = mount(UpdateProfileInformationForm, {
             props: defaultProps,
         });
-        expect(wrapper.text()).not.toContain('Select A New Photo');
+        expect(wrapper.text()).not.toContain('Change Photo');
     });
 
     it('shows photo section when managesProfilePhotos is true', () => {
         const wrapper = mount(UpdateProfileInformationForm, {
             props: { ...defaultProps, managesProfilePhotos: true },
         });
-        expect(wrapper.text()).toContain('Select A New Photo');
+        expect(wrapper.text()).toContain('Change Photo');
     });
 });

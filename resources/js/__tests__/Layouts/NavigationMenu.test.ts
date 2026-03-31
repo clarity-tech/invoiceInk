@@ -115,7 +115,7 @@ describe('NavigationMenu', () => {
         const avatarBtn = wrapper.find('[data-user-dropdown] button');
         await avatarBtn.trigger('click');
         // Find logout button in dropdown
-        const logoutBtn = wrapper.find('[data-user-dropdown] button.block');
+        const logoutBtn = wrapper.findAll('[data-user-dropdown] button').find(b => b.text().includes('Log Out'))!;
         await logoutBtn.trigger('click');
         expect(mockRouterPost).toHaveBeenCalledWith('/logout');
     });

@@ -70,8 +70,8 @@ describe('UpdatePasswordForm', () => {
         );
     });
 
-    it('has Save button', () => {
+    it('has Update Password button', () => {
         const wrapper = mount(UpdatePasswordForm);
-        expect(wrapper.find('button[type="submit"]').text()).toBe('Save');
+        expect(wrapper.find('button[type="submit"]').text()).toBe('Update Password');
     });
 });

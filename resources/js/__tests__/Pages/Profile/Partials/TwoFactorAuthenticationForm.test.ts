@@ -42,7 +42,7 @@ describe('TwoFactorAuthenticationForm', () => {
             },
         });
         expect(wrapper.text()).toContain(
-            'You have not enabled two factor authentication',
+            'Disabled',
         );
         expect(wrapper.text()).toContain('Enable');
     });
@@ -58,7 +58,7 @@ describe('TwoFactorAuthenticationForm', () => {
             },
         });
         expect(wrapper.text()).toContain(
-            'You have enabled two factor authentication',
+            'You have enabled two-factor authentication',
         );
         expect(wrapper.text()).toContain('Disable');
     });
@@ -73,6 +73,6 @@ describe('TwoFactorAuthenticationForm', () => {
                 confirmsTwoFactorAuthentication: false,
             },
         });
-        expect(wrapper.text()).toContain('Two Factor Authentication');
+        expect(wrapper.text()).toContain('Two-Factor Authentication');
     });
 });

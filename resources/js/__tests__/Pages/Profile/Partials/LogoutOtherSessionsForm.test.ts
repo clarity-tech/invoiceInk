@@ -83,7 +83,7 @@ describe('LogoutOtherSessionsForm', () => {
         const wrapper = mount(LogoutOtherSessionsForm, {
             props: { sessions },
         });
-        expect(wrapper.text()).toContain('Log Out Other Browser Sessions');
+        expect(wrapper.text()).toContain('Log Out Other Sessions');
     });
 
     it('shows modal when logout button clicked', async () => {
