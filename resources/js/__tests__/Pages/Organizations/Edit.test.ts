@@ -63,6 +63,8 @@ vi.mock('lucide-vue-next', () => ({
     Landmark: { template: '<span />' },
     Image: { template: '<span />' },
     ArrowLeft: { template: '<span />' },
+    Hash: { template: '<span />' },
+    ChevronRight: { template: '<span />' },
 }));
 
 import Edit from '@/Pages/Organizations/Edit.vue';
@@ -147,7 +149,7 @@ describe('Organizations/Edit', () => {
 
     it('renders Organization settings subtitle', () => {
         const wrapper = mountComponent();
-        expect(wrapper.text()).toContain('Organization settings');
+        expect(wrapper.text()).toContain('Settings');
     });
 
     it('renders tab navigation buttons', () => {

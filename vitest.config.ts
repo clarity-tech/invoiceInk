@@ -7,13 +7,19 @@ export default defineConfig({
     test: {
         environment: 'happy-dom',
         globals: true,
-        include: ['resources/ts/**/*.{test,spec}.ts'],
+        include: ['resources/js/**/*.{test,spec}.ts'],
         coverage: {
             provider: 'v8',
-            include: ['resources/ts/composables/**', 'resources/ts/lib/**', 'resources/ts/Components/**', 'resources/ts/Pages/**', 'resources/ts/Layouts/**'],
+            include: [
+                'resources/js/composables/**',
+                'resources/js/lib/**',
+                'resources/js/Components/**',
+                'resources/js/Pages/**',
+                'resources/js/Layouts/**',
+            ],
         },
     },
     resolve: {
-        alias: { '@': resolve(__dirname, 'resources/ts') },
+        alias: { '@': resolve(__dirname, 'resources/js') },
     },
 });

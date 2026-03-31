@@ -22,7 +22,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.5"
+          php-version: '8.5'
           extensions: mbstring, pdo_sqlite
           coverage: none
 
@@ -53,7 +53,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.5"
+          php-version: '8.5'
           extensions: mbstring, pdo_sqlite
           coverage: none
 
@@ -77,6 +77,8 @@ jobs:
           sed -i 's/APP_ENV=local/APP_ENV=testing/' .env
           sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=sqlite/' .env
           sed -i 's|DB_DATABASE=.*|DB_DATABASE=:memory:|' .env
+          sed -i 's|FILESYSTEM_DISK=.*|FILESYSTEM_DISK=local|' .env
+          echo "MEDIA_DISK=public" >> .env
           echo "CACHE_STORE=array" >> .env
           echo "SESSION_DRIVER=array" >> .env
           echo "QUEUE_CONNECTION=sync" >> .env
@@ -107,7 +109,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.5"
+          php-version: '8.5'
           extensions: mbstring, pdo_sqlite
           coverage: none
 
@@ -158,6 +160,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo_sqlite
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
@@ -179,7 +191,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.5"
+          php-version: '8.5'
           extensions: mbstring, pdo_sqlite
           coverage: none
 
@@ -230,6 +242,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo_sqlite
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
 
       - uses: oven-sh/setup-bun@v2
         with:

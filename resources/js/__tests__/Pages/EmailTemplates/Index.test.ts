@@ -73,7 +73,9 @@ function mountComponent(propsOverride = {}) {
         },
         global: {
             stubs: {
-                AppLayout: { template: '<div><slot /></div>' },
+                AppLayout: {
+                    template: '<div><slot name="header" /><slot /></div>',
+                },
             },
         },
     });
