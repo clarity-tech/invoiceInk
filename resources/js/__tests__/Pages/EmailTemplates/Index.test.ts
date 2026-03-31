@@ -73,8 +73,8 @@ function mountComponent(propsOverride = {}) {
         },
         global: {
             stubs: {
-                AppLayout: {
-                    template: '<div><slot name="header" /><slot /></div>',
+                SettingsLayout: {
+                    template: '<div><slot /></div>',
                 },
             },
         },
@@ -84,7 +84,7 @@ function mountComponent(propsOverride = {}) {
 describe('EmailTemplates/Index', () => {
     it('renders page title', () => {
         const wrapper = mountComponent();
-        expect(wrapper.text()).toContain('Email Templates');
+        expect(wrapper.text()).toContain('Invoice Templates');
     });
 
     it('renders invoice templates section', () => {
@@ -141,7 +141,7 @@ describe('EmailTemplates/Index', () => {
 
     it('uses SettingsLayout', () => {
         const wrapper = mountComponent();
-        // SettingsLayout provides sub-nav; component renders its own content
-        expect(wrapper.text()).toContain('Email Templates');
+        // SettingsLayout provides the outer chrome; component renders its own content
+        expect(wrapper.text()).toContain('Estimate Templates');
     });
 });

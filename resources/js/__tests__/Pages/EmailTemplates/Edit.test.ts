@@ -87,7 +87,9 @@ function mountComponent(propsOverride = {}) {
         props: { ...defaultProps, ...propsOverride },
         global: {
             stubs: {
-                AppLayout: { template: '<div><slot name="header" /><slot /></div>' },
+                AppLayout: {
+                    template: '<div><slot name="header" /><slot /></div>',
+                },
                 TipTapEditor: {
                     template:
                         '<div data-testid="tiptap-editor"><textarea :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" /></div>',

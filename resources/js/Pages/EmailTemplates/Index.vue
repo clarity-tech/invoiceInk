@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import SettingsLayout from '@/Layouts/SettingsLayout.vue';
+
+defineOptions({ layout: SettingsLayout });
 
 defineProps<{
     templates: {
@@ -15,18 +17,11 @@ defineProps<{
 </script>
 
 <template>
-    <AppLayout title="Email Templates">
-        <template #header>
-            <h2 class="text-xl leading-tight font-semibold text-gray-800">
-                Email Templates
-            </h2>
-        </template>
-
+    <div>
         <div class="px-4 py-4 sm:px-0">
             <p class="mb-6 text-sm text-gray-500">
-                Customize the emails sent with your invoices and
-                estimates. Templates not customized use the latest
-                defaults.
+                Customize the emails sent with your invoices and estimates.
+                Templates not customized use the latest defaults.
             </p>
 
             <!-- Invoice Templates -->
@@ -200,5 +195,5 @@ defineProps<{
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </div>
 </template>

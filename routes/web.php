@@ -12,6 +12,7 @@ use App\Http\Controllers\OrganizationSetupController;
 use App\Http\Controllers\OtherBrowserSessionsController;
 use App\Http\Controllers\PrivacyPolicyController;
 use App\Http\Controllers\PublicViewController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamInvitationController;
 use App\Http\Controllers\TermsOfServiceController;
@@ -115,6 +116,9 @@ Route::middleware([
         Route::delete('/numbering-series/{series}', [NumberingSeriesController::class, 'destroy'])->name('numbering-series.destroy');
         Route::post('/numbering-series/{series}/toggle-active', [NumberingSeriesController::class, 'toggleActive'])->name('numbering-series.toggle-active');
         Route::post('/numbering-series/{series}/set-default', [NumberingSeriesController::class, 'setDefault'])->name('numbering-series.set-default');
+
+        // Settings Hub
+        Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
 
         // Email Templates
         Route::get('/email-templates', [EmailTemplateController::class, 'index'])->name('email-templates.index');
