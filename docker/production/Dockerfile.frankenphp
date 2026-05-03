@@ -28,6 +28,19 @@ RUN composer install \
     --no-scripts \
     --optimize-autoloader
 
+# Pre-generate Wayfinder TypeScript files here, where PHP is available.
+# The frontend (Bun) stage has no PHP, so the Vite plugin can't run wayfinder:generate.
+COPY . .
+
+RUN mkdir -p bootstrap/cache \
+        storage/framework/cache/data \
+        storage/framework/sessions \
+        storage/framework/views \
+    && APP_ENV=production \
+       APP_DEBUG=false \
+       APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \
+       php artisan wayfinder:generate --with-form
+
 # ========================================
 # Stage 2: Frontend Build (Bun)
 # ========================================
@@ -35,17 +48,15 @@ FROM oven/bun:1 AS frontend
 
 WORKDIR /build
 
-# Copy application code, vendor deps, and built assets
-COPY --chown=www-data:www-data . .
+# Copy app source + vendor + pre-generated Wayfinder TS files from php-deps
 COPY --from=php-deps --chown=www-data:www-data /var/www/html /build
 
-COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
-
-COPY vite.config.ts tsconfig.json ./
 
 RUN mkdir -p storage/framework/views
 
+# Skip the Wayfinder Vite plugin (no PHP here; files were pre-generated above)
+ENV WAYFINDER_SKIP_GENERATE=1
 ARG VITE_APP_NAME="Clarity InvoiceInk"
 RUN bun run build
 
