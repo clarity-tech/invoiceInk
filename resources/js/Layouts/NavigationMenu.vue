@@ -28,6 +28,7 @@ const auth = (page.props.auth ?? {}) as {
 };
 
 function handleLogout() {
+    router.flushAll();
     router.post(logout.url());
 }
 
@@ -160,7 +161,11 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                 <span
                                     class="text-sm font-semibold text-brand-600"
                                 >
-                                    {{ auth.user?.name?.charAt(0)?.toUpperCase() }}
+                                    {{
+                                        auth.user?.name
+                                            ?.charAt(0)
+                                            ?.toUpperCase()
+                                    }}
                                 </span>
                             </span>
                             <svg
@@ -171,7 +176,11 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                 stroke="currentColor"
                                 stroke-width="2"
                             >
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M19 9l-7 7-7-7"
+                                />
                             </svg>
                         </button>
 
@@ -181,16 +190,34 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                         >
                             <!-- User info header -->
                             <div class="border-b border-gray-100 px-4 py-3">
-                                <p class="text-sm font-medium text-gray-900 truncate">{{ auth.user?.name }}</p>
-                                <p class="mt-0.5 text-xs text-gray-500 truncate">{{ auth.user?.email }}</p>
+                                <p
+                                    class="truncate text-sm font-medium text-gray-900"
+                                >
+                                    {{ auth.user?.name }}
+                                </p>
+                                <p
+                                    class="mt-0.5 truncate text-xs text-gray-500"
+                                >
+                                    {{ auth.user?.email }}
+                                </p>
                             </div>
                             <div class="py-1">
                                 <Link
                                     :href="profileShow.url()"
                                     class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                                 >
-                                    <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                    <svg
+                                        class="h-4 w-4 text-gray-400"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                                        />
                                     </svg>
                                     Profile
                                 </Link>
@@ -198,8 +225,18 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                     class="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                                     @click="handleLogout"
                                 >
-                                    <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                                    <svg
+                                        class="h-4 w-4 text-gray-400"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+                                        />
                                     </svg>
                                     Log Out
                                 </button>

@@ -156,4 +156,20 @@ return [
         ]),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Redirect Paths
+    |--------------------------------------------------------------------------
+    |
+    | Fortify uses these paths after various authentication actions. The
+    | logout target must point to an Inertia-rendered route (not the
+    | guest welcome Blade view), otherwise Inertia displays the HTML
+    | response in its non-Inertia modal overlay.
+    |
+    */
+
+    'redirects' => [
+        'logout' => '/login',
+    ],
+
 ];
