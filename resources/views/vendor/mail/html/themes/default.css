@@ -113,6 +113,14 @@ img {
     text-decoration: none;
 }
 
+.header .logo-text {
+    color: #7c3aed;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1;
+}
+
 /* Logo */
 
 .logo {
