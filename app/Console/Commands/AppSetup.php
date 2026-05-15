@@ -29,7 +29,7 @@ class AppSetup extends Command
 
         // 1. Environment check
         if (! file_exists(base_path('.env'))) {
-            $this->task('Copying .env.example to .env', function () {
+            $this->components->task('Copying .env.example to .env', function () {
                 copy(base_path('.env.example'), base_path('.env'));
             });
 
@@ -38,23 +38,23 @@ class AppSetup extends Command
 
         // 2. Database
         if ($this->option('fresh')) {
-            $this->task('Migrating database (fresh)', fn () => $this->callSilently('migrate:fresh', ['--force' => true]) === 0);
+            $this->components->task('Migrating database (fresh)', fn () => $this->callSilently('migrate:fresh', ['--force' => true]) === 0);
         } else {
-            $this->task('Running migrations', fn () => $this->callSilently('migrate', ['--force' => true]) === 0);
+            $this->components->task('Running migrations', fn () => $this->callSilently('migrate', ['--force' => true]) === 0);
         }
 
         // 3. Seed if requested
         if ($this->option('seed')) {
-            $this->task('Seeding database', fn () => $this->callSilently('db:seed', ['--force' => true]) === 0);
+            $this->components->task('Seeding database', fn () => $this->callSilently('db:seed', ['--force' => true]) === 0);
         }
 
         // 4. Storage
-        $this->task('Creating storage link', fn () => $this->callSilently('storage:link', ['--force' => true]) === 0);
+        $this->components->task('Creating storage link', fn () => $this->callSilently('storage:link', ['--force' => true]) === 0);
 
-        $this->task('Setting up S3 bucket', fn () => $this->callSilently('app:setup-storage') === 0);
+        $this->components->task('Setting up S3 bucket', fn () => $this->callSilently('app:setup-storage') === 0);
 
         // 5. Caches
-        $this->task('Clearing caches', function () {
+        $this->components->task('Clearing caches', function () {
             $this->callSilently('config:clear');
             $this->callSilently('cache:clear');
             $this->callSilently('view:clear');

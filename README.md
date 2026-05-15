@@ -20,8 +20,8 @@ docker run --rm \
     -u "$(id -u):$(id -g)" \
     -v "$(pwd):/var/www/html" \
     -w /var/www/html \
-    laravelsail/php85-composer:latest \
-    composer install --ignore-platform-reqs
+    composer:latest \
+    composer update --ignore-platform-reqs
 ```
 
 ### 2. Environment setup
@@ -34,9 +34,15 @@ cp .env.example .env
 
 ```bash
 ./vendor/bin/sail up -d
-sail php artisan app:setup --seed
+sail php artisan app:setup --seed # press enter if seems stuck at "Seeding database"
 sail bun install
 sail bun run build
+```
+
+bun is not installed by dockerfile, so we install it manually after the container is up.
+
+```bash
+sail root-shell -c "curl -fsSL https://bun.sh/install | bash && cp /root/.bun/bin/bun /usr/local/bin/bun"
 ```
 
 The `app:setup` command handles everything: key generation, migrations, database seeding, S3 bucket creation on RustFS, and cache clearing.
