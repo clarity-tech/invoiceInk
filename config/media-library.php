@@ -257,7 +257,7 @@ return [
      * The default lifetime in minutes for temporary urls.
      * This is used when you call the `getLastTemporaryUrl` or `getLastTemporaryUrl` method on a media item.
      */
-    'temporary_url_default_lifetime' => env('MEDIA_TEMPORARY_URL_DEFAULT_LIFETIME', 5),
+    'temporary_url_default_lifetime' => env('MEDIA_TEMPORARY_URL_DEFAULT_LIFETIME', 15),
 
     'remote' => [
         /*

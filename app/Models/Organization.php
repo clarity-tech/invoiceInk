@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -487,9 +488,7 @@ class Organization extends Model implements HasMedia
      */
     public function getLogoUrlAttribute(): ?string
     {
-        $logo = $this->getFirstMedia('logo');
-
-        return $logo ? $logo->getUrl() : null;
+        return $this->resolveLogoUrl();
     }
 
     /**
@@ -497,9 +496,27 @@ class Organization extends Model implements HasMedia
      */
     public function getLogoThumbUrlAttribute(): ?string
     {
+        return $this->resolveLogoUrl('thumb');
+    }
+
+    /**
+     * Resolve a logo URL, using a short-lived temporary URL on disks that
+     * support them (e.g. S3) and falling back to a regular URL on disks that
+     * do not (e.g. the local disk in dev/testing).
+     */
+    private function resolveLogoUrl(string $conversion = ''): ?string
+    {
         $logo = $this->getFirstMedia('logo');
 
-        return $logo ? $logo->getUrl('thumb') : null;
+        if (! $logo) {
+            return null;
+        }
+
+        if (Storage::disk($logo->disk)->providesTemporaryUrls()) {
+            return $logo->getTemporaryUrl(null, $conversion);
+        }
+
+        return $logo->getUrl($conversion);
     }
 
     /**
@@ -513,16 +530,14 @@ class Organization extends Model implements HasMedia
             return null;
         }
 
-        $path = $logo->getPath();
+        $disk = Storage::disk($logo->disk);
+        $path = $logo->getPathRelativeToRoot();
 
-        if (! file_exists($path)) {
+        if (! $disk->exists($path)) {
             return null;
         }
 
-        $mimeType = $logo->mime_type;
-        $content = file_get_contents($path);
-
-        return 'data:'.$mimeType.';base64,'.base64_encode($content);
+        return 'data:'.$logo->mime_type.';base64,'.base64_encode($disk->get($path));
     }
 
     /**

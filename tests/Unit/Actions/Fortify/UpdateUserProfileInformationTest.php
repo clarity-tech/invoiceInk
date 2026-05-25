@@ -161,7 +161,8 @@ class UpdateUserProfileInformationTest extends TestCase
 
     public function test_can_update_profile_photo(): void
     {
-        Storage::fake('public');
+        $disk = config('jetstream.profile_photo_disk');
+        Storage::fake($disk);
 
         $user = User::factory()->withPersonalTeam()->create();
         $photo = UploadedFile::fake()->create('photo.jpg', 100, 'image/jpeg');
@@ -175,7 +176,7 @@ class UpdateUserProfileInformationTest extends TestCase
         $user->refresh();
 
         expect($user->profile_photo_path)->not->toBeNull();
-        Storage::disk('public')->assertExists($user->profile_photo_path);
+        Storage::disk($disk)->assertExists($user->profile_photo_path);
     }
 
     public function test_validates_photo_file_type(): void

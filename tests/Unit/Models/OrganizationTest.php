@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 test('can create organization with required fields', function () {
     $user = User::factory()->create();
@@ -998,8 +999,59 @@ test('logoThumbUrl returns null when no logo uploaded', function () {
     expect($organization->logo_thumb_url)->toBeNull();
 });
 
+test('logoUrl falls back to a regular url on disks without temporary url support', function () {
+    // A plain local disk (no serve/temporary_url) does not support temporary URLs,
+    // mirroring the local/dev setup where getTemporaryUrl() previously threw.
+    config([
+        'filesystems.disks.plain_local' => [
+            'driver' => 'local',
+            'root' => storage_path('framework/testing/disks/plain_local'),
+            'url' => 'http://localhost/storage',
+        ],
+        'media-library.disk_name' => 'plain_local',
+    ]);
+
+    $organization = createOrganizationWithLocation();
+
+    $pngBytes = base64_decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+    );
+
+    $organization
+        ->addMediaFromString($pngBytes)
+        ->usingFileName('logo.png')
+        ->toMediaCollection('logo');
+
+    $organization = $organization->fresh();
+
+    expect(Storage::disk('plain_local')->providesTemporaryUrls())->toBeFalse()
+        ->and($organization->logo_url)->not->toBeNull()
+        ->and($organization->logo_thumb_url)->not->toBeNull();
+});
+
 test('logoBase64 returns null when no logo uploaded', function () {
     $organization = createOrganizationWithLocation();
 
     expect($organization->logo_base64)->toBeNull();
+});
+
+test('logoBase64 reads from configured media disk (not local filesystem)', function () {
+    config(['media-library.disk_name' => 'public']);
+    Storage::fake('public');
+
+    $organization = createOrganizationWithLocation();
+
+    $pngBytes = base64_decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+    );
+
+    $organization
+        ->addMediaFromString($pngBytes)
+        ->usingFileName('logo.png')
+        ->toMediaCollection('logo');
+
+    $base64 = $organization->fresh()->logo_base64;
+
+    expect($base64)->toStartWith('data:image/png;base64,')
+        ->and(base64_decode(substr($base64, strlen('data:image/png;base64,'))))->toBe($pngBytes);
 });

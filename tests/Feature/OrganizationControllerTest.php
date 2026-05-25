@@ -4,6 +4,7 @@ use App\Models\Organization;
 use Illuminate\Http\UploadedFile;
 
 beforeEach(function () {
+    Storage::fake('s3');
     $this->user = createUserWithTeam();
     $this->actingAs($this->user);
 });
