@@ -35,23 +35,29 @@ class InvoiceNumberingService implements InvoiceNumberingServiceInterface
             // Refresh the series inside the lock to get the latest current_number
             $series->refresh();
 
-            // Get the next number
             $sequenceNumber = $this->getNextNumber($series);
+            $maxAttempts = 1000;
 
-            // Generate the formatted invoice number
-            $invoiceNumber = $this->formatInvoiceNumber($series, $sequenceNumber);
+            for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+                $invoiceNumber = $this->formatInvoiceNumber($series, $sequenceNumber);
 
-            // Validate uniqueness within organization
-            $this->validateNumberUniqueness($invoiceNumber, $organization);
+                if (! $this->numberExists($invoiceNumber, $organization)) {
+                    $series->commitSequenceNumber($sequenceNumber);
 
-            // Update the series counter
-            $series->incrementAndSave();
+                    return [
+                        'invoice_number' => $invoiceNumber,
+                        'series_id' => $series->id,
+                        'sequence_number' => $sequenceNumber,
+                    ];
+                }
 
-            return [
-                'invoice_number' => $invoiceNumber,
-                'series_id' => $series->id,
-                'sequence_number' => $sequenceNumber,
-            ];
+                // Counter is out of sync with actual invoices — walk forward.
+                $sequenceNumber++;
+            }
+
+            throw new InvalidArgumentException(
+                "Unable to allocate a unique invoice number for series '{$series->name}' after {$maxAttempts} attempts."
+            );
         });
     }
 
@@ -160,17 +166,23 @@ class InvoiceNumberingService implements InvoiceNumberingServiceInterface
      */
     public function validateNumberUniqueness(string $invoiceNumber, Organization $organization): bool
     {
-        $exists = Invoice::withoutGlobalScopes()
-            ->where('organization_id', $organization->id)
-            ->where('invoice_number', $invoiceNumber)
-            ->where('type', 'invoice') // Only check invoices, not estimates
-            ->exists();
-
-        if ($exists) {
+        if ($this->numberExists($invoiceNumber, $organization)) {
             throw new InvalidArgumentException("Invoice number '{$invoiceNumber}' already exists for this organization.");
         }
 
         return true;
+    }
+
+    /**
+     * Check whether an invoice number already exists for the organization.
+     */
+    protected function numberExists(string $invoiceNumber, Organization $organization): bool
+    {
+        return Invoice::withoutGlobalScopes()
+            ->where('organization_id', $organization->id)
+            ->where('invoice_number', $invoiceNumber)
+            ->where('type', 'invoice') // Only check invoices, not estimates
+            ->exists();
     }
 
     /**

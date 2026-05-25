@@ -464,7 +464,11 @@ class InvoiceController extends Controller
             return back()->with('error', 'Only estimates can be converted to invoices.');
         }
 
-        $newInvoice = $converter->convert($invoice);
+        try {
+            $newInvoice = $converter->convert($invoice);
+        } catch (InvalidArgumentException $e) {
+            return back()->with('error', 'Unable to convert estimate: '.$e->getMessage());
+        }
 
         return redirect()->route('invoices.edit', $newInvoice->id)
             ->with('success', 'Estimate converted to invoice successfully.');

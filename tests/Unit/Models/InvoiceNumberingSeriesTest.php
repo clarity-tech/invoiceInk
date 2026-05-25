@@ -138,28 +138,42 @@ test('get next sequence number resets when needed', function () {
     expect($series->getNextSequenceNumber())->toBe(1);
 });
 
-test('increment and save method works correctly', function () {
+test('commit sequence number persists the value', function () {
     $series = InvoiceNumberingSeries::factory()->create([
         'current_number' => 5,
         'reset_frequency' => ResetFrequency::NEVER,
     ]);
 
-    $series->incrementAndSave();
+    $series->commitSequenceNumber(6);
 
     expect($series->fresh()->current_number)->toBe(6);
 });
 
-test('increment and save method updates reset timestamp when needed', function () {
+test('commit sequence number updates reset timestamp when reset is due', function () {
     $series = InvoiceNumberingSeries::factory()->create([
         'current_number' => 5,
         'reset_frequency' => ResetFrequency::YEARLY,
         'last_reset_at' => now()->subYear(),
     ]);
 
-    $series->incrementAndSave();
+    $series->commitSequenceNumber(1);
 
     $fresh = $series->fresh();
-    expect($fresh->current_number)->toBe(6);
+    expect($fresh->current_number)->toBe(1);
     expect($fresh->last_reset_at)->not()->toBeNull();
     expect($fresh->last_reset_at->isToday())->toBe(true);
+});
+
+test('commit sequence number backfills last_reset_at on first ever use', function () {
+    $series = InvoiceNumberingSeries::factory()->create([
+        'current_number' => 0,
+        'reset_frequency' => ResetFrequency::NEVER,
+        'last_reset_at' => null,
+    ]);
+
+    $series->commitSequenceNumber(1);
+
+    $fresh = $series->fresh();
+    expect($fresh->current_number)->toBe(1);
+    expect($fresh->last_reset_at)->not()->toBeNull();
 });

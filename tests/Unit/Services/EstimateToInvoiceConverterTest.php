@@ -429,6 +429,32 @@ test('converter creates invoice with correct relationships', function () {
     expect($invoice->wasRecentlyCreated)->toBeTrue();
 });
 
+test('converter succeeds when first sequence numbers are already taken', function () {
+    // Regression: converting estimates used to throw InvalidArgumentException
+    // when the numbering series counter was out of sync with existing invoices.
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+
+    // Existing invoice already occupies sequence 1 in the default series.
+    createInvoiceWithItems([
+        'type' => 'invoice',
+        'invoice_number' => sprintf('INV-%s-%s-0001', now()->year, now()->format('m')),
+        'status' => 'draft',
+    ], null, $organization, $customer);
+
+    $estimate = createInvoiceWithItems([
+        'type' => 'estimate',
+        'invoice_number' => 'EST-COLLIDE',
+        'status' => 'sent',
+    ], null, $organization, $customer);
+
+    $converter = new EstimateToInvoiceConverter(new InvoiceCalculator, new InvoiceNumberingService);
+    $invoice = $converter->convert($estimate);
+
+    expect($invoice->type)->toBe('invoice');
+    expect($invoice->invoice_number)->not->toBe(sprintf('INV-%s-%s-0001', now()->year, now()->format('m')));
+});
+
 test('converter recalculates totals after conversion', function () {
     $estimate = createInvoiceWithItems([
         'type' => 'estimate',

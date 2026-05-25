@@ -261,6 +261,72 @@ test('get series for organization returns correct series', function () {
     expect($series->pluck('id'))->not()->toContain($inactiveSeries->id);
 });
 
+test('skips past pre-existing numbers when counter is out of sync', function () {
+    $organization = Organization::factory()->withLocation()->create();
+    $location = $organization->primaryLocation;
+
+    $series = InvoiceNumberingSeries::factory()->create([
+        'organization_id' => $organization->id,
+        'prefix' => 'INV',
+        'format_pattern' => '{PREFIX}-{SEQUENCE:4}',
+        'current_number' => 0,
+        'is_default' => true,
+        'is_active' => true,
+        'reset_frequency' => ResetFrequency::NEVER,
+        'last_reset_at' => now(),
+    ]);
+
+    // Pre-existing invoices that would collide with sequence 1, 2, 3
+    foreach (['INV-0001', 'INV-0002', 'INV-0003'] as $number) {
+        Invoice::factory()->create([
+            'organization_id' => $organization->id,
+            'invoice_number' => $number,
+            'type' => 'invoice',
+        ]);
+    }
+
+    $result = $this->service->generateInvoiceNumber($organization, $location);
+
+    expect($result['invoice_number'])->toBe('INV-0004');
+    expect($result['sequence_number'])->toBe(4);
+    expect($series->fresh()->current_number)->toBe(4);
+});
+
+test('does not leave counter at zero when reset triggers a collision', function () {
+    $organization = Organization::factory()->withLocation()->create();
+    $location = $organization->primaryLocation;
+
+    $series = InvoiceNumberingSeries::factory()->create([
+        'organization_id' => $organization->id,
+        'prefix' => 'INV',
+        'format_pattern' => '{PREFIX}-{SEQUENCE:4}',
+        'current_number' => 10,
+        'is_default' => true,
+        'is_active' => true,
+        'reset_frequency' => ResetFrequency::YEARLY,
+        'last_reset_at' => now()->subYear(), // forces reset
+    ]);
+
+    // Pre-existing invoice that would collide with the reset value (sequence 1)
+    Invoice::factory()->create([
+        'organization_id' => $organization->id,
+        'invoice_number' => 'INV-0001',
+        'type' => 'invoice',
+    ]);
+
+    $result = $this->service->generateInvoiceNumber($organization, $location);
+
+    // Should walk past 0001 and land on 0002
+    expect($result['invoice_number'])->toBe('INV-0002');
+    expect($result['sequence_number'])->toBe(2);
+
+    // Critically, the persisted counter must reflect the actual number used
+    // and must NOT be left at 0 (the bug we are guarding against).
+    $fresh = $series->fresh();
+    expect($fresh->current_number)->toBe(2);
+    expect($fresh->last_reset_at->isToday())->toBe(true);
+});
+
 test('concurrent number generation is thread safe', function () {
     $organization = Organization::factory()->withLocation()->create();
     $location = $organization->primaryLocation;

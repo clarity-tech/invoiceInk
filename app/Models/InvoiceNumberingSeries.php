@@ -107,29 +107,31 @@ class InvoiceNumberingSeries extends Model
         };
     }
 
+    /**
+     * Compute the next sequence number without mutating any state.
+     * If a reset is due, the next sequence is 1 (off a virtual zero baseline).
+     */
     public function getNextSequenceNumber(): int
     {
         if ($this->shouldReset()) {
-            $this->resetSequence();
+            return 1;
         }
 
         return $this->current_number + 1;
     }
 
-    public function incrementAndSave(): void
+    /**
+     * Persist the series counter to the given sequence number atomically.
+     * Also handles `last_reset_at` bookkeeping when a reset is due.
+     */
+    public function commitSequenceNumber(int $sequenceNumber): void
     {
-        $this->increment('current_number');
+        $attributes = ['current_number' => $sequenceNumber];
 
-        if ($this->shouldReset()) {
-            $this->update(['last_reset_at' => now()]);
+        if ($this->shouldReset() || $this->last_reset_at === null) {
+            $attributes['last_reset_at'] = now();
         }
-    }
 
-    private function resetSequence(): void
-    {
-        $this->update([
-            'current_number' => 0,
-            'last_reset_at' => now(),
-        ]);
+        $this->update($attributes);
     }
 }
