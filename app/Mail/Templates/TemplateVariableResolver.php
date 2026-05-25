@@ -22,8 +22,8 @@ class TemplateVariableResolver
         $invoice->loadMissing(['customer', 'organization', 'items']);
 
         $currencyCode = $invoice->currency?->value ?? $invoice->currency ?? 'INR';
-        $total = $invoice->items->sum(fn ($item) => $item->getLineTotal());
-        $subtotal = $invoice->items->sum(fn ($item) => $item->quantity * $item->unit_price);
+        $subtotal = $invoice->items->sum(fn ($item) => $item->getLineTotal());
+        $total = $invoice->items->sum(fn ($item) => $item->getLineTotalWithTax());
         $tax = $total - $subtotal;
 
         $orgEmail = $invoice->organization?->emails?->first()['email'] ?? '';

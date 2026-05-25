@@ -384,19 +384,9 @@ class InvoiceController extends Controller
             $contactCollection,
             $validated['subject'],
             $ccEmails,
-            $validated['body']
+            $validated['body'],
+            (bool) ($validated['attach_pdf'] ?? false),
         );
-
-        if ($validated['attach_pdf'] ?? false) {
-            $pdfService = app(PdfServiceInterface::class);
-            $pdfContent = $invoice->isInvoice()
-                ? $pdfService->generateInvoicePdf($invoice)
-                : $pdfService->generateEstimatePdf($invoice);
-
-            $mailable->attachData($pdfContent, "{$invoice->invoice_number}.pdf", [
-                'mime' => 'application/pdf',
-            ]);
-        }
 
         Mail::send($mailable);
 

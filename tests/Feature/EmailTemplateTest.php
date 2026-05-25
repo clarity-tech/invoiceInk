@@ -91,6 +91,24 @@ test('resolves template variables from invoice', function () {
         ->and($variables['{{view_url}}'])->toContain('/invoices/view/');
 });
 
+test('amount_due includes tax and tax_amount is non-zero', function () {
+    $invoice = createInvoiceWithItems(
+        ['invoice_number' => 'INV-AMT-001', 'currency' => 'INR'],
+        [[
+            'description' => 'Item',
+            'quantity' => 1,
+            'unit_price' => 10000, // 100.00
+            'tax_rate' => 1800,    // 18% in basis points
+        ]],
+    );
+
+    $variables = TemplateVariableResolver::resolve($invoice);
+
+    expect($variables['{{subtotal}}'])->toContain('100.00')
+        ->and($variables['{{tax_amount}}'])->toContain('18.00')
+        ->and($variables['{{amount_due}}'])->toContain('118.00');
+});
+
 test('renders template with variables substituted', function () {
     $template = 'Invoice #{{invoice_number}} for {{customer_name}}';
     $variables = [

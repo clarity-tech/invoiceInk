@@ -1,8 +1,10 @@
 <?php
 
+use App\Contracts\Services\PdfServiceInterface;
 use App\Mail\DocumentMailer;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
 
 // --- CC recipients tests ---
 
@@ -173,6 +175,51 @@ test('attachments method returns empty array by default', function () {
     $mailer = new DocumentMailer($invoice, $recipients);
 
     expect($mailer->attachments())->toBeEmpty();
+});
+
+// --- PDF attachment ---
+
+test('attachments includes a pdf when attachPdf is true', function () {
+    $pdfBytes = "%PDF-1.4\n\xFFbinary-not-utf8\xFE";
+
+    $this->mock(PdfServiceInterface::class, function ($mock) use ($pdfBytes) {
+        $mock->shouldReceive('generateInvoicePdf')->once()->andReturn($pdfBytes);
+    });
+
+    $invoice = createInvoiceWithItems([
+        'invoice_number' => 'INV-PDF-001',
+        'status' => 'sent',
+    ]);
+
+    $recipients = new ContactCollection([['name' => 'Test', 'email' => 'test@example.test']]);
+
+    $mailer = new DocumentMailer($invoice, $recipients, null, [], null, true);
+    $attachments = $mailer->attachments();
+
+    expect($attachments)->toHaveCount(1)
+        ->and($attachments[0])->toBeInstanceOf(Attachment::class);
+});
+
+test('queued mailable with pdf attachment serializes without utf8 error', function () {
+    $pdfBytes = "%PDF-1.4\n\xFFbinary-not-utf8\xFE";
+
+    $this->mock(PdfServiceInterface::class, function ($mock) use ($pdfBytes) {
+        $mock->shouldReceive('generateInvoicePdf')->andReturn($pdfBytes);
+    });
+
+    $invoice = createInvoiceWithItems([
+        'invoice_number' => 'INV-PDF-Q-001',
+        'status' => 'sent',
+    ]);
+
+    $recipients = new ContactCollection([['name' => 'Test', 'email' => 'test@example.test']]);
+    $mailer = new DocumentMailer($invoice, $recipients, null, [], null, true);
+
+    $serialized = serialize($mailer);
+    $payload = json_encode(['data' => $serialized]);
+
+    expect($payload)->not->toBeFalse()
+        ->and(json_last_error())->toBe(JSON_ERROR_NONE);
 });
 
 // --- Full construction with all parameters ---
