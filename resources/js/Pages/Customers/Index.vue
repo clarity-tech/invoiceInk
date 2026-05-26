@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm, router } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import CustomerForm from '@/Components/CustomerForm.vue';
 import LocationModal from '@/Components/LocationModal.vue';
@@ -21,6 +21,11 @@ const props = defineProps<{
     currencies: Record<string, string>;
     countries: Record<string, string>;
 }>();
+
+const isMounted = ref(false);
+onMounted(() => {
+    isMounted.value = true;
+});
 
 // Customer form state
 const searchQuery = ref('');
@@ -266,8 +271,8 @@ function locationSummary(customer: Customer): string {
             </div>
 
             <!-- Customer Form Modal -->
-            <Teleport to="body">
-                <div v-if="showForm" class="fixed inset-0 z-50 overflow-y-auto">
+            <Teleport v-if="isMounted && showForm" to="body">
+                <div class="fixed inset-0 z-50 overflow-y-auto">
                     <div
                         class="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0"
                     >

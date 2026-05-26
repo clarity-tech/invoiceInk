@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import type { Location } from '@/types';
 
 const props = defineProps<{
@@ -75,6 +75,11 @@ watch(
     },
 );
 
+const isMounted = ref(false);
+onMounted(() => {
+    isMounted.value = true;
+});
+
 function submit() {
     if (props.location?.id) {
         form.put(
@@ -94,8 +99,8 @@ function submit() {
 </script>
 
 <template>
-    <Teleport to="body">
-        <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto">
+    <Teleport v-if="isMounted && show" to="body">
+        <div class="fixed inset-0 z-50 overflow-y-auto">
             <div
                 class="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0"
             >

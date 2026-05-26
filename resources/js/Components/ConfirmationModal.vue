@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue';
+
 defineProps<{
     show: boolean;
     title?: string;
@@ -12,11 +14,16 @@ const emit = defineEmits<{
     (e: 'confirm'): void;
     (e: 'cancel'): void;
 }>();
+
+const isMounted = ref(false);
+onMounted(() => {
+    isMounted.value = true;
+});
 </script>
 
 <template>
-    <Teleport to="body">
-        <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto">
+    <Teleport v-if="isMounted && show" to="body">
+        <div class="fixed inset-0 z-50 overflow-y-auto">
             <div
                 class="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0"
             >
