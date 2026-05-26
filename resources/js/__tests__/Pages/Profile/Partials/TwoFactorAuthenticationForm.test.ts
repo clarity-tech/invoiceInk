@@ -41,9 +41,7 @@ describe('TwoFactorAuthenticationForm', () => {
                 confirmsTwoFactorAuthentication: true,
             },
         });
-        expect(wrapper.text()).toContain(
-            'Disabled',
-        );
+        expect(wrapper.text()).toContain('Disabled');
         expect(wrapper.text()).toContain('Enable');
     });
 

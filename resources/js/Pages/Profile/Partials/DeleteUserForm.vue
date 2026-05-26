@@ -28,15 +28,19 @@ function deleteUser(): void {
 
 <template>
     <section class="rounded-xl border border-red-100 bg-white p-6">
-        <h2 class="mb-1 text-sm font-semibold tracking-wider text-gray-400 uppercase">
+        <h2
+            class="mb-1 text-sm font-semibold tracking-wider text-gray-400 uppercase"
+        >
             Delete Account
         </h2>
-        <p class="mb-4 text-sm text-gray-500">Permanently delete your account.</p>
+        <p class="mb-4 text-sm text-gray-500">
+            Permanently delete your account.
+        </p>
 
         <p class="mb-5 text-sm text-gray-600">
-            Once your account is deleted, all of its resources and data will be permanently deleted.
-            Before deleting your account, please download any data or information that you wish to
-            retain.
+            Once your account is deleted, all of its resources and data will be
+            permanently deleted. Before deleting your account, please download
+            any data or information that you wish to retain.
         </p>
 
         <button
@@ -50,7 +54,10 @@ function deleteUser(): void {
 
     <!-- Delete User Confirmation Modal -->
     <Teleport to="body">
-        <div v-if="confirmingUserDeletion" class="fixed inset-0 z-50 overflow-y-auto">
+        <div
+            v-if="confirmingUserDeletion"
+            class="fixed inset-0 z-50 overflow-y-auto"
+        >
             <div
                 class="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0"
             >
@@ -58,18 +65,23 @@ function deleteUser(): void {
                     class="fixed inset-0 bg-gray-500/75 transition-opacity"
                     @click="confirmingUserDeletion = false"
                 />
-                <span class="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true"
+                <span
+                    class="hidden sm:inline-block sm:h-screen sm:align-middle"
+                    aria-hidden="true"
                     >&#8203;</span
                 >
                 <div
                     class="relative inline-block transform overflow-hidden rounded-xl bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle"
                 >
                     <div class="bg-white px-6 pt-6 pb-4">
-                        <h3 class="text-base font-semibold text-gray-900">Delete Account</h3>
+                        <h3 class="text-base font-semibold text-gray-900">
+                            Delete Account
+                        </h3>
                         <p class="mt-2 text-sm text-gray-500">
-                            Are you sure you want to delete your account? Once your account is
-                            deleted, all of its resources and data will be permanently deleted.
-                            Please enter your password to confirm.
+                            Are you sure you want to delete your account? Once
+                            your account is deleted, all of its resources and
+                            data will be permanently deleted. Please enter your
+                            password to confirm.
                         </p>
                         <div class="mt-4">
                             <input
@@ -81,12 +93,17 @@ function deleteUser(): void {
                                 autocomplete="current-password"
                                 @keydown.enter="deleteUser"
                             />
-                            <div v-if="form.errors.password" class="mt-2 text-sm text-red-600">
+                            <div
+                                v-if="form.errors.password"
+                                class="mt-2 text-sm text-red-600"
+                            >
                                 {{ form.errors.password }}
                             </div>
                         </div>
                     </div>
-                    <div class="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse sm:gap-2">
+                    <div
+                        class="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse sm:gap-2"
+                    >
                         <button
                             type="button"
                             class="inline-flex w-full justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-500 disabled:opacity-60 sm:w-auto"

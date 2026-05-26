@@ -36,7 +36,9 @@ const passwordForConfirm = ref('');
 const pendingAction = ref<(() => void) | null>(null);
 
 const twoFactorEnabled = computed(() => {
-    return !!props.user.two_factor_secret && !!props.user.two_factor_confirmed_at;
+    return (
+        !!props.user.two_factor_secret && !!props.user.two_factor_confirmed_at
+    );
 });
 
 function confirmPassword(action: () => void): void {
@@ -66,16 +68,18 @@ function enableTwoFactorAuthentication(): void {
             onSuccess: () => {
                 showingQrCode.value = true;
 
-                return Promise.all([fetchQrCode(), fetchSetupKey()]).then(() => {
-                    if (props.confirmsTwoFactorAuthentication) {
-                        showingConfirmation.value = true;
-                    } else {
-                        fetchRecoveryCodes();
-                        showingRecoveryCodes.value = true;
-                    }
+                return Promise.all([fetchQrCode(), fetchSetupKey()]).then(
+                    () => {
+                        if (props.confirmsTwoFactorAuthentication) {
+                            showingConfirmation.value = true;
+                        } else {
+                            fetchRecoveryCodes();
+                            showingRecoveryCodes.value = true;
+                        }
 
-                    enabling.value = false;
-                });
+                        enabling.value = false;
+                    },
+                );
             },
             onFinish: () => {
                 enabling.value = false;
@@ -172,11 +176,14 @@ async function fetchRecoveryCodes(): Promise<void> {
     <section class="rounded-xl border border-gray-200 bg-white p-6">
         <div class="mb-4 flex items-start justify-between">
             <div>
-                <h2 class="mb-1 text-sm font-semibold tracking-wider text-gray-400 uppercase">
+                <h2
+                    class="mb-1 text-sm font-semibold tracking-wider text-gray-400 uppercase"
+                >
                     Two-Factor Authentication
                 </h2>
                 <p class="text-sm text-gray-500">
-                    Add additional security to your account using two-factor authentication.
+                    Add additional security to your account using two-factor
+                    authentication.
                 </p>
             </div>
             <span
@@ -196,7 +203,9 @@ async function fetchRecoveryCodes(): Promise<void> {
         <div class="text-sm text-gray-600">
             <template v-if="twoFactorEnabled">
                 <template v-if="showingConfirmation">
-                    <p class="font-medium text-gray-900">Finish enabling two-factor authentication.</p>
+                    <p class="font-medium text-gray-900">
+                        Finish enabling two-factor authentication.
+                    </p>
                 </template>
                 <template v-else>
                     <p>You have enabled two-factor authentication.</p>
@@ -204,9 +213,10 @@ async function fetchRecoveryCodes(): Promise<void> {
             </template>
             <template v-else>
                 <p>
-                    When two-factor authentication is enabled, you will be prompted for a secure,
-                    random token during authentication. You may retrieve this token from your
-                    phone's Google Authenticator application.
+                    When two-factor authentication is enabled, you will be
+                    prompted for a secure, random token during authentication.
+                    You may retrieve this token from your phone's Google
+                    Authenticator application.
                 </p>
             </template>
         </div>
@@ -215,25 +225,36 @@ async function fetchRecoveryCodes(): Promise<void> {
             <div v-if="showingQrCode">
                 <p class="mb-3 text-sm font-medium text-gray-700">
                     <template v-if="showingConfirmation">
-                        Scan the QR code using your authenticator app or enter the setup key, then
-                        provide the generated OTP code below.
+                        Scan the QR code using your authenticator app or enter
+                        the setup key, then provide the generated OTP code
+                        below.
                     </template>
                     <template v-else>
-                        Scan the QR code using your authenticator app or enter the setup key.
+                        Scan the QR code using your authenticator app or enter
+                        the setup key.
                     </template>
                 </p>
 
-                <div class="inline-block rounded-lg border border-gray-200 bg-white p-2" v-html="qrCodeSvg" />
+                <div
+                    class="inline-block rounded-lg border border-gray-200 bg-white p-2"
+                    v-html="qrCodeSvg"
+                />
 
                 <div v-if="setupKey" class="mt-3 text-sm text-gray-600">
                     <p>
                         Setup Key:
-                        <span class="font-mono font-semibold text-gray-800" v-text="setupKey" />
+                        <span
+                            class="font-mono font-semibold text-gray-800"
+                            v-text="setupKey"
+                        />
                     </p>
                 </div>
 
                 <div v-if="showingConfirmation" class="mt-4">
-                    <label for="code" class="block text-sm font-medium text-gray-700">
+                    <label
+                        for="code"
+                        class="block text-sm font-medium text-gray-700"
+                    >
                         Authentication Code
                     </label>
                     <input
@@ -246,21 +267,30 @@ async function fetchRecoveryCodes(): Promise<void> {
                         class="mt-1 block w-48 rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
                         @keydown.enter="confirmTwoFactorAuthentication"
                     />
-                    <div v-if="confirmationError" class="mt-2 text-sm text-red-600">
+                    <div
+                        v-if="confirmationError"
+                        class="mt-2 text-sm text-red-600"
+                    >
                         {{ confirmationError }}
                     </div>
                 </div>
             </div>
 
-            <div v-if="showingRecoveryCodes && recoveryCodesData.length > 0" class="mt-5">
+            <div
+                v-if="showingRecoveryCodes && recoveryCodesData.length > 0"
+                class="mt-5"
+            >
                 <p class="mb-3 text-sm font-medium text-gray-700">
-                    Store these recovery codes in a secure password manager. They can be used to
-                    recover access to your account if your two-factor authentication device is lost.
+                    Store these recovery codes in a secure password manager.
+                    They can be used to recover access to your account if your
+                    two-factor authentication device is lost.
                 </p>
                 <div
                     class="grid max-w-sm gap-1 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700"
                 >
-                    <div v-for="code in recoveryCodesData" :key="code">{{ code }}</div>
+                    <div v-for="code in recoveryCodesData" :key="code">
+                        {{ code }}
+                    </div>
                 </div>
             </div>
         </div>

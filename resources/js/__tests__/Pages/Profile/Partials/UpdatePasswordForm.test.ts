@@ -72,6 +72,8 @@ describe('UpdatePasswordForm', () => {
 
     it('has Update Password button', () => {
         const wrapper = mount(UpdatePasswordForm);
-        expect(wrapper.find('button[type="submit"]').text()).toBe('Update Password');
+        expect(wrapper.find('button[type="submit"]').text()).toBe(
+            'Update Password',
+        );
     });
 });

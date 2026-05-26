@@ -40,7 +40,9 @@ defineProps<{
 <template>
     <AppLayout title="Profile">
         <template #header>
-            <h2 class="text-xl leading-tight font-semibold text-gray-800">Profile</h2>
+            <h2 class="text-xl leading-tight font-semibold text-gray-800">
+                Profile
+            </h2>
         </template>
 
         <div class="px-4 py-4 sm:px-0">
@@ -60,9 +62,14 @@ defineProps<{
                     <TwoFactorAuthenticationForm
                         v-if="canManageTwoFactorAuthentication"
                         :user="user"
-                        :confirms-two-factor-authentication="confirmsTwoFactorAuthentication"
+                        :confirms-two-factor-authentication="
+                            confirmsTwoFactorAuthentication
+                        "
                     />
-                    <LogoutOtherSessionsForm v-if="sessionsEnabled" :sessions="sessions" />
+                    <LogoutOtherSessionsForm
+                        v-if="sessionsEnabled"
+                        :sessions="sessions"
+                    />
                 </div>
 
                 <!-- Row 3: Delete Account -->

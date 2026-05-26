@@ -85,7 +85,9 @@ function sendEmailVerification(): void {
 
 <template>
     <section class="rounded-xl border border-gray-200 bg-white p-6">
-        <h2 class="mb-1 text-sm font-semibold tracking-wider text-gray-400 uppercase">
+        <h2
+            class="mb-1 text-sm font-semibold tracking-wider text-gray-400 uppercase"
+        >
             Profile Information
         </h2>
         <p class="mb-6 text-sm text-gray-500">
@@ -104,7 +106,9 @@ function sendEmailVerification(): void {
                         @change="updatePhotoPreview"
                     />
 
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Photo</label>
+                    <label class="mb-2 block text-sm font-medium text-gray-700"
+                        >Photo</label
+                    >
 
                     <div class="flex items-center gap-4">
                         <img
@@ -116,7 +120,11 @@ function sendEmailVerification(): void {
                         <span
                             v-show="photoPreview"
                             class="block size-16 rounded-full bg-cover bg-center bg-no-repeat ring-2 ring-gray-100"
-                            :style="'background-image: url(\'' + photoPreview + '\');'"
+                            :style="
+                                'background-image: url(\'' +
+                                photoPreview +
+                                '\');'
+                            "
                         />
                         <div class="flex gap-2">
                             <button
@@ -137,14 +145,21 @@ function sendEmailVerification(): void {
                         </div>
                     </div>
 
-                    <div v-if="form.errors.photo" class="mt-2 text-sm text-red-600">
+                    <div
+                        v-if="form.errors.photo"
+                        class="mt-2 text-sm text-red-600"
+                    >
                         {{ form.errors.photo }}
                     </div>
                 </div>
 
                 <!-- Name -->
                 <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                    <label
+                        for="name"
+                        class="block text-sm font-medium text-gray-700"
+                        >Name</label
+                    >
                     <input
                         id="name"
                         v-model="form.name"
@@ -153,14 +168,21 @@ function sendEmailVerification(): void {
                         required
                         autocomplete="name"
                     />
-                    <div v-if="form.errors.name" class="mt-2 text-sm text-red-600">
+                    <div
+                        v-if="form.errors.name"
+                        class="mt-2 text-sm text-red-600"
+                    >
                         {{ form.errors.name }}
                     </div>
                 </div>
 
                 <!-- Email -->
                 <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <label
+                        for="email"
+                        class="block text-sm font-medium text-gray-700"
+                        >Email</label
+                    >
                     <input
                         id="email"
                         v-model="form.email"
@@ -169,7 +191,10 @@ function sendEmailVerification(): void {
                         required
                         autocomplete="username"
                     />
-                    <div v-if="form.errors.email" class="mt-2 text-sm text-red-600">
+                    <div
+                        v-if="form.errors.email"
+                        class="mt-2 text-sm text-red-600"
+                    >
                         {{ form.errors.email }}
                     </div>
 
@@ -188,7 +213,8 @@ function sendEmailVerification(): void {
                             v-if="verificationLinkSent"
                             class="mt-2 text-sm font-medium text-green-600"
                         >
-                            A new verification link has been sent to your email address.
+                            A new verification link has been sent to your email
+                            address.
                         </p>
                     </div>
                 </div>
@@ -202,7 +228,9 @@ function sendEmailVerification(): void {
                 >
                     Save Changes
                 </button>
-                <span v-show="recentlySuccessful" class="text-sm text-gray-500">Saved.</span>
+                <span v-show="recentlySuccessful" class="text-sm text-gray-500"
+                    >Saved.</span
+                >
             </div>
         </form>
     </section>

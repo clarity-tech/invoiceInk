@@ -35,7 +35,9 @@ function updatePassword(): void {
 
 <template>
     <section class="rounded-xl border border-gray-200 bg-white p-6">
-        <h2 class="mb-1 text-sm font-semibold tracking-wider text-gray-400 uppercase">
+        <h2
+            class="mb-1 text-sm font-semibold tracking-wider text-gray-400 uppercase"
+        >
             Update Password
         </h2>
         <p class="mb-6 text-sm text-gray-500">
@@ -45,7 +47,10 @@ function updatePassword(): void {
         <form @submit.prevent="updatePassword">
             <div class="space-y-5">
                 <div>
-                    <label for="current_password" class="block text-sm font-medium text-gray-700">
+                    <label
+                        for="current_password"
+                        class="block text-sm font-medium text-gray-700"
+                    >
                         Current Password
                     </label>
                     <input
@@ -55,13 +60,19 @@ function updatePassword(): void {
                         class="mt-1 block w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
                         autocomplete="current-password"
                     />
-                    <div v-if="form.errors.current_password" class="mt-2 text-sm text-red-600">
+                    <div
+                        v-if="form.errors.current_password"
+                        class="mt-2 text-sm text-red-600"
+                    >
                         {{ form.errors.current_password }}
                     </div>
                 </div>
 
                 <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700">
+                    <label
+                        for="password"
+                        class="block text-sm font-medium text-gray-700"
+                    >
                         New Password
                     </label>
                     <input
@@ -71,13 +82,19 @@ function updatePassword(): void {
                         class="mt-1 block w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
                         autocomplete="new-password"
                     />
-                    <div v-if="form.errors.password" class="mt-2 text-sm text-red-600">
+                    <div
+                        v-if="form.errors.password"
+                        class="mt-2 text-sm text-red-600"
+                    >
                         {{ form.errors.password }}
                     </div>
                 </div>
 
                 <div>
-                    <label for="password_confirmation" class="block text-sm font-medium text-gray-700">
+                    <label
+                        for="password_confirmation"
+                        class="block text-sm font-medium text-gray-700"
+                    >
                         Confirm Password
                     </label>
                     <input
@@ -87,7 +104,10 @@ function updatePassword(): void {
                         class="mt-1 block w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
                         autocomplete="new-password"
                     />
-                    <div v-if="form.errors.password_confirmation" class="mt-2 text-sm text-red-600">
+                    <div
+                        v-if="form.errors.password_confirmation"
+                        class="mt-2 text-sm text-red-600"
+                    >
                         {{ form.errors.password_confirmation }}
                     </div>
                 </div>
@@ -101,7 +121,9 @@ function updatePassword(): void {
                 >
                     Update Password
                 </button>
-                <span v-show="recentlySuccessful" class="text-sm text-gray-500">Saved.</span>
+                <span v-show="recentlySuccessful" class="text-sm text-gray-500"
+                    >Saved.</span
+                >
             </div>
         </form>
     </section>
