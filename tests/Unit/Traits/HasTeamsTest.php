@@ -7,7 +7,7 @@ use App\Support\OwnerRole;
 
 beforeEach(function () {
     $this->user = User::factory()->withPersonalTeam()->create();
-    $this->team = $this->user->personalTeam();
+    $this->team = $this->user->ownedTeams()->first();
 });
 
 // --- isCurrentTeam ---
@@ -20,7 +20,7 @@ test('isCurrentTeam returns true for the current team', function () {
 
 test('isCurrentTeam returns false for a different team', function () {
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     $this->user->switchTeam($this->team);
 
@@ -29,7 +29,7 @@ test('isCurrentTeam returns false for a different team', function () {
 
 // --- currentTeam ---
 
-test('currentTeam auto-switches to personal team when current_team_id is null', function () {
+test('currentTeam auto-switches to first owned team when current_team_id is null', function () {
     $this->user->forceFill(['current_team_id' => null])->save();
     $this->user->unsetRelation('currentTeam');
 
@@ -57,7 +57,7 @@ test('ownsTeam returns false for null', function () {
 
 test('ownsTeam returns false for team owned by another user', function () {
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     expect($this->user->ownsTeam($otherTeam))->toBeFalse();
 });
@@ -74,7 +74,7 @@ test('belongsToTeam returns false for null', function () {
 
 test('belongsToTeam returns true for team user is member of', function () {
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     // Add user as a member of otherTeam
     Membership::create([
@@ -89,7 +89,7 @@ test('belongsToTeam returns true for team user is member of', function () {
 
 test('belongsToTeam returns false for unrelated team', function () {
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     expect($this->user->belongsToTeam($otherTeam))->toBeFalse();
 });
@@ -105,7 +105,7 @@ test('allTeams includes owned teams', function () {
 
 test('allTeams includes teams user is member of', function () {
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     Membership::create([
         'team_id' => $otherTeam->id,
@@ -130,7 +130,7 @@ test('teamRole returns OwnerRole for team owner', function () {
 
 test('teamRole returns null for non-member', function () {
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     $role = $this->user->teamRole($otherTeam);
 
@@ -141,7 +141,7 @@ test('teamRole returns correct role for team member', function () {
     Jetstream::role('editor', 'Editor', ['read', 'create']);
 
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     Membership::create([
         'team_id' => $otherTeam->id,
@@ -164,7 +164,7 @@ test('teamRole returns correct role for team member', function () {
 
 test('teamRole returns null when member has no recognized role', function () {
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     Membership::create([
         'team_id' => $otherTeam->id,
@@ -189,7 +189,7 @@ test('hasTeamRole returns true for owner regardless of role name', function () {
 
 test('hasTeamRole returns false for non-member', function () {
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     expect($this->user->hasTeamRole($otherTeam, 'editor'))->toBeFalse();
 });
@@ -198,7 +198,7 @@ test('hasTeamRole returns true when member has matching role', function () {
     Jetstream::role('editor', 'Editor', ['read', 'create']);
 
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     Membership::create([
         'team_id' => $otherTeam->id,
@@ -223,7 +223,7 @@ test('teamPermissions returns wildcard for owner', function () {
 
 test('teamPermissions returns empty array for non-member', function () {
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     expect($this->user->teamPermissions($otherTeam))->toBe([]);
 });
@@ -232,7 +232,7 @@ test('teamPermissions returns role permissions for member', function () {
     Jetstream::role('editor', 'Editor', ['read', 'create']);
 
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     Membership::create([
         'team_id' => $otherTeam->id,
@@ -259,7 +259,7 @@ test('hasTeamPermission returns true for owner', function () {
 
 test('hasTeamPermission returns false for non-member', function () {
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     expect($this->user->hasTeamPermission($otherTeam, 'read'))->toBeFalse();
 });
@@ -268,7 +268,7 @@ test('hasTeamPermission checks role permissions for member', function () {
     Jetstream::role('editor', 'Editor', ['read', 'create']);
 
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     Membership::create([
         'team_id' => $otherTeam->id,
@@ -290,7 +290,7 @@ test('hasTeamPermission supports wildcard create permissions', function () {
     Jetstream::role('creator', 'Creator', ['*:create']);
 
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     Membership::create([
         'team_id' => $otherTeam->id,
@@ -312,7 +312,7 @@ test('hasTeamPermission supports wildcard update permissions', function () {
     Jetstream::role('updater', 'Updater', ['*:update']);
 
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     Membership::create([
         'team_id' => $otherTeam->id,
@@ -334,7 +334,7 @@ test('hasTeamPermission supports wildcard update permissions', function () {
 
 test('switchTeam returns false for non-member team', function () {
     $otherUser = User::factory()->withPersonalTeam()->create();
-    $otherTeam = $otherUser->personalTeam();
+    $otherTeam = $otherUser->ownedTeams()->first();
 
     expect($this->user->switchTeam($otherTeam))->toBeFalse();
 });
@@ -342,17 +342,4 @@ test('switchTeam returns false for non-member team', function () {
 test('switchTeam returns true and updates current team', function () {
     expect($this->user->switchTeam($this->team))->toBeTrue();
     expect($this->user->fresh()->current_team_id)->toBe($this->team->id);
-});
-
-// --- personalTeam ---
-
-test('personalTeam returns the personal team', function () {
-    expect($this->user->personalTeam())->not->toBeNull();
-    expect($this->user->personalTeam()->personal_team)->toBeTrue();
-});
-
-test('personalTeam returns null when user has no personal team', function () {
-    $user = User::factory()->create();
-
-    expect($user->personalTeam())->toBeNull();
 });

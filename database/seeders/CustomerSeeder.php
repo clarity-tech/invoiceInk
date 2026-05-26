@@ -25,11 +25,6 @@ class CustomerSeeder extends ProductionSafeSeeder
 
     private function createCustomersForOrganization(Organization $organization): void
     {
-        // Skip personal teams (only create customers for business organizations)
-        if ($organization->personal_team) {
-            return;
-        }
-
         $customerCount = 0;
 
         // Create domestic customers

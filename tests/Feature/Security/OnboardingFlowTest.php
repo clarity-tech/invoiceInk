@@ -9,9 +9,8 @@ use App\Models\User;
 |--------------------------------------------------------------------------
 |
 | Verify that the EnsureOrganizationSetup middleware correctly enforces
-| setup completion before allowing access to protected routes. Tests cover
-| middleware enforcement, bypass routes, personal team skip logic, and
-| the setup completion flow.
+| setup completion before allowing access to protected routes. Every org
+| must complete setup — there is no "personal team" bypass.
 |
 */
 
@@ -21,8 +20,7 @@ use App\Models\User;
 
 test('incomplete setup user accessing dashboard is redirected to setup wizard', function () {
     $user = createUserWithTeam();
-    $org = $user->currentTeam;
-    $org->update(['personal_team' => false, 'setup_completed_at' => null]);
+    $user->currentTeam->update(['setup_completed_at' => null]);
 
     $this->actingAs($user)
         ->get('/dashboard')
@@ -31,8 +29,7 @@ test('incomplete setup user accessing dashboard is redirected to setup wizard', 
 
 test('incomplete setup user accessing invoices is redirected to setup wizard', function () {
     $user = createUserWithTeam();
-    $org = $user->currentTeam;
-    $org->update(['personal_team' => false, 'setup_completed_at' => null]);
+    $user->currentTeam->update(['setup_completed_at' => null]);
 
     $this->actingAs($user)
         ->get('/invoices')
@@ -41,8 +38,7 @@ test('incomplete setup user accessing invoices is redirected to setup wizard', f
 
 test('incomplete setup user accessing customers is redirected to setup wizard', function () {
     $user = createUserWithTeam();
-    $org = $user->currentTeam;
-    $org->update(['personal_team' => false, 'setup_completed_at' => null]);
+    $user->currentTeam->update(['setup_completed_at' => null]);
 
     $this->actingAs($user)
         ->get('/customers')
@@ -51,8 +47,7 @@ test('incomplete setup user accessing customers is redirected to setup wizard', 
 
 test('incomplete setup user accessing organizations is redirected to setup wizard', function () {
     $user = createUserWithTeam();
-    $org = $user->currentTeam;
-    $org->update(['personal_team' => false, 'setup_completed_at' => null]);
+    $user->currentTeam->update(['setup_completed_at' => null]);
 
     $this->actingAs($user)
         ->get('/organizations')
@@ -61,8 +56,7 @@ test('incomplete setup user accessing organizations is redirected to setup wizar
 
 test('completed setup user can access dashboard', function () {
     $user = createUserWithTeam();
-    $org = $user->currentTeam;
-    $org->update(['personal_team' => false, 'setup_completed_at' => now()]);
+    $user->currentTeam->update(['setup_completed_at' => now()]);
 
     $this->actingAs($user)
         ->get('/dashboard')
@@ -80,8 +74,7 @@ test('unauthenticated user is redirected to login not setup', function () {
 
 test('incomplete setup user can access setup wizard', function () {
     $user = createUserWithTeam();
-    $org = $user->currentTeam;
-    $org->update(['personal_team' => false, 'setup_completed_at' => null]);
+    $user->currentTeam->update(['setup_completed_at' => null]);
 
     $this->actingAs($user)
         ->get('/organization/setup')
@@ -90,8 +83,7 @@ test('incomplete setup user can access setup wizard', function () {
 
 test('incomplete setup user can access profile page', function () {
     $user = createUserWithTeam();
-    $org = $user->currentTeam;
-    $org->update(['personal_team' => false, 'setup_completed_at' => null]);
+    $user->currentTeam->update(['setup_completed_at' => null]);
 
     $this->actingAs($user)
         ->get('/user/profile')
@@ -100,44 +92,51 @@ test('incomplete setup user can access profile page', function () {
 
 test('incomplete setup user can logout', function () {
     $user = createUserWithTeam();
-    $org = $user->currentTeam;
-    $org->update(['personal_team' => false, 'setup_completed_at' => null]);
+    $user->currentTeam->update(['setup_completed_at' => null]);
+
+    $response = $this->actingAs($user)->post('/logout');
+
+    // Logout bypasses the setup-enforcement middleware; the exact redirect
+    // target depends on Fortify config but must not bounce back to setup.
+    $response->assertRedirect();
+    expect($response->headers->get('Location', ''))
+        ->not->toContain('organization/setup');
+    $this->assertGuest();
+});
+
+test('incomplete setup user can switch to a setup-complete org', function () {
+    $user = createUserWithTeam();
+    $user->currentTeam->update(['setup_completed_at' => null]);
+
+    $completeOrg = Organization::factory()->completedSetup()->create([
+        'user_id' => $user->id,
+    ]);
 
     $this->actingAs($user)
-        ->post('/logout')
-        ->assertRedirect('/');
+        ->put('/current-team', ['team_id' => $completeOrg->id])
+        ->assertRedirect();
+
+    expect($user->fresh()->current_team_id)->toBe($completeOrg->id);
 });
 
 // ──────────────────────────────────────────────────────
-// Personal team skip: personal teams bypass setup check
+// needsSetup logic: depends only on setup_completed_at
 // ──────────────────────────────────────────────────────
 
-test('personal team user can access dashboard without setup completion', function () {
-    $user = createUserWithTeam();
-    // Default createUserWithTeam sets personal_team=true, setup_completed_at=null
-    expect($user->currentTeam->personal_team)->toBeTrue();
-    expect($user->currentTeam->setup_completed_at)->toBeNull();
-
-    $this->actingAs($user)
-        ->get('/dashboard')
-        ->assertSuccessful();
-});
-
-test('personal team needsSetup returns false regardless of setup_completed_at', function () {
+test('org with null setup_completed_at needs setup', function () {
     $user = createUserWithTeam();
     $org = $user->currentTeam;
-
-    expect($org->personal_team)->toBeTrue();
-    expect($org->setup_completed_at)->toBeNull();
-    expect($org->needsSetup())->toBeFalse();
-});
-
-test('non-personal team with null setup_completed_at needsSetup returns true', function () {
-    $user = createUserWithTeam();
-    $org = $user->currentTeam;
-    $org->update(['personal_team' => false, 'setup_completed_at' => null]);
+    $org->update(['setup_completed_at' => null]);
 
     expect($org->fresh()->needsSetup())->toBeTrue();
+});
+
+test('org with non-null setup_completed_at does not need setup', function () {
+    $user = createUserWithTeam();
+    $org = $user->currentTeam;
+    $org->update(['setup_completed_at' => now()]);
+
+    expect($org->fresh()->needsSetup())->toBeFalse();
 });
 
 // ──────────────────────────────────────────────────────
@@ -147,7 +146,7 @@ test('non-personal team with null setup_completed_at needsSetup returns true', f
 test('markSetupComplete sets setup_completed_at to non-null', function () {
     $user = createUserWithTeam();
     $org = $user->currentTeam;
-    $org->update(['personal_team' => false, 'setup_completed_at' => null]);
+    $org->update(['setup_completed_at' => null]);
 
     expect($org->fresh()->isSetupComplete())->toBeFalse();
 
@@ -160,17 +159,14 @@ test('markSetupComplete sets setup_completed_at to non-null', function () {
 test('after setup completion middleware allows access to dashboard', function () {
     $user = createUserWithTeam();
     $org = $user->currentTeam;
-    $org->update(['personal_team' => false, 'setup_completed_at' => null]);
+    $org->update(['setup_completed_at' => null]);
 
-    // Before completion — redirected
     $this->actingAs($user)
         ->get('/dashboard')
         ->assertRedirect(route('organization.setup'));
 
-    // Complete setup
     $org->markSetupComplete();
 
-    // After completion — allowed
     $this->actingAs($user)
         ->get('/dashboard')
         ->assertSuccessful();
@@ -179,7 +175,7 @@ test('after setup completion middleware allows access to dashboard', function ()
 test('setup redirect flashes setup-required message', function () {
     $user = createUserWithTeam();
     $org = $user->currentTeam;
-    $org->update(['personal_team' => false, 'setup_completed_at' => null]);
+    $org->update(['setup_completed_at' => null]);
 
     $this->actingAs($user)
         ->get('/dashboard')
@@ -197,7 +193,6 @@ test('user with no current team is not redirected to setup by middleware', funct
 
     $response = $this->actingAs($user)->get('/dashboard');
 
-    // Should not redirect to organization setup — may succeed or redirect elsewhere
     expect($response->headers->get('Location', ''))
         ->not->toContain('organization/setup');
 });

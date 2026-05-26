@@ -29,7 +29,10 @@ trait HasTeams
     public function currentTeam(): BelongsTo
     {
         if (is_null($this->current_team_id) && $this->id) {
-            $this->switchTeam($this->personalTeam());
+            $fallback = $this->ownedTeams()->first();
+            if ($fallback) {
+                $this->switchTeam($fallback);
+            }
         }
 
         return $this->belongsTo(Organization::class, 'current_team_id');
@@ -83,14 +86,6 @@ trait HasTeams
             ->withPivot('role')
             ->withTimestamps()
             ->as('membership');
-    }
-
-    /**
-     * Get the user's "personal" team.
-     */
-    public function personalTeam(): ?Organization
-    {
-        return $this->ownedTeams->where('personal_team', true)->first();
     }
 
     /**

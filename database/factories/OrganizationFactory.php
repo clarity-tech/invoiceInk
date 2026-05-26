@@ -23,7 +23,6 @@ class OrganizationFactory extends Factory
         return [
             'name' => $this->faker->unique()->company(),
             'user_id' => User::factory(),
-            'personal_team' => true,
             'company_name' => $this->faker->company(),
             'tax_number' => $this->faker->regexify('[A-Z]{2}-[0-9]{9}'),
             'registration_number' => $this->faker->regexify('REG-[A-Z]{4}-[0-9]{4}'),
@@ -133,30 +132,23 @@ class OrganizationFactory extends Factory
     }
 
     /**
-     * Create personal team setup
+     * Legacy alias kept to limit test churn. Defaults to a setup-complete org
+     * so existing tests that called withPersonalTeam() and expected the old
+     * "personal team bypasses setup middleware" behavior keep passing.
      */
     public function personalTeam(): static
     {
         return $this->state([
-            'personal_team' => true,
-            'setup_completed_at' => null,
-            'company_name' => null,
-            'emails' => [],
-            'phone' => null,
-            'tax_number' => null,
-            'registration_number' => null,
-            'website' => null,
-            'notes' => null,
+            'setup_completed_at' => now(),
         ]);
     }
 
     /**
-     * Create business organization setup
+     * Create business organization with completed setup.
      */
     public function businessOrganization(): static
     {
         return $this->state([
-            'personal_team' => false,
             'setup_completed_at' => now(),
             'company_name' => $this->faker->company(),
         ]);

@@ -18,7 +18,6 @@ function createSetupUser(string $email, string $name = 'Maya Sharma'): array
 
     $org = $user->currentTeam;
     $org->update([
-        'personal_team' => false,
         'setup_completed_at' => null,
         'company_name' => null,
     ]);
@@ -227,10 +226,10 @@ it('adds additional location after setup completion', function () {
     $this->visit('/dashboard')
         ->assertPathIs('/dashboard');
 
-    // Navigate to organizations page - single org redirects to show page
-    $org = $user->fresh()->currentTeam;
+    // Navigate to organizations list (always shows the list now)
     $this->visit('/organizations')
-        ->assertPathIs("/organizations/{$org->id}")
+        ->waitForEvent('networkidle')
+        ->assertPathIs('/organizations')
         ->assertSee('Multi-Location Corp')
         ->screenshot(fullPage: true, filename: 'demo/24-org-with-locations');
 });

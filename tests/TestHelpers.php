@@ -43,10 +43,10 @@ if (! function_exists('createUserWithTeam')) {
 
         $defaultTeamAttributes = [
             'name' => 'Test Organization',
-            'user_id' => $user->id, // Required for proper team ownership
-            'personal_team' => true,
+            'user_id' => $user->id,
             'company_name' => 'Test Organization Inc.',
             'currency' => 'INR',
+            'setup_completed_at' => now(),
         ];
 
         $team = $user->ownedTeams()->create(array_merge($defaultTeamAttributes, $teamAttributes));
@@ -83,7 +83,6 @@ if (! function_exists('createOrganizationWithLocation')) {
 
         $defaultOrgAttributes = [
             'name' => 'Test Organization',
-            'personal_team' => false,
             'company_name' => 'Test Organization Inc.',
             'tax_number' => 'TX-'.getUniqueTestId(),
             'registration_number' => 'REG-'.getUniqueTestId(),

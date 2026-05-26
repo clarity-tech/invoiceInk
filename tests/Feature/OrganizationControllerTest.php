@@ -9,12 +9,17 @@ beforeEach(function () {
     $this->actingAs($this->user);
 });
 
-test('organizations index redirects to show for single org user', function () {
+test('organizations index always shows the list, even for single org user', function () {
     $organization = createOrganizationWithLocation([], [], $this->user);
 
     $response = $this->get('/organizations');
 
-    $response->assertRedirect("/organizations/{$organization->id}");
+    $response->assertStatus(200);
+    $response->assertInertia(fn ($page) => $page
+        ->component('Organizations/Index')
+        ->has('organizations.data', 1)
+        ->where('organizations.data.0.id', $organization->id)
+    );
 });
 
 test('can render organization show page', function () {
@@ -173,25 +178,44 @@ test('can update bank details', function () {
     expect($organization->bank_details->ifsc)->toBe('TEST0001234');
 });
 
-test('can delete organization', function () {
-    $organization = createOrganizationWithLocation([
-        'personal_team' => false,
-    ], [], $this->user);
-    $orgId = $organization->id;
+test('can delete organization when user has more than one', function () {
+    // First org from createUserWithTeam in beforeEach is the current team.
+    // Create a second owned org so the deletion is not "the last one".
+    $secondOrg = Organization::factory()->completedSetup()->create([
+        'user_id' => $this->user->id,
+    ]);
+    $secondOrgId = $secondOrg->id;
 
-    $response = $this->delete("/organizations/{$orgId}");
+    $response = $this->delete("/organizations/{$secondOrgId}");
 
     $response->assertRedirect('/organizations');
-    expect(Organization::find($orgId))->toBeNull();
+    expect(Organization::find($secondOrgId))->toBeNull();
 });
 
-test('cannot delete personal organization', function () {
-    $personalTeam = $this->user->currentTeam;
+test('cannot delete the only owned organization', function () {
+    $onlyOrg = $this->user->currentTeam;
+    $onlyOrg->markSetupComplete();
 
-    $response = $this->delete("/organizations/{$personalTeam->id}");
+    $response = $this->delete("/organizations/{$onlyOrg->id}");
 
     $response->assertRedirect();
-    expect(Organization::find($personalTeam->id))->not->toBeNull();
+    $response->assertSessionHas('error');
+    expect(Organization::find($onlyOrg->id))->not->toBeNull();
+});
+
+test('deleting current org switches to remaining owned org', function () {
+    $current = $this->user->currentTeam;
+    $current->markSetupComplete();
+
+    $remaining = Organization::factory()->completedSetup()->create([
+        'user_id' => $this->user->id,
+    ]);
+
+    $response = $this->delete("/organizations/{$current->id}");
+
+    $response->assertRedirect('/organizations');
+    expect(Organization::find($current->id))->toBeNull();
+    expect($this->user->fresh()->current_team_id)->toBe($remaining->id);
 });
 
 test('cannot update organization user does not own', function () {

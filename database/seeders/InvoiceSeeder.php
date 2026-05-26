@@ -13,9 +13,7 @@ class InvoiceSeeder extends ProductionSafeSeeder
     {
         $this->info('Seeding invoices using factory states...');
 
-        $organizations = Organization::with(['customers', 'primaryLocation'])
-            ->where('personal_team', false)
-            ->get();
+        $organizations = Organization::with(['customers', 'primaryLocation'])->get();
 
         foreach ($organizations as $organization) {
             if ($organization->customers->count() > 0 && $organization->primaryLocation) {

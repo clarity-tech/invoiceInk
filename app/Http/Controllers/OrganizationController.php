@@ -21,15 +21,10 @@ use Inertia\Response;
 
 class OrganizationController extends Controller
 {
-    public function index(Request $request): Response|RedirectResponse
+    public function index(Request $request): Response
     {
         $user = $request->user();
         $teams = $user->allTeams();
-
-        // Smart redirect: if user has exactly one org, go straight to show
-        if ($teams->count() === 1) {
-            return redirect()->route('organizations.show', $teams->first()->id);
-        }
 
         $organizations = Organization::with('primaryLocation')
             ->whereIn('id', $teams->pluck('id'))
@@ -233,8 +228,19 @@ class OrganizationController extends Controller
             abort(403, __('messages.authorization.unauthorized_organization'));
         }
 
-        if ($organization->personal_team) {
-            return back()->with('error', 'Personal organizations cannot be deleted.');
+        if ($user->ownedTeams()->count() <= 1) {
+            return back()->with('error', __('messages.notifications.cannot_delete_last_organization'));
+        }
+
+        if ($user->current_team_id === $organization->id) {
+            $next = $user->ownedTeams()->where('id', '!=', $organization->id)->first()
+                ?? $user->teams()->where('teams.id', '!=', $organization->id)->first();
+
+            if ($next) {
+                $user->switchTeam($next);
+            } else {
+                $user->forceFill(['current_team_id' => null])->save();
+            }
         }
 
         $organization->primary_location_id = null;

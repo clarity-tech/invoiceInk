@@ -42,7 +42,7 @@ it('creates user within database transaction', function () {
     expect($user->ownedTeams)->toHaveCount(1);
 });
 
-it('creates a personal team for the user', function () {
+it('creates an unconfigured organization for the user', function () {
     $input = [
         'name' => 'John Doe',
         'email' => 'john@example.com',
@@ -56,9 +56,8 @@ it('creates a personal team for the user', function () {
     expect($user->ownedTeams)
         ->toHaveCount(1)
         ->first()->name->toBe("John's Organization")
-        ->first()->personal_team->toBeTrue()
         ->first()->user_id->toBe($user->id)
-        ->first()->setup_completed_at->toBeNull(); // Ensure setup is incomplete
+        ->first()->setup_completed_at->toBeNull();
 });
 
 it('validates name is required', function () {

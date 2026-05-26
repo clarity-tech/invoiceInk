@@ -64,7 +64,6 @@ function makeOrg(overrides = {}) {
         bank_details: null,
         logo_url: null,
         primary_location: null,
-        personal_team: false,
         ...overrides,
     };
 }

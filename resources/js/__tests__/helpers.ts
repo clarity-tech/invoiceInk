@@ -42,7 +42,6 @@ export function makeOrganization(
         id: 1,
         name: "Maya's Team",
         company_name: 'Clarity Technologies',
-        personal_team: false,
         currency: 'INR',
         country_code: 'IN',
         financial_year_type: 'april_march',
@@ -203,7 +202,6 @@ export function makeSharedPageProps(overrides: Record<string, unknown> = {}) {
                     name: "Maya's Team",
                     company_name: 'Clarity Technologies',
                     currency: 'INR',
-                    personal_team: false,
                 },
             },
             flash: {

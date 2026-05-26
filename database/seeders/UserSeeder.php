@@ -48,8 +48,8 @@ class UserSeeder extends ProductionSafeSeeder
         User $globalCorpOwner
     ): void {
         // Get business organizations for each user
-        $johnOrg = $johnUser->ownedTeams()->where('personal_team', false)->first();
-        $mariaOrg = $mariaUser->ownedTeams()->where('personal_team', false)->first();
+        $johnOrg = $johnUser->ownedTeams()->first();
+        $mariaOrg = $mariaUser->ownedTeams()->first();
         $globalCorpOrg = $globalCorpOwner->ownedTeams()
             ->where('name', 'LIKE', 'GlobalCorp Holdings%')
             ->first();

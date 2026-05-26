@@ -67,12 +67,12 @@ it('deletes user tokens', function () {
     expect(true)->toBeTrue();
 });
 
-it('purges personal team on deletion', function () {
-    $personalTeamId = $this->user->personalTeam()->id;
+it('purges the user\'s owned org on deletion', function () {
+    $ownedTeamId = $this->user->ownedTeams()->first()->id;
 
     $this->action->delete($this->user);
 
-    expect(Organization::find($personalTeamId))->toBeNull();
+    expect(Organization::find($ownedTeamId))->toBeNull();
 });
 
 it('handles user with no tokens', function () {

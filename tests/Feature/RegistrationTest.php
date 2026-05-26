@@ -35,7 +35,7 @@ test('new users can register', function () {
     return ! Features::enabled(Features::registration());
 }, 'Registration support is not enabled.');
 
-test('new user registration creates personal team and sets current team', function () {
+test('new user registration creates an unconfigured organization and sets current team', function () {
     $response = $this->post('/register', [
         'name' => 'John Doe',
         'email' => 'john@example.test',
@@ -53,12 +53,13 @@ test('new user registration creates personal team and sets current team', functi
     expect($user)->not->toBeNull();
     expect($user->name)->toBe('John Doe');
 
-    // Validate personal team was created
+    // Validate the organization was created with setup incomplete
     expect($user->ownedTeams()->count())->toBe(1);
 
     $organization = $user->ownedTeams()->first();
     expect($organization)->not->toBeNull();
-    expect($organization->personal_team)->toBe(true);
+    expect($organization->setup_completed_at)->toBeNull();
+    expect($organization->needsSetup())->toBeTrue();
     expect($organization->name)->toBe("John's Organization");
     expect($organization->user_id)->toBe($user->id);
 
@@ -92,7 +93,10 @@ test('registered user can immediately update their organization via HTTP', funct
 
     // Validate initial state
     expect($user->current_team_id)->toBe($organization->id);
-    expect($organization->personal_team)->toBe(true);
+    expect($organization->needsSetup())->toBeTrue();
+
+    // Mark setup complete so the org-setup middleware allows the PUT through
+    $organization->markSetupComplete();
 
     // Step 2: Update the organization via HTTP
     $response = $this->actingAs($user)->put("/organizations/{$organization->id}", [

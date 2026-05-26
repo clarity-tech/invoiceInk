@@ -19,7 +19,6 @@ vi.mock('@inertiajs/vue3', () => ({
                     name: 'Team',
                     company_name: 'Co',
                     currency: 'INR',
-                    personal_team: false,
                 },
             },
             flash: { success: null, error: null, message: null },
@@ -50,7 +49,6 @@ function makeOrg(overrides = {}) {
         bank_details: null,
         logo_url: null,
         primary_location: null,
-        personal_team: false,
         ...overrides,
     };
 }

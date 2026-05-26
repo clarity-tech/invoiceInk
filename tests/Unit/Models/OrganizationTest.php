@@ -24,7 +24,6 @@ test('can create organization with required fields', function () {
     $organization = Organization::create([
         'name' => 'Test Organization',
         'user_id' => $user->id,
-        'personal_team' => false,
         'company_name' => 'Test Company Inc.',
         'currency' => 'INR',
     ]);
@@ -33,7 +32,6 @@ test('can create organization with required fields', function () {
     expect($organization->name)->toBe('Test Organization');
     expect($organization->company_name)->toBe('Test Company Inc.');
     expect($organization->currency)->toBe(Currency::INR);
-    expect($organization->personal_team)->toBeFalse();
 });
 
 test('organization extends eloquent model', function () {
@@ -52,7 +50,6 @@ test('organization has correct fillable attributes', function () {
 
     $expectedFillable = [
         'name',
-        'personal_team',
         'company_name',
         'tax_number',
         'registration_number',
@@ -76,7 +73,6 @@ test('organization emails are cast to ContactCollection', function () {
     $organization = Organization::create([
         'name' => 'Test Organization',
         'user_id' => $user->id,
-        'personal_team' => false,
         'emails' => $contacts,
         'currency' => 'INR',
     ]);
@@ -90,25 +86,11 @@ test('organization currency is cast to Currency enum', function () {
     $organization = Organization::create([
         'name' => 'Test Organization',
         'user_id' => $user->id,
-        'personal_team' => false,
         'currency' => 'USD',
     ]);
 
     expect($organization->currency)->toBe(Currency::USD);
     expect($organization->currency->value)->toBe('USD');
-});
-
-test('organization personal_team is cast to boolean', function () {
-    $user = User::factory()->create();
-    $organization = Organization::create([
-        'name' => 'Test Organization',
-        'user_id' => $user->id,
-        'personal_team' => 1,
-        'currency' => 'INR',
-    ]);
-
-    expect($organization->personal_team)->toBeTrue();
-    expect($organization->personal_team)->toBeBool();
 });
 
 test('organization can have primary location relationship', function () {
@@ -127,7 +109,6 @@ test('organization can have primary location relationship', function () {
     $organization = Organization::create([
         'name' => 'Test Organization',
         'user_id' => $user->id,
-        'personal_team' => false,
         'primary_location_id' => $location->id,
         'currency' => 'INR',
     ]);
@@ -204,7 +185,6 @@ test('organization getUrlAttribute with custom domain', function () {
     $organization = Organization::create([
         'name' => 'Test Organization',
         'user_id' => $user->id,
-        'personal_team' => false,
         'custom_domain' => 'custom.example.com',
         'currency' => 'INR',
     ]);
@@ -217,7 +197,6 @@ test('organization getUrlAttribute without custom domain', function () {
     $organization = Organization::create([
         'name' => 'Test Organization',
         'user_id' => $user->id,
-        'personal_team' => false,
         'currency' => 'INR',
     ]);
 
@@ -229,7 +208,6 @@ test('organization getDisplayNameAttribute uses company name when available', fu
     $organization = Organization::create([
         'name' => 'Team Name',
         'user_id' => $user->id,
-        'personal_team' => false,
         'company_name' => 'Company Name Inc.',
         'currency' => 'INR',
     ]);
@@ -242,49 +220,10 @@ test('organization getDisplayNameAttribute falls back to name when no company na
     $organization = Organization::create([
         'name' => 'Team Name',
         'user_id' => $user->id,
-        'personal_team' => false,
         'currency' => 'INR',
     ]);
 
     expect($organization->display_name)->toBe('Team Name');
-});
-
-test('organization isBusinessOrganization returns true for business organizations', function () {
-    $user = User::factory()->create();
-    $organization = Organization::create([
-        'name' => 'Business Team',
-        'user_id' => $user->id,
-        'personal_team' => false,
-        'company_name' => 'Business Corp.',
-        'currency' => 'INR',
-    ]);
-
-    expect($organization->isBusinessOrganization())->toBeTrue();
-});
-
-test('organization isBusinessOrganization returns false for personal teams', function () {
-    $user = User::factory()->create();
-    $organization = Organization::create([
-        'name' => 'Personal Team',
-        'user_id' => $user->id,
-        'personal_team' => true,
-        'company_name' => 'Personal Corp.',
-        'currency' => 'INR',
-    ]);
-
-    expect($organization->isBusinessOrganization())->toBeFalse();
-});
-
-test('organization isBusinessOrganization returns false when no company name', function () {
-    $user = User::factory()->create();
-    $organization = Organization::create([
-        'name' => 'Team Name',
-        'user_id' => $user->id,
-        'personal_team' => false,
-        'currency' => 'INR',
-    ]);
-
-    expect($organization->isBusinessOrganization())->toBeFalse();
 });
 
 test('organization getCurrencySymbolAttribute returns correct symbols', function () {
@@ -301,7 +240,6 @@ test('organization getCurrencySymbolAttribute returns correct symbols', function
         $organization = Organization::create([
             'name' => 'Test Organization',
             'user_id' => $user->id,
-            'personal_team' => false,
             'currency' => $currency,
         ]);
 
@@ -316,7 +254,6 @@ test('organization can be created with all fillable attributes', function () {
     $organization = Organization::create([
         'name' => 'Complete Organization',
         'user_id' => $user->id,
-        'personal_team' => false,
         'company_name' => 'Complete Corp.',
         'tax_number' => 'TAX123456789',
         'registration_number' => 'REG987654321',
@@ -329,7 +266,6 @@ test('organization can be created with all fillable attributes', function () {
     ]);
 
     expect($organization->name)->toBe('Complete Organization');
-    expect($organization->personal_team)->toBeFalse();
     expect($organization->company_name)->toBe('Complete Corp.');
     expect($organization->tax_number)->toBe('TAX123456789');
     expect($organization->registration_number)->toBe('REG987654321');
@@ -347,7 +283,6 @@ test('organization handles empty emails collection', function () {
     $organization = Organization::create([
         'name' => 'Test Organization',
         'user_id' => $user->id,
-        'personal_team' => false,
         'emails' => new ContactCollection([]),
         'currency' => 'INR',
     ]);
@@ -361,7 +296,6 @@ test('organization emails cast handles array input', function () {
     $organization = Organization::create([
         'name' => 'Test Organization',
         'user_id' => $user->id,
-        'personal_team' => false,
         'emails' => ['test1@example.com', 'test2@example.com'],
         'currency' => 'INR',
     ]);
@@ -375,7 +309,6 @@ test('organization emails cast handles string input', function () {
     $organization = Organization::create([
         'name' => 'Test Organization',
         'user_id' => $user->id,
-        'personal_team' => false,
         'emails' => 'single@example.com',
         'currency' => 'INR',
     ]);
@@ -390,7 +323,6 @@ test('organization emails cast handles null input', function () {
     $organization = Organization::create([
         'name' => 'Test Organization',
         'user_id' => $user->id,
-        'personal_team' => false,
         'emails' => null,
         'currency' => 'INR',
     ]);
@@ -403,7 +335,6 @@ test('organization casts method returns correct array', function () {
     $organization = new Organization;
     $casts = $organization->getCasts();
 
-    expect($casts['personal_team'])->toBe('boolean');
     expect($casts['emails'])->toBe(ContactCollectionCast::class);
     expect($casts['currency'])->toBe(Currency::class);
 });
@@ -464,7 +395,6 @@ test('organization can be updated with new attributes', function () {
     $organization = Organization::create([
         'name' => 'Original Name',
         'user_id' => $user->id,
-        'personal_team' => false,
         'currency' => 'INR',
     ]);
 
@@ -484,7 +414,6 @@ test('organization handles nullable fields correctly', function () {
     $organization = Organization::create([
         'name' => 'Test Organization',
         'user_id' => $user->id,
-        'personal_team' => false,
         'currency' => 'INR',
         'phone' => null,
         'website' => null,
@@ -528,7 +457,6 @@ test('organization currency enum integration works correctly', function () {
         $organization = Organization::create([
             'name' => "Test Organization {$currency->value}",
             'user_id' => $user->id,
-            'personal_team' => false,
             'currency' => $currency->value,
         ]);
 
@@ -614,31 +542,24 @@ test('isSetupComplete returns false when setup_completed_at is null', function (
     expect($organization->isSetupComplete())->toBeFalse();
 });
 
-test('needsSetup returns false for personal teams', function () {
-    $user = User::factory()->create();
-    $organization = Organization::create([
-        'name' => 'Personal Team',
-        'user_id' => $user->id,
-        'personal_team' => true,
-        'currency' => 'INR',
-        'setup_completed_at' => null,
-    ]);
-
-    expect($organization->needsSetup())->toBeFalse();
-});
-
-test('needsSetup returns true for non-personal team without setup_completed_at', function () {
+test('needsSetup returns true when setup_completed_at is null', function () {
     $organization = createOrganizationWithLocation([
-        'personal_team' => false,
         'setup_completed_at' => null,
     ]);
 
     expect($organization->needsSetup())->toBeTrue();
 });
 
+test('needsSetup returns false when setup_completed_at is set', function () {
+    $organization = createOrganizationWithLocation([
+        'setup_completed_at' => now(),
+    ]);
+
+    expect($organization->needsSetup())->toBeFalse();
+});
+
 test('needsSetup returns false when setup is already complete', function () {
     $organization = createOrganizationWithLocation([
-        'personal_team' => false,
         'setup_completed_at' => now(),
     ]);
 
@@ -672,7 +593,6 @@ test('getSetupCompletionPercentage calculates percentage based on filled fields'
     $organization = Organization::create([
         'name' => 'Incomplete Org',
         'user_id' => $user->id,
-        'personal_team' => false,
         'currency' => 'INR',
         'setup_completed_at' => null,
     ]);
@@ -709,7 +629,6 @@ test('getMissingSetupFields lists all missing fields for bare organization', fun
     $organization = Organization::create([
         'name' => 'Bare Org',
         'user_id' => $user->id,
-        'personal_team' => false,
         'currency' => 'INR',
         'setup_completed_at' => null,
     ]);

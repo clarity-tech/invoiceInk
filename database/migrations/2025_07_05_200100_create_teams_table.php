@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->index();
             $table->string('name');
-            $table->boolean('personal_team');
 
             // Business organization fields
             $table->string('company_name')->nullable();

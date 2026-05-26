@@ -20,7 +20,6 @@ vi.mock('@inertiajs/vue3', () => ({
                     name: 'Team',
                     company_name: 'Co',
                     currency: 'INR',
-                    personal_team: false,
                 },
             },
             flash: { success: null, error: null, message: null },
@@ -47,7 +46,6 @@ import Show from '@/Pages/Teams/Show.vue';
 const team = {
     id: 1,
     name: 'Test Team',
-    personal_team: false,
     owner: {
         id: 1,
         name: 'Owner',
@@ -88,7 +86,7 @@ describe('Teams/Show', () => {
         ).toBe(true);
     });
 
-    it('shows delete form when canDeleteTeam and not personal team', () => {
+    it('shows delete form when canDeleteTeam is true', () => {
         const wrapper = mount(Show, { props: defaultProps });
         expect(wrapper.find('[data-testid="delete-team-form"]').exists()).toBe(
             true,
@@ -103,18 +101,6 @@ describe('Teams/Show', () => {
                     ...defaultProps.permissions,
                     canDeleteTeam: false,
                 },
-            },
-        });
-        expect(wrapper.find('[data-testid="delete-team-form"]').exists()).toBe(
-            false,
-        );
-    });
-
-    it('hides delete form for personal team', () => {
-        const wrapper = mount(Show, {
-            props: {
-                ...defaultProps,
-                team: { ...team, personal_team: true },
             },
         });
         expect(wrapper.find('[data-testid="delete-team-form"]').exists()).toBe(

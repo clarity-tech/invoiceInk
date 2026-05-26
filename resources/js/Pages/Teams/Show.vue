@@ -29,7 +29,6 @@ interface TeamInvitation {
 interface Team {
     id: number;
     name: string;
-    personal_team: boolean;
     owner: {
         id: number;
         name: string;
@@ -81,9 +80,7 @@ defineProps<{
                     class="mt-10 sm:mt-0"
                 />
 
-                <template
-                    v-if="permissions.canDeleteTeam && !team.personal_team"
-                >
+                <template v-if="permissions.canDeleteTeam">
                     <div class="hidden sm:block">
                         <div class="py-8">
                             <div class="border-t border-gray-200" />

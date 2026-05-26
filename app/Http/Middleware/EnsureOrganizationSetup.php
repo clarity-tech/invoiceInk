@@ -33,13 +33,9 @@ class EnsureOrganizationSetup
             return $next($request);
         }
 
-        // Allow access to logout and profile routes
-        if ($request->routeIs(['logout', 'profile.*', 'user-profile-information.*', 'user-password.*', 'two-factor.*'])) {
-            return $next($request);
-        }
-
-        // Skip setup enforcement for personal teams (they don't need full business setup)
-        if ($currentTeam->personal_team) {
+        // Allow logout, profile, and current-team switching so a user with
+        // an in-progress setup can still escape to a setup-complete org.
+        if ($request->routeIs(['logout', 'profile.*', 'user-profile-information.*', 'user-password.*', 'two-factor.*', 'current-team.*'])) {
             return $next($request);
         }
 

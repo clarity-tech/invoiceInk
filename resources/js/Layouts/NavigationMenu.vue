@@ -1,17 +1,25 @@
 <script setup lang="ts">
 import { Link, usePage, router } from '@inertiajs/vue3';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { dashboard, logout } from '@/routes';
 import { index as customersIndex } from '@/routes/customers';
 import { index as invoicesIndex } from '@/routes/invoices';
 import { index as settingsIndex } from '@/routes/settings';
 import { index as organizationsIndex } from '@/routes/organizations';
+import { update as switchTeam } from '@/routes/current-team';
 import { show as profileShow } from '@/routes/profile';
+
+interface TeamSummary {
+    id: number;
+    name: string;
+    company_name: string | null;
+}
 
 const appName = import.meta.env.VITE_APP_NAME || 'InvoiceInk';
 const page = usePage();
 const showMobileMenu = ref(false);
 const showUserDropdown = ref(false);
+const showTeamDropdown = ref(false);
 
 const auth = (page.props.auth ?? {}) as {
     user: {
@@ -19,6 +27,7 @@ const auth = (page.props.auth ?? {}) as {
         name: string;
         email: string;
         profile_photo_url: string;
+        all_teams: TeamSummary[];
     } | null;
     currentTeam: {
         id: number;
@@ -26,6 +35,9 @@ const auth = (page.props.auth ?? {}) as {
         company_name: string | null;
     } | null;
 };
+
+const teams = computed<TeamSummary[]>(() => auth.user?.all_teams ?? []);
+const hasMultipleTeams = computed(() => teams.value.length > 1);
 
 function handleLogout() {
     router.flushAll();
@@ -36,18 +48,34 @@ function isCurrentPath(path: string): boolean {
     return page.url.startsWith(path);
 }
 
-// Close mobile menu and dropdown on Inertia navigation
+function selectTeam(teamId: number) {
+    showTeamDropdown.value = false;
+    if (auth.currentTeam?.id === teamId) {
+        return;
+    }
+    router.put(
+        switchTeam.url(),
+        { team_id: teamId },
+        { preserveScroll: false },
+    );
+}
+
+// Close mobile menu and dropdowns on Inertia navigation
 router.on('navigate', () => {
     showMobileMenu.value = false;
     showUserDropdown.value = false;
+    showTeamDropdown.value = false;
 });
 
-// Close dropdown when clicking outside
+// Close dropdowns when clicking outside
 function handleClickOutside(event: MouseEvent) {
     const target = event.target as HTMLElement;
 
     if (showUserDropdown.value && !target.closest('[data-user-dropdown]')) {
         showUserDropdown.value = false;
+    }
+    if (showTeamDropdown.value && !target.closest('[data-team-dropdown]')) {
+        showTeamDropdown.value = false;
     }
 }
 
@@ -133,15 +161,89 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 
                 <!-- Right side -->
                 <div class="hidden sm:ml-6 sm:flex sm:items-center">
-                    <span
+                    <div
                         v-if="auth.currentTeam"
-                        class="mr-4 text-sm text-gray-500"
+                        class="relative mr-3"
+                        data-team-dropdown
                     >
-                        {{
-                            auth.currentTeam.company_name ||
-                            auth.currentTeam.name
-                        }}
-                    </span>
+                        <button
+                            v-if="hasMultipleTeams"
+                            type="button"
+                            class="inline-flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none"
+                            @click.stop="showTeamDropdown = !showTeamDropdown"
+                        >
+                            <span class="max-w-[12rem] truncate">{{
+                                auth.currentTeam.company_name ||
+                                auth.currentTeam.name
+                            }}</span>
+                            <svg
+                                class="h-3.5 w-3.5 text-gray-400 transition-transform duration-150"
+                                :class="{ 'rotate-180': showTeamDropdown }"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </button>
+                        <span v-else class="text-sm text-gray-500">
+                            {{
+                                auth.currentTeam.company_name ||
+                                auth.currentTeam.name
+                            }}
+                        </span>
+
+                        <div
+                            v-show="showTeamDropdown && hasMultipleTeams"
+                            class="absolute right-0 z-50 mt-2 w-64 origin-top-right rounded-xl border border-gray-100 bg-white shadow-lg"
+                        >
+                            <div
+                                class="border-b border-gray-100 px-4 py-2 text-xs font-semibold tracking-wide text-gray-500 uppercase"
+                            >
+                                Switch organization
+                            </div>
+                            <div class="max-h-72 overflow-y-auto py-1">
+                                <button
+                                    v-for="team in teams"
+                                    :key="team.id"
+                                    type="button"
+                                    class="flex w-full items-center justify-between gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                    @click="selectTeam(team.id)"
+                                >
+                                    <span class="truncate">{{
+                                        team.company_name || team.name
+                                    }}</span>
+                                    <svg
+                                        v-if="auth.currentTeam?.id === team.id"
+                                        class="h-4 w-4 text-brand-600"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        stroke-width="2.5"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M5 13l4 4L19 7"
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="border-t border-gray-100 py-1">
+                                <Link
+                                    :href="organizationsIndex.url()"
+                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                >
+                                    Manage organizations
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="relative ml-3" data-user-dropdown>
                         <button
@@ -339,6 +441,53 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                     "
                     >Settings</Link
                 >
+            </div>
+            <div
+                v-if="auth.currentTeam"
+                class="border-t border-gray-200 pt-4 pb-1"
+            >
+                <div
+                    class="px-4 text-xs font-semibold tracking-wide text-gray-500 uppercase"
+                >
+                    {{
+                        hasMultipleTeams
+                            ? 'Switch organization'
+                            : 'Current organization'
+                    }}
+                </div>
+                <div class="mt-2 space-y-1">
+                    <button
+                        v-for="team in teams"
+                        :key="team.id"
+                        type="button"
+                        class="flex w-full items-center justify-between gap-2 px-4 py-2 text-left text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+                        @click="selectTeam(team.id)"
+                    >
+                        <span class="truncate">{{
+                            team.company_name || team.name
+                        }}</span>
+                        <svg
+                            v-if="auth.currentTeam?.id === team.id"
+                            class="h-4 w-4 text-brand-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="2.5"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M5 13l4 4L19 7"
+                            />
+                        </svg>
+                    </button>
+                    <Link
+                        :href="organizationsIndex.url()"
+                        class="block px-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+                    >
+                        Manage organizations
+                    </Link>
+                </div>
             </div>
             <div class="border-t border-gray-200 pt-4 pb-1">
                 <div class="px-4">

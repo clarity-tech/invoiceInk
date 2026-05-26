@@ -60,11 +60,9 @@ it('captures organization setup journey', function () {
         'email' => 'journey-setup@example.test',
     ]);
 
-    // Create a non-personal org that needs setup
     $org = Organization::create([
         'name' => 'New Business',
         'user_id' => $user->id,
-        'personal_team' => false,
         'currency' => 'INR',
         'country_code' => 'IN',
     ]);

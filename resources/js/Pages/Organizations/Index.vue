@@ -15,7 +15,6 @@ interface Organization {
     country_code: string | null;
     logo_url: string | null;
     primary_location: Location | null;
-    personal_team: boolean;
 }
 
 interface PaginatedOrganizations {

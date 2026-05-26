@@ -13,15 +13,18 @@ test('dashboard shows business overview', function () {
     $response->assertInertia(fn ($page) => $page->component('Dashboard'));
 });
 
-test('organizations index redirects single-org user to show page', function () {
+test('organizations index always shows the list, even for single-org user', function () {
     $user = User::factory()->withPersonalTeam()->create([
         'email' => 'test@example.test',
     ]);
-
-    $org = $user->currentTeam;
+    $user->currentTeam->markSetupComplete();
 
     $response = $this->actingAs($user)->get('/organizations');
-    $response->assertRedirect("/organizations/{$org->id}");
+    $response->assertStatus(200);
+    $response->assertInertia(fn ($page) => $page
+        ->component('Organizations/Index')
+        ->has('organizations.data', 1)
+    );
 });
 
 test('organization show page renders for owner', function () {

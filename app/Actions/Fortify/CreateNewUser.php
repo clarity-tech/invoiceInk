@@ -41,28 +41,24 @@ class CreateNewUser implements CreatesNewUsers
     }
 
     /**
-     * Create a personal team for the user.
+     * Create an unconfigured organization for the user. Forced through the setup
+     * wizard on first authenticated request because setup_completed_at is null.
      */
     protected function createTeam(User $user): void
     {
-        // Generate meaningful organization name from user input
         $firstName = explode(' ', trim($user->name), 2)[0];
         $organizationName = $firstName ? $firstName."'s Organization" : $user->name."'s Organization";
 
         $organization = Organization::forceCreate([
             'user_id' => $user->id,
             'name' => $organizationName,
-            'personal_team' => true,
             'currency' => Currency::default(),
-            'setup_completed_at' => null, // Explicitly set as incomplete for new registrations
+            'setup_completed_at' => null,
         ]);
 
-        // CRITICAL FIX: Set the user's current team to the newly created personal team
-        // This ensures proper team assignment from registration
         $user->current_team_id = $organization->id;
         $user->save();
 
-        // Associate the organization with the user through the pivot table
         $user->ownedTeams()->save($organization);
     }
 }

@@ -49,7 +49,6 @@ class Organization extends Model implements HasMedia
     protected $fillable = [
         'name',
         'user_id',
-        'personal_team',
         'company_name',
         'tax_number',
         'registration_number',
@@ -88,7 +87,6 @@ class Organization extends Model implements HasMedia
     protected function casts(): array
     {
         return [
-            'personal_team' => 'boolean',
             'emails' => ContactCollectionCast::class,
             'currency' => Currency::class,
             'country_code' => Country::class,
@@ -243,14 +241,6 @@ class Organization extends Model implements HasMedia
     public function getDisplayNameAttribute(): string
     {
         return $this->company_name ?: $this->name;
-    }
-
-    /**
-     * Check if this is a business organization (not personal).
-     */
-    public function isBusinessOrganization(): bool
-    {
-        return ! $this->personal_team && ! empty($this->company_name);
     }
 
     /**
@@ -446,11 +436,6 @@ class Organization extends Model implements HasMedia
      */
     public function needsSetup(): bool
     {
-        // Personal teams typically don't need full setup
-        if ($this->personal_team) {
-            return false;
-        }
-
         return is_null($this->setup_completed_at);
     }
 

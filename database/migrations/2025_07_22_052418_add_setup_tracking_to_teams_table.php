@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('teams', function (Blueprint $table) {
-            $table->timestamp('setup_completed_at')->nullable()->after('personal_team');
+            $table->timestamp('setup_completed_at')->nullable();
         });
     }
 

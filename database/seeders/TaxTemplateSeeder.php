@@ -15,7 +15,7 @@ class TaxTemplateSeeder extends Seeder
     {
         $this->command->info('Creating tax templates for all organizations...');
 
-        $organizations = Organization::where('personal_team', false)->get();
+        $organizations = Organization::all();
 
         foreach ($organizations as $organization) {
             $this->createTaxTemplatesForOrganization($organization);

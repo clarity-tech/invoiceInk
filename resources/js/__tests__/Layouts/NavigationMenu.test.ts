@@ -1,8 +1,9 @@
 import { mount } from '@vue/test-utils';
 import { describe, it, expect, vi } from 'vitest';
 
-const { mockRouterPost } = vi.hoisted(() => ({
+const { mockRouterPost, mockRouterPut } = vi.hoisted(() => ({
     mockRouterPost: vi.fn(),
+    mockRouterPut: vi.fn(),
 }));
 
 vi.mock('@inertiajs/vue3', () => ({
@@ -15,8 +16,10 @@ vi.mock('@inertiajs/vue3', () => ({
     Form: { template: '<form><slot /></form>' },
     router: {
         post: mockRouterPost,
+        put: mockRouterPut,
         get: vi.fn(),
         on: vi.fn(),
+        flushAll: vi.fn(),
     },
     usePage: () => ({
         props: {
@@ -26,6 +29,9 @@ vi.mock('@inertiajs/vue3', () => ({
                     name: 'Test User',
                     email: 'test@test.test',
                     profile_photo_url: 'https://example.test/photo.jpg',
+                    all_teams: [
+                        { id: 1, name: "Test's Team", company_name: 'Test Co' },
+                    ],
                 },
                 currentTeam: {
                     id: 1,
@@ -62,6 +68,14 @@ vi.mock('@/routes/organizations', () => ({
 
 vi.mock('@/routes/profile', () => ({
     show: { url: () => '/user/profile' },
+}));
+
+vi.mock('@/routes/settings', () => ({
+    index: { url: () => '/settings' },
+}));
+
+vi.mock('@/routes/current-team', () => ({
+    update: { url: () => '/current-team' },
 }));
 
 import NavigationMenu from '@/Layouts/NavigationMenu.vue';
@@ -115,7 +129,9 @@ describe('NavigationMenu', () => {
         const avatarBtn = wrapper.find('[data-user-dropdown] button');
         await avatarBtn.trigger('click');
         // Find logout button in dropdown
-        const logoutBtn = wrapper.findAll('[data-user-dropdown] button').find(b => b.text().includes('Log Out'))!;
+        const logoutBtn = wrapper
+            .findAll('[data-user-dropdown] button')
+            .find((b) => b.text().includes('Log Out'))!;
         await logoutBtn.trigger('click');
         expect(mockRouterPost).toHaveBeenCalledWith('/logout');
     });

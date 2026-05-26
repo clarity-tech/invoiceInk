@@ -70,13 +70,10 @@ class UserFactory extends Factory
             'ownedTeams'
         )
             ->afterCreating(function (User $user) {
-                // Set current_team_id to the personal team after creation
-                if ($user->ownedTeams->count() > 0) {
-                    $personalTeam = $user->ownedTeams->where('personal_team', true)->first();
-                    if ($personalTeam) {
-                        $user->current_team_id = $personalTeam->id;
-                        $user->save();
-                    }
+                $firstTeam = $user->ownedTeams->first();
+                if ($firstTeam) {
+                    $user->current_team_id = $firstTeam->id;
+                    $user->save();
                 }
             });
     }
@@ -103,13 +100,10 @@ class UserFactory extends Factory
             'ownedTeams'
         )
             ->afterCreating(function (User $user) {
-                // Set current_team_id to the business organization after creation
-                if ($user->ownedTeams->count() > 0) {
-                    $businessOrganization = $user->ownedTeams->where('personal_team', false)->first();
-                    if ($businessOrganization) {
-                        $user->current_team_id = $businessOrganization->id;
-                        $user->save();
-                    }
+                $firstTeam = $user->ownedTeams->first();
+                if ($firstTeam) {
+                    $user->current_team_id = $firstTeam->id;
+                    $user->save();
                 }
             });
     }

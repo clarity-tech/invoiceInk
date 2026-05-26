@@ -76,6 +76,7 @@ return [
         'organization_updated' => 'Organization updated successfully!',
         'organization_created' => 'Organization created successfully!',
         'organization_deleted' => 'Organization deleted successfully!',
+        'cannot_delete_last_organization' => 'You cannot delete your only organization.',
         'organization_setup_complete' => 'Organization setup completed successfully! Welcome to your invoicing system.',
         'document_type_deleted' => ':type deleted successfully!',
         'document_type_sent' => ':type sent successfully!',

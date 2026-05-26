@@ -1,11 +1,11 @@
 @php
-$currentTeam = auth()->user()->currentTeam;
+$currentTeam = auth()->user()?->currentTeam;
 $isSetupComplete = $currentTeam ? $currentTeam->isSetupComplete() : true;
 $setupPercentage = $currentTeam ? $currentTeam->getSetupCompletionPercentage() : 100;
 $missingFields = $currentTeam ? $currentTeam->getMissingSetupFields() : [];
 @endphp
 
-@if($currentTeam && !$currentTeam->personal_team && !$isSetupComplete)
+@if($currentTeam && !$isSetupComplete)
     <div class="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
         <div class="flex items-start">
             <div class="flex-shrink-0">
@@ -43,7 +43,7 @@ $missingFields = $currentTeam ? $currentTeam->getMissingSetupFields() : [];
             </div>
         </div>
     </div>
-@elseif($currentTeam && !$currentTeam->personal_team && $isSetupComplete)
+@elseif($currentTeam && $isSetupComplete)
     <div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
         <div class="flex items-center">
             <div class="flex-shrink-0">

@@ -10,6 +10,9 @@ beforeEach(function () {
 });
 
 test('can render organization setup page', function () {
+    // withPersonalTeam alias now marks setup complete; reset it for this test.
+    $this->user->currentTeam->update(['setup_completed_at' => null]);
+
     $response = $this->get('/organization/setup');
 
     $response->assertStatus(200);

@@ -28,13 +28,19 @@ class HandleInertiaRequests extends Middleware
                     'email' => $request->user()->email,
                     'profile_photo_url' => $request->user()->profile_photo_url,
                     'two_factor_enabled' => ! is_null($request->user()->two_factor_secret),
+                    'all_teams' => $request->user()->allTeams()
+                        ->map(fn ($team) => [
+                            'id' => $team->id,
+                            'name' => $team->name,
+                            'company_name' => $team->company_name,
+                        ])
+                        ->values(),
                 ] : null,
                 'currentTeam' => $request->user()?->currentTeam ? [
                     'id' => $request->user()->currentTeam->id,
                     'name' => $request->user()->currentTeam->name,
                     'company_name' => $request->user()->currentTeam->company_name,
                     'currency' => $request->user()->currentTeam->currency,
-                    'personal_team' => $request->user()->currentTeam->personal_team,
                 ] : null,
             ],
             'flash' => fn () => [

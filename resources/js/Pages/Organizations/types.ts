@@ -38,7 +38,6 @@ export interface Organization {
     bank_details: BankDetails | null;
     logo_url: string | null;
     primary_location: Location | null;
-    personal_team: boolean;
 }
 
 export interface CountryInfo {

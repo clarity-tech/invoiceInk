@@ -19,7 +19,6 @@ vi.mock('@inertiajs/vue3', () => ({
                     name: 'Team',
                     company_name: 'Co',
                     currency: 'INR',
-                    personal_team: false,
                 },
             },
             flash: { success: null, error: null, message: null },
@@ -37,7 +36,6 @@ interface Org {
     country_code: string | null;
     logo_url: string | null;
     primary_location: { city: string; state: string } | null;
-    personal_team: boolean;
 }
 
 function makeOrg(overrides: Partial<Org> = {}): Org {
@@ -49,7 +47,6 @@ function makeOrg(overrides: Partial<Org> = {}): Org {
         country_code: 'IN',
         logo_url: null,
         primary_location: { city: 'Mumbai', state: 'Maharashtra' },
-        personal_team: false,
         ...overrides,
     };
 }

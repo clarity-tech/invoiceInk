@@ -46,7 +46,6 @@ vi.mock('@inertiajs/vue3', () => ({
                     name: 'Team',
                     company_name: 'Co',
                     currency: 'INR',
-                    personal_team: false,
                     emails: [{ name: 'Admin', email: 'admin@company.test' }],
                 },
             },

@@ -54,7 +54,6 @@ export interface Organization {
     id: number;
     name: string;
     company_name: string | null;
-    personal_team: boolean;
     currency: Currency | null;
     country_code: Country | null;
     financial_year_type: FinancialYearType | null;
@@ -237,16 +236,28 @@ export interface InvoiceNumberingSeries {
     updated_at: string;
 }
 
+export interface TeamSummary {
+    id: number;
+    name: string;
+    company_name: string | null;
+}
+
 /** Shared page props from HandleInertiaRequests */
 export interface SharedProps {
     auth: {
-        user: Pick<
-            User,
-            'id' | 'name' | 'email' | 'profile_photo_url' | 'two_factor_enabled'
-        > | null;
+        user:
+            | (Pick<
+                  User,
+                  | 'id'
+                  | 'name'
+                  | 'email'
+                  | 'profile_photo_url'
+                  | 'two_factor_enabled'
+              > & { all_teams: TeamSummary[] })
+            | null;
         currentTeam: Pick<
             Organization,
-            'id' | 'name' | 'company_name' | 'currency' | 'personal_team'
+            'id' | 'name' | 'company_name' | 'currency'
         > | null;
     };
     flash: {
