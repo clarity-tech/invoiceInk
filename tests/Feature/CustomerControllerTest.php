@@ -257,6 +257,65 @@ test('cannot delete last location', function () {
     $this->assertDatabaseHas('locations', ['id' => $location->id]);
 });
 
+test('cannot delete primary location referenced by invoices and primary is preserved', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+    $primaryLocation = $customer->primaryLocation;
+
+    $secondLocation = Location::create([
+        'name' => 'Second Office',
+        'address_line_1' => '222 Second St',
+        'city' => 'Second City',
+        'state' => 'Second State',
+        'country' => 'IN',
+        'postal_code' => '11111',
+        'locatable_type' => Customer::class,
+        'locatable_id' => $customer->id,
+    ]);
+
+    createInvoiceWithItems([], null, $organization, $customer);
+
+    $this->actingAs($organization->owner);
+
+    $this->delete("/customers/{$customer->id}/locations/{$primaryLocation->id}")
+        ->assertRedirect()
+        ->assertSessionHas('error');
+
+    $this->assertDatabaseHas('locations', ['id' => $primaryLocation->id]);
+    expect($customer->fresh()->primary_location_id)->toBe($primaryLocation->id);
+    expect($secondLocation->fresh())->not->toBeNull();
+});
+
+test('cannot delete shipping location referenced by invoices', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+    $primaryLocation = $customer->primaryLocation;
+
+    $shippingLocation = Location::create([
+        'name' => 'Warehouse',
+        'address_line_1' => '500 Warehouse Ln',
+        'city' => 'Pune',
+        'state' => 'MH',
+        'country' => 'IN',
+        'postal_code' => '411001',
+        'locatable_type' => Customer::class,
+        'locatable_id' => $customer->id,
+    ]);
+
+    createInvoiceWithItems([
+        'customer_shipping_location_id' => $shippingLocation->id,
+    ], null, $organization, $customer);
+
+    $this->actingAs($organization->owner);
+
+    $this->delete("/customers/{$customer->id}/locations/{$shippingLocation->id}")
+        ->assertRedirect()
+        ->assertSessionHas('error');
+
+    $this->assertDatabaseHas('locations', ['id' => $shippingLocation->id]);
+    expect($customer->fresh()->primary_location_id)->toBe($primaryLocation->id);
+});
+
 test('can set primary location', function () {
     $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation([], [], $organization);

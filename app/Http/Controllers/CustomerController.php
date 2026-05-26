@@ -12,6 +12,7 @@ use App\Models\Location;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -170,12 +171,22 @@ class CustomerController extends Controller
             return back()->with('error', __('forms.validation.cannot_delete_last_location'));
         }
 
-        if ($customer->primary_location_id === $location->id) {
-            $newPrimary = $customer->locations()->where('id', '!=', $location->id)->first();
-            $customer->update(['primary_location_id' => $newPrimary->id]);
+        $isReferencedByInvoice = Invoice::where('customer_location_id', $location->id)
+            ->orWhere('customer_shipping_location_id', $location->id)
+            ->exists();
+
+        if ($isReferencedByInvoice) {
+            return back()->with('error', __('forms.validation.cannot_delete_location_with_invoices'));
         }
 
-        $location->delete();
+        DB::transaction(function () use ($customer, $location) {
+            if ($customer->primary_location_id === $location->id) {
+                $newPrimary = $customer->locations()->where('id', '!=', $location->id)->first();
+                $customer->update(['primary_location_id' => $newPrimary->id]);
+            }
+
+            $location->delete();
+        });
 
         return back()->with('success', __('messages.notifications.location_deleted'));
     }

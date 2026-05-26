@@ -234,6 +234,7 @@ return [
         'save_customer_first_locations' => 'Please save the customer first before adding locations.',
         'save_customer_first' => 'Please save the customer first.',
         'cannot_delete_last_location' => 'Cannot delete the last location. Customer must have at least one location.',
+        'cannot_delete_location_with_invoices' => 'Cannot delete this location because it is used on one or more invoices.',
         'at_least_one_contact_email' => 'At least one contact with email is required.',
         'at_least_one_email' => 'At least one email is required.',
         'valid_email_required' => 'Please enter a valid email address.',
