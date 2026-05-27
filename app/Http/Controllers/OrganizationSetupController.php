@@ -118,6 +118,7 @@ class OrganizationSetupController extends Controller
             2 => $request->validate([
                 'location_name' => ['nullable', 'string', 'max:255'],
                 'gstin' => ['nullable', 'string', 'max:50'],
+                'country_code' => ['required', 'string', ValidationRule::enum(Country::class)],
                 'address_line_1' => ['required', 'string', 'max:500'],
                 'address_line_2' => ['nullable', 'string', 'max:500'],
                 'city' => ['required', 'string', 'max:100'],
@@ -126,7 +127,6 @@ class OrganizationSetupController extends Controller
             ]),
             3 => $request->validate([
                 'currency' => ['required', 'string', new CurrencyCode],
-                'country_code' => ['required', 'string', ValidationRule::enum(Country::class)],
                 'financial_year_type' => ['nullable', 'string', ValidationRule::enum(FinancialYearType::class)],
                 'financial_year_start_month' => ['nullable', 'integer', 'min:1', 'max:12'],
                 'financial_year_start_day' => ['nullable', 'integer', 'min:1', 'max:31'],
@@ -154,6 +154,10 @@ class OrganizationSetupController extends Controller
 
     private function saveStep2(Request $request, Organization $organization): void
     {
+        $countryCode = $request->input('country_code');
+
+        $organization->update(['country_code' => $countryCode]);
+
         $locationData = [
             'name' => $request->input('location_name') ?: ($organization->company_name ?: 'Main Office'),
             'gstin' => $request->input('gstin') ?: null,
@@ -161,7 +165,7 @@ class OrganizationSetupController extends Controller
             'address_line_2' => $request->input('address_line_2') ?: null,
             'city' => $request->input('city'),
             'state' => $request->input('state'),
-            'country' => $organization->country_code?->value ?? $request->input('country_code') ?? 'XX',
+            'country' => $countryCode,
             'postal_code' => $request->input('postal_code'),
         ];
 
@@ -178,44 +182,40 @@ class OrganizationSetupController extends Controller
 
     private function saveStep3(Request $request, Organization $organization): void
     {
-        $countryCode = $request->input('country_code');
+        $countryCode = $organization->country_code?->value;
         $currency = $request->input('currency');
 
-        // Validate currency-country match
-        if ($countryCode && $currency) {
-            try {
-                $country = Country::from($countryCode);
-                $supportedCurrencies = collect($country->getSupportedCurrencies())->pluck('value')->toArray();
-
-                if (! in_array($currency, $supportedCurrencies)) {
-                    throw ValidationException::withMessages([
-                        'currency' => __('forms.validation.currency_not_supported', [
-                            'country' => $country->name(),
-                            'currencies' => implode(', ', $supportedCurrencies),
-                        ]),
-                    ]);
-                }
-            } catch (\ValueError) {
-                // handled by enum validation
-            }
+        if (! $countryCode) {
+            throw ValidationException::withMessages([
+                'currency' => __('forms.validation.country_required_before_currency'),
+            ]);
         }
 
         $country = Country::from($countryCode);
+
+        // Validate currency-country match
+        if ($currency) {
+            $supportedCurrencies = collect($country->getSupportedCurrencies())->pluck('value')->toArray();
+
+            if (! in_array($currency, $supportedCurrencies)) {
+                throw ValidationException::withMessages([
+                    'currency' => __('forms.validation.currency_not_supported', [
+                        'country' => $country->name(),
+                        'currencies' => implode(', ', $supportedCurrencies),
+                    ]),
+                ]);
+            }
+        }
+
         $defaultFinancialYearType = $request->input('financial_year_type') ?: $country->getDefaultFinancialYearType()->value;
         $defaultCurrency = $currency ?: $country->getDefaultCurrency()->value;
 
         $organization->update([
             'currency' => $defaultCurrency,
-            'country_code' => $countryCode,
             'financial_year_type' => $defaultFinancialYearType,
             'financial_year_start_month' => $request->input('financial_year_start_month'),
             'financial_year_start_day' => $request->input('financial_year_start_day'),
         ]);
-
-        // Also update location country if location exists
-        if ($organization->primaryLocation) {
-            $organization->primaryLocation->update(['country' => $countryCode]);
-        }
     }
 
     private function saveStep4(Request $request, Organization $organization): void

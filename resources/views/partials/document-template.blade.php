@@ -11,7 +11,7 @@
     $logoUrl = $isPdf ? $organization->logo_base64 : $organization->logo_url;
     $orgLocation = $document->organizationLocation;
     $custLocation = $document->customerLocation;
-    $isGstInvoice = $isInvoice && !empty($orgLocation?->gstin);
+    $isGstInvoice = $isInvoice && !empty($orgLocation?->gstin) && $orgLocation?->isIndian();
     $taxColumnHeader = $document->tax_type ?: __('documents.table.tax_rate');
 
     // Set the invoice relation on each item to avoid lazy-loading through OrganizationScope
@@ -483,7 +483,7 @@
                         {{ $orgLocation->city }} {{ $orgLocation->state }} {{ $orgLocation->postal_code }}<br>
                         {{ $orgLocation->country }}
                         @if($orgLocation->gstin)
-                            <div class="gstin">{{ __('documents.fields.gstin') }} {{ $orgLocation->gstin }}</div>
+                            <div class="gstin">{{ $orgLocation->taxIdLabel() }}: {{ $orgLocation->gstin }}</div>
                         @endif
                         @if($orgEmails && $orgEmails->count() > 0)
                             <div style="margin-top: 4px;">{{ $orgEmails->getEmails()[0] ?? '' }}</div>
@@ -523,9 +523,9 @@
                         {{ $custLocation->postal_code }} {{ $custLocation->state }}<br>
                         {{ $custLocation->country }}
                         @if($custLocation->gstin)
-                            <div class="gstin">{{ __('documents.fields.gstin') }} {{ $custLocation->gstin }}</div>
+                            <div class="gstin">{{ $custLocation->taxIdLabel() }}: {{ $custLocation->gstin }}</div>
                         @endif
-                        @if($custLocation->state)
+                        @if($custLocation->isIndian() && $custLocation->state)
                             <div>{{ __('documents.fields.place_of_supply') }}: {{ $custLocation->state }}@if($custLocation->gstin) ({{ substr($custLocation->gstin, 0, 2) }})@endif</div>
                         @endif
                     </div>

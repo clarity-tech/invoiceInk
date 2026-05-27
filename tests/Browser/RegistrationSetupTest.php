@@ -86,9 +86,10 @@ it('completes Indian company setup with all fields', function () {
         ->screenshot(fullPage: true, filename: 'demo/17-setup-step1-filled')
         ->click('Next');
 
-    // Step 2: Primary Location - fill all fields including GSTIN
+    // Step 2: Primary Location - country + address + GSTIN
     $page->assertSee('Primary Location')
         ->fill('#location_name', 'Head Office')
+        ->select('#country_code', 'IN')
         ->fill('#gstin', '29AAFCC1234A1ZV')
         ->fill('#address_line_1', '42 MG Road, Indiranagar')
         ->fill('#address_line_2', '2nd Floor, Prestige Tower')
@@ -98,9 +99,8 @@ it('completes Indian company setup with all fields', function () {
         ->screenshot(fullPage: true, filename: 'demo/18-setup-step2-filled')
         ->click('Next');
 
-    // Step 3: Configuration - select India, assert GST info panel
+    // Step 3: Configuration - currency only; GST info panel comes from country picked in step 2
     $page->assertSee('Configuration')
-        ->select('#country_code', 'IN')
         ->assertSee('GST')
         ->select('#currency', 'INR')
         ->screenshot(fullPage: true, filename: 'demo/19-setup-step3-india')
@@ -138,8 +138,10 @@ it('completes UAE company setup with different currency', function () {
         ->screenshot(fullPage: true, filename: 'demo/22-setup-uae-step1')
         ->click('Next');
 
-    // Step 2: Location (no GSTIN for UAE)
+    // Step 2: Country (UAE) + location; tax-id field label flips to "TRN"
     $page->fill('#location_name', 'Dubai Office')
+        ->select('#country_code', 'AE')
+        ->assertSee('TRN')
         ->fill('#address_line_1', 'Dubai Healthcare City')
         ->fill('#address_line_2', 'Building 64, Block A')
         ->fill('#city', 'Dubai')
@@ -147,9 +149,8 @@ it('completes UAE company setup with different currency', function () {
         ->fill('#postal_code', '505055')
         ->click('Next');
 
-    // Step 3: Configuration - select UAE, assert VAT and AED
-    $page->select('#country_code', 'AE')
-        ->assertSee('VAT')
+    // Step 3: Configuration - currency only; VAT info panel comes from UAE selected in step 2
+    $page->assertSee('VAT')
         ->select('#currency', 'AED')
         ->screenshot(fullPage: true, filename: 'demo/23-setup-uae-step3')
         ->click('Next');
@@ -178,16 +179,16 @@ it('completes minimal setup with only required fields', function () {
     $page->fill('#company_name', 'Minimal Corp')
         ->click('Next');
 
-    // Step 2: Only required fields (skip location_name, gstin, address_line_2)
-    $page->fill('#address_line_1', '100 Main Street')
+    // Step 2: Country + required address fields (skip location_name, gstin, address_line_2)
+    $page->select('#country_code', 'US')
+        ->fill('#address_line_1', '100 Main Street')
         ->fill('#city', 'New York')
         ->fill('#state', 'NY')
         ->fill('#postal_code', '10001')
         ->click('Next');
 
-    // Step 3: Select US, currency auto-sets to USD
-    $page->select('#country_code', 'US')
-        ->select('#currency', 'USD')
+    // Step 3: Currency auto-sets to USD when US was picked; just confirm and continue
+    $page->select('#currency', 'USD')
         ->click('Next');
 
     // Step 4: One email only (skip phone)
@@ -211,12 +212,13 @@ it('adds additional location after setup completion', function () {
     $page = $this->visit('/organization/setup');
     $page->fill('#company_name', 'Multi-Location Corp')
         ->click('Next')
+        ->select('#country_code', 'US')
         ->fill('#address_line_1', '200 Broadway')
         ->fill('#city', 'San Francisco')
         ->fill('#state', 'CA')
         ->fill('#postal_code', '94102')
         ->click('Next')
-        ->select('#country_code', 'US')
+        ->select('#currency', 'USD')
         ->click('Next')
         ->fill('input[aria-describedby="error-emails-0"]', 'admin@multiloc.test')
         ->click('Complete Setup')

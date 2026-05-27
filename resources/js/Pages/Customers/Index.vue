@@ -20,6 +20,7 @@ const props = defineProps<{
     customers: PaginatedCustomers;
     currencies: Record<string, string>;
     countries: Record<string, string>;
+    taxLabels: Record<string, string>;
 }>();
 
 const isMounted = ref(false);
@@ -774,6 +775,7 @@ function locationSummary(customer: Customer): string {
             :customer-id="locationCustomerId"
             :location="editingLocation"
             :countries="countries"
+            :tax-labels="taxLabels"
             @close="closeLocationModal"
         />
 

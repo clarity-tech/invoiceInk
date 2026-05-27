@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import type { Organization, CountryInfo } from '../types';
+import { useTaxLabel } from '@/composables/useTaxLabel';
 
 const props = defineProps<{
     organization: Organization;
@@ -21,6 +22,14 @@ const form = useForm({
     country: loc?.country ?? '',
     postal_code: loc?.postal_code ?? '',
 });
+
+const taxLabels = computed<Record<string, string>>(() =>
+    Object.fromEntries(
+        props.countries.map((c) => [c.value, c.tax_system.number_format]),
+    ),
+);
+const formCountry = computed(() => form.country);
+const { label: taxLabel } = useTaxLabel(formCountry, taxLabels.value);
 
 function submit() {
     form.put(`/organizations/${props.organization.id}/location`, {
@@ -65,17 +74,48 @@ function submit() {
                 </div>
                 <div>
                     <label
-                        for="loc-gstin"
+                        for="loc-country"
                         class="block text-sm font-medium text-gray-700"
-                        >GSTIN / Tax ID</label
+                        >Country *</label
                     >
-                    <input
-                        id="loc-gstin"
-                        v-model="form.gstin"
-                        type="text"
+                    <select
+                        id="loc-country"
+                        v-model="form.country"
                         class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
-                    />
+                    >
+                        <option value="">Select country</option>
+                        <option
+                            v-for="c in countries"
+                            :key="c.value"
+                            :value="c.value"
+                        >
+                            {{ c.label }}
+                        </option>
+                    </select>
+                    <p
+                        v-if="form.errors.country"
+                        class="mt-1 text-sm text-red-600"
+                    >
+                        {{ form.errors.country }}
+                    </p>
                 </div>
+            </div>
+
+            <div>
+                <label
+                    for="loc-gstin"
+                    class="block text-sm font-medium text-gray-700"
+                    >{{ taxLabel }}</label
+                >
+                <input
+                    id="loc-gstin"
+                    v-model="form.gstin"
+                    type="text"
+                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                />
+                <p v-if="form.errors.gstin" class="mt-1 text-sm text-red-600">
+                    {{ form.errors.gstin }}
+                </p>
             </div>
 
             <div>
@@ -170,31 +210,6 @@ function submit() {
                         {{ form.errors.postal_code }}
                     </p>
                 </div>
-            </div>
-
-            <div>
-                <label
-                    for="loc-country"
-                    class="block text-sm font-medium text-gray-700"
-                    >Country *</label
-                >
-                <select
-                    id="loc-country"
-                    v-model="form.country"
-                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
-                >
-                    <option value="">Select country</option>
-                    <option
-                        v-for="c in countries"
-                        :key="c.value"
-                        :value="c.value"
-                    >
-                        {{ c.label }}
-                    </option>
-                </select>
-                <p v-if="form.errors.country" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.country }}
-                </p>
             </div>
         </div>
 

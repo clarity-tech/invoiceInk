@@ -66,7 +66,12 @@ function makeCountryInfo(overrides = {}) {
         },
         default_financial_year: 'april_march',
         supported_currencies: { INR: 'Indian Rupee', USD: 'US Dollar' },
-        tax_system: { name: 'GST', rates: ['5%', '12%', '18%', '28%'] },
+        tax_system: {
+            name: 'GST',
+            rates: ['5%', '12%', '18%', '28%'],
+            number_format: 'GSTIN',
+            number_length: 15,
+        },
         recommended_numbering: '{PREFIX}-{FY}-{SEQUENCE:4}',
         ...overrides,
     };
@@ -101,7 +106,12 @@ const countries = [
         currency: 'AED',
         supported_currencies: { AED: 'UAE Dirham', USD: 'US Dollar' },
         default_financial_year: 'calendar',
-        tax_system: { name: 'VAT', rates: ['5%'] },
+        tax_system: {
+            name: 'VAT',
+            rates: ['5%'],
+            number_format: 'TRN',
+            number_length: 15,
+        },
         financial_year_options: { calendar: 'Calendar Year' },
     }),
 ];
@@ -252,6 +262,25 @@ describe('OrganizationSetupFlow', () => {
         });
     });
 
+    describe('step 2 - country & location', () => {
+        async function goToStep2(wrapper: ReturnType<typeof mountComponent>) {
+            simulateStepSuccess();
+            const nextBtn = wrapper
+                .findAll('button')
+                .find((b) => b.text() === 'Next');
+            await nextBtn!.trigger('click');
+            await wrapper.vm.$nextTick();
+        }
+
+        it('shows country dropdown on step 2', async () => {
+            const wrapper = mountComponent();
+            await goToStep2(wrapper);
+            expect(wrapper.find('#country_code').exists()).toBe(true);
+            expect(wrapper.text()).toContain('India');
+            expect(wrapper.text()).toContain('United Arab Emirates');
+        });
+    });
+
     describe('step 3 - configuration', () => {
         async function goToStep3(wrapper: ReturnType<typeof mountComponent>) {
             simulateStepSuccess();
@@ -274,22 +303,27 @@ describe('OrganizationSetupFlow', () => {
             await goToStep3(wrapper);
             expect(wrapper.text()).toContain('Configuration');
             expect(wrapper.text()).toContain('Currency');
-            expect(wrapper.find('#country_code').exists()).toBe(true);
             expect(wrapper.find('#currency').exists()).toBe(true);
+            // Country dropdown is no longer on step 3 (moved to step 2)
+            expect(wrapper.find('#country_code').exists()).toBe(false);
         });
 
-        it('shows country options', async () => {
+        it('selecting country in step 2 updates available currencies on step 3', async () => {
             const wrapper = mountComponent();
-            await goToStep3(wrapper);
-            expect(wrapper.text()).toContain('India');
-            expect(wrapper.text()).toContain('United Arab Emirates');
-        });
-
-        it('selecting country updates available currencies', async () => {
-            const wrapper = mountComponent();
-            await goToStep3(wrapper);
-            const countrySelect = wrapper.find('#country_code');
-            await countrySelect.setValue('AE');
+            // Pick UAE on step 2 first
+            simulateStepSuccess();
+            const nextBtn = wrapper
+                .findAll('button')
+                .find((b) => b.text() === 'Next');
+            await nextBtn!.trigger('click');
+            await wrapper.vm.$nextTick();
+            await wrapper.find('#country_code').setValue('AE');
+            await wrapper.vm.$nextTick();
+            // Then advance to step 3
+            const nextBtn2 = wrapper
+                .findAll('button')
+                .find((b) => b.text() === 'Next');
+            await nextBtn2!.trigger('click');
             await wrapper.vm.$nextTick();
             // UAE supported currencies
             expect(wrapper.text()).toContain('UAE Dirham');

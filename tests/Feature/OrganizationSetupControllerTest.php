@@ -84,6 +84,7 @@ test('can save step 2 location data', function () {
         'step' => 2,
         'location_name' => 'Main Office',
         'gstin' => '27AABCG9603R1ZV',
+        'country_code' => 'IN',
         'address_line_1' => '123 Test Street',
         'address_line_2' => 'Suite 100',
         'city' => 'Mumbai',
@@ -98,30 +99,43 @@ test('can save step 2 location data', function () {
         'gstin' => '27AABCG9603R1ZV',
         'address_line_1' => '123 Test Street',
         'city' => 'Mumbai',
+        'country' => 'IN',
+    ]);
+
+    $this->assertDatabaseHas('teams', [
+        'id' => $organization->id,
+        'country_code' => 'IN',
     ]);
 });
 
-test('validates step 2 requires address fields', function () {
+test('validates step 2 requires address fields and country', function () {
     $organization = $this->user->currentTeam;
 
     $response = $this->post("/organization/setup/{$organization->id}/step", [
         'step' => 2,
+        'country_code' => '',
         'address_line_1' => '',
         'city' => '',
         'state' => '',
         'postal_code' => '',
     ]);
 
-    $response->assertSessionHasErrors(['address_line_1', 'city', 'state', 'postal_code']);
+    $response->assertSessionHasErrors([
+        'country_code',
+        'address_line_1',
+        'city',
+        'state',
+        'postal_code',
+    ]);
 });
 
-test('can save step 3 configuration', function () {
+test('can save step 3 configuration when country was set in step 2', function () {
     $organization = $this->user->currentTeam;
+    $organization->update(['country_code' => 'IN']);
 
     $response = $this->post("/organization/setup/{$organization->id}/step", [
         'step' => 3,
         'currency' => 'INR',
-        'country_code' => 'IN',
         'financial_year_type' => 'april_march',
         'financial_year_start_month' => 4,
         'financial_year_start_day' => 1,
@@ -136,16 +150,28 @@ test('can save step 3 configuration', function () {
     ]);
 });
 
-test('validates step 3 requires currency and country', function () {
+test('validates step 3 requires currency', function () {
     $organization = $this->user->currentTeam;
+    $organization->update(['country_code' => 'IN']);
 
     $response = $this->post("/organization/setup/{$organization->id}/step", [
         'step' => 3,
         'currency' => '',
-        'country_code' => '',
     ]);
 
-    $response->assertSessionHasErrors(['currency', 'country_code']);
+    $response->assertSessionHasErrors(['currency']);
+});
+
+test('step 3 errors out gracefully when country was not set in step 2', function () {
+    $organization = $this->user->currentTeam;
+    $organization->update(['country_code' => null]);
+
+    $response = $this->post("/organization/setup/{$organization->id}/step", [
+        'step' => 3,
+        'currency' => 'INR',
+    ]);
+
+    $response->assertSessionHasErrors(['currency']);
 });
 
 test('can save step 4 and complete setup', function () {
@@ -197,6 +223,7 @@ test('step 2 updates existing location', function () {
     $response = $this->post("/organization/setup/{$organization->id}/step", [
         'step' => 2,
         'location_name' => 'Updated Location',
+        'country_code' => 'IN',
         'address_line_1' => '456 Updated St',
         'city' => 'Delhi',
         'state' => 'Delhi',
@@ -219,6 +246,7 @@ test('location name defaults to company name when empty', function () {
     $response = $this->post("/organization/setup/{$organization->id}/step", [
         'step' => 2,
         'location_name' => '',
+        'country_code' => 'IN',
         'address_line_1' => '123 Test St',
         'city' => 'Mumbai',
         'state' => 'Maharashtra',
@@ -246,11 +274,11 @@ test('cannot save step for organization user does not own', function () {
 
 test('validates currency country match in step 3', function () {
     $organization = $this->user->currentTeam;
+    $organization->update(['country_code' => 'IN']);
 
     $response = $this->post("/organization/setup/{$organization->id}/step", [
         'step' => 3,
         'currency' => 'USD',
-        'country_code' => 'IN',
     ]);
 
     $response->assertSessionHasErrors(['currency']);

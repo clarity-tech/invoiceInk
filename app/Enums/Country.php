@@ -218,6 +218,23 @@ enum Country: string
             ->toArray();
     }
 
+    /**
+     * Map of country code => tax-id label (e.g. "GSTIN", "VAT Registration Number", "TRN").
+     *
+     * Used in customer/organization location forms and on invoice PDFs to render the
+     * country-appropriate name for the tax identification number.
+     *
+     * @return array<string, string>
+     */
+    public static function taxLabels(): array
+    {
+        return collect(self::cases())
+            ->mapWithKeys(fn ($country) => [
+                $country->value => $country->getTaxSystemInfo()['number_format'],
+            ])
+            ->toArray();
+    }
+
     public static function fromName(string $name): ?self
     {
         return collect(self::cases())

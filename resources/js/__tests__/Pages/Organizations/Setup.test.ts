@@ -65,7 +65,12 @@ function makeCountryInfo(overrides = {}) {
         },
         default_financial_year: 'april_march',
         supported_currencies: { INR: 'Indian Rupee', USD: 'US Dollar' },
-        tax_system: { name: 'GST', rates: ['5%', '12%', '18%', '28%'] },
+        tax_system: {
+            name: 'GST',
+            rates: ['5%', '12%', '18%', '28%'],
+            number_format: 'GSTIN',
+            number_length: 15,
+        },
         recommended_numbering: '{PREFIX}-{FY}-{SEQUENCE:4}',
         ...overrides,
     };
@@ -102,7 +107,12 @@ const defaultProps = () => ({
             currency: 'AED',
             supported_currencies: { AED: 'UAE Dirham' },
             default_financial_year: 'calendar',
-            tax_system: { name: 'VAT', rates: ['5%'] },
+            tax_system: {
+                name: 'VAT',
+                rates: ['5%'],
+                number_format: 'TRN',
+                number_length: 15,
+            },
             financial_year_options: { calendar: 'Calendar Year' },
         }),
     ],

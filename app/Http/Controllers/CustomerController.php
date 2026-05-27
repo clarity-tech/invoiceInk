@@ -32,6 +32,7 @@ class CustomerController extends Controller
             'customers' => $customers,
             'currencies' => Currency::options(),
             'countries' => Country::options(),
+            'taxLabels' => Country::taxLabels(),
         ]);
     }
 

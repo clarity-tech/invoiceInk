@@ -62,6 +62,77 @@ test('public invoice template renders INVOICE header when no GSTIN', function ()
     $response->assertDontSee('TAX INVOICE');
 });
 
+test('public invoice renders TRN label for UAE organization location', function () {
+    $organization = createOrganizationWithLocation([
+        'currency' => 'AED',
+        'country_code' => 'AE',
+    ], [
+        'country' => 'AE',
+        'gstin' => '100123456700003',
+    ]);
+    $customer = createCustomerWithLocation([
+        'currency' => 'AED',
+    ], [
+        'country' => 'AE',
+        'gstin' => '100987654300003',
+    ], $organization);
+    $invoice = createInvoiceWithItems([
+        'type' => 'invoice',
+    ], null, $organization, $customer);
+
+    $response = $this->get(route('invoices.public', $invoice->ulid));
+
+    $response->assertStatus(200);
+    $response->assertSee('TRN: 100123456700003', false);
+    $response->assertSee('TRN: 100987654300003', false);
+    $response->assertDontSee('GSTIN');
+});
+
+test('public invoice does not show TAX INVOICE header for non-Indian organization even with a tax id', function () {
+    $organization = createOrganizationWithLocation([
+        'currency' => 'AED',
+        'country_code' => 'AE',
+    ], [
+        'country' => 'AE',
+        'gstin' => '100123456700003',
+    ]);
+    $customer = createCustomerWithLocation([
+        'currency' => 'AED',
+    ], [], $organization);
+    $invoice = createInvoiceWithItems([
+        'type' => 'invoice',
+    ], null, $organization, $customer);
+
+    $response = $this->get(route('invoices.public', $invoice->ulid));
+
+    $response->assertStatus(200);
+    $response->assertSee('INVOICE');
+    $response->assertDontSee('TAX INVOICE');
+});
+
+test('public invoice hides Place of Supply for non-Indian customer', function () {
+    $organization = createOrganizationWithLocation([
+        'currency' => 'AED',
+        'country_code' => 'AE',
+    ], [
+        'country' => 'AE',
+    ]);
+    $customer = createCustomerWithLocation([
+        'currency' => 'AED',
+    ], [
+        'country' => 'AE',
+        'state' => 'Dubai',
+    ], $organization);
+    $invoice = createInvoiceWithItems([
+        'type' => 'invoice',
+    ], null, $organization, $customer);
+
+    $response = $this->get(route('invoices.public', $invoice->ulid));
+
+    $response->assertStatus(200);
+    $response->assertDontSee('Place of Supply');
+});
+
 test('public invoice template hides bank details when not configured', function () {
     $organization = createOrganizationWithLocation([
         'bank_details' => null,

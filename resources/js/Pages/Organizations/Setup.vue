@@ -2,6 +2,7 @@
 import { useForm, router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { useTaxLabel } from '@/composables/useTaxLabel';
 
 interface CountryInfo {
     value: string;
@@ -10,7 +11,12 @@ interface CountryInfo {
     financial_year_options: Record<string, string>;
     default_financial_year: string;
     supported_currencies: Record<string, string>;
-    tax_system: { name: string; rates: string[] };
+    tax_system: {
+        name: string;
+        rates: string[];
+        number_format: string;
+        number_length: number;
+    };
     recommended_numbering: string;
 }
 
@@ -53,7 +59,10 @@ const totalSteps = 4;
 
 const steps = [
     { title: 'Company Information', description: 'Basic company details' },
-    { title: 'Primary Location', description: 'Main business address' },
+    {
+        title: 'Primary Location',
+        description: 'Country, address & tax details',
+    },
     { title: 'Configuration', description: 'Currency & financial settings' },
     { title: 'Contact Details', description: 'Email and phone information' },
 ];
@@ -91,6 +100,14 @@ const selectedCountry = computed(() => {
 
     return props.countries.find((c) => c.value === form.country_code) ?? null;
 });
+
+const taxLabels = computed<Record<string, string>>(() =>
+    Object.fromEntries(
+        props.countries.map((c) => [c.value, c.tax_system.number_format]),
+    ),
+);
+const countryRef = computed(() => form.country_code);
+const { label: taxLabel } = useTaxLabel(countryRef, taxLabels.value);
 
 const availableCurrencies = computed(() => {
     return selectedCountry.value
@@ -354,7 +371,7 @@ function goToStep(step: number): void {
                                 </p>
                             </div>
                             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                <div class="md:col-span-2">
+                                <div>
                                     <label
                                         class="mb-2 block text-sm font-medium text-gray-700"
                                         >Location Name</label
@@ -370,7 +387,35 @@ function goToStep(step: number): void {
                                 <div>
                                     <label
                                         class="mb-2 block text-sm font-medium text-gray-700"
-                                        >GSTIN / Tax ID</label
+                                        >Country *</label
+                                    >
+                                    <select
+                                        id="country_code"
+                                        v-model="form.country_code"
+                                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                                    >
+                                        <option value="">
+                                            Select your country
+                                        </option>
+                                        <option
+                                            v-for="c in countries"
+                                            :key="c.value"
+                                            :value="c.value"
+                                        >
+                                            {{ c.label }}
+                                        </option>
+                                    </select>
+                                    <p
+                                        v-if="form.errors.country_code"
+                                        class="mt-1 text-sm text-red-600"
+                                    >
+                                        {{ form.errors.country_code }}
+                                    </p>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label
+                                        class="mb-2 block text-sm font-medium text-gray-700"
+                                        >{{ taxLabel }}</label
                                     >
                                     <input
                                         id="gstin"
@@ -479,34 +524,6 @@ function goToStep(step: number): void {
                                 </p>
                             </div>
                             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                <div class="md:col-span-2">
-                                    <label
-                                        class="mb-2 block text-sm font-medium text-gray-700"
-                                        >Country *</label
-                                    >
-                                    <select
-                                        id="country_code"
-                                        v-model="form.country_code"
-                                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
-                                    >
-                                        <option value="">
-                                            Select your country
-                                        </option>
-                                        <option
-                                            v-for="c in countries"
-                                            :key="c.value"
-                                            :value="c.value"
-                                        >
-                                            {{ c.label }}
-                                        </option>
-                                    </select>
-                                    <p
-                                        v-if="form.errors.country_code"
-                                        class="mt-1 text-sm text-red-600"
-                                    >
-                                        {{ form.errors.country_code }}
-                                    </p>
-                                </div>
                                 <div>
                                     <label
                                         class="mb-2 block text-sm font-medium text-gray-700"

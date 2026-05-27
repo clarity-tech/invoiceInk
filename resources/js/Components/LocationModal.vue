@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import type { Location } from '@/types';
+import { useTaxLabel, type TaxLabels } from '@/composables/useTaxLabel';
 
 const props = defineProps<{
     show: boolean;
     customerId: number;
     location?: Location | null;
     countries: Record<string, string>;
+    taxLabels: TaxLabels;
 }>();
 
 const emit = defineEmits<{
@@ -27,6 +29,9 @@ const form = useForm({
 
 const fieldErrors = ref<Record<string, string>>({});
 
+const formCountry = computed(() => form.country);
+const { label: taxLabel, isIndia } = useTaxLabel(formCountry, props.taxLabels);
+
 function validateGstin() {
     const val = form.gstin.trim();
 
@@ -36,15 +41,19 @@ function validateGstin() {
         return;
     }
 
-    const gstinRegex =
-        /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    if (isIndia.value) {
+        const gstinRegex =
+            /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 
-    if (!gstinRegex.test(val.toUpperCase())) {
-        fieldErrors.value.gstin =
-            'Invalid GSTIN format. Expected: 29ABCDE1234F1Z5 (15 characters)';
-    } else {
-        delete fieldErrors.value.gstin;
+        if (!gstinRegex.test(val.toUpperCase())) {
+            fieldErrors.value.gstin =
+                'Invalid GSTIN format. Expected: 29ABCDE1234F1Z5 (15 characters)';
+
+            return;
+        }
     }
+
+    delete fieldErrors.value.gstin;
 }
 
 function validateRequired(field: string, label: string) {
@@ -171,7 +180,49 @@ function submit() {
                                 <div>
                                     <label
                                         class="block text-sm font-medium text-gray-700"
-                                        >GSTIN</label
+                                        >Country *</label
+                                    >
+                                    <select
+                                        v-model="form.country"
+                                        class="mt-1 block w-full rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        :class="
+                                            fieldErrors.country
+                                                ? 'border-red-300'
+                                                : 'border-gray-300'
+                                        "
+                                        @change="
+                                            validateRequired(
+                                                'country',
+                                                'Country',
+                                            )
+                                        "
+                                    >
+                                        <option value="">Select country</option>
+                                        <option
+                                            v-for="(label, value) in countries"
+                                            :key="value"
+                                            :value="value"
+                                        >
+                                            {{ label }}
+                                        </option>
+                                    </select>
+                                    <p
+                                        v-if="fieldErrors.country"
+                                        class="mt-1 text-sm text-red-600"
+                                    >
+                                        {{ fieldErrors.country }}
+                                    </p>
+                                    <p
+                                        v-else-if="form.errors.country"
+                                        class="mt-1 text-sm text-red-600"
+                                    >
+                                        {{ form.errors.country }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700"
+                                        >{{ taxLabel }}</label
                                     >
                                     <input
                                         v-model="form.gstin"
@@ -182,13 +233,21 @@ function submit() {
                                                 ? 'border-red-300'
                                                 : 'border-gray-300'
                                         "
-                                        placeholder="e.g., 29ABCDE1234F1Z5"
-                                        maxlength="15"
+                                        :placeholder="
+                                            isIndia
+                                                ? 'e.g., 29ABCDE1234F1Z5'
+                                                : ''
+                                        "
+                                        :maxlength="isIndia ? 15 : 50"
                                         @blur="validateGstin"
                                         @input="
-                                            form.gstin = (
-                                                $event.target as HTMLInputElement
-                                            ).value.toUpperCase()
+                                            form.gstin = isIndia
+                                                ? (
+                                                      $event.target as HTMLInputElement
+                                                  ).value.toUpperCase()
+                                                : (
+                                                      $event.target as HTMLInputElement
+                                                  ).value
                                         "
                                     />
                                     <p
@@ -204,7 +263,7 @@ function submit() {
                                         {{ form.errors.gstin }}
                                     </p>
                                     <p
-                                        v-else
+                                        v-else-if="isIndia"
                                         class="mt-1 text-xs text-gray-400"
                                     >
                                         15-character alphanumeric (e.g.,
@@ -256,7 +315,7 @@ function submit() {
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
                                     />
                                 </div>
-                                <div class="grid grid-cols-2 gap-4">
+                                <div class="grid grid-cols-3 gap-4">
                                     <div>
                                         <label
                                             class="block text-sm font-medium text-gray-700"
@@ -320,54 +379,6 @@ function submit() {
                                             class="mt-1 text-sm text-red-600"
                                         >
                                             {{ form.errors.state }}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label
-                                            class="block text-sm font-medium text-gray-700"
-                                            >Country *</label
-                                        >
-                                        <select
-                                            v-model="form.country"
-                                            class="mt-1 block w-full rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
-                                            :class="
-                                                fieldErrors.country
-                                                    ? 'border-red-300'
-                                                    : 'border-gray-300'
-                                            "
-                                            @change="
-                                                validateRequired(
-                                                    'country',
-                                                    'Country',
-                                                )
-                                            "
-                                        >
-                                            <option value="">
-                                                Select country
-                                            </option>
-                                            <option
-                                                v-for="(
-                                                    label, value
-                                                ) in countries"
-                                                :key="value"
-                                                :value="value"
-                                            >
-                                                {{ label }}
-                                            </option>
-                                        </select>
-                                        <p
-                                            v-if="fieldErrors.country"
-                                            class="mt-1 text-sm text-red-600"
-                                        >
-                                            {{ fieldErrors.country }}
-                                        </p>
-                                        <p
-                                            v-else-if="form.errors.country"
-                                            class="mt-1 text-sm text-red-600"
-                                        >
-                                            {{ form.errors.country }}
                                         </p>
                                     </div>
                                     <div>

@@ -154,3 +154,27 @@ test('location polymorphic relationship works with different models', function (
     expect($organizationLocation->locatable->name)->toBe('Test Organization');
     expect($customerLocation->locatable->name)->toBe('Test Customer');
 });
+
+test('taxIdLabel returns GSTIN for Indian location', function () {
+    $location = new Location(['country' => 'IN']);
+
+    expect($location->taxIdLabel())->toBe('GSTIN');
+});
+
+test('taxIdLabel returns country-specific name for non-Indian location', function () {
+    expect((new Location(['country' => 'AE']))->taxIdLabel())->toBe('TRN');
+    expect((new Location(['country' => 'US']))->taxIdLabel())->toBe('EIN');
+    expect((new Location(['country' => 'AU']))->taxIdLabel())->toBe('ABN');
+    expect((new Location(['country' => 'GB']))->taxIdLabel())->toBe('VAT Registration Number');
+});
+
+test('taxIdLabel falls back to "Tax ID" when country is unknown or empty', function () {
+    expect((new Location(['country' => 'ZZ']))->taxIdLabel())->toBe('Tax ID');
+    expect((new Location(['country' => '']))->taxIdLabel())->toBe('Tax ID');
+});
+
+test('isIndian returns true only when country is IN', function () {
+    expect((new Location(['country' => 'IN']))->isIndian())->toBeTrue();
+    expect((new Location(['country' => 'US']))->isIndian())->toBeFalse();
+    expect((new Location(['country' => '']))->isIndian())->toBeFalse();
+});

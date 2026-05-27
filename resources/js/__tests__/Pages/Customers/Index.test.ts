@@ -119,6 +119,7 @@ const defaultProps = () => ({
     customers: makePaginatedCustomers(),
     currencies: { INR: 'Indian Rupee', USD: 'US Dollar', EUR: 'Euro' },
     countries: { IN: 'India', US: 'United States' },
+    taxLabels: { IN: 'GSTIN', US: 'EIN' },
 });
 
 function mountComponent(propsOverride = {}) {

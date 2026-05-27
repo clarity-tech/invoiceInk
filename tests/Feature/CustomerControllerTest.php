@@ -583,5 +583,9 @@ test('currencies are passed to index page', function () {
         ->assertInertia(fn ($page) => $page
             ->has('currencies')
             ->has('countries')
+            ->has('taxLabels')
+            ->where('taxLabels.IN', 'GSTIN')
+            ->where('taxLabels.US', 'EIN')
+            ->where('taxLabels.AE', 'TRN')
         );
 });

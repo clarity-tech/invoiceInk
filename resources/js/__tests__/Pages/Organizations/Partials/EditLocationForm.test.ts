@@ -70,7 +70,12 @@ const countries = [
         financial_year_options: { april_march: 'April - March' },
         default_financial_year: 'april_march',
         supported_currencies: { INR: 'Indian Rupee' },
-        tax_system: { name: 'GST', rates: ['18%'] },
+        tax_system: {
+            name: 'GST',
+            rates: ['18%'],
+            number_format: 'GSTIN',
+            number_length: 15,
+        },
         recommended_numbering: '{PREFIX}-{FY}-{SEQUENCE:4}',
     },
 ];

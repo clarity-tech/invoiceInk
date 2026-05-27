@@ -240,6 +240,7 @@ return [
         'valid_email_required' => 'Please enter a valid email address.',
         'valid_email_address' => 'Please provide a valid email address.',
         'currency_not_supported' => 'The selected currency is not supported by :country. Supported currencies: :currencies',
+        'country_required_before_currency' => 'Please select a country in the previous step before choosing a currency.',
         'failed_load_organization' => 'Failed to load organization for editing: :error',
         'failed_load_organization_data' => 'Failed to load organization data: :error',
         'failed_process_emails' => 'Failed to process email addresses: :error',

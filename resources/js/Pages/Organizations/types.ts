@@ -47,6 +47,11 @@ export interface CountryInfo {
     financial_year_options: Record<string, string>;
     default_financial_year: string;
     supported_currencies: Record<string, string>;
-    tax_system: { name: string; rates: string[] };
+    tax_system: {
+        name: string;
+        rates: string[];
+        number_format: string;
+        number_length: number;
+    };
     recommended_numbering: string;
 }
