@@ -73,16 +73,13 @@ function deleteInvoice() {
 
     // Optimistic: remove from list immediately, auto-reverts on failure
     router
-        .optimistic((page) => {
-            const invoices = (page.props as any).invoices;
-
-            if (invoices?.data) {
-                invoices.data = invoices.data.filter(
-                    (i: Invoice) => i.id !== id,
-                );
-                invoices.total = Math.max(0, invoices.total - 1);
-            }
-        })
+        .optimistic((current: any) => ({
+            invoices: {
+                ...current.invoices,
+                data: current.invoices.data.filter((i: Invoice) => i.id !== id),
+                total: Math.max(0, current.invoices.total - 1),
+            },
+        }))
         .delete(`/invoices/${id}`, {
             preserveScroll: true,
         });
@@ -144,6 +141,12 @@ const tabs = [
                 </h2>
                 <div class="flex gap-2">
                     <a
+                        href="/invoices/trash"
+                        class="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50"
+                    >
+                        Trash
+                    </a>
+                    <a
                         href="/estimates/create"
                         class="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700"
                     >
@@ -167,7 +170,7 @@ const tabs = [
                         v-for="tab in tabs"
                         :key="tab.key"
                         type="button"
-                        class="rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                        class="cursor-pointer rounded-md px-4 py-2 text-sm font-medium transition-colors"
                         :class="
                             activeTab === tab.key
                                 ? 'bg-white text-gray-900 shadow-sm'
@@ -315,7 +318,7 @@ const tabs = [
                                     >
                                     <button
                                         type="button"
-                                        class="text-gray-600 hover:text-gray-900 disabled:opacity-50"
+                                        class="cursor-pointer text-gray-600 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
                                         :disabled="duplicating === invoice.id"
                                         @click="duplicateInvoice(invoice)"
                                     >
@@ -328,7 +331,7 @@ const tabs = [
                                     <button
                                         v-if="invoice.type === 'estimate'"
                                         type="button"
-                                        class="text-purple-600 hover:text-purple-900 disabled:opacity-50"
+                                        class="cursor-pointer text-purple-600 hover:text-purple-900 disabled:cursor-not-allowed disabled:opacity-50"
                                         :disabled="converting === invoice.id"
                                         @click="convertEstimate(invoice)"
                                     >
@@ -340,7 +343,7 @@ const tabs = [
                                     </button>
                                     <button
                                         type="button"
-                                        class="text-red-600 hover:text-red-900"
+                                        class="cursor-pointer text-red-600 hover:text-red-900"
                                         @click="confirmDelete(invoice)"
                                     >
                                         Delete
@@ -417,7 +420,7 @@ const tabs = [
                             <button
                                 v-if="link.url"
                                 type="button"
-                                class="relative inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium"
+                                class="relative inline-flex cursor-pointer items-center rounded-md border px-4 py-2 text-sm font-medium"
                                 :class="
                                     link.active
                                         ? 'border-brand-500 bg-brand-50 text-brand-600'

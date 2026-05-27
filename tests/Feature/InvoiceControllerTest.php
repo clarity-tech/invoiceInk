@@ -59,8 +59,76 @@ test('can delete invoice', function () {
     $this->delete("/invoices/{$invoice->id}")
         ->assertRedirect();
 
-    expect(Invoice::withoutGlobalScopes()->count())->toBe(0);
-    expect(InvoiceItem::count())->toBe(0);
+    expect(Invoice::count())->toBe(0);
+    expect(Invoice::withTrashed()->count())->toBe(1);
+    expect(Invoice::withTrashed()->find($invoice->id)->trashed())->toBeTrue();
+    expect(InvoiceItem::where('invoice_id', $invoice->id)->count())->toBe($invoice->items()->count());
+});
+
+test('can render trash page listing soft-deleted invoices', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+    $this->actingAs($organization->owner);
+
+    $live = createInvoiceWithItems([], null, $organization, $customer);
+    $trashed = createInvoiceWithItems([], null, $organization, $customer);
+    $trashed->delete();
+
+    $response = $this->get('/invoices/trash');
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('Invoices/Trash')
+        ->has('invoices.data', 1)
+        ->where('invoices.data.0.id', $trashed->id)
+    );
+});
+
+test('can restore a soft-deleted invoice', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+    $this->actingAs($organization->owner);
+
+    $invoice = createInvoiceWithItems([], null, $organization, $customer);
+    $invoice->delete();
+
+    expect(Invoice::count())->toBe(0);
+
+    $this->post("/invoices/{$invoice->id}/restore")
+        ->assertRedirect();
+
+    expect(Invoice::count())->toBe(1);
+    expect(Invoice::find($invoice->id)->trashed())->toBeFalse();
+});
+
+test('cannot restore another organizations invoice', function () {
+    $organization1 = createOrganizationWithLocation();
+    $organization2 = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization1);
+
+    $invoice = createInvoiceWithItems([], null, $organization1, $customer);
+    $invoice->delete();
+
+    $this->actingAs($organization2->owner);
+
+    $this->post("/invoices/{$invoice->id}/restore")
+        ->assertNotFound();
+});
+
+test('can permanently delete a soft-deleted invoice', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+    $this->actingAs($organization->owner);
+
+    $invoice = createInvoiceWithItems([], null, $organization, $customer);
+    $invoiceId = $invoice->id;
+    $invoice->delete();
+
+    $this->delete("/invoices/{$invoiceId}/force")
+        ->assertRedirect();
+
+    expect(Invoice::withTrashed()->find($invoiceId))->toBeNull();
+    expect(InvoiceItem::where('invoice_id', $invoiceId)->count())->toBe(0);
 });
 
 test('cannot delete another organizations invoice', function () {

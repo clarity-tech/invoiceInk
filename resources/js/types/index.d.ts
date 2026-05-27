@@ -103,6 +103,7 @@ export interface Location {
     locatable_id: number;
     created_at: string;
     updated_at: string;
+    deleted_at?: string | null;
 }
 
 export interface Customer {
@@ -115,8 +116,10 @@ export interface Customer {
     primary_location_id: number | null;
     primary_location?: Location;
     locations?: Location[];
+    archived_locations?: Location[];
     created_at: string;
     updated_at: string;
+    deleted_at?: string | null;
 }
 
 export interface Invoice {
@@ -156,6 +159,7 @@ export interface Invoice {
     payments?: Payment[];
     created_at: string;
     updated_at: string;
+    deleted_at?: string | null;
 }
 
 export interface Payment {

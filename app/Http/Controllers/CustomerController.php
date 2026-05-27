@@ -22,7 +22,7 @@ class CustomerController extends Controller
 {
     public function index(): Response
     {
-        $customers = Customer::with(['primaryLocation', 'locations'])
+        $customers = Customer::with(['primaryLocation', 'locations', 'archivedLocations'])
             ->withCount('locations')
             ->latest()
             ->orderBy('id')
@@ -80,20 +80,56 @@ class CustomerController extends Controller
     {
         $this->authorizeCustomer($customer);
 
+        $customer->delete();
+
+        return back()->with('success', __('messages.notifications.customer_deleted'));
+    }
+
+    public function trash(): Response
+    {
+        $customers = Customer::onlyTrashed()
+            ->with(['primaryLocation', 'locations'])
+            ->withCount('locations')
+            ->latest('deleted_at')
+            ->paginate(10);
+
+        return Inertia::render('Customers/Trash', [
+            'customers' => $customers,
+        ]);
+    }
+
+    public function restore(Customer $customer): RedirectResponse
+    {
+        $this->authorize('restore', $customer);
+
+        $customer->restore();
+
+        return back()->with('success', __('messages.notifications.customer_restored'));
+    }
+
+    public function forceDestroy(Customer $customer): RedirectResponse
+    {
+        $this->authorize('forceDelete', $customer);
+
         $invoiceCount = Invoice::withoutGlobalScopes()
             ->where('customer_id', $customer->id)
             ->count();
 
         if ($invoiceCount > 0) {
-            return back()->with('error', "Cannot delete customer with {$invoiceCount} existing ".Str::plural('invoice', $invoiceCount).'. Delete or reassign the invoices first.');
+            return back()->with('error', "Cannot permanently delete customer with {$invoiceCount} existing ".Str::plural('invoice', $invoiceCount).'. Delete the invoices first.');
         }
 
         $customer->primary_location_id = null;
         $customer->save();
-        $customer->locations()->delete();
-        $customer->delete();
 
-        return back()->with('success', __('messages.notifications.customer_deleted'));
+        Location::withTrashed()
+            ->where('locatable_type', Customer::class)
+            ->where('locatable_id', $customer->id)
+            ->forceDelete();
+
+        $customer->forceDelete();
+
+        return back()->with('success', __('messages.notifications.customer_permanently_deleted'));
     }
 
     public function storeLocation(Request $request, Customer $customer): RedirectResponse
@@ -171,14 +207,6 @@ class CustomerController extends Controller
             return back()->with('error', __('forms.validation.cannot_delete_last_location'));
         }
 
-        $isReferencedByInvoice = Invoice::where('customer_location_id', $location->id)
-            ->orWhere('customer_shipping_location_id', $location->id)
-            ->exists();
-
-        if ($isReferencedByInvoice) {
-            return back()->with('error', __('forms.validation.cannot_delete_location_with_invoices'));
-        }
-
         DB::transaction(function () use ($customer, $location) {
             if ($customer->primary_location_id === $location->id) {
                 $newPrimary = $customer->locations()->where('id', '!=', $location->id)->first();
@@ -189,6 +217,37 @@ class CustomerController extends Controller
         });
 
         return back()->with('success', __('messages.notifications.location_deleted'));
+    }
+
+    public function restoreLocation(Request $request, Customer $customer, Location $location): RedirectResponse
+    {
+        $this->authorizeCustomer($customer);
+        $this->authorizeLocation($customer, $location);
+
+        $location->restore();
+
+        return back()->with('success', __('messages.notifications.location_restored'));
+    }
+
+    public function forceDestroyLocation(Request $request, Customer $customer, Location $location): RedirectResponse
+    {
+        $this->authorizeCustomer($customer);
+        $this->authorizeLocation($customer, $location);
+
+        $isReferencedByInvoice = Invoice::withoutGlobalScopes()
+            ->where(function ($q) use ($location) {
+                $q->where('customer_location_id', $location->id)
+                    ->orWhere('customer_shipping_location_id', $location->id);
+            })
+            ->exists();
+
+        if ($isReferencedByInvoice) {
+            return back()->with('error', __('forms.validation.cannot_delete_location_with_invoices'));
+        }
+
+        $location->forceDelete();
+
+        return back()->with('success', __('messages.notifications.location_permanently_deleted'));
     }
 
     public function setPrimaryLocation(Request $request, Customer $customer, Location $location): RedirectResponse

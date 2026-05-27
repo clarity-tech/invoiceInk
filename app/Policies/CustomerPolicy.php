@@ -46,4 +46,20 @@ class CustomerPolicy
     {
         return $user->allTeams()->contains('id', $customer->organization_id);
     }
+
+    /**
+     * Determine whether the user can restore the model.
+     */
+    public function restore(User $user, Customer $customer): bool
+    {
+        return $user->allTeams()->contains('id', $customer->organization_id);
+    }
+
+    /**
+     * Determine whether the user can permanently delete the model.
+     */
+    public function forceDelete(User $user, Customer $customer): bool
+    {
+        return $user->allTeams()->contains('id', $customer->organization_id);
+    }
 }

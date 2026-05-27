@@ -10,10 +10,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Customer extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -35,6 +36,11 @@ class Customer extends Model
     public function locations(): MorphMany
     {
         return $this->morphMany(Location::class, 'locatable');
+    }
+
+    public function archivedLocations(): MorphMany
+    {
+        return $this->morphMany(Location::class, 'locatable')->onlyTrashed();
     }
 
     public function primaryLocation(): BelongsTo

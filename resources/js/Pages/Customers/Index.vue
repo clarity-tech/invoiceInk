@@ -124,14 +124,13 @@ function deleteCustomer() {
 
     // Optimistic: remove from list immediately, auto-reverts on failure
     router
-        .optimistic((page) => {
-            const customers = (page.props as any).customers;
-
-            if (customers?.data) {
-                customers.data = customers.data.filter((c: any) => c.id !== id);
-                customers.total = Math.max(0, customers.total - 1);
-            }
-        })
+        .optimistic((props: any) => ({
+            customers: {
+                ...props.customers,
+                data: props.customers.data.filter((c: any) => c.id !== id),
+                total: Math.max(0, props.customers.total - 1),
+            },
+        }))
         .delete(`/customers/${id}`, {
             preserveScroll: true,
             onFinish: () => {
@@ -212,6 +211,48 @@ function setPrimary(customerId: number, locationId: number) {
     );
 }
 
+const restoringLocation = ref<number | null>(null);
+
+function restoreLocation(customerId: number, locationId: number) {
+    restoringLocation.value = locationId;
+    router.post(
+        `/customers/${customerId}/locations/${locationId}/restore`,
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                restoringLocation.value = null;
+            },
+        },
+    );
+}
+
+const confirmingLocationForceDelete = ref(false);
+const locationToForceDelete = ref<{
+    customerId: number;
+    locationId: number;
+} | null>(null);
+
+function confirmForceDeleteLocation(customerId: number, locationId: number) {
+    locationToForceDelete.value = { customerId, locationId };
+    confirmingLocationForceDelete.value = true;
+}
+
+function forceDeleteLocation() {
+    if (!locationToForceDelete.value) {
+        return;
+    }
+
+    const { customerId, locationId } = locationToForceDelete.value;
+
+    confirmingLocationForceDelete.value = false;
+    locationToForceDelete.value = null;
+
+    router.delete(`/customers/${customerId}/locations/${locationId}/force`, {
+        preserveScroll: true,
+    });
+}
+
 function primaryEmail(customer: Customer): string {
     return customer.emails?.[0]?.email ?? '';
 }
@@ -234,13 +275,21 @@ function locationSummary(customer: Customer): string {
                 <h2 class="text-xl leading-tight font-semibold text-gray-800">
                     Customers
                 </h2>
-                <button
-                    type="button"
-                    class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
-                    @click="openCreate"
-                >
-                    Add Customer
-                </button>
+                <div class="flex gap-2">
+                    <a
+                        href="/customers/trash"
+                        class="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50"
+                    >
+                        Trash
+                    </a>
+                    <button
+                        type="button"
+                        class="cursor-pointer rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
+                        @click="openCreate"
+                    >
+                        Add Customer
+                    </button>
+                </div>
             </div>
         </template>
 
@@ -445,89 +494,165 @@ function locationSummary(customer: Customer): string {
                             <tr
                                 v-if="
                                     expandedRows.has(customer.id) &&
-                                    customer.locations?.length
+                                    (customer.locations?.length ||
+                                        customer.archived_locations?.length)
                                 "
                             >
                                 <td colspan="7" class="bg-gray-50 px-6 py-3">
-                                    <div
-                                        class="mb-2 text-xs font-medium text-gray-500 uppercase"
-                                    >
-                                        Locations ({{
-                                            customer.locations.length
-                                        }})
-                                    </div>
-                                    <div
-                                        v-for="loc in customer.locations"
-                                        :key="loc.id"
-                                        class="flex items-center justify-between border-b border-gray-100 py-2 last:border-0"
-                                    >
-                                        <div class="text-sm">
-                                            <span
-                                                class="font-medium text-gray-900"
-                                                >{{ loc.name }}</span
-                                            >
-                                            <span
-                                                v-if="
-                                                    customer.primary_location_id ===
-                                                    loc.id
-                                                "
-                                                class="ml-1 inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800"
-                                                >Primary</span
-                                            >
-                                            <span class="ml-2 text-gray-500"
-                                                >{{ loc.address_line_1 }},
-                                                {{ loc.city }},
-                                                {{ loc.state }}</span
-                                            >
-                                            <span
-                                                v-if="loc.gstin"
-                                                class="ml-2 text-gray-400"
-                                                >GSTIN: {{ loc.gstin }}</span
-                                            >
+                                    <template v-if="customer.locations?.length">
+                                        <div
+                                            class="mb-2 text-xs font-medium text-gray-500 uppercase"
+                                        >
+                                            Locations ({{
+                                                customer.locations.length
+                                            }})
                                         </div>
-                                        <div class="flex gap-2">
-                                            <button
-                                                v-if="
-                                                    customer.primary_location_id !==
-                                                    loc.id
-                                                "
-                                                type="button"
-                                                class="text-xs text-brand-600 hover:text-brand-900"
-                                                @click="
-                                                    setPrimary(
-                                                        customer.id,
-                                                        loc.id,
-                                                    )
-                                                "
-                                            >
-                                                Set Primary
-                                            </button>
-                                            <button
-                                                type="button"
-                                                class="text-xs text-brand-600 hover:text-brand-900"
-                                                @click="
-                                                    openEditLocation(
-                                                        customer.id,
-                                                        loc,
-                                                    )
-                                                "
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                type="button"
-                                                class="text-xs text-red-600 hover:text-red-900"
-                                                @click="
-                                                    confirmDeleteLocation(
-                                                        customer.id,
-                                                        loc.id,
-                                                    )
-                                                "
-                                            >
-                                                Delete
-                                            </button>
+                                        <div
+                                            v-for="loc in customer.locations"
+                                            :key="loc.id"
+                                            class="flex items-center justify-between border-b border-gray-100 py-2 last:border-0"
+                                        >
+                                            <div class="text-sm">
+                                                <span
+                                                    class="font-medium text-gray-900"
+                                                    >{{ loc.name }}</span
+                                                >
+                                                <span
+                                                    v-if="
+                                                        customer.primary_location_id ===
+                                                        loc.id
+                                                    "
+                                                    class="ml-1 inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800"
+                                                    >Primary</span
+                                                >
+                                                <span class="ml-2 text-gray-500"
+                                                    >{{ loc.address_line_1 }},
+                                                    {{ loc.city }},
+                                                    {{ loc.state }}</span
+                                                >
+                                                <span
+                                                    v-if="loc.gstin"
+                                                    class="ml-2 text-gray-400"
+                                                    >GSTIN:
+                                                    {{ loc.gstin }}</span
+                                                >
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <button
+                                                    v-if="
+                                                        customer.primary_location_id !==
+                                                        loc.id
+                                                    "
+                                                    type="button"
+                                                    class="cursor-pointer text-xs text-brand-600 hover:text-brand-900"
+                                                    @click="
+                                                        setPrimary(
+                                                            customer.id,
+                                                            loc.id,
+                                                        )
+                                                    "
+                                                >
+                                                    Set Primary
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="cursor-pointer text-xs text-brand-600 hover:text-brand-900"
+                                                    @click="
+                                                        openEditLocation(
+                                                            customer.id,
+                                                            loc,
+                                                        )
+                                                    "
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="cursor-pointer text-xs text-red-600 hover:text-red-900"
+                                                    @click="
+                                                        confirmDeleteLocation(
+                                                            customer.id,
+                                                            loc.id,
+                                                        )
+                                                    "
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
+                                    </template>
+
+                                    <template
+                                        v-if="
+                                            customer.archived_locations?.length
+                                        "
+                                    >
+                                        <div
+                                            class="mt-4 mb-2 text-xs font-medium text-gray-400 uppercase"
+                                        >
+                                            Archived ({{
+                                                customer.archived_locations
+                                                    .length
+                                            }})
+                                        </div>
+                                        <div
+                                            v-for="loc in customer.archived_locations"
+                                            :key="loc.id"
+                                            class="flex items-center justify-between border-b border-gray-100 py-2 text-gray-400 last:border-0"
+                                        >
+                                            <div class="text-sm">
+                                                <span class="font-medium">{{
+                                                    loc.name
+                                                }}</span>
+                                                <span class="ml-2"
+                                                    >{{ loc.address_line_1 }},
+                                                    {{ loc.city }},
+                                                    {{ loc.state }}</span
+                                                >
+                                                <span
+                                                    v-if="loc.gstin"
+                                                    class="ml-2"
+                                                    >GSTIN:
+                                                    {{ loc.gstin }}</span
+                                                >
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    class="cursor-pointer text-xs text-brand-600 hover:text-brand-900 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    :disabled="
+                                                        restoringLocation ===
+                                                        loc.id
+                                                    "
+                                                    @click="
+                                                        restoreLocation(
+                                                            customer.id,
+                                                            loc.id,
+                                                        )
+                                                    "
+                                                >
+                                                    {{
+                                                        restoringLocation ===
+                                                        loc.id
+                                                            ? 'Restoring...'
+                                                            : 'Restore'
+                                                    }}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="cursor-pointer text-xs text-red-600 hover:text-red-900"
+                                                    @click="
+                                                        confirmForceDeleteLocation(
+                                                            customer.id,
+                                                            loc.id,
+                                                        )
+                                                    "
+                                                >
+                                                    Delete Forever
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </td>
                             </tr>
                         </template>
@@ -656,7 +781,7 @@ function locationSummary(customer: Customer): string {
         <ConfirmationModal
             :show="confirmingDelete"
             title="Delete Customer"
-            message="Are you sure you want to delete this customer? This action cannot be undone."
+            message="Delete this customer? You can restore them from Trash later."
             confirm-label="Delete"
             :destructive="true"
             @confirm="deleteCustomer"
@@ -667,11 +792,22 @@ function locationSummary(customer: Customer): string {
         <ConfirmationModal
             :show="confirmingLocationDelete"
             title="Delete Location"
-            message="Are you sure you want to delete this location? This action cannot be undone."
+            message="Delete this location? It will be archived and can be restored later. Invoices that already use it will still display the address."
             confirm-label="Delete"
             :destructive="true"
             @confirm="deleteLocation"
             @cancel="confirmingLocationDelete = false"
+        />
+
+        <!-- Location Force Delete Confirmation -->
+        <ConfirmationModal
+            :show="confirmingLocationForceDelete"
+            title="Delete Location Forever"
+            message="Permanently delete this archived location? This cannot be undone. If any invoice references it, the deletion will be blocked."
+            confirm-label="Delete Forever"
+            :destructive="true"
+            @confirm="forceDeleteLocation"
+            @cancel="confirmingLocationForceDelete = false"
         />
     </AppLayout>
 </template>

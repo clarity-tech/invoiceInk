@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Contracts\Services\PdfServiceInterface;
 use App\Models\Invoice;
+use App\Models\Scopes\OrganizationScope;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -11,7 +12,7 @@ class PublicViewController extends Controller
 {
     public function showInvoice(string $ulid): View
     {
-        $invoice = Invoice::withoutGlobalScopes()
+        $invoice = Invoice::withoutGlobalScope(OrganizationScope::class)
             ->with([
                 'items',
                 'organization',
@@ -29,7 +30,7 @@ class PublicViewController extends Controller
 
     public function showEstimate(string $ulid): View
     {
-        $estimate = Invoice::withoutGlobalScopes()
+        $estimate = Invoice::withoutGlobalScope(OrganizationScope::class)
             ->with([
                 'items',
                 'organization',
@@ -47,7 +48,7 @@ class PublicViewController extends Controller
 
     public function downloadInvoicePdf(string $ulid, PdfServiceInterface $pdfService): Response
     {
-        $invoice = Invoice::withoutGlobalScopes()
+        $invoice = Invoice::withoutGlobalScope(OrganizationScope::class)
             ->with([
                 'items',
                 'organization',
@@ -65,7 +66,7 @@ class PublicViewController extends Controller
 
     public function downloadEstimatePdf(string $ulid, PdfServiceInterface $pdfService): Response
     {
-        $estimate = Invoice::withoutGlobalScopes()
+        $estimate = Invoice::withoutGlobalScope(OrganizationScope::class)
             ->with([
                 'items',
                 'organization',

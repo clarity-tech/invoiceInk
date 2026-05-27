@@ -472,7 +472,10 @@ const flash = computed(() => (page.props as any).flash ?? {});
                                     :key="customer.id"
                                     :value="customer.id"
                                 >
-                                    {{ customer.name }}
+                                    {{ customer.name
+                                    }}{{
+                                        customer.deleted_at ? ' (Archived)' : ''
+                                    }}
                                 </option>
                             </select>
                             <p
@@ -526,7 +529,7 @@ const flash = computed(() => (page.props as any).flash ?? {});
                                         loc.id
                                             ? ' (Primary)'
                                             : ''
-                                    }}
+                                    }}{{ loc.deleted_at ? ' (Archived)' : '' }}
                                 </option>
                             </select>
                             <p
@@ -617,7 +620,7 @@ const flash = computed(() => (page.props as any).flash ?? {});
                                         loc.id
                                             ? ' (Primary)'
                                             : ''
-                                    }}
+                                    }}{{ loc.deleted_at ? ' (Archived)' : '' }}
                                 </option>
                             </select>
                             <p

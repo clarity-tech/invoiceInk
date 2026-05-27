@@ -13,12 +13,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Invoice extends Model implements HasMedia
 {
-    use HasFactory, HasUlids, InteractsWithMedia;
+    use HasFactory, HasUlids, InteractsWithMedia, SoftDeletes;
 
     protected $fillable = [
         'type',
@@ -71,17 +72,17 @@ class Invoice extends Model implements HasMedia
 
     public function customer(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Customer::class)->withTrashed();
     }
 
     public function customerLocation(): BelongsTo
     {
-        return $this->belongsTo(Location::class, 'customer_location_id');
+        return $this->belongsTo(Location::class, 'customer_location_id')->withTrashed();
     }
 
     public function customerShippingLocation(): BelongsTo
     {
-        return $this->belongsTo(Location::class, 'customer_shipping_location_id');
+        return $this->belongsTo(Location::class, 'customer_shipping_location_id')->withTrashed();
     }
 
     public function items(): HasMany

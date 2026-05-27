@@ -245,6 +245,41 @@ class InvoiceController extends Controller
             ->with('primaryLocation', 'locations')
             ->get();
 
+        if ($invoice->customer_id && ! $customers->contains('id', $invoice->customer_id)) {
+            $archivedCustomer = Customer::withTrashed()
+                ->where('organization_id', $organization->id)
+                ->where('id', $invoice->customer_id)
+                ->with('primaryLocation', 'locations')
+                ->first();
+
+            if ($archivedCustomer) {
+                $customers->push($archivedCustomer);
+            }
+        }
+
+        $referencedLocationIds = array_filter([
+            $invoice->customer_location_id,
+            $invoice->customer_shipping_location_id,
+        ]);
+
+        if ($invoice->customer_id && $referencedLocationIds) {
+            $archived = Location::onlyTrashed()
+                ->whereIn('id', $referencedLocationIds)
+                ->where('locatable_type', Customer::class)
+                ->where('locatable_id', $invoice->customer_id)
+                ->get();
+
+            if ($archived->isNotEmpty()) {
+                $invoiceCustomer = $customers->firstWhere('id', $invoice->customer_id);
+                if ($invoiceCustomer) {
+                    $invoiceCustomer->setRelation(
+                        'locations',
+                        $invoiceCustomer->locations->concat($archived)
+                    );
+                }
+            }
+        }
+
         $organizationLocations = Location::where('locatable_type', Organization::class)
             ->where('locatable_id', $organization->id)
             ->get();
@@ -401,10 +436,56 @@ class InvoiceController extends Controller
 
         $documentType = $invoice->type;
 
-        $invoice->items()->delete();
         $invoice->delete();
 
         return back()->with('success', ucfirst($documentType).' deleted successfully.');
+    }
+
+    public function trash(Request $request): Response
+    {
+        $this->authorize('viewAny', Invoice::class);
+
+        $query = Invoice::onlyTrashed()->with([
+            'customer',
+            'organizationLocation.locatable',
+            'customerLocation.locatable',
+        ]);
+
+        if ($request->filled('type') && in_array($request->type, ['invoice', 'estimate'])) {
+            $query->where('type', $request->type);
+        }
+
+        $invoices = $query->latest('deleted_at')->paginate(10)->withQueryString();
+
+        return Inertia::render('Invoices/Trash', [
+            'invoices' => $invoices,
+            'filters' => [
+                'type' => $request->type,
+            ],
+        ]);
+    }
+
+    public function restore(Invoice $invoice): RedirectResponse
+    {
+        $this->authorize('restore', $invoice);
+
+        $documentType = $invoice->type;
+
+        $invoice->restore();
+
+        return back()->with('success', ucfirst($documentType).' restored successfully.');
+    }
+
+    public function forceDestroy(Invoice $invoice): RedirectResponse
+    {
+        $this->authorize('forceDelete', $invoice);
+
+        $documentType = $invoice->type;
+
+        $invoice->items()->delete();
+        $invoice->forceDelete();
+
+        return back()->with('success', ucfirst($documentType).' permanently deleted.');
     }
 
     public function duplicate(Invoice $invoice): RedirectResponse

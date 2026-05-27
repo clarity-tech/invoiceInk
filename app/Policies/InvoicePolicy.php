@@ -48,6 +48,22 @@ class InvoicePolicy
     }
 
     /**
+     * Determine whether the user can restore the model.
+     */
+    public function restore(User $user, Invoice $invoice): bool
+    {
+        return $user->allTeams()->contains('id', $invoice->organization_id);
+    }
+
+    /**
+     * Determine whether the user can permanently delete the model.
+     */
+    public function forceDelete(User $user, Invoice $invoice): bool
+    {
+        return $user->allTeams()->contains('id', $invoice->organization_id);
+    }
+
+    /**
      * Determine whether the user can send the document via email.
      */
     public function send(User $user, Invoice $invoice): bool

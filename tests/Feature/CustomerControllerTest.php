@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Customer;
+use App\Models\Invoice;
 use App\Models\Location;
 use App\ValueObjects\ContactCollection;
 
@@ -146,7 +147,7 @@ test('cannot update customer from different organization', function () {
     ])->assertNotFound(); // OrganizationScope hides customer from other orgs
 });
 
-test('can delete customer', function () {
+test('can soft delete customer and locations remain', function () {
     $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation([
         'name' => 'Customer to Delete',
@@ -159,11 +160,12 @@ test('can delete customer', function () {
 
     $this->delete("/customers/{$customer->id}")->assertRedirect();
 
-    $this->assertDatabaseMissing('customers', ['id' => $customer->id]);
-    $this->assertDatabaseMissing('locations', ['id' => $locationId]);
+    expect(Customer::find($customer->id))->toBeNull();
+    expect(Customer::withTrashed()->find($customer->id)?->trashed())->toBeTrue();
+    $this->assertDatabaseHas('locations', ['id' => $locationId]);
 });
 
-test('cannot delete customer with invoices', function () {
+test('can soft delete customer with invoices', function () {
     $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation([
         'name' => 'Customer With Invoice',
@@ -176,7 +178,80 @@ test('cannot delete customer with invoices', function () {
 
     $this->delete("/customers/{$customer->id}")->assertRedirect();
 
-    $this->assertDatabaseHas('customers', ['id' => $customer->id]);
+    expect(Customer::find($customer->id))->toBeNull();
+    expect(Customer::withTrashed()->find($customer->id)?->trashed())->toBeTrue();
+});
+
+test('can render customers trash page listing soft-deleted customers', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
+    $live = createCustomerWithLocation(['name' => 'Live'], [], $organization);
+    $trashed = createCustomerWithLocation(['name' => 'Trashed'], [], $organization);
+    $trashed->delete();
+
+    $response = $this->get('/customers/trash');
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('Customers/Trash')
+        ->has('customers.data', 1)
+        ->where('customers.data.0.id', $trashed->id)
+    );
+});
+
+test('can restore a soft-deleted customer', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
+    $customer = createCustomerWithLocation([], [], $organization);
+    $customer->delete();
+
+    $this->post("/customers/{$customer->id}/restore")->assertRedirect();
+
+    expect(Customer::find($customer->id))->not->toBeNull();
+    expect(Customer::find($customer->id)->trashed())->toBeFalse();
+});
+
+test('can permanently delete a customer without invoices', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
+    $customer = createCustomerWithLocation([], [], $organization);
+    $customerId = $customer->id;
+    $locationId = $customer->primaryLocation->id;
+    $customer->delete();
+
+    $this->delete("/customers/{$customerId}/force")->assertRedirect();
+
+    expect(Customer::withTrashed()->find($customerId))->toBeNull();
+    $this->assertDatabaseMissing('locations', ['id' => $locationId]);
+});
+
+test('cannot permanently delete a customer with invoices', function () {
+    $organization = createOrganizationWithLocation();
+    $this->actingAs($organization->owner);
+
+    $customer = createCustomerWithLocation([], [], $organization);
+    createInvoiceWithItems([], null, $organization, $customer);
+    $customer->delete();
+
+    $this->delete("/customers/{$customer->id}/force")->assertRedirect();
+
+    expect(Customer::withTrashed()->find($customer->id))->not->toBeNull();
+});
+
+test('invoice list still shows customer name after customer is soft-deleted', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation(['name' => 'Will Be Trashed'], [], $organization);
+    $invoice = createInvoiceWithItems([], null, $organization, $customer);
+    $customer->delete();
+
+    $this->actingAs($organization->owner);
+
+    $loadedInvoice = Invoice::with('customer')->find($invoice->id);
+    expect($loadedInvoice->customer)->not->toBeNull();
+    expect($loadedInvoice->customer->name)->toBe('Will Be Trashed');
 });
 
 test('can add location to customer', function () {
@@ -221,11 +296,10 @@ test('can update location', function () {
     expect($location->address_line_1)->toBe('999 Updated St');
 });
 
-test('can delete location', function () {
+test('can soft delete location', function () {
     $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation([], [], $organization);
 
-    // Add a second location so we can delete one
     $secondLocation = Location::create([
         'name' => 'Second Office',
         'address_line_1' => '222 Second St',
@@ -241,7 +315,8 @@ test('can delete location', function () {
 
     $this->delete("/customers/{$customer->id}/locations/{$secondLocation->id}")->assertRedirect();
 
-    $this->assertDatabaseMissing('locations', ['id' => $secondLocation->id]);
+    expect(Location::find($secondLocation->id))->toBeNull();
+    expect(Location::withTrashed()->find($secondLocation->id)?->trashed())->toBeTrue();
 });
 
 test('cannot delete last location', function () {
@@ -257,7 +332,7 @@ test('cannot delete last location', function () {
     $this->assertDatabaseHas('locations', ['id' => $location->id]);
 });
 
-test('cannot delete primary location referenced by invoices and primary is preserved', function () {
+test('soft deleting primary location reassigns primary to another active location', function () {
     $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation([], [], $organization);
     $primaryLocation = $customer->primaryLocation;
@@ -278,18 +353,16 @@ test('cannot delete primary location referenced by invoices and primary is prese
     $this->actingAs($organization->owner);
 
     $this->delete("/customers/{$customer->id}/locations/{$primaryLocation->id}")
-        ->assertRedirect()
-        ->assertSessionHas('error');
+        ->assertRedirect();
 
-    $this->assertDatabaseHas('locations', ['id' => $primaryLocation->id]);
-    expect($customer->fresh()->primary_location_id)->toBe($primaryLocation->id);
-    expect($secondLocation->fresh())->not->toBeNull();
+    expect(Location::find($primaryLocation->id))->toBeNull();
+    expect(Location::withTrashed()->find($primaryLocation->id)?->trashed())->toBeTrue();
+    expect($customer->fresh()->primary_location_id)->toBe($secondLocation->id);
 });
 
-test('cannot delete shipping location referenced by invoices', function () {
+test('can soft delete shipping location referenced by invoices', function () {
     $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation([], [], $organization);
-    $primaryLocation = $customer->primaryLocation;
 
     $shippingLocation = Location::create([
         'name' => 'Warehouse',
@@ -309,11 +382,147 @@ test('cannot delete shipping location referenced by invoices', function () {
     $this->actingAs($organization->owner);
 
     $this->delete("/customers/{$customer->id}/locations/{$shippingLocation->id}")
+        ->assertRedirect();
+
+    expect(Location::find($shippingLocation->id))->toBeNull();
+    expect(Location::withTrashed()->find($shippingLocation->id)?->trashed())->toBeTrue();
+});
+
+test('can restore an archived location', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+
+    $secondLocation = Location::create([
+        'name' => 'Branch',
+        'address_line_1' => '1 Branch Rd',
+        'city' => 'Branch City',
+        'state' => 'Branch State',
+        'country' => 'IN',
+        'postal_code' => '11111',
+        'locatable_type' => Customer::class,
+        'locatable_id' => $customer->id,
+    ]);
+    $secondLocation->delete();
+
+    $this->actingAs($organization->owner);
+
+    $this->post("/customers/{$customer->id}/locations/{$secondLocation->id}/restore")
+        ->assertRedirect();
+
+    expect(Location::find($secondLocation->id))->not->toBeNull();
+    expect(Location::find($secondLocation->id)->trashed())->toBeFalse();
+});
+
+test('can force delete archived location not referenced by invoices', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+
+    $secondLocation = Location::create([
+        'name' => 'Branch',
+        'address_line_1' => '1 Branch Rd',
+        'city' => 'Branch City',
+        'state' => 'Branch State',
+        'country' => 'IN',
+        'postal_code' => '11111',
+        'locatable_type' => Customer::class,
+        'locatable_id' => $customer->id,
+    ]);
+    $secondLocation->delete();
+
+    $this->actingAs($organization->owner);
+
+    $this->delete("/customers/{$customer->id}/locations/{$secondLocation->id}/force")
+        ->assertRedirect();
+
+    expect(Location::withTrashed()->find($secondLocation->id))->toBeNull();
+});
+
+test('cannot force delete archived location still referenced by invoices', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+
+    $secondLocation = Location::create([
+        'name' => 'Branch',
+        'address_line_1' => '1 Branch Rd',
+        'city' => 'Branch City',
+        'state' => 'Branch State',
+        'country' => 'IN',
+        'postal_code' => '11111',
+        'locatable_type' => Customer::class,
+        'locatable_id' => $customer->id,
+    ]);
+
+    createInvoiceWithItems([
+        'customer_shipping_location_id' => $secondLocation->id,
+    ], null, $organization, $customer);
+
+    $secondLocation->delete();
+
+    $this->actingAs($organization->owner);
+
+    $this->delete("/customers/{$customer->id}/locations/{$secondLocation->id}/force")
         ->assertRedirect()
         ->assertSessionHas('error');
 
-    $this->assertDatabaseHas('locations', ['id' => $shippingLocation->id]);
-    expect($customer->fresh()->primary_location_id)->toBe($primaryLocation->id);
+    expect(Location::withTrashed()->find($secondLocation->id))->not->toBeNull();
+});
+
+test('invoice resolves customer location even after location is archived', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+    $location = $customer->primaryLocation;
+    $invoice = createInvoiceWithItems([], null, $organization, $customer);
+
+    Location::create([
+        'name' => 'Spare',
+        'address_line_1' => '1 Spare Rd',
+        'city' => 'Spare City',
+        'state' => 'Spare State',
+        'country' => 'IN',
+        'postal_code' => '11111',
+        'locatable_type' => Customer::class,
+        'locatable_id' => $customer->id,
+    ]);
+
+    $this->actingAs($organization->owner);
+    $this->delete("/customers/{$customer->id}/locations/{$location->id}")->assertRedirect();
+
+    $loaded = Invoice::with('customerLocation')->find($invoice->id);
+    expect($loaded->customerLocation)->not->toBeNull();
+    expect($loaded->customerLocation->id)->toBe($location->id);
+});
+
+test('invoice edit page includes archived referenced location in customer locations', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+    $location = $customer->primaryLocation;
+
+    Location::create([
+        'name' => 'Active',
+        'address_line_1' => '1 Active Rd',
+        'city' => 'Active City',
+        'state' => 'Active State',
+        'country' => 'IN',
+        'postal_code' => '11111',
+        'locatable_type' => Customer::class,
+        'locatable_id' => $customer->id,
+    ]);
+
+    $invoice = createInvoiceWithItems([], null, $organization, $customer);
+
+    $this->actingAs($organization->owner);
+    $this->delete("/customers/{$customer->id}/locations/{$location->id}")->assertRedirect();
+
+    $response = $this->get("/invoices/{$invoice->id}/edit");
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->where('customers', function ($customers) use ($customer, $location) {
+            $target = collect($customers)->firstWhere('id', $customer->id);
+
+            return collect($target['locations'])->contains(fn ($loc) => $loc['id'] === $location->id && ! empty($loc['deleted_at']));
+        })
+    );
 });
 
 test('can set primary location', function () {

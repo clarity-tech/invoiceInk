@@ -87,14 +87,22 @@ Route::middleware([
         Route::delete('/organizations/{organization}', [OrganizationController::class, 'destroy'])->name('organizations.destroy');
 
         // Customer management
+        Route::get('customers/trash', [CustomerController::class, 'trash'])->name('customers.trash');
+        Route::post('customers/{customer}/restore', [CustomerController::class, 'restore'])->name('customers.restore')->withTrashed();
+        Route::delete('customers/{customer}/force', [CustomerController::class, 'forceDestroy'])->name('customers.force-destroy')->withTrashed();
         Route::resource('customers', CustomerController::class)->except(['show', 'create', 'edit']);
         Route::post('customers/{customer}/locations', [CustomerController::class, 'storeLocation'])->name('customers.locations.store');
         Route::put('customers/{customer}/locations/{location}', [CustomerController::class, 'updateLocation'])->name('customers.locations.update');
         Route::delete('customers/{customer}/locations/{location}', [CustomerController::class, 'destroyLocation'])->name('customers.locations.destroy');
+        Route::post('customers/{customer}/locations/{location}/restore', [CustomerController::class, 'restoreLocation'])->name('customers.locations.restore')->withTrashed();
+        Route::delete('customers/{customer}/locations/{location}/force', [CustomerController::class, 'forceDestroyLocation'])->name('customers.locations.force-destroy')->withTrashed();
         Route::post('customers/{customer}/primary-location/{location}', [CustomerController::class, 'setPrimaryLocation'])->name('customers.primary-location');
 
         // Invoice management routes
         Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('/invoices/trash', [InvoiceController::class, 'trash'])->name('invoices.trash');
+        Route::post('/invoices/{invoice}/restore', [InvoiceController::class, 'restore'])->name('invoices.restore')->withTrashed();
+        Route::delete('/invoices/{invoice}/force', [InvoiceController::class, 'forceDestroy'])->name('invoices.force-destroy')->withTrashed();
         Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
         Route::post('/invoices/{invoice}/duplicate', [InvoiceController::class, 'duplicate'])->name('invoices.duplicate');
         Route::post('/invoices/{invoice}/convert', [InvoiceController::class, 'convertEstimate'])->name('invoices.convert');
