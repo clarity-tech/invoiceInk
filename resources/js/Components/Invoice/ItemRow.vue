@@ -63,7 +63,7 @@ function errorFor(field: string): string | undefined {
 </script>
 
 <template>
-    <tr>
+    <tr class="align-top">
         <td class="px-4 py-3">
             <input
                 :value="item.description"
