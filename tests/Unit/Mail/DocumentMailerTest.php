@@ -83,7 +83,7 @@ test('document mailer implements ShouldQueue', function () {
     expect($mailer)->toBeInstanceOf(ShouldQueue::class);
 });
 
-test('document mailer always uses custom-document view', function () {
+test('document mailer content is pre-rendered html, not a view reference', function () {
     $invoice = createInvoiceWithItems([
         'invoice_number' => 'INV-005',
         'status' => 'draft',
@@ -95,10 +95,28 @@ test('document mailer always uses custom-document view', function () {
     $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'Test', 'email' => 'test@example.com']]));
     $content = $mailer->content();
 
-    expect($content->view)->toBe('emails.custom-document');
+    expect($content->view)->toBeNull()
+        ->and($content->htmlString)->toBeString()
+        ->and($content->htmlString)->toContain('INV-005');
 });
 
-test('document mailer uses custom-document view for estimate', function () {
+test('document mailer renders inlined html for invoice', function () {
+    $invoice = createInvoiceWithItems([
+        'invoice_number' => 'INV-005',
+        'status' => 'draft',
+        'subtotal' => 4000,
+        'tax' => 720,
+        'total' => 4720,
+    ]);
+
+    $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'Test', 'email' => 'test@example.com']]));
+    $html = $mailer->renderHtml();
+
+    expect($html)->toContain('INV-005')
+        ->and($html)->toContain('class="email-body"');
+});
+
+test('document mailer renders inlined html for estimate', function () {
     $estimate = createInvoiceWithItems([
         'type' => 'estimate',
         'invoice_number' => 'EST-002',
@@ -109,12 +127,27 @@ test('document mailer uses custom-document view for estimate', function () {
     ]);
 
     $mailer = new DocumentMailer($estimate, new ContactCollection([['name' => 'Test', 'email' => 'test@example.com']]));
-    $content = $mailer->content();
+    $html = $mailer->renderHtml();
 
-    expect($content->view)->toBe('emails.custom-document');
+    expect($html)->toContain('EST-002');
 });
 
-test('document mailer passes correct data to view', function () {
+test('document mailer inlines stylesheet rules as inline styles', function () {
+    $invoice = createInvoiceWithItems(['invoice_number' => 'INV-INLINE-001']);
+
+    $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']]));
+    $html = $mailer->renderHtml();
+
+    // The CTA button colour lives only in the <style> block; after inlining it
+    // must appear as an inline style attribute (what Gmail actually honours).
+    expect($html)->toMatch('/style="[^"]*background-color:\s*#7c3aed/i')
+        // First-child margin reset is inlined onto the leading body element.
+        ->and($html)->toMatch('/style="[^"]*margin-top:\s*0/i')
+        // bgcolor attribute is kept for clients that ignore CSS backgrounds.
+        ->and($html)->toContain('bgcolor="#f4f4f4"');
+});
+
+test('document mailer renders invoice number and public url into html', function () {
     $invoice = createInvoiceWithItems([
         'invoice_number' => 'INV-006',
         'status' => 'sent',
@@ -124,12 +157,36 @@ test('document mailer passes correct data to view', function () {
     ]);
 
     $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'Recipient', 'email' => 'recipient@test.com']]));
-    $content = $mailer->content();
+    $html = $mailer->renderHtml();
 
-    expect($content->with)->toHaveKey('invoice');
-    expect($content->with)->toHaveKey('viewUrl');
-    expect($content->with['invoice'])->toBe($invoice);
-    expect($content->with['viewUrl'])->toBeString();
+    expect($html)->toContain('INV-006')
+        ->and($html)->toContain('/invoices/view/')
+        ->and($html)->toContain($invoice->ulid);
+});
+
+test('document mailer includes the view-online button by default', function () {
+    $invoice = createInvoiceWithItems(['invoice_number' => 'INV-CTA-DEFAULT']);
+    $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']]));
+
+    // class="cta-button" only appears on the anchor element; the `.cta-button`
+    // rule in the retained <style> block must not be mistaken for it.
+    expect($mailer->renderHtml())->toContain('class="cta-button"');
+});
+
+test('document mailer omits the view-online button when disabled', function () {
+    $invoice = createInvoiceWithItems(['invoice_number' => 'INV-CTA-OFF']);
+    $mailer = new DocumentMailer(
+        $invoice,
+        new ContactCollection([['name' => 'R', 'email' => 'r@test.com']]),
+        null,
+        [],
+        null,
+        false,
+        [],
+        false,
+    );
+
+    expect($mailer->renderHtml())->not->toContain('class="cta-button"');
 });
 
 test('document mailer handles different recipient emails', function () {

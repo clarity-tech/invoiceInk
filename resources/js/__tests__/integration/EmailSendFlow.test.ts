@@ -196,7 +196,14 @@ describe('EmailSendFlow', () => {
 
     it('shows attach PDF checkbox checked by default', () => {
         const wrapper = mountComponent();
-        const checkbox = wrapper.find('input[type="checkbox"]');
+        // Scope to the attachment row's label so the assertion targets the
+        // attach-PDF checkbox regardless of other checkboxes (e.g. the
+        // "View Online" toggle) or their order in the modal.
+        const pdfRow = wrapper
+            .findAll('label')
+            .find((label) => label.text().includes('.pdf'));
+        expect(pdfRow?.exists()).toBe(true);
+        const checkbox = pdfRow!.find('input[type="checkbox"]');
         expect(checkbox.exists()).toBe(true);
         expect((checkbox.element as HTMLInputElement).checked).toBe(true);
     });

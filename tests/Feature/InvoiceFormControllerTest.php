@@ -1,7 +1,11 @@
 <?php
 
 use App\Contracts\Services\PdfServiceInterface;
+use App\Mail\DocumentMailer;
 use App\Models\Invoice;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
 
 beforeEach(function () {
@@ -262,4 +266,122 @@ test('send email denies unauthenticated access', function () {
         'subject' => 'Test',
         'body' => 'Body',
     ])->assertRedirect('/login');
+});
+
+test('send email stores uploaded attachments and forwards them to the mailer', function () {
+    Mail::fake();
+    Storage::fake(config('filesystems.default'));
+
+    $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
+
+    $this->mock(PdfServiceInterface::class, function ($mock) {
+        $mock->shouldReceive('generateInvoicePdf')->andReturn('fake-pdf-content');
+    });
+
+    $contract = UploadedFile::fake()->create('contract.pdf', 500, 'application/pdf');
+    $photo = UploadedFile::fake()->image('photo.png');
+
+    $this->post(route('invoices.send-email', $invoice->id), [
+        'recipients' => ['test@example.test'],
+        'cc' => [],
+        'subject' => 'Test Invoice',
+        'body' => 'Please review.',
+        'attach_pdf' => true,
+        'attachments' => [$contract, $photo],
+    ])->assertRedirect();
+
+    Mail::assertQueued(DocumentMailer::class, function (DocumentMailer $mail) {
+        return count($mail->extraAttachments) === 2
+            && $mail->extraAttachments[0]['name'] === 'contract.pdf'
+            && $mail->extraAttachments[1]['name'] === 'photo.png';
+    });
+
+    $disk = Storage::disk(config('filesystems.default'));
+    $stored = $disk->allFiles('email-attachments');
+    expect($stored)->toHaveCount(2);
+});
+
+test('send email rejects too many attachments', function () {
+    $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
+
+    $files = array_fill(0, 11, UploadedFile::fake()->create('x.pdf', 10, 'application/pdf'));
+
+    $this->post(route('invoices.send-email', $invoice->id), [
+        'recipients' => ['test@example.test'],
+        'subject' => 'Test',
+        'body' => 'Body',
+        'attachments' => $files,
+    ])->assertSessionHasErrors('attachments');
+});
+
+test('send email rejects an oversized attachment', function () {
+    $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
+
+    $big = UploadedFile::fake()->create('huge.pdf', 11 * 1024, 'application/pdf');
+
+    $this->post(route('invoices.send-email', $invoice->id), [
+        'recipients' => ['test@example.test'],
+        'subject' => 'Test',
+        'body' => 'Body',
+        'attachments' => [$big],
+    ])->assertSessionHasErrors('attachments.0');
+});
+
+test('send email rejects unsupported mime types', function () {
+    $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
+
+    $exe = UploadedFile::fake()->create('virus.exe', 10, 'application/octet-stream');
+
+    $this->post(route('invoices.send-email', $invoice->id), [
+        'recipients' => ['test@example.test'],
+        'subject' => 'Test',
+        'body' => 'Body',
+        'attachments' => [$exe],
+    ])->assertSessionHasErrors('attachments.0');
+});
+
+test('send email defaults include_view_online_button to true when omitted', function () {
+    Mail::fake();
+    $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
+
+    $this->post(route('invoices.send-email', $invoice->id), [
+        'recipients' => ['test@example.test'],
+        'subject' => 'Test',
+        'body' => 'Body',
+    ])->assertRedirect();
+
+    Mail::assertQueued(DocumentMailer::class, fn (DocumentMailer $m) => $m->includeViewOnlineButton === true);
+});
+
+test('send email forwards include_view_online_button=false to the mailer', function () {
+    Mail::fake();
+    $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
+
+    $this->post(route('invoices.send-email', $invoice->id), [
+        'recipients' => ['test@example.test'],
+        'subject' => 'Test',
+        'body' => 'Body',
+        'include_view_online_button' => false,
+    ])->assertRedirect();
+
+    Mail::assertQueued(DocumentMailer::class, fn (DocumentMailer $m) => $m->includeViewOnlineButton === false);
+});
+
+test('send email rejects when combined attachment size exceeds the cap', function () {
+    Storage::fake(config('filesystems.default'));
+    $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
+
+    // 3 files * 10MB = 30MB total, each individually allowed.
+    $files = array_map(
+        fn ($i) => UploadedFile::fake()->create("file-{$i}.pdf", 10 * 1024, 'application/pdf'),
+        range(1, 3),
+    );
+
+    $this->post(route('invoices.send-email', $invoice->id), [
+        'recipients' => ['test@example.test'],
+        'subject' => 'Test',
+        'body' => 'Body',
+        'attach_pdf' => false,
+        'attachments' => $files,
+    ])->assertSessionHasErrors('attachments');
 });

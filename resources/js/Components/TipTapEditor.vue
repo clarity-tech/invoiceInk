@@ -4,7 +4,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
 import StarterKit from '@tiptap/starter-kit';
 import { EditorContent, useEditor } from '@tiptap/vue-3';
-import { watch } from 'vue';
+import { nextTick, onBeforeUnmount, ref, watch } from 'vue';
 
 const props = defineProps<{
     modelValue: string;
@@ -52,6 +52,102 @@ watch(
 function insertText(text: string) {
     editor.value?.chain().focus().insertContent(text).run();
 }
+
+const linkPopoverOpen = ref(false);
+const linkUrl = ref('');
+const linkInputRef = ref<HTMLInputElement | null>(null);
+const linkPopoverRef = ref<HTMLElement | null>(null);
+const linkButtonRef = ref<HTMLButtonElement | null>(null);
+
+function openLinkPopover() {
+    if (!editor.value) {
+        return;
+    }
+
+    linkUrl.value = editor.value.getAttributes('link').href ?? '';
+    linkPopoverOpen.value = true;
+
+    nextTick(() => {
+        linkInputRef.value?.focus();
+        linkInputRef.value?.select();
+    });
+}
+
+function closeLinkPopover() {
+    linkPopoverOpen.value = false;
+    linkUrl.value = '';
+}
+
+function normalizeUrl(input: string): string {
+    const trimmed = input.trim();
+
+    if (trimmed === '') {
+        return '';
+    }
+
+    if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
+        return trimmed;
+    }
+
+    if (trimmed.startsWith('/') || trimmed.startsWith('#')) {
+        return trimmed;
+    }
+
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+        return `mailto:${trimmed}`;
+    }
+
+    return `https://${trimmed}`;
+}
+
+function applyLink() {
+    if (!editor.value) {
+        return;
+    }
+
+    const url = normalizeUrl(linkUrl.value);
+
+    if (url === '') {
+        editor.value.chain().focus().extendMarkRange('link').unsetLink().run();
+    } else {
+        editor.value
+            .chain()
+            .focus()
+            .extendMarkRange('link')
+            .setLink({ href: url })
+            .run();
+    }
+
+    closeLinkPopover();
+}
+
+function removeLink() {
+    editor.value?.chain().focus().extendMarkRange('link').unsetLink().run();
+    closeLinkPopover();
+}
+
+function handleDocumentClick(event: MouseEvent) {
+    if (!linkPopoverOpen.value) {
+        return;
+    }
+
+    const target = event.target as Node;
+
+    if (
+        linkPopoverRef.value?.contains(target) ||
+        linkButtonRef.value?.contains(target)
+    ) {
+        return;
+    }
+
+    closeLinkPopover();
+}
+
+document.addEventListener('mousedown', handleDocumentClick);
+
+onBeforeUnmount(() => {
+    document.removeEventListener('mousedown', handleDocumentClick);
+});
 
 defineExpose({ insertText, editor });
 </script>
@@ -230,22 +326,54 @@ defineExpose({ insertText, editor });
 
             <div class="mx-1 h-5 w-px bg-gray-300" />
 
-            <button
-                type="button"
-                class="rounded p-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50"
-                title="Insert link"
-                @click="
-                    () => {
-                        const url = prompt('URL:');
+            <div class="relative">
+                <button
+                    ref="linkButtonRef"
+                    type="button"
+                    class="rounded p-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50"
+                    :class="{
+                        'bg-brand-50':
+                            editor.isActive('link') || linkPopoverOpen,
+                    }"
+                    title="Insert link"
+                    @click="
+                        linkPopoverOpen ? closeLinkPopover() : openLinkPopover()
+                    "
+                >
+                    Link
+                </button>
 
-                        if (url) {
-                            editor.chain().focus().setLink({ href: url }).run();
-                        }
-                    }
-                "
-            >
-                Link
-            </button>
+                <div
+                    v-if="linkPopoverOpen"
+                    ref="linkPopoverRef"
+                    class="absolute top-full left-0 z-10 mt-1 flex items-center gap-2 rounded-md border border-gray-200 bg-white p-2 shadow-lg"
+                    @keydown.escape.stop="closeLinkPopover"
+                >
+                    <input
+                        ref="linkInputRef"
+                        v-model="linkUrl"
+                        type="url"
+                        placeholder="https://example.com"
+                        class="w-64 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none"
+                        @keydown.enter.prevent="applyLink"
+                    />
+                    <button
+                        type="button"
+                        class="rounded-md bg-brand-600 px-3 py-1 text-xs font-medium text-white hover:bg-brand-700"
+                        @click="applyLink"
+                    >
+                        Apply
+                    </button>
+                    <button
+                        v-if="editor.isActive('link')"
+                        type="button"
+                        class="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                        @click="removeLink"
+                    >
+                        Remove
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Editor content -->

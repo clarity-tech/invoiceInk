@@ -18,8 +18,10 @@ use App\Services\InvoiceCalculator;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -404,7 +406,29 @@ class InvoiceController extends Controller
             'subject' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string'],
             'attach_pdf' => ['boolean'],
+            'include_view_online_button' => ['boolean'],
+            'attachments' => ['nullable', 'array', 'max:10'],
+            'attachments.*' => [
+                'file',
+                'max:10240',
+                'mimes:pdf,png,jpg,jpeg,gif,webp,doc,docx,xls,xlsx,ppt,pptx,csv,txt',
+            ],
+        ], [
+            'attachments.max' => 'You may attach at most 10 files.',
+            'attachments.*.max' => 'Each attachment must be 10MB or smaller.',
+            'attachments.*.mimes' => 'Unsupported file type.',
         ]);
+
+        $uploadedFiles = $request->file('attachments', []);
+        $totalBytes = collect($uploadedFiles)->sum(fn ($file) => $file->getSize());
+
+        if ($totalBytes > 25 * 1024 * 1024) {
+            return back()->withErrors([
+                'attachments' => 'Total attachments size must not exceed 25MB.',
+            ])->withInput();
+        }
+
+        $extraAttachments = $this->persistEmailAttachments($uploadedFiles);
 
         $contacts = collect($validated['recipients'])->map(fn ($email) => [
             'name' => '',
@@ -421,6 +445,8 @@ class InvoiceController extends Controller
             $ccEmails,
             $validated['body'],
             (bool) ($validated['attach_pdf'] ?? false),
+            $extraAttachments,
+            (bool) ($validated['include_view_online_button'] ?? true),
         );
 
         Mail::send($mailable);
@@ -428,6 +454,39 @@ class InvoiceController extends Controller
         $documentType = ucfirst($invoice->type);
 
         return back()->with('success', "{$documentType} sent successfully.");
+    }
+
+    /**
+     * Persist uploaded files to a temp location so the queued mailer can read them.
+     *
+     * @param  array<int, UploadedFile>  $files
+     * @return array<int, array{disk: string, path: string, name: string, mime: string}>
+     */
+    private function persistEmailAttachments(array $files): array
+    {
+        if (empty($files)) {
+            return [];
+        }
+
+        $disk = config('filesystems.default');
+        $bucket = 'email-attachments/'.(string) Str::ulid();
+
+        return collect($files)->map(function ($file) use ($disk, $bucket) {
+            $safeName = Str::of($file->getClientOriginalName())
+                ->replace(['\\', '/', "\0"], '-')
+                ->limit(120, '')
+                ->toString();
+            $storedName = Str::ulid().'-'.$safeName;
+
+            $path = $file->storeAs($bucket, $storedName, ['disk' => $disk]);
+
+            return [
+                'disk' => $disk,
+                'path' => $path,
+                'name' => $safeName !== '' ? $safeName : 'attachment',
+                'mime' => $file->getMimeType() ?: 'application/octet-stream',
+            ];
+        })->all();
     }
 
     public function destroy(Invoice $invoice): RedirectResponse

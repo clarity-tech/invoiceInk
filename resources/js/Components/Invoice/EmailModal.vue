@@ -52,10 +52,105 @@ const form = useForm({
     subject: '',
     body: '',
     attach_pdf: true,
+    include_view_online_button: false,
+    attachments: [] as File[],
 });
 
 const newToEmail = ref('');
 const newCcEmail = ref('');
+const fileInputRef = ref<HTMLInputElement | null>(null);
+const attachmentError = ref('');
+const isDragging = ref(false);
+
+const MAX_FILES = 10;
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 25 * 1024 * 1024;
+const ALLOWED_EXTENSIONS = [
+    'pdf',
+    'png',
+    'jpg',
+    'jpeg',
+    'gif',
+    'webp',
+    'doc',
+    'docx',
+    'xls',
+    'xlsx',
+    'ppt',
+    'pptx',
+    'csv',
+    'txt',
+];
+
+function formatBytes(bytes: number): string {
+    if (bytes < 1024) {
+        return `${bytes} B`;
+    }
+
+    if (bytes < 1024 * 1024) {
+        return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function extensionOf(name: string): string {
+    const dot = name.lastIndexOf('.');
+
+    return dot >= 0 ? name.slice(dot + 1).toLowerCase() : '';
+}
+
+function addAttachments(files: FileList | File[] | null) {
+    if (!files || files.length === 0) {
+        return;
+    }
+
+    attachmentError.value = '';
+    const incoming = Array.from(files);
+
+    for (const file of incoming) {
+        if (form.attachments.length >= MAX_FILES) {
+            attachmentError.value = `You may attach at most ${MAX_FILES} files.`;
+            break;
+        }
+
+        if (!ALLOWED_EXTENSIONS.includes(extensionOf(file.name))) {
+            attachmentError.value = `Unsupported file type: ${file.name}`;
+            continue;
+        }
+
+        if (file.size > MAX_FILE_BYTES) {
+            attachmentError.value = `${file.name} exceeds the 10MB per-file limit.`;
+            continue;
+        }
+
+        const newTotal =
+            form.attachments.reduce((sum, f) => sum + f.size, 0) + file.size;
+
+        if (newTotal > MAX_TOTAL_BYTES) {
+            attachmentError.value = `Total attachments would exceed the 25MB limit.`;
+            break;
+        }
+
+        form.attachments.push(file);
+    }
+}
+
+function removeAttachment(index: number) {
+    form.attachments.splice(index, 1);
+    attachmentError.value = '';
+}
+
+function onFilesSelected(event: Event) {
+    const target = event.target as HTMLInputElement;
+    addAttachments(target.files);
+    target.value = '';
+}
+
+function onDrop(event: DragEvent) {
+    isDragging.value = false;
+    addAttachments(event.dataTransfer?.files ?? null);
+}
 
 async function loadTemplate(templateType: string) {
     loadingTemplate.value = true;
@@ -94,9 +189,12 @@ watch(
             form.recipients = [...customerEmails.value];
             form.cc = [...orgEmails.value];
             form.attach_pdf = true;
+            form.include_view_online_button = false;
+            form.attachments = [];
             form.clearErrors();
             newToEmail.value = '';
             newCcEmail.value = '';
+            attachmentError.value = '';
 
             loadTemplate(selectedTemplateType.value);
         }
@@ -361,11 +459,42 @@ function send() {
                     </p>
                 </div>
 
-                <!-- Attach PDF -->
+                <!-- Options -->
+                <div class="mb-4 border-t pt-4">
+                    <h3 class="mb-3 text-sm font-semibold text-gray-700">
+                        Options
+                    </h3>
+                    <label
+                        class="flex cursor-pointer items-center rounded-md p-3 hover:bg-gray-50"
+                    >
+                        <input
+                            v-model="form.include_view_online_button"
+                            type="checkbox"
+                            class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                        />
+                        <div class="ml-3">
+                            <div class="text-sm font-medium text-gray-900">
+                                Include "View
+                                {{
+                                    invoice.type === 'estimate'
+                                        ? 'Estimate'
+                                        : 'Invoice'
+                                }}
+                                Online" button
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                Adds a CTA linking to the public document page
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Attachments -->
                 <div class="mb-4 border-t pt-4">
                     <h3 class="mb-3 text-sm font-semibold text-gray-700">
                         Attachments
                     </h3>
+
                     <label
                         class="flex cursor-pointer items-center rounded-md p-3 hover:bg-gray-50"
                     >
@@ -388,6 +517,93 @@ function send() {
                             </div>
                         </div>
                     </label>
+
+                    <ul
+                        v-if="form.attachments.length > 0"
+                        class="mt-2 space-y-1"
+                    >
+                        <li
+                            v-for="(file, index) in form.attachments"
+                            :key="`${file.name}-${index}`"
+                            class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2"
+                        >
+                            <div class="min-w-0 flex-1">
+                                <div
+                                    class="truncate text-sm font-medium text-gray-900"
+                                >
+                                    {{ file.name }}
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    {{ formatBytes(file.size) }}
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                class="ml-2 text-gray-400 hover:text-red-600"
+                                aria-label="Remove attachment"
+                                @click="removeAttachment(index)"
+                            >
+                                <svg
+                                    class="h-4 w-4"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        fill-rule="evenodd"
+                                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                        clip-rule="evenodd"
+                                    />
+                                </svg>
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div
+                        class="mt-2 cursor-pointer rounded-md border border-dashed px-3 py-4 text-center transition"
+                        :class="
+                            isDragging
+                                ? 'border-brand-500 bg-brand-50'
+                                : 'border-gray-300 hover:bg-gray-50'
+                        "
+                        role="button"
+                        tabindex="0"
+                        @click="fileInputRef?.click()"
+                        @keydown.enter.prevent="fileInputRef?.click()"
+                        @keydown.space.prevent="fileInputRef?.click()"
+                        @dragover.prevent="isDragging = true"
+                        @dragleave.prevent="isDragging = false"
+                        @drop.prevent="onDrop"
+                    >
+                        <p class="text-sm text-gray-600">
+                            <span class="font-medium text-brand-600"
+                                >Click to attach files</span
+                            >
+                            or drag and drop
+                        </p>
+                        <p class="mt-0.5 text-xs text-gray-500">
+                            Up to 10 files, 10MB each, 25MB total
+                        </p>
+                        <input
+                            ref="fileInputRef"
+                            type="file"
+                            multiple
+                            class="hidden"
+                            :accept="
+                                ALLOWED_EXTENSIONS.map((e) => '.' + e).join(',')
+                            "
+                            @change="onFilesSelected"
+                        />
+                    </div>
+
+                    <p v-if="attachmentError" class="mt-2 text-xs text-red-600">
+                        {{ attachmentError }}
+                    </p>
+                    <p
+                        v-if="form.errors.attachments"
+                        class="mt-1 text-xs text-red-600"
+                    >
+                        {{ form.errors.attachments }}
+                    </p>
                 </div>
             </div>
 

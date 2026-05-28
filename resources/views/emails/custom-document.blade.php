@@ -2,29 +2,39 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ ucfirst($invoice->type) }} {{ $invoice->invoice_number }}</title>
     <style>
         body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
+        }
+        .email-wrapper {
+            width: 100%;
             background-color: #f4f4f4;
         }
+        .email-wrapper-cell {
+            padding: 20px;
+        }
         .email-container {
+            width: 600px;
+            max-width: 600px;
             background-color: #ffffff;
             border-radius: 8px;
+        }
+        .email-content {
             padding: 30px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         .email-body {
-            white-space: pre-wrap;
             word-wrap: break-word;
             color: #1f2937;
             font-size: 14px;
             line-height: 1.8;
+        }
+        .email-body > :first-child {
+            margin-top: 0;
         }
         /* Constrain logo images */
         .email-body img {
@@ -70,6 +80,9 @@
             display: block;
             margin-top: 5px;
         }
+        .cta-wrapper {
+            text-align: center;
+        }
         .cta-button {
             display: inline-block;
             background-color: #7c3aed;
@@ -92,32 +105,52 @@
             font-size: 12px;
             text-align: center;
         }
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+            }
+            .email-content {
+                padding: 20px !important;
+            }
+        }
     </style>
 </head>
-<body>
-    <div class="email-container">
-        <div class="email-body">{!! $customBody !!}</div>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4;">
+    <table role="presentation" class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
+        <tr>
+            <td class="email-wrapper-cell" align="center">
+                <table role="presentation" class="email-container" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" align="center">
+                    <tr>
+                        <td class="email-content">
+                            <div class="email-body">{!! $customBody !!}</div>
 
-        <div style="text-align: center;">
-            <a href="{{ $viewUrl }}" class="cta-button">
-                View {{ ucfirst($invoice->type) }} Online
-            </a>
-        </div>
+                            @if($includeViewOnlineButton)
+                                <div class="cta-wrapper">
+                                    <a href="{{ $viewUrl }}" class="cta-button">
+                                        View {{ ucfirst($invoice->type) }} Online
+                                    </a>
+                                </div>
+                            @endif
 
-        <div class="footer">
-            @if($invoice->organization)
-                <p style="margin: 0 0 10px 0; font-weight: 600; color: #1f2937;">
-                    {{ $invoice->organization->company_name ?? $invoice->organization->name }}
-                </p>
-                @if($invoice->organizationLocation)
-                    <p style="color: #9ca3af; margin: 0;">
-                        {{ $invoice->organizationLocation->address_line_1 }}<br>
-                        {{ $invoice->organizationLocation->city }}, {{ $invoice->organizationLocation->state }} {{ $invoice->organizationLocation->postal_code }}<br>
-                        {{ $invoice->organizationLocation->country }}
-                    </p>
-                @endif
-            @endif
-        </div>
-    </div>
+                            <div class="footer">
+                                @if($invoice->organization)
+                                    <p style="margin: 0 0 10px 0; font-weight: 600; color: #1f2937;">
+                                        {{ $invoice->organization->company_name ?? $invoice->organization->name }}
+                                    </p>
+                                    @if($invoice->organizationLocation)
+                                        <p style="color: #9ca3af; margin: 0;">
+                                            {{ $invoice->organizationLocation->address_line_1 }}<br>
+                                            {{ $invoice->organizationLocation->city }}, {{ $invoice->organizationLocation->state }} {{ $invoice->organizationLocation->postal_code }}<br>
+                                            {{ $invoice->organizationLocation->country }}
+                                        </p>
+                                    @endif
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
