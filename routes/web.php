@@ -50,7 +50,8 @@ Route::middleware([
     Route::delete('/user', [CurrentUserController::class, 'destroy'])->name('current-user.destroy');
 
     // Team management
-    Route::get('/teams/create', [TeamController::class, 'create'])->name('teams.create');
+    // Route::get('/teams/create', [TeamController::class, 'create'])->name('teams.create');
+    Route::redirect('/teams/create', '/organizations')->name('teams.create');
     Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');
     Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
     Route::put('/teams/{team}', [TeamController::class, 'update'])->name('teams.update');
