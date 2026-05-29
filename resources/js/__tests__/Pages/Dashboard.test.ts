@@ -129,6 +129,7 @@ function defaultProps(overrides = {}) {
         ],
         customerCount: 12,
         estimateStats: { count: 4, total: 8000000, accepted: 2 },
+        currencyBreakdown: [],
         ...overrides,
     };
 }

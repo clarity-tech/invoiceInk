@@ -230,8 +230,8 @@ it('adds additional location after setup completion', function () {
 
     // Navigate to organizations list (always shows the list now)
     $this->visit('/organizations')
-        ->waitForEvent('networkidle')
         ->assertPathIs('/organizations')
+        ->waitForText('Multi-Location Corp')
         ->assertSee('Multi-Location Corp')
         ->screenshot(fullPage: true, filename: 'demo/24-org-with-locations');
 });

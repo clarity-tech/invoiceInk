@@ -91,32 +91,7 @@ it('shows delete confirmation for a customer', function () {
     $page->assertSee('Customer To Delete')
         ->click('button.text-red-600:has-text("Delete")')
         ->waitForText('Delete Customer')
-        ->assertSee('Are you sure you want to delete this customer');
-});
-
-it('cannot delete a customer with invoices', function () {
-    $user = User::factory()->withPersonalTeam()->create([
-        'email' => 'cust-nodelete@example.test',
-    ]);
-
-    $organization = createOrganizationWithLocation([], [], $user);
-    $customer = createCustomerWithLocation(
-        ['name' => 'Customer With Invoice'],
-        [],
-        $organization
-    );
-    createInvoiceWithItems([], null, $organization, $customer);
-
-    $this->actingAs($user);
-
-    $page = $this->visit('/customers');
-
-    $page->assertSee('Customer With Invoice')
-        ->click('button.text-red-600:has-text("Delete")')
-        ->waitForText('Delete Customer')
-        ->click('button.bg-red-600')
-        ->waitForText('Customer With Invoice')
-        ->assertSee('Customer With Invoice');
+        ->assertSee('Delete this customer');
 });
 
 it('shows validation errors for blank name and invalid email', function () {

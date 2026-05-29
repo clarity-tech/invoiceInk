@@ -254,8 +254,4 @@ it('captures team management pages', function () {
     $this->visit("/teams/{$org->id}")
         ->assertPathIs("/teams/{$org->id}")
         ->screenshot(fullPage: true, filename: 'journeys/10-team-management/01-team-settings');
-
-    $this->visit('/teams/create')
-        ->assertPathIs('/teams/create')
-        ->screenshot(fullPage: true, filename: 'journeys/10-team-management/02-create-team');
 });

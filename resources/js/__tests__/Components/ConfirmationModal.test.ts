@@ -1,5 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { describe, it, expect } from 'vitest';
+import { nextTick } from 'vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 
 describe('ConfirmationModal', () => {
@@ -8,15 +9,16 @@ describe('ConfirmationModal', () => {
         expect(wrapper.find('.fixed').exists()).toBe(false);
     });
 
-    it('renders when show is true', () => {
+    it('renders when show is true', async () => {
         const wrapper = mount(ConfirmationModal, {
             props: { show: true },
             global: { stubs: { Teleport: true } },
         });
+        await nextTick();
         expect(wrapper.text()).toContain('Confirm Action');
     });
 
-    it('displays custom title and message', () => {
+    it('displays custom title and message', async () => {
         const wrapper = mount(ConfirmationModal, {
             props: {
                 show: true,
@@ -25,6 +27,7 @@ describe('ConfirmationModal', () => {
             },
             global: { stubs: { Teleport: true } },
         });
+        await nextTick();
         expect(wrapper.text()).toContain('Delete?');
         expect(wrapper.text()).toContain('This cannot be undone.');
     });
@@ -34,6 +37,7 @@ describe('ConfirmationModal', () => {
             props: { show: true },
             global: { stubs: { Teleport: true } },
         });
+        await nextTick();
         const buttons = wrapper.findAll('button');
         await buttons[0].trigger('click'); // first button is confirm
         expect(wrapper.emitted('confirm')).toHaveLength(1);
@@ -44,6 +48,7 @@ describe('ConfirmationModal', () => {
             props: { show: true },
             global: { stubs: { Teleport: true } },
         });
+        await nextTick();
         const buttons = wrapper.findAll('button');
         await buttons[1].trigger('click'); // second button is cancel
         expect(wrapper.emitted('cancel')).toHaveLength(1);
