@@ -717,7 +717,7 @@ const flash = computed(() => (page.props as any).flash ?? {});
                                     Qty *
                                 </th>
                                 <th
-                                    class="w-32 px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                    class="w-36 px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                                 >
                                     Unit Price
                                 </th>

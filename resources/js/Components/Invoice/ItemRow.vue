@@ -25,6 +25,22 @@ const currencySymbol = computed(
     () => CURRENCY_CONFIG[props.currency]?.symbol ?? props.currency,
 );
 
+// Reserve more left padding for multi-character codes (e.g. "AED") so the
+// prefix doesn't overlap with the input value.
+const symbolPaddingClass = computed(() => {
+    const length = currencySymbol.value.trim().length;
+
+    if (length >= 3) {
+        return 'pl-12';
+    }
+
+    if (length === 2) {
+        return 'pl-9';
+    }
+
+    return 'pl-8';
+});
+
 const lineTotal = computed(() => calcLineTotalWithTax(props.item));
 
 function updateField(field: keyof LineItem, value: string | number | null) {
@@ -134,7 +150,10 @@ function errorFor(field: string): string | undefined {
                     min="0"
                     step="0.01"
                     placeholder="0.00"
-                    class="w-full rounded-md border border-gray-300 py-2 pr-3 pl-8 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                    :class="[
+                        'w-full rounded-md border border-gray-300 py-2 pr-3 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none',
+                        symbolPaddingClass,
+                    ]"
                     @input="
                         updateField(
                             'unit_price',
