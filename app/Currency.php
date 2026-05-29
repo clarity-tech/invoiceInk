@@ -27,7 +27,7 @@ enum Currency: string
             self::CAD => 'C$',
             self::SGD => 'S$',
             self::JPY => '¥',
-            self::AED => 'د.إ',
+            self::AED => 'AED',
         };
     }
 

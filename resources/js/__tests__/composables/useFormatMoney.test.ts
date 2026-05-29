@@ -93,8 +93,8 @@ describe('formatMoney', () => {
     describe('AED', () => {
         it('formats basic amount', () => {
             const result = formatMoney(10050, 'AED');
-            // ar-AE locale uses Arabic-Indic numerals or Western numerals depending on env
-            expect(result).toContain('د.إ');
+            // Using "AED " text prefix until the new dirham symbol is widely supported.
+            expect(result.startsWith('AED ')).toBe(true);
         });
     });
 

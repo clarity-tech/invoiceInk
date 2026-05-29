@@ -12,7 +12,7 @@ const CURRENCY_CONFIG: Record<
     CAD: { symbol: 'C$', locale: 'en-CA', subunitName: 'Cents' },
     SGD: { symbol: 'S$', locale: 'en-SG', subunitName: 'Cents' },
     JPY: { symbol: '¥', locale: 'ja-JP', subunitName: '' },
-    AED: { symbol: 'د.إ', locale: 'ar-AE', subunitName: 'Fils' },
+    AED: { symbol: 'AED ', locale: 'ar-AE', subunitName: 'Fils' },
 };
 
 /**
