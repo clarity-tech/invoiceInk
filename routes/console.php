@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('email-attachments:prune')->dailyAt('03:00');
+Schedule::command('exchange-rates:fetch')->dailyAt('02:00');

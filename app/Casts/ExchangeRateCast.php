@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ExchangeRateCast implements CastsAttributes
 {
+    public const SCALE = 1000000;
+
     /**
      * Cast the given value from micro-units to decimal string.
      *

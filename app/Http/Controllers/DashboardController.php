@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Casts\ExchangeRateCast;
 use App\Enums\InvoiceStatus;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -14,6 +15,8 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    private const RATE_SCALE = ExchangeRateCast::SCALE;
+
     /**
      * Handle the incoming request.
      */
@@ -35,6 +38,7 @@ class DashboardController extends Controller
             'monthlyTrend' => fn () => $this->getMonthlyTrend(),
             'customerCount' => fn () => Customer::count(),
             'estimateStats' => fn () => $this->getEstimateStats($range),
+            'currencyBreakdown' => fn () => $this->getCurrencyBreakdown($range),
         ]);
     }
 
@@ -69,14 +73,15 @@ class DashboardController extends Controller
             ];
         }
 
+        $scale = self::RATE_SCALE;
         $result = Invoice::invoices()
             ->whereBetween('issued_at', [$range['start'], $range['end']])
-            ->selectRaw('
+            ->selectRaw("
                 count(*) as invoice_count,
-                coalesce(sum(total), 0) as total_revenue,
-                coalesce(sum(amount_paid), 0) as total_collected,
+                coalesce(sum(total * exchange_rate / {$scale}), 0) as total_revenue,
+                coalesce(sum(amount_paid * exchange_rate / {$scale}), 0) as total_collected,
                 count(case when status = ? then 1 end) as paid_count
-            ', [InvoiceStatus::PAID->value])
+            ", [InvoiceStatus::PAID->value])
             ->first();
 
         $overdueCount = Invoice::invoices()->overdue()->count();
@@ -98,9 +103,10 @@ class DashboardController extends Controller
 
     private function getStatusBreakdown(array $range): array
     {
+        $scale = self::RATE_SCALE;
         $counts = Invoice::invoices()
             ->whereBetween('issued_at', [$range['start'], $range['end']])
-            ->selectRaw('status, count(*) as count, coalesce(sum(total), 0) as total_amount')
+            ->selectRaw("status, count(*) as count, coalesce(sum(total * exchange_rate / {$scale}), 0) as total_amount")
             ->groupBy('status')
             ->get()
             ->keyBy('status');
@@ -191,9 +197,11 @@ class DashboardController extends Controller
 
     private function getTopCustomers(array $range): array
     {
+        $scale = self::RATE_SCALE;
+
         return Invoice::invoices()
             ->whereBetween('issued_at', [$range['start'], $range['end']])
-            ->selectRaw('customer_id, count(*) as invoice_count, coalesce(sum(total), 0) as total_amount, coalesce(sum(amount_paid), 0) as total_paid')
+            ->selectRaw("customer_id, count(*) as invoice_count, coalesce(sum(total * exchange_rate / {$scale}), 0) as total_amount, coalesce(sum(amount_paid * exchange_rate / {$scale}), 0) as total_paid")
             ->groupBy('customer_id')
             ->orderByDesc('total_amount')
             ->limit(5)
@@ -209,19 +217,31 @@ class DashboardController extends Controller
             ->toArray();
     }
 
+    /**
+     * Build the database-specific SQL expression that formats `issued_at`
+     * into a `YYYY-MM` month key. Each engine exposes a different function
+     * (PostgreSQL: to_char, MySQL/MariaDB: DATE_FORMAT, SQLite: strftime).
+     */
+    public static function monthKeyExpression(string $driver): string
+    {
+        return match ($driver) {
+            'sqlite' => "strftime('%Y-%m', issued_at)",
+            'mysql', 'mariadb' => "DATE_FORMAT(issued_at, '%Y-%m')",
+            default => "to_char(issued_at, 'YYYY-MM')", // pgsql
+        };
+    }
+
     private function getMonthlyTrend(): array
     {
         $start = now()->subMonths(5)->startOfMonth();
         $end = now()->endOfMonth();
 
-        $driver = DB::getDriverName();
-        $monthExpr = $driver === 'sqlite'
-            ? "strftime('%Y-%m', issued_at)"
-            : "to_char(issued_at, 'YYYY-MM')";
+        $monthExpr = self::monthKeyExpression(DB::getDriverName());
 
+        $scale = self::RATE_SCALE;
         $rows = Invoice::invoices()
             ->whereBetween('issued_at', [$start, $end])
-            ->selectRaw("{$monthExpr} as month_key, coalesce(sum(total), 0) as invoiced, coalesce(sum(amount_paid), 0) as collected")
+            ->selectRaw("{$monthExpr} as month_key, coalesce(sum(total * exchange_rate / {$scale}), 0) as invoiced, coalesce(sum(amount_paid * exchange_rate / {$scale}), 0) as collected")
             ->groupByRaw($monthExpr)
             ->get()
             ->keyBy('month_key');
@@ -243,15 +263,33 @@ class DashboardController extends Controller
         return $months;
     }
 
+    private function getCurrencyBreakdown(array $range): array
+    {
+        return Invoice::invoices()
+            ->whereBetween('issued_at', [$range['start'], $range['end']])
+            ->selectRaw('currency, count(*) as invoice_count, coalesce(sum(total), 0) as total, coalesce(sum(amount_paid), 0) as collected')
+            ->groupBy('currency')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn ($row) => [
+                'currency' => $row->currency?->value ?? $row->currency,
+                'invoice_count' => (int) $row->invoice_count,
+                'total' => (int) $row->total,
+                'collected' => (int) $row->collected,
+            ])
+            ->toArray();
+    }
+
     private function getEstimateStats(array $range): array
     {
+        $scale = self::RATE_SCALE;
         $result = Invoice::estimates()
             ->whereBetween('issued_at', [$range['start'], $range['end']])
-            ->selectRaw('
+            ->selectRaw("
                 count(*) as count,
-                coalesce(sum(total), 0) as total,
+                coalesce(sum(total * exchange_rate / {$scale}), 0) as total,
                 count(case when status = ? then 1 end) as accepted
-            ', [InvoiceStatus::ACCEPTED->value])
+            ", [InvoiceStatus::ACCEPTED->value])
             ->first();
 
         return [

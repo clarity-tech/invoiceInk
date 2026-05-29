@@ -74,6 +74,13 @@ interface EstimateStats {
     accepted: number;
 }
 
+interface CurrencyBreakdownItem {
+    currency: Currency;
+    invoice_count: number;
+    total: number;
+    collected: number;
+}
+
 const props = defineProps<{
     period: string;
     organizationName: string;
@@ -86,6 +93,7 @@ const props = defineProps<{
     monthlyTrend: MonthlyTrendItem[];
     customerCount: number;
     estimateStats: EstimateStats;
+    currencyBreakdown: CurrencyBreakdownItem[];
 }>();
 
 const currency = computed(() => props.stats.currency ?? 'INR');
@@ -116,6 +124,7 @@ function onPeriodChange(event: Event) {
             'topCustomers',
             'monthlyTrend',
             'estimateStats',
+            'currencyBreakdown',
         ],
     });
 }
@@ -301,6 +310,43 @@ const totalStatusCount = computed(() =>
                             estimateStats.count === 1 ? 'estimate' : 'estimates'
                         }}
                         ({{ estimateStats.accepted }} accepted)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Per-Currency Breakdown (shown when invoices span >1 currency) -->
+            <div
+                v-if="currencyBreakdown.length > 1"
+                class="mb-8 rounded-lg bg-white p-5 shadow"
+            >
+                <div class="mb-3 flex items-baseline justify-between gap-2">
+                    <h3 class="text-sm font-semibold text-gray-900">
+                        Original Currencies
+                    </h3>
+                    <span class="text-xs text-gray-500">
+                        KPI totals above are converted to
+                        {{ currency }} using the rate at invoice date.
+                    </span>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <div
+                        v-for="row in currencyBreakdown"
+                        :key="row.currency"
+                        class="rounded-md border border-gray-200 bg-gray-50 px-3 py-2"
+                    >
+                        <div
+                            class="text-xs font-medium tracking-wide text-gray-500 uppercase"
+                        >
+                            {{ row.currency }} · {{ row.invoice_count }}
+                            {{ row.invoice_count === 1 ? 'inv' : 'invs' }}
+                        </div>
+                        <div class="text-sm font-semibold text-gray-900">
+                            {{ formatMoney(row.total, row.currency) }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            {{ formatMoney(row.collected, row.currency) }}
+                            collected
+                        </div>
                     </div>
                 </div>
             </div>

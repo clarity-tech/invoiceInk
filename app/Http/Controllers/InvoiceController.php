@@ -14,6 +14,7 @@ use App\Models\Location;
 use App\Models\Organization;
 use App\Models\Payment;
 use App\Services\EstimateToInvoiceConverter;
+use App\Services\ExchangeRateService;
 use App\Services\InvoiceCalculator;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Http\RedirectResponse;
@@ -194,6 +195,11 @@ class InvoiceController extends Controller
             }
 
             $currency = Customer::find($validated['customer_id'])?->currency?->value;
+            $issuedAt = ! empty($validated['issued_at']) ? now()->parse($validated['issued_at']) : now();
+            $orgCurrency = Organization::find($validated['organization_id'])?->currency?->value;
+            $exchangeRate = $currency && $orgCurrency
+                ? app(ExchangeRateService::class)->getRate($currency, $orgCurrency, $issuedAt)
+                : 1.0;
 
             $invoice = Invoice::create([
                 'type' => $validated['type'],
@@ -211,6 +217,7 @@ class InvoiceController extends Controller
                 'tax' => $totals->tax,
                 'total' => $totals->total,
                 'currency' => $currency,
+                'exchange_rate' => $exchangeRate,
                 'notes' => $validated['notes'] ?? null,
             ]);
 
@@ -357,6 +364,11 @@ class InvoiceController extends Controller
             $totals = $calculator->calculateFromItems($itemsCollection);
 
             $currency = Customer::find($validated['customer_id'])?->currency?->value;
+            $issuedAt = ! empty($validated['issued_at']) ? now()->parse($validated['issued_at']) : now();
+            $orgCurrency = $invoice->organization?->currency?->value;
+            $exchangeRate = $currency && $orgCurrency
+                ? app(ExchangeRateService::class)->getRate($currency, $orgCurrency, $issuedAt)
+                : 1.0;
 
             $invoice->update([
                 'type' => $validated['type'],
@@ -371,6 +383,7 @@ class InvoiceController extends Controller
                 'tax' => $totals->tax,
                 'total' => $totals->total,
                 'currency' => $currency,
+                'exchange_rate' => $exchangeRate,
                 'notes' => $validated['notes'] ?? null,
             ]);
 

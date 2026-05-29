@@ -41,4 +41,9 @@ return [
         'timeout' => env('GOTENBERG_TIMEOUT', 30),
     ],
 
+    'frankfurter' => [
+        'url' => env('FRANKFURTER_URL', 'https://api.frankfurter.dev/v2'),
+        'timeout' => env('FRANKFURTER_TIMEOUT', 10),
+    ],
+
 ];
