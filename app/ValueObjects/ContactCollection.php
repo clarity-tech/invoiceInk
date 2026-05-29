@@ -13,10 +13,16 @@ class ContactCollection implements Arrayable, Jsonable, JsonSerializable
 
     public function __construct(array $contacts = [])
     {
-        // Convert legacy simple email strings to contact format
         $contacts = array_map(function ($contact) {
+            // Convert legacy simple email strings to contact format
             if (is_string($contact) && filter_var($contact, FILTER_VALIDATE_EMAIL)) {
                 return ['name' => '', 'email' => $contact];
+            }
+
+            // A null/missing name (e.g. from Laravel's ConvertEmptyStringsToNull
+            // middleware) should be treated as an empty string, not dropped.
+            if (is_array($contact)) {
+                $contact['name'] = $contact['name'] ?? '';
             }
 
             return $contact;

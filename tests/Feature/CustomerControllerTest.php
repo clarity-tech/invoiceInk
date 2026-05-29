@@ -53,6 +53,25 @@ test('can create customer', function () {
     ]);
 });
 
+test('stores email when contact name is empty', function () {
+    // Regression: ConvertEmptyStringsToNull middleware turned name '' into
+    // null, and ContactCollection silently dropped the entire contact.
+    $user = createUserWithTeam();
+    $this->actingAs($user);
+
+    $this->post('/customers', [
+        'name' => 'Anonymous Contact Customer',
+        'currency' => 'INR',
+        'contacts' => [
+            ['name' => '', 'email' => 'nameless@customer.test'],
+        ],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    $customer = Customer::where('name', 'Anonymous Contact Customer')->firstOrFail();
+    expect($customer->emails->getEmails())->toBe(['nameless@customer.test']);
+    expect($customer->emails->getNames())->toBe(['']);
+});
+
 test('can create customer with multiple contacts', function () {
     $user = createUserWithTeam();
     $this->actingAs($user);

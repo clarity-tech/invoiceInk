@@ -158,6 +158,25 @@ describe('ContactCollection', function () {
         expect($collection->count())->toBe(1);
     });
 
+    // --- normalization of null/missing name (regression guard) ---
+
+    it('keeps contacts whose name is null or missing', function () {
+        // Laravel's ConvertEmptyStringsToNull middleware turns '' into null
+        // before requests reach the controller; the cast then receives a
+        // contact with name=null. The contact must survive as name=''.
+        $collection = new ContactCollection([
+            ['name' => null, 'email' => 'nulled@example.com'],
+            ['email' => 'missing@example.com'],
+        ]);
+
+        expect($collection->count())->toBe(2);
+        expect($collection->getEmails())->toBe([
+            'nulled@example.com',
+            'missing@example.com',
+        ]);
+        expect($collection->getNames())->toBe(['', '']);
+    });
+
     // --- Legacy string email conversion (line 18-19) ---
 
     it('converts legacy email strings to contact format', function () {
