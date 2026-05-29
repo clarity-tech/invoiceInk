@@ -464,6 +464,10 @@ class InvoiceController extends Controller
 
         Mail::send($mailable);
 
+        if ($invoice->status === InvoiceStatus::DRAFT) {
+            $invoice->update(['status' => InvoiceStatus::SENT]);
+        }
+
         $documentType = ucfirst($invoice->type);
 
         return back()->with('success', "{$documentType} sent successfully.");

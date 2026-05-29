@@ -1,6 +1,7 @@
 <?php
 
 use App\Contracts\Services\PdfServiceInterface;
+use App\Enums\InvoiceStatus;
 use App\Mail\DocumentMailer;
 use App\Models\Invoice;
 use Illuminate\Http\UploadedFile;
@@ -244,6 +245,46 @@ test('send email works', function () {
         'body' => 'Please find attached.',
         'attach_pdf' => true,
     ])->assertRedirect();
+});
+
+test('send email promotes draft invoice to sent', function () {
+    Mail::fake();
+
+    $invoice = createInvoiceWithItems(
+        ['status' => InvoiceStatus::DRAFT],
+        null,
+        $this->organization,
+        $this->customer,
+    );
+
+    $this->post(route('invoices.send-email', $invoice->id), [
+        'recipients' => ['test@example.test'],
+        'subject' => 'Test Invoice',
+        'body' => 'Please find attached.',
+    ])->assertRedirect();
+
+    expect($invoice->fresh()->status)->toBe(InvoiceStatus::SENT);
+});
+
+test('send email does not overwrite a non-draft status', function () {
+    Mail::fake();
+
+    foreach ([InvoiceStatus::PAID, InvoiceStatus::PARTIALLY_PAID, InvoiceStatus::ACCEPTED, InvoiceStatus::VOID] as $status) {
+        $invoice = createInvoiceWithItems(
+            ['status' => $status],
+            null,
+            $this->organization,
+            $this->customer,
+        );
+
+        $this->post(route('invoices.send-email', $invoice->id), [
+            'recipients' => ['test@example.test'],
+            'subject' => 'Test Invoice',
+            'body' => 'Please find attached.',
+        ])->assertRedirect();
+
+        expect($invoice->fresh()->status)->toBe($status);
+    }
 });
 
 test('send email validates recipients', function () {
