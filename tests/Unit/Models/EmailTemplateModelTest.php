@@ -100,7 +100,7 @@ test('different orgs can have same template type', function () {
         ->and($template2->subject)->toBe('Org 2');
 });
 
-test('deleting organization cascades to email templates', function () {
+test('soft deleting an organization preserves its email templates', function () {
     $org = createOrganizationWithLocation();
 
     EmailTemplate::create([
@@ -112,7 +112,27 @@ test('deleting organization cascades to email templates', function () {
 
     expect(EmailTemplate::count())->toBe(1);
 
+    // Organization deletion is a soft delete: it must NOT fire the DB cascade,
+    // so the templates survive and can be restored alongside the org.
     $org->delete();
+
+    expect(EmailTemplate::count())->toBe(1);
+});
+
+test('force deleting an organization cascades to email templates', function () {
+    $org = createOrganizationWithLocation();
+
+    EmailTemplate::create([
+        'organization_id' => $org->id,
+        'template_type' => 'invoice_initial',
+        'subject' => 'Test',
+        'body' => '<p>Test</p>',
+    ]);
+
+    expect(EmailTemplate::count())->toBe(1);
+
+    // An explicit hard wipe is the only path that removes child data.
+    $org->forceDelete();
 
     expect(EmailTemplate::count())->toBe(0);
 });

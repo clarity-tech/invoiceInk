@@ -53,9 +53,9 @@ class TeamController extends Controller
 
     public function store(Request $request, CreatesTeams $creator): RedirectResponse
     {
-        $team = $creator->create($request->user(), $request->all());
+        $creator->create($request->user(), $request->all());
 
-        return redirect()->route('teams.show', $team->id)->banner('Team created successfully.');
+        return redirect()->route('organization.setup')->banner('Organization created — let\'s set it up.');
     }
 
     public function update(Request $request, int $teamId): RedirectResponse

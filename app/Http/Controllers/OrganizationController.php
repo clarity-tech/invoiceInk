@@ -243,9 +243,9 @@ class OrganizationController extends Controller
             }
         }
 
-        $organization->primary_location_id = null;
-        $organization->save();
-        $organization->locations()->delete();
+        // Soft delete only: leave the organization's locations and child data
+        // (invoices, customers, ...) intact so it can be restored. Hard-deleting
+        // here would also fire the cascade FKs and permanently destroy that data.
         $organization->delete();
 
         return redirect()->route('organizations.index')

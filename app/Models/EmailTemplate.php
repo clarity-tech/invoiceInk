@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EmailTemplateType;
+use App\Models\Scopes\OrganizationScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -25,5 +26,10 @@ class EmailTemplate extends Model
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class, 'organization_id');
+    }
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new OrganizationScope);
     }
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { create as teamsCreate } from '@/routes/teams';
 
 interface Location {
     city: string;
@@ -32,9 +33,30 @@ defineProps<{
 <template>
     <AppLayout title="Organizations">
         <template #header>
-            <h2 class="text-xl leading-tight font-semibold text-gray-800">
-                Organizations
-            </h2>
+            <div class="flex items-center justify-between gap-4">
+                <h2 class="text-xl leading-tight font-semibold text-gray-800">
+                    Organizations
+                </h2>
+                <Link
+                    :href="teamsCreate.url()"
+                    class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none"
+                >
+                    <svg
+                        class="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M12 4.5v15m7.5-7.5h-15"
+                        />
+                    </svg>
+                    New organization
+                </Link>
+            </div>
         </template>
 
         <div class="px-4 py-4 sm:px-0">
@@ -131,6 +153,12 @@ defineProps<{
                 class="rounded-xl border-2 border-dashed border-gray-300 py-16 text-center"
             >
                 <p class="text-sm text-gray-500">No organizations found.</p>
+                <Link
+                    :href="teamsCreate.url()"
+                    class="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
+                >
+                    Create your first organization
+                </Link>
             </div>
         </div>
     </AppLayout>

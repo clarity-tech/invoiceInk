@@ -3,6 +3,7 @@
 namespace App\Actions\Jetstream;
 
 use App\Contracts\Teams\CreatesTeams;
+use App\Currency;
 use App\Events\AddingTeam;
 use App\Models\Organization;
 use App\Models\User;
@@ -27,8 +28,12 @@ class CreateTeam implements CreatesTeams
 
         AddingTeam::dispatch($user);
 
+        // currency is NOT NULL with no DB default; seed a sensible default that the
+        // setup wizard lets the owner change. Mirrors CreateNewUser's first org.
         $user->switchTeam($team = $user->ownedTeams()->create([
             'name' => $input['name'],
+            'currency' => Currency::default(),
+            'setup_completed_at' => null,
         ]));
 
         return $team;

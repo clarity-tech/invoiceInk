@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\EmailTemplateType;
 use App\Models\Customer;
+use App\Models\EmailTemplate;
 use App\Models\Invoice;
 use App\Models\InvoiceNumberingSeries;
 use App\Models\Organization;
@@ -504,4 +506,45 @@ test('user cannot delete another users organization via HTTP', function () {
     $response = $this->deleteJson("/organizations/{$this->orgB->id}");
 
     $response->assertStatus(403);
+});
+
+/*
+|--------------------------------------------------------------------------
+| OrganizationScope: EmailTemplate isolation
+|--------------------------------------------------------------------------
+*/
+
+test('email templates are isolated per organization via OrganizationScope', function () {
+    EmailTemplate::create([
+        'organization_id' => $this->orgA->id,
+        'template_type' => EmailTemplateType::InvoiceInitial,
+        'subject' => 'Org A subject',
+        'body' => 'Org A body',
+    ]);
+    EmailTemplate::create([
+        'organization_id' => $this->orgB->id,
+        'template_type' => EmailTemplateType::InvoiceInitial,
+        'subject' => 'Org B subject',
+        'body' => 'Org B body',
+    ]);
+
+    $this->actingAs($this->userA);
+    $templates = EmailTemplate::all();
+
+    expect($templates)->toHaveCount(1);
+    expect($templates->first()->organization_id)->toBe($this->orgA->id);
+    expect($templates->first()->subject)->toBe('Org A subject');
+});
+
+test('user B email templates are not visible to user A', function () {
+    EmailTemplate::create([
+        'organization_id' => $this->orgB->id,
+        'template_type' => EmailTemplateType::InvoiceReminder,
+        'subject' => 'Org B only',
+        'body' => 'Org B body',
+    ]);
+
+    $this->actingAs($this->userA);
+
+    expect(EmailTemplate::count())->toBe(0);
 });

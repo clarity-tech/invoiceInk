@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Customer;
+use App\Models\Invoice;
 use App\Models\Organization;
 use Illuminate\Http\UploadedFile;
 
@@ -189,7 +191,10 @@ test('can delete organization when user has more than one', function () {
     $response = $this->delete("/organizations/{$secondOrgId}");
 
     $response->assertRedirect('/organizations');
+    // Soft delete: hidden from normal queries but recoverable.
     expect(Organization::find($secondOrgId))->toBeNull();
+    $this->assertSoftDeleted('teams', ['id' => $secondOrgId]);
+    expect(Organization::withTrashed()->find($secondOrgId))->not->toBeNull();
 });
 
 test('cannot delete the only owned organization', function () {
@@ -215,7 +220,37 @@ test('deleting current org switches to remaining owned org', function () {
 
     $response->assertRedirect('/organizations');
     expect(Organization::find($current->id))->toBeNull();
+    $this->assertSoftDeleted('teams', ['id' => $current->id]);
     expect($this->user->fresh()->current_team_id)->toBe($remaining->id);
+});
+
+test('deleting an organization soft-deletes it and preserves its invoices and customers', function () {
+    // Second org made current so helpers scope to it; give it a location so invoices are valid.
+    $secondOrg = Organization::factory()->completedSetup()->create([
+        'user_id' => $this->user->id,
+    ]);
+    $this->user->switchTeam($secondOrg);
+    $this->actingAs($this->user->fresh());
+
+    $secondOrg = createOrganizationWithLocation([], [], $this->user);
+    $customer = createCustomerWithLocation([], [], $secondOrg);
+    $invoice = createInvoiceWithItems([], null, $secondOrg, $customer);
+
+    $response = $this->delete("/organizations/{$secondOrg->id}");
+
+    $response->assertRedirect('/organizations');
+
+    // Org is soft-deleted (recoverable), not cascade-wiped...
+    $this->assertSoftDeleted('teams', ['id' => $secondOrg->id]);
+
+    // ...and its child data still physically exists in the database. Drop ALL global
+    // scopes (OrganizationScope is now pointed at the remaining org, plus SoftDeletes)
+    // to assert the raw rows were not cascade-deleted.
+    expect(Customer::withoutGlobalScopes()->whereKey($customer->id)->exists())->toBeTrue();
+    expect(Invoice::withoutGlobalScopes()->whereKey($invoice->id)->exists())->toBeTrue();
+
+    // It no longer appears among the user's owned organizations / switcher list.
+    expect($this->user->fresh()->ownedTeams()->pluck('id'))->not->toContain($secondOrg->id);
 });
 
 test('cannot update organization user does not own', function () {

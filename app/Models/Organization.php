@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Spatie\MediaLibrary\HasMedia;
@@ -24,7 +25,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class Organization extends Model implements HasMedia
 {
     /** @use HasFactory<OrganizationFactory> */
-    use HasFactory, InteractsWithMedia;
+    use HasFactory, InteractsWithMedia, SoftDeletes;
 
     /**
      * The table associated with the model.
@@ -155,7 +156,11 @@ class Organization extends Model implements HasMedia
     }
 
     /**
-     * Purge all of the team's resources.
+     * Soft delete the team, moving any users off it as their active organization.
+     *
+     * Memberships and child data (invoices, customers, etc.) are intentionally left
+     * intact so the organization can be restored; a true hard wipe should go through
+     * an explicit forceDelete().
      */
     public function purge(): void
     {
@@ -164,8 +169,6 @@ class Organization extends Model implements HasMedia
 
         $this->users()->where('current_team_id', $this->id)
             ->update(['current_team_id' => null]);
-
-        $this->users()->detach();
 
         $this->delete();
     }
