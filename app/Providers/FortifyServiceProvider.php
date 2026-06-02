@@ -6,6 +6,7 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Models\TeamInvitation;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -38,7 +39,19 @@ class FortifyServiceProvider extends ServiceProvider
 
         // Register Fortify views using Inertia
         Fortify::loginView(fn () => Inertia::render('Auth/Login', ['status' => session('status')]));
-        Fortify::registerView(fn () => Inertia::render('Auth/Register'));
+        Fortify::registerView(function () {
+            $invitationId = session('pending_invitation_id');
+            $invitation = $invitationId
+                ? TeamInvitation::with('team')->find($invitationId)
+                : null;
+
+            return Inertia::render('Auth/Register', [
+                'invitation' => $invitation ? [
+                    'email' => $invitation->email,
+                    'organization' => $invitation->team->name,
+                ] : null,
+            ]);
+        });
         Fortify::requestPasswordResetLinkView(fn () => Inertia::render('Auth/ForgotPassword', ['status' => session('status')]));
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('Auth/ResetPassword', ['email' => $request->email, 'token' => $request->route('token')]));
         Fortify::verifyEmailView(fn () => Inertia::render('Auth/VerifyEmail', ['status' => session('status')]));

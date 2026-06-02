@@ -29,7 +29,9 @@ trait HasTeams
     public function currentTeam(): BelongsTo
     {
         if (is_null($this->current_team_id) && $this->id) {
-            $fallback = $this->ownedTeams()->first();
+            // Fall back to an owned org first, then a membership — so a
+            // member-only user (e.g. an accountant) lands in their employer's org.
+            $fallback = $this->ownedTeams()->first() ?? $this->teams()->first();
             if ($fallback) {
                 $this->switchTeam($fallback);
             }

@@ -39,6 +39,18 @@ test('currentTeam auto-switches to first owned team when current_team_id is null
     expect($currentTeam->id)->toBe($this->team->id);
 });
 
+test('currentTeam falls back to a member team when the user owns none', function () {
+    // A member-only user (e.g. an accountant): no owned org, only a membership.
+    $member = User::factory()->create(['current_team_id' => null]);
+    $this->team->users()->attach($member, ['role' => 'editor']);
+
+    $currentTeam = $member->fresh()->currentTeam;
+
+    expect($currentTeam)->not->toBeNull();
+    expect($currentTeam->id)->toBe($this->team->id);
+    expect($member->fresh()->current_team_id)->toBe($this->team->id);
+});
+
 test('currentTeam returns the set team', function () {
     $this->user->switchTeam($this->team);
 

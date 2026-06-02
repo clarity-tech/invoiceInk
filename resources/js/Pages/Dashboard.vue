@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { router, usePage, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { formatMoney } from '@/composables/useFormatMoney';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { create as teamsCreate } from '@/routes/teams';
 import type { Currency, InvoiceStatus } from '@/types';
+
+const page = usePage();
+const hasOrganization = computed(
+    () => !!(page.props.auth as { currentTeam?: unknown })?.currentTeam,
+);
 
 interface Stats {
     total_revenue: number;
@@ -153,7 +159,28 @@ const totalStatusCount = computed(() =>
             </h2>
         </template>
 
-        <div class="px-4 py-4 sm:px-0">
+        <!-- No active organization (e.g. a member removed from every org) -->
+        <div v-if="!hasOrganization" class="px-4 py-16 sm:px-0">
+            <div
+                class="mx-auto max-w-md rounded-xl border-2 border-dashed border-gray-300 px-6 py-12 text-center"
+            >
+                <h3 class="text-base font-semibold text-gray-900">
+                    You're not part of any organization yet
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    Ask an organization owner to invite you, or create your own
+                    to get started.
+                </p>
+                <Link
+                    :href="teamsCreate.url()"
+                    class="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
+                >
+                    Create organization
+                </Link>
+            </div>
+        </div>
+
+        <div v-else class="px-4 py-4 sm:px-0">
             <!-- Header with Period Selector -->
             <div
                 class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"

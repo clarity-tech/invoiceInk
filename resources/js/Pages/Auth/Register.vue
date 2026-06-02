@@ -5,6 +5,10 @@ import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
 
+defineProps<{
+    invitation?: { email: string; organization: string } | null;
+}>();
+
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 </script>
@@ -12,6 +16,15 @@ const showConfirmPassword = ref(false);
 <template>
     <GuestLayout title="Register">
         <Head title="Register" />
+
+        <div
+            v-if="invitation"
+            class="mb-4 rounded-md bg-brand-50 px-4 py-3 text-sm text-brand-800"
+        >
+            You've been invited to join
+            <span class="font-semibold">{{ invitation.organization }}</span
+            >. Create your account to continue.
+        </div>
 
         <Form
             v-bind="store.form()"
@@ -59,9 +72,11 @@ const showConfirmPassword = ref(false);
                     id="email"
                     name="email"
                     type="email"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm read-only:bg-gray-100 read-only:text-gray-500 focus:border-brand-500 focus:ring-brand-500"
                     required
                     autocomplete="username"
+                    :value="invitation?.email"
+                    :readonly="!!invitation"
                 />
                 <p v-if="errors.email" class="mt-1 text-xs text-red-600">
                     {{ errors.email }}

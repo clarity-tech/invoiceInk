@@ -251,6 +251,7 @@ class InvoiceController extends Controller
 
         $user = $request->user();
         $organization = $invoice->organization ?? $user->currentTeam;
+        abort_unless($organization, 403, __('messages.authorization.no_organization_context'));
 
         $customers = Customer::where('organization_id', $organization->id)
             ->with('primaryLocation', 'locations')

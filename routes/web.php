@@ -26,6 +26,13 @@ Route::get('/', fn () => auth()->check() ? redirect('/dashboard') : view('welcom
 Route::get('/terms-of-service', [TermsOfServiceController::class, 'show'])->name('terms.show');
 Route::get('/privacy-policy', [PrivacyPolicyController::class, 'show'])->name('policy.show');
 
+// Team invitation acceptance (signed URL). Reachable while unauthenticated so a
+// brand-new invitee can register through the accept flow; the controller branches
+// on whether a user already exists for the invited email.
+Route::get('/team-invitations/{invitation}', [TeamInvitationController::class, 'accept'])
+    ->middleware(['signed'])
+    ->name('team-invitations.accept');
+
 // Public view routes for invoices and estimates (no authentication required, rate limited)
 Route::middleware('throttle:60,1')->group(function () {
     Route::get('/invoices/view/{ulid}', [PublicViewController::class, 'showInvoice'])->name('invoices.public');
@@ -60,11 +67,6 @@ Route::middleware([
     Route::delete('/teams/{team}/members/{user}', [TeamController::class, 'removeMember'])->name('teams.members.destroy');
     Route::delete('/teams/{team}/invitations/{invitation}', [TeamController::class, 'cancelInvitation'])->name('teams.invitations.destroy');
     Route::put('/current-team', [CurrentTeamController::class, 'update'])->name('current-team.update');
-
-    // Team invitations (signed URL)
-    Route::get('/team-invitations/{invitation}', [TeamInvitationController::class, 'accept'])
-        ->middleware(['signed'])
-        ->name('team-invitations.accept');
 
     // Organization setup wizard (should be accessible before main app features)
     Route::get('/organization/setup', [OrganizationSetupController::class, 'show'])->name('organization.setup');

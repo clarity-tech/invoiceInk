@@ -4,6 +4,7 @@ namespace App\Actions\Fortify;
 
 use App\Currency;
 use App\Models\Organization;
+use App\Models\TeamInvitation;
 use App\Models\User;
 use App\Support\Jetstream;
 use Illuminate\Support\Facades\DB;
@@ -34,10 +35,53 @@ class CreateNewUser implements CreatesNewUsers
                 'name' => $input['name'],
                 'email' => $input['email'],
                 'password' => Hash::make($input['password']),
-            ]), function (User $user) {
-                $this->createTeam($user);
+            ]), function (User $user) use ($input) {
+                // Invited members (e.g. accountants) join their employer's org
+                // and never get one of their own. Everyone else creates a business.
+                $invitation = $this->pendingInvitationFor($input['email']);
+
+                if ($invitation) {
+                    $this->joinViaInvitation($user, $invitation);
+                } else {
+                    $this->createTeam($user);
+                }
             });
         });
+    }
+
+    /**
+     * Resolve a session-stashed invitation only if it still exists and matches the
+     * email being registered (guards a stale or tampered session).
+     */
+    protected function pendingInvitationFor(string $email): ?TeamInvitation
+    {
+        $invitationId = session('pending_invitation_id');
+
+        if (! $invitationId) {
+            return null;
+        }
+
+        $invitation = TeamInvitation::with('team')->find($invitationId);
+
+        return $invitation && $invitation->email === $email ? $invitation : null;
+    }
+
+    /**
+     * Attach a newly registered invitee to the inviting organization with their
+     * assigned role. No org of their own is created, and they are marked verified
+     * because clicking the signed invitation link proves email ownership.
+     */
+    protected function joinViaInvitation(User $user, TeamInvitation $invitation): void
+    {
+        $user->forceFill([
+            'email_verified_at' => now(),
+            'current_team_id' => $invitation->team_id,
+        ])->save();
+
+        $invitation->team->users()->attach($user, ['role' => $invitation->role]);
+
+        $invitation->delete();
+        session()->forget('pending_invitation_id');
     }
 
     /**
