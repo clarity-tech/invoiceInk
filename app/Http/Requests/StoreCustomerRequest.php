@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Currency;
+use App\Models\Customer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -10,7 +11,7 @@ class StoreCustomerRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->currentTeam !== null;
+        return $this->user()?->can('create', Customer::class) ?? false;
     }
 
     /** @return array<string, mixed> */

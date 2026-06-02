@@ -68,6 +68,8 @@ vi.mock('@inertiajs/vue3', () => ({
                     name: 'Team',
                     company_name: 'Co',
                     currency: 'INR',
+                    role: 'owner',
+                    permissions: ['*'],
                 },
             },
             flash: { success: null, error: null, message: null },

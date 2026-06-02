@@ -167,8 +167,8 @@ describe('Organizations/Index', () => {
     it('links to organization detail page', () => {
         const org = makeOrg({ id: 42 });
         const wrapper = mountComponent({ organizations: makePaginated([org]) });
-        const link = wrapper.find('a');
-        expect(link.attributes('href')).toBe('/organizations/42');
+        const link = wrapper.find('a[href="/organizations/42"]');
+        expect(link.exists()).toBe(true);
     });
 
     it('renders multiple organizations', () => {

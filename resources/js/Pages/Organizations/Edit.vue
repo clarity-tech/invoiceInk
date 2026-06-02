@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { router, Link } from '@inertiajs/vue3';
 import { computed, type Component } from 'vue';
-import { Settings, MapPin, Landmark, Image, Hash } from 'lucide-vue-next';
+import {
+    Settings,
+    MapPin,
+    Landmark,
+    Image,
+    Hash,
+    Users,
+} from 'lucide-vue-next';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -15,8 +22,43 @@ import EditLocationForm from './Partials/EditLocationForm.vue';
 import EditBankDetailsForm from './Partials/EditBankDetailsForm.vue';
 import EditLogoForm from './Partials/EditLogoForm.vue';
 import EditNumberingForm from './Partials/EditNumberingForm.vue';
+import TeamMemberManager from '../Teams/Partials/TeamMemberManager.vue';
 import type { Organization, CountryInfo } from './types';
 import type { InvoiceNumberingSeries } from '@/types';
+
+interface Role {
+    key: string;
+    name: string;
+    description: string;
+    permissions: string[];
+}
+
+interface MemberTeam {
+    id: number;
+    name: string;
+    owner: {
+        id: number;
+        name: string;
+        email: string;
+        profile_photo_url: string;
+    };
+    users: {
+        id: number;
+        name: string;
+        email: string;
+        profile_photo_url: string;
+        membership: { role: string };
+    }[];
+    team_invitations: { id: number; email: string }[];
+}
+
+interface MemberPermissions {
+    canAddTeamMembers: boolean;
+    canDeleteTeam: boolean;
+    canRemoveTeamMembers: boolean;
+    canUpdateTeam: boolean;
+    canUpdateTeamMembers: boolean;
+}
 
 const props = defineProps<{
     organization: Organization;
@@ -25,9 +67,15 @@ const props = defineProps<{
     tab: string;
     numberingSeries: InvoiceNumberingSeries[];
     resetFrequencyOptions: Record<string, string>;
+    availableRoles: Role[];
+    memberPermissions: MemberPermissions;
+    hasRoles: boolean;
+    sendsTeamInvitations: boolean;
 }>();
 
 const currentTab = computed(() => props.tab || 'basics');
+
+const memberTeam = computed(() => props.organization as unknown as MemberTeam);
 
 const tabs: { key: string; label: string; icon: Component }[] = [
     { key: 'basics', label: 'General', icon: Settings },
@@ -35,6 +83,7 @@ const tabs: { key: string; label: string; icon: Component }[] = [
     { key: 'bank', label: 'Bank Details', icon: Landmark },
     { key: 'logo', label: 'Logo', icon: Image },
     { key: 'numbering', label: 'Numbering', icon: Hash },
+    { key: 'members', label: 'Members', icon: Users },
 ];
 
 function switchTab(key: string) {
@@ -127,6 +176,14 @@ function switchTab(key: string) {
                         :organization-id="organization.id"
                         :series="numberingSeries"
                         :reset-frequency-options="resetFrequencyOptions"
+                    />
+                    <TeamMemberManager
+                        v-else-if="currentTab === 'members'"
+                        :team="memberTeam"
+                        :available-roles="availableRoles"
+                        :permissions="memberPermissions"
+                        :has-roles="hasRoles"
+                        :sends-team-invitations="sendsTeamInvitations"
                     />
                 </div>
             </div>

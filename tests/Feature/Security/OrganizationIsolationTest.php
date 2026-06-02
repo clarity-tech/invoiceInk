@@ -319,6 +319,7 @@ test('user cannot download PDF for another organizations invoice via HTTP', func
 test('team member can access organization data via allTeams()', function () {
     // Add User A as a member of Org B
     $this->orgB->users()->attach($this->userA, ['role' => 'editor']);
+    $this->userA->unsetRelation('teams');
 
     $this->actingAs($this->userA);
 
@@ -367,6 +368,7 @@ test('user cannot switch to a team they do not belong to', function () {
 test('removed team member cannot access former organizations data via policy', function () {
     // Add User A as member of Org B, then remove
     $this->orgB->users()->attach($this->userA, ['role' => 'editor']);
+    $this->userA->unsetRelation('teams');
     expect(Gate::forUser($this->userA)->allows('view', $this->invoiceB))->toBeTrue();
 
     $this->orgB->removeUser($this->userA->fresh());

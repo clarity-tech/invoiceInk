@@ -9,26 +9,26 @@ class TaxTemplatePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->currentTeam !== null;
+        return $user->currentTeam !== null && $user->hasTeamPermission($user->currentTeam, 'read');
     }
 
     public function view(User $user, TaxTemplate $taxTemplate): bool
     {
-        return $user->allTeams()->contains('id', $taxTemplate->organization_id);
+        return $user->hasTeamPermission($taxTemplate->organization, 'read');
     }
 
     public function create(User $user): bool
     {
-        return $user->currentTeam !== null;
+        return $user->currentTeam !== null && $user->hasTeamPermission($user->currentTeam, 'manage');
     }
 
     public function update(User $user, TaxTemplate $taxTemplate): bool
     {
-        return $user->allTeams()->contains('id', $taxTemplate->organization_id);
+        return $user->hasTeamPermission($taxTemplate->organization, 'manage');
     }
 
     public function delete(User $user, TaxTemplate $taxTemplate): bool
     {
-        return $user->allTeams()->contains('id', $taxTemplate->organization_id);
+        return $user->hasTeamPermission($taxTemplate->organization, 'manage');
     }
 }

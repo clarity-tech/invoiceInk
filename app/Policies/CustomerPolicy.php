@@ -12,7 +12,7 @@ class CustomerPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->currentTeam !== null;
+        return $user->currentTeam !== null && $user->hasTeamPermission($user->currentTeam, 'read');
     }
 
     /**
@@ -20,7 +20,7 @@ class CustomerPolicy
      */
     public function view(User $user, Customer $customer): bool
     {
-        return $user->allTeams()->contains('id', $customer->organization_id);
+        return $user->hasTeamPermission($customer->organization, 'read');
     }
 
     /**
@@ -28,7 +28,7 @@ class CustomerPolicy
      */
     public function create(User $user): bool
     {
-        return $user->currentTeam !== null;
+        return $user->currentTeam !== null && $user->hasTeamPermission($user->currentTeam, 'create');
     }
 
     /**
@@ -36,7 +36,7 @@ class CustomerPolicy
      */
     public function update(User $user, Customer $customer): bool
     {
-        return $user->allTeams()->contains('id', $customer->organization_id);
+        return $user->hasTeamPermission($customer->organization, 'update');
     }
 
     /**
@@ -44,7 +44,7 @@ class CustomerPolicy
      */
     public function delete(User $user, Customer $customer): bool
     {
-        return $user->allTeams()->contains('id', $customer->organization_id);
+        return $user->hasTeamPermission($customer->organization, 'delete');
     }
 
     /**
@@ -52,7 +52,7 @@ class CustomerPolicy
      */
     public function restore(User $user, Customer $customer): bool
     {
-        return $user->allTeams()->contains('id', $customer->organization_id);
+        return $user->hasTeamPermission($customer->organization, 'update');
     }
 
     /**
@@ -60,6 +60,6 @@ class CustomerPolicy
      */
     public function forceDelete(User $user, Customer $customer): bool
     {
-        return $user->allTeams()->contains('id', $customer->organization_id);
+        return $user->hasTeamPermission($customer->organization, 'delete');
     }
 }

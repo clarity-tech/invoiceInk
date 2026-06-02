@@ -64,6 +64,7 @@ vi.mock('lucide-vue-next', () => ({
     ArrowLeft: { template: '<span />' },
     Hash: { template: '<span />' },
     ChevronRight: { template: '<span />' },
+    Users: { template: '<span />' },
 }));
 
 import Edit from '@/Pages/Organizations/Edit.vue';
@@ -107,6 +108,18 @@ const defaultProps = {
     ],
     currencies: { INR: 'Indian Rupee', USD: 'US Dollar' },
     tab: 'basics',
+    numberingSeries: [],
+    resetFrequencyOptions: {},
+    availableRoles: [],
+    memberPermissions: {
+        canAddTeamMembers: true,
+        canDeleteTeam: true,
+        canRemoveTeamMembers: true,
+        canUpdateTeam: true,
+        canUpdateTeamMembers: true,
+    },
+    hasRoles: true,
+    sendsTeamInvitations: true,
 };
 
 function mountComponent(propsOverride = {}) {

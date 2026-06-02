@@ -55,13 +55,18 @@ class TeamServiceProvider extends ServiceProvider
             'read',
             'update',
             'delete',
-        ])->description('Administrator users can perform any action.');
+            'manage',
+        ])->description('Administrators can do everything except delete the organization.');
 
         Jetstream::role('editor', 'Editor', [
             'read',
             'create',
             'update',
-        ])->description('Editor users have the ability to read, create, and update.');
+        ])->description('Editors can create and edit invoices and customers, but cannot delete or change settings.');
+
+        Jetstream::role('viewer', 'Viewer', [
+            'read',
+        ])->description('Viewers have read-only access.');
     }
 
     /**

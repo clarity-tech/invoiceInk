@@ -79,8 +79,19 @@ class OrganizationSetupController extends Controller
     public function saveStep(Request $request, Organization $organization): RedirectResponse
     {
         $user = $request->user();
-        if (! $user->allTeams()->contains('id', $organization->id)) {
+
+        // Setup mutates the same core org settings that OrganizationController gates
+        // behind "manage" — so only owners/admins may run the wizard, never editors
+        // or viewers.
+        if (! $user->hasTeamPermission($organization, 'manage')) {
             abort(403, __('messages.authorization.no_permission_edit_organization'));
+        }
+
+        // Once setup is complete, settings changes must go through the guarded
+        // organization settings screen; the wizard endpoint is no longer a valid
+        // path to overwrite them.
+        if ($organization->isSetupComplete()) {
+            return redirect()->route('dashboard');
         }
 
         $step = (int) $request->input('step', 1);

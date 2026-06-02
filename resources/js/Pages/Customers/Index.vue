@@ -4,8 +4,11 @@ import { computed, onMounted, ref } from 'vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import CustomerForm from '@/Components/CustomerForm.vue';
 import LocationModal from '@/Components/LocationModal.vue';
+import { usePermissions } from '@/composables/usePermissions';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import type { Customer, Location, Contact } from '@/types';
+
+const { can } = usePermissions();
 
 interface PaginatedCustomers {
     data: (Customer & { locations_count: number })[];
@@ -284,6 +287,7 @@ function locationSummary(customer: Customer): string {
                         Trash
                     </a>
                     <button
+                        v-if="can('create')"
                         type="button"
                         class="cursor-pointer rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
                         @click="openCreate"
@@ -469,6 +473,7 @@ function locationSummary(customer: Customer): string {
                                     class="px-6 py-4 text-right text-sm whitespace-nowrap"
                                 >
                                     <button
+                                        v-if="can('update')"
                                         type="button"
                                         class="mr-3 text-brand-600 hover:text-brand-900"
                                         @click="openAddLocation(customer.id)"
@@ -476,6 +481,7 @@ function locationSummary(customer: Customer): string {
                                         + Location
                                     </button>
                                     <button
+                                        v-if="can('update')"
                                         type="button"
                                         class="mr-3 text-brand-600 hover:text-brand-900"
                                         @click="openEdit(customer)"
@@ -483,6 +489,7 @@ function locationSummary(customer: Customer): string {
                                         Edit
                                     </button>
                                     <button
+                                        v-if="can('delete')"
                                         type="button"
                                         class="text-red-600 hover:text-red-900"
                                         @click="confirmDelete(customer)"
@@ -541,8 +548,9 @@ function locationSummary(customer: Customer): string {
                                             <div class="flex gap-2">
                                                 <button
                                                     v-if="
+                                                        can('update') &&
                                                         customer.primary_location_id !==
-                                                        loc.id
+                                                            loc.id
                                                     "
                                                     type="button"
                                                     class="cursor-pointer text-xs text-brand-600 hover:text-brand-900"
@@ -556,6 +564,7 @@ function locationSummary(customer: Customer): string {
                                                     Set Primary
                                                 </button>
                                                 <button
+                                                    v-if="can('update')"
                                                     type="button"
                                                     class="cursor-pointer text-xs text-brand-600 hover:text-brand-900"
                                                     @click="
@@ -568,6 +577,7 @@ function locationSummary(customer: Customer): string {
                                                     Edit
                                                 </button>
                                                 <button
+                                                    v-if="can('delete')"
                                                     type="button"
                                                     class="cursor-pointer text-xs text-red-600 hover:text-red-900"
                                                     @click="
@@ -619,6 +629,7 @@ function locationSummary(customer: Customer): string {
                                             </div>
                                             <div class="flex gap-2">
                                                 <button
+                                                    v-if="can('update')"
                                                     type="button"
                                                     class="cursor-pointer text-xs text-brand-600 hover:text-brand-900 disabled:cursor-not-allowed disabled:opacity-50"
                                                     :disabled="
@@ -640,6 +651,7 @@ function locationSummary(customer: Customer): string {
                                                     }}
                                                 </button>
                                                 <button
+                                                    v-if="can('delete')"
                                                     type="button"
                                                     class="cursor-pointer text-xs text-red-600 hover:text-red-900"
                                                     @click="
@@ -706,7 +718,7 @@ function locationSummary(customer: Customer): string {
                                         Add your first customer to start
                                         creating invoices.
                                     </p>
-                                    <div class="mt-4">
+                                    <div v-if="can('create')" class="mt-4">
                                         <button
                                             type="button"
                                             class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"

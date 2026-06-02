@@ -9,6 +9,7 @@ import { index as organizationsIndex } from '@/routes/organizations';
 import { create as teamsCreate } from '@/routes/teams';
 import { update as switchTeam } from '@/routes/current-team';
 import { show as profileShow } from '@/routes/profile';
+import { usePermissions } from '@/composables/usePermissions';
 
 interface TeamSummary {
     id: number;
@@ -39,6 +40,8 @@ const auth = (page.props.auth ?? {}) as {
 
 const teams = computed<TeamSummary[]>(() => auth.user?.all_teams ?? []);
 const hasMultipleTeams = computed(() => teams.value.length > 1);
+
+const { canManage } = usePermissions();
 
 function handleLogout() {
     router.flushAll();
@@ -145,6 +148,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                             Organizations
                         </Link>
                         <Link
+                            v-if="canManage"
                             :href="settingsIndex.url()"
                             class="inline-flex items-center border-b-2 px-1 pt-1 text-sm leading-5 font-medium transition"
                             :class="
@@ -443,6 +447,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                     >Organizations</Link
                 >
                 <Link
+                    v-if="canManage"
                     :href="settingsIndex.url()"
                     class="block border-l-4 py-2 pr-4 pl-3 text-base font-medium"
                     :class="

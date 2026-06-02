@@ -7,6 +7,11 @@ use App\Models\User;
 beforeEach(function () {
     $this->user = User::factory()->withPersonalTeam()->create();
     $this->actingAs($this->user);
+
+    // The setup wizard only operates on an in-progress org; the withPersonalTeam
+    // factory marks setup complete, so reset it to the realistic incomplete state.
+    // (Tests that assert the "already complete" behaviour set it back themselves.)
+    $this->user->currentTeam->update(['setup_completed_at' => null]);
 });
 
 test('can render organization setup page', function () {

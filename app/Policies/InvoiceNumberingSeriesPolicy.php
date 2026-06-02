@@ -9,26 +9,26 @@ class InvoiceNumberingSeriesPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->currentTeam !== null;
+        return $user->currentTeam !== null && $user->hasTeamPermission($user->currentTeam, 'read');
     }
 
     public function view(User $user, InvoiceNumberingSeries $series): bool
     {
-        return $user->allTeams()->contains('id', $series->organization_id);
+        return $user->hasTeamPermission($series->organization, 'read');
     }
 
     public function create(User $user): bool
     {
-        return $user->currentTeam !== null;
+        return $user->currentTeam !== null && $user->hasTeamPermission($user->currentTeam, 'manage');
     }
 
     public function update(User $user, InvoiceNumberingSeries $series): bool
     {
-        return $user->allTeams()->contains('id', $series->organization_id);
+        return $user->hasTeamPermission($series->organization, 'manage');
     }
 
     public function delete(User $user, InvoiceNumberingSeries $series): bool
     {
-        return $user->allTeams()->contains('id', $series->organization_id);
+        return $user->hasTeamPermission($series->organization, 'manage');
     }
 }

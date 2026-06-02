@@ -50,6 +50,25 @@ class Jetstream
     }
 
     /**
+     * Return the registered roles as plain arrays for the frontend.
+     *
+     * @return array<int, array{key: string, name: string, description: string, permissions: array<int, string>}>
+     */
+    public static function availableRoles(): array
+    {
+        return collect(static::$roles)->map(function ($role) {
+            $data = $role->jsonSerialize();
+
+            return [
+                'key' => $data['key'],
+                'name' => $data['name'],
+                'description' => $data['description'],
+                'permissions' => $data['permissions'],
+            ];
+        })->values()->all();
+    }
+
+    /**
      * Define a role.
      */
     public static function role(string $key, string $name, array $permissions): Role

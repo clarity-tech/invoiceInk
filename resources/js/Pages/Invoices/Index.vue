@@ -5,8 +5,11 @@ import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import MoneyDisplay from '@/Components/MoneyDisplay.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { formatDate } from '@/composables/useFormatDate';
+import { usePermissions } from '@/composables/usePermissions';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import type { Invoice } from '@/types';
+
+const { can } = usePermissions();
 
 interface PaginatedInvoices {
     data: Invoice[];
@@ -147,12 +150,14 @@ const tabs = [
                         Trash
                     </a>
                     <a
+                        v-if="can('create')"
                         href="/estimates/create"
                         class="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700"
                     >
                         Create Estimate
                     </a>
                     <a
+                        v-if="can('create')"
                         href="/invoices/create"
                         class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
                     >
@@ -307,6 +312,7 @@ const tabs = [
                                         >View</a
                                     >
                                     <a
+                                        v-if="can('update')"
                                         :href="`/invoices/${invoice.id}/edit`"
                                         class="text-brand-600 hover:text-brand-900"
                                         >Edit</a
@@ -317,6 +323,7 @@ const tabs = [
                                         >PDF</a
                                     >
                                     <button
+                                        v-if="can('create')"
                                         type="button"
                                         class="cursor-pointer text-gray-600 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
                                         :disabled="duplicating === invoice.id"
@@ -329,7 +336,10 @@ const tabs = [
                                         }}
                                     </button>
                                     <button
-                                        v-if="invoice.type === 'estimate'"
+                                        v-if="
+                                            invoice.type === 'estimate' &&
+                                            can('create')
+                                        "
                                         type="button"
                                         class="cursor-pointer text-purple-600 hover:text-purple-900 disabled:cursor-not-allowed disabled:opacity-50"
                                         :disabled="converting === invoice.id"
@@ -342,6 +352,7 @@ const tabs = [
                                         }}
                                     </button>
                                     <button
+                                        v-if="can('delete')"
                                         type="button"
                                         class="cursor-pointer text-red-600 hover:text-red-900"
                                         @click="confirmDelete(invoice)"
@@ -375,7 +386,10 @@ const tabs = [
                                     Get started by creating your first invoice
                                     or estimate.
                                 </p>
-                                <div class="mt-4 flex justify-center gap-3">
+                                <div
+                                    v-if="can('create')"
+                                    class="mt-4 flex justify-center gap-3"
+                                >
                                     <a
                                         href="/invoices/create"
                                         class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"

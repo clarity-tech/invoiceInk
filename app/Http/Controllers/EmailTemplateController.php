@@ -7,6 +7,7 @@ use App\Mail\Templates\DefaultEmailTemplates;
 use App\Mail\Templates\EmailTemplateService;
 use App\Mail\Templates\TemplateVariableResolver;
 use App\Models\Invoice;
+use App\Models\Organization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ class EmailTemplateController extends Controller
 
     public function index(): Response
     {
-        $organization = auth()->user()->currentTeam;
+        $organization = $this->authorizeManageTemplates();
         $templates = $this->service->listForOrganization($organization);
 
         return Inertia::render('EmailTemplates/Index', [
@@ -31,7 +32,7 @@ class EmailTemplateController extends Controller
     public function edit(string $type): Response
     {
         $templateType = EmailTemplateType::from($type);
-        $organization = auth()->user()->currentTeam;
+        $organization = $this->authorizeManageTemplates();
         $resolved = $this->service->resolve($organization, $templateType);
         $default = DefaultEmailTemplates::get($templateType);
 
@@ -49,7 +50,7 @@ class EmailTemplateController extends Controller
     public function update(Request $request, string $type): RedirectResponse
     {
         $templateType = EmailTemplateType::from($type);
-        $organization = auth()->user()->currentTeam;
+        $organization = $this->authorizeManageTemplates();
 
         $validated = $request->validate([
             'subject' => ['required', 'string', 'max:500'],
@@ -64,11 +65,24 @@ class EmailTemplateController extends Controller
     public function destroy(string $type): RedirectResponse
     {
         $templateType = EmailTemplateType::from($type);
-        $organization = auth()->user()->currentTeam;
+        $organization = $this->authorizeManageTemplates();
 
         $this->service->resetToDefault($organization, $templateType);
 
         return back()->with('success', 'Email template reset to default.');
+    }
+
+    /**
+     * Ensure the current user may manage the active organization's settings.
+     */
+    private function authorizeManageTemplates(): Organization
+    {
+        $user = auth()->user();
+        $organization = $user->currentTeam;
+
+        abort_unless($organization && $user->hasTeamPermission($organization, 'manage'), 403);
+
+        return $organization;
     }
 
     /**

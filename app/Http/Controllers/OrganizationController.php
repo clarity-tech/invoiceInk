@@ -9,11 +9,14 @@ use App\Enums\ResetFrequency;
 use App\Models\Location;
 use App\Models\Organization;
 use App\Rules\CurrencyCode;
+use App\Support\Jetstream;
+use App\Support\JetstreamFeatures;
 use App\ValueObjects\BankDetails;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule as ValidationRule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -38,7 +41,8 @@ class OrganizationController extends Controller
 
     public function show(Request $request, Organization $organization): Response
     {
-        $this->authorizeAccess($request, $organization);
+        // Viewing the org overview only requires membership (any role).
+        abort_unless($request->user()->belongsToTeam($organization), 403, __('messages.authorization.no_permission_edit_organization'));
 
         $organization->load('primaryLocation');
 
@@ -50,6 +54,7 @@ class OrganizationController extends Controller
         return Inertia::render('Organizations/Show', [
             'organization' => $organization,
             'numberingSeries' => $numberingSeries,
+            'canManage' => $request->user()->hasTeamPermission($organization, 'manage'),
         ]);
     }
 
@@ -57,7 +62,7 @@ class OrganizationController extends Controller
     {
         $this->authorizeAccess($request, $organization);
 
-        $organization->load('primaryLocation');
+        $organization->load(['primaryLocation', 'owner', 'users', 'teamInvitations']);
 
         $numberingSeries = $organization->numberingSeries()
             ->orderByDesc('is_default')
@@ -71,6 +76,16 @@ class OrganizationController extends Controller
             'tab' => $request->query('tab', 'basics'),
             'numberingSeries' => $numberingSeries,
             'resetFrequencyOptions' => ResetFrequency::getOptions(),
+            'availableRoles' => Jetstream::availableRoles(),
+            'memberPermissions' => [
+                'canAddTeamMembers' => Gate::check('addTeamMember', $organization),
+                'canDeleteTeam' => Gate::check('delete', $organization),
+                'canRemoveTeamMembers' => Gate::check('removeTeamMember', $organization),
+                'canUpdateTeam' => Gate::check('update', $organization),
+                'canUpdateTeamMembers' => Gate::check('updateTeamMember', $organization),
+            ],
+            'hasRoles' => Jetstream::hasRoles(),
+            'sendsTeamInvitations' => JetstreamFeatures::sendsTeamInvitations(),
         ]);
     }
 
@@ -271,12 +286,14 @@ class OrganizationController extends Controller
         ]);
     }
 
+    /**
+     * Editing organization settings requires the "manage" permission (owner/admin).
+     */
     private function authorizeAccess(Request $request, Organization $organization): void
     {
         $user = $request->user();
-        $hasAccess = $user->allTeams()->contains('id', $organization->id);
 
-        if (! $hasAccess) {
+        if (! $user->hasTeamPermission($organization, 'manage')) {
             abort(403, __('messages.authorization.no_permission_edit_organization'));
         }
     }

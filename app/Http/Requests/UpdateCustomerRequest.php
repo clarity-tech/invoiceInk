@@ -12,7 +12,7 @@ class UpdateCustomerRequest extends FormRequest
     {
         $customer = $this->route('customer');
 
-        return $customer && $this->user()?->allTeams()->contains('id', $customer->organization_id);
+        return $customer && ($this->user()?->can('update', $customer) ?? false);
     }
 
     /** @return array<string, mixed> */

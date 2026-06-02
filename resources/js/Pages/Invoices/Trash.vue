@@ -5,8 +5,11 @@ import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import MoneyDisplay from '@/Components/MoneyDisplay.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { formatDate } from '@/composables/useFormatDate';
+import { usePermissions } from '@/composables/usePermissions';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import type { Invoice } from '@/types';
+
+const { can } = usePermissions();
 
 interface PaginatedInvoices {
     data: Invoice[];
@@ -228,6 +231,7 @@ const tabs = [
                                     class="flex items-center justify-end gap-2"
                                 >
                                     <button
+                                        v-if="can('update')"
                                         type="button"
                                         class="cursor-pointer text-brand-600 hover:text-brand-900 disabled:cursor-not-allowed disabled:opacity-50"
                                         :disabled="restoring === invoice.id"
@@ -240,6 +244,7 @@ const tabs = [
                                         }}
                                     </button>
                                     <button
+                                        v-if="can('delete')"
                                         type="button"
                                         class="cursor-pointer text-red-600 hover:text-red-900"
                                         @click="confirmForceDelete(invoice)"

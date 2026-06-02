@@ -57,6 +57,7 @@ interface NumberingSeries {
 const props = defineProps<{
     organization: Organization;
     numberingSeries: NumberingSeries[];
+    canManage: boolean;
 }>();
 
 const org = props.organization;
@@ -183,6 +184,7 @@ function previewNumber(series: NumberingSeries): string {
                     </div>
                 </div>
                 <Link
+                    v-if="canManage"
                     :href="`/organizations/${org.id}/edit`"
                     class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none"
                 >
@@ -286,6 +288,7 @@ function previewNumber(series: NumberingSeries): string {
                     <p v-else class="text-sm text-gray-400 italic">
                         No location configured.
                         <Link
+                            v-if="canManage"
                             :href="`/organizations/${org.id}/edit?tab=location`"
                             class="text-brand-600 not-italic hover:underline"
                             >Add one</Link
@@ -330,6 +333,7 @@ function previewNumber(series: NumberingSeries): string {
                     <p v-else class="text-sm text-gray-400 italic">
                         No bank details configured.
                         <Link
+                            v-if="canManage"
                             :href="`/organizations/${org.id}/edit?tab=bank`"
                             class="text-brand-600 not-italic hover:underline"
                             >Add details</Link
@@ -346,6 +350,7 @@ function previewNumber(series: NumberingSeries): string {
                             Numbering Series
                         </h2>
                         <Link
+                            v-if="canManage"
                             :href="`/organizations/${org.id}/edit?tab=numbering`"
                             class="text-xs font-medium text-brand-600 hover:text-brand-900"
                         >

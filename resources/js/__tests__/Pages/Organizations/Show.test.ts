@@ -58,6 +58,7 @@ function mountComponent(propsOverride = {}) {
         props: {
             organization: makeOrg(),
             numberingSeries: [],
+            canManage: true,
             ...propsOverride,
         },
         global: {

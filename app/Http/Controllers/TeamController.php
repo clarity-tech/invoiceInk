@@ -31,7 +31,7 @@ class TeamController extends Controller
 
         return Inertia::render('Teams/Show', [
             'team' => $team,
-            'availableRoles' => $this->availableRoles(),
+            'availableRoles' => Jetstream::availableRoles(),
             'permissions' => [
                 'canAddTeamMembers' => Gate::check('addTeamMember', $team),
                 'canDeleteTeam' => Gate::check('delete', $team),
@@ -147,22 +147,5 @@ class TeamController extends Controller
         $model::whereKey($invitationId)->where('team_id', $team->id)->delete();
 
         return back()->banner('Invitation cancelled.');
-    }
-
-    /**
-     * @return array<int, array{key: string, name: string, description: string, permissions: array<int, string>}>
-     */
-    protected function availableRoles(): array
-    {
-        return collect(Jetstream::$roles)->map(function ($role) {
-            $data = $role->jsonSerialize();
-
-            return [
-                'key' => $data['key'],
-                'name' => $data['name'],
-                'description' => $data['description'],
-                'permissions' => $data['permissions'],
-            ];
-        })->values()->all();
     }
 }

@@ -58,9 +58,9 @@ describe('Teams/Create', () => {
         mockPost.mockClear();
     });
 
-    it('renders Create Team heading', () => {
+    it('renders Create organization heading', () => {
         const wrapper = mount(Create);
-        expect(wrapper.text()).toContain('Create Team');
+        expect(wrapper.text()).toContain('Create organization');
     });
 
     it('renders team name field', () => {
@@ -80,8 +80,10 @@ describe('Teams/Create', () => {
         expect(mockPost).toHaveBeenCalledWith('/teams', expect.any(Object));
     });
 
-    it('has Create button', () => {
+    it('has submit button', () => {
         const wrapper = mount(Create);
-        expect(wrapper.find('button[type="submit"]').text()).toBe('Create');
+        expect(wrapper.find('button[type="submit"]').text()).toBe(
+            'Continue to setup',
+        );
     });
 });

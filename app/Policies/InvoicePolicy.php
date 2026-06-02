@@ -12,7 +12,7 @@ class InvoicePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->currentTeam !== null;
+        return $user->currentTeam !== null && $user->hasTeamPermission($user->currentTeam, 'read');
     }
 
     /**
@@ -20,7 +20,7 @@ class InvoicePolicy
      */
     public function view(User $user, Invoice $invoice): bool
     {
-        return $user->allTeams()->contains('id', $invoice->organization_id);
+        return $user->hasTeamPermission($invoice->organization, 'read');
     }
 
     /**
@@ -28,7 +28,7 @@ class InvoicePolicy
      */
     public function create(User $user): bool
     {
-        return $user->currentTeam !== null;
+        return $user->currentTeam !== null && $user->hasTeamPermission($user->currentTeam, 'create');
     }
 
     /**
@@ -36,7 +36,7 @@ class InvoicePolicy
      */
     public function update(User $user, Invoice $invoice): bool
     {
-        return $user->allTeams()->contains('id', $invoice->organization_id);
+        return $user->hasTeamPermission($invoice->organization, 'update');
     }
 
     /**
@@ -44,7 +44,7 @@ class InvoicePolicy
      */
     public function delete(User $user, Invoice $invoice): bool
     {
-        return $user->allTeams()->contains('id', $invoice->organization_id);
+        return $user->hasTeamPermission($invoice->organization, 'delete');
     }
 
     /**
@@ -52,7 +52,7 @@ class InvoicePolicy
      */
     public function restore(User $user, Invoice $invoice): bool
     {
-        return $user->allTeams()->contains('id', $invoice->organization_id);
+        return $user->hasTeamPermission($invoice->organization, 'update');
     }
 
     /**
@@ -60,7 +60,7 @@ class InvoicePolicy
      */
     public function forceDelete(User $user, Invoice $invoice): bool
     {
-        return $user->allTeams()->contains('id', $invoice->organization_id);
+        return $user->hasTeamPermission($invoice->organization, 'delete');
     }
 
     /**
@@ -68,7 +68,7 @@ class InvoicePolicy
      */
     public function send(User $user, Invoice $invoice): bool
     {
-        return $user->allTeams()->contains('id', $invoice->organization_id);
+        return $user->hasTeamPermission($invoice->organization, 'update');
     }
 
     /**
@@ -76,6 +76,6 @@ class InvoicePolicy
      */
     public function downloadPdf(User $user, Invoice $invoice): bool
     {
-        return $user->allTeams()->contains('id', $invoice->organization_id);
+        return $user->hasTeamPermission($invoice->organization, 'read');
     }
 }
