@@ -82,6 +82,35 @@ test('can update organization basics', function () {
     expect($organization->currency->value)->toBe('USD');
 });
 
+test('can update the company name independently of the organization name', function () {
+    $organization = createOrganizationWithLocation(['name' => 'Acme Workspace', 'company_name' => 'Old Co'], [], $this->user);
+
+    $this->put("/organizations/{$organization->id}", [
+        'name' => 'Acme Workspace',
+        'company_name' => 'Acme Manufacturing Pvt Ltd',
+        'emails' => ['ops@acme.test'],
+        'currency' => 'INR',
+        'country_code' => 'IN',
+    ])->assertRedirect();
+
+    $organization->refresh();
+    expect($organization->name)->toBe('Acme Workspace');
+    expect($organization->company_name)->toBe('Acme Manufacturing Pvt Ltd');
+});
+
+test('omitting company_name leaves it unchanged', function () {
+    $organization = createOrganizationWithLocation(['company_name' => 'Keep Me Ltd'], [], $this->user);
+
+    $this->put("/organizations/{$organization->id}", [
+        'name' => 'Renamed Workspace',
+        'emails' => ['ops@acme.test'],
+        'currency' => 'INR',
+        'country_code' => 'IN',
+    ])->assertRedirect();
+
+    expect($organization->refresh()->company_name)->toBe('Keep Me Ltd');
+});
+
 test('validates required fields when updating organization', function () {
     $organization = createOrganizationWithLocation([], [], $this->user);
 

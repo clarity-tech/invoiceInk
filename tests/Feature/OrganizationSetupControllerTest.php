@@ -59,6 +59,23 @@ test('can save step 1 company information', function () {
     ]);
 });
 
+test('step 1 sets company name without overwriting the organization name', function () {
+    $organization = $this->user->currentTeam;
+    $organization->update(['name' => 'Acme Workspace']);
+
+    $this->post("/organization/setup/{$organization->id}/step", [
+        'step' => 1,
+        'company_name' => 'Acme Manufacturing Pvt Ltd',
+    ])->assertRedirect();
+
+    // The switcher label (name) is preserved; only the legal company_name changes.
+    $this->assertDatabaseHas('teams', [
+        'id' => $organization->id,
+        'name' => 'Acme Workspace',
+        'company_name' => 'Acme Manufacturing Pvt Ltd',
+    ]);
+});
+
 test('validates step 1 requires company name', function () {
     $organization = $this->user->currentTeam;
 
@@ -244,7 +261,7 @@ test('step 2 updates existing location', function () {
     ]);
 });
 
-test('location name defaults to company name when empty', function () {
+test('location name defaults to a generic label when empty', function () {
     $organization = $this->user->currentTeam;
     $organization->update(['company_name' => 'Test Company Ltd']);
 
@@ -260,7 +277,11 @@ test('location name defaults to company name when empty', function () {
 
     $response->assertRedirect();
 
+    // The location is named generically, not after the company.
     $this->assertDatabaseHas('locations', [
+        'name' => 'Head Office',
+    ]);
+    $this->assertDatabaseMissing('locations', [
         'name' => 'Test Company Ltd',
     ]);
 });

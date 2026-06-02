@@ -99,7 +99,7 @@ describe('NavigationMenu', () => {
 
     it('renders current team name', () => {
         const wrapper = mount(NavigationMenu);
-        expect(wrapper.text()).toContain('Test Co');
+        expect(wrapper.text()).toContain("Test's Team");
     });
 
     it('renders user avatar', () => {

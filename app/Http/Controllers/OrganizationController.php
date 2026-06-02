@@ -95,6 +95,7 @@ class OrganizationController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'company_name' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20', 'regex:/^[+]?[\d\s\-().]+$/'],
             'emails' => ['required', 'array', 'min:1'],
             'emails.*' => ['nullable', 'email'],
@@ -126,7 +127,7 @@ class OrganizationController extends Controller
             array_map(fn ($email) => ['name' => '', 'email' => $email], $filteredEmails)
         );
 
-        $organization->update([
+        $attributes = [
             'name' => $validated['name'],
             'phone' => ($validated['phone'] ?? '') ?: null,
             'emails' => $contactCollection,
@@ -139,7 +140,15 @@ class OrganizationController extends Controller
             'registration_number' => ($validated['registration_number'] ?? '') ?: null,
             'website' => ($validated['website'] ?? '') ?: null,
             'notes' => ($validated['notes'] ?? '') ?: null,
-        ]);
+        ];
+
+        // Only touch company_name when the form actually submits it, so callers
+        // that omit the field don't accidentally clear the legal business name.
+        if ($request->has('company_name')) {
+            $attributes['company_name'] = ($validated['company_name'] ?? '') ?: null;
+        }
+
+        $organization->update($attributes);
 
         return back()->with('message', __('messages.notifications.organization_updated'));
     }

@@ -13,6 +13,7 @@ const recentlySuccessful = ref(false);
 
 const form = useForm({
     name: props.organization.name ?? '',
+    company_name: props.organization.company_name ?? '',
     phone: props.organization.phone ?? '',
     emails:
         (props.organization.emails?.map((e) => e.email) ?? ['']).length > 0
@@ -88,12 +89,12 @@ function submit() {
         </div>
 
         <div class="space-y-6 p-6">
-            <!-- Name -->
+            <!-- Organization name (switcher label) -->
             <div>
                 <label
                     for="org-name"
                     class="block text-sm font-medium text-gray-700"
-                    >Name *</label
+                    >Organization name *</label
                 >
                 <input
                     id="org-name"
@@ -101,8 +102,35 @@ function submit() {
                     type="text"
                     class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
                 />
+                <p class="mt-1 text-xs text-gray-500">
+                    Shown in the organization switcher. Internal label only.
+                </p>
                 <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">
                     {{ form.errors.name }}
+                </p>
+            </div>
+
+            <!-- Company name (legal name on documents) -->
+            <div>
+                <label
+                    for="org-company-name"
+                    class="block text-sm font-medium text-gray-700"
+                    >Company name</label
+                >
+                <input
+                    id="org-company-name"
+                    v-model="form.company_name"
+                    type="text"
+                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                />
+                <p class="mt-1 text-xs text-gray-500">
+                    Your legal/business name shown on invoices and documents.
+                </p>
+                <p
+                    v-if="form.errors.company_name"
+                    class="mt-1 text-sm text-red-600"
+                >
+                    {{ form.errors.company_name }}
                 </p>
             </div>
 

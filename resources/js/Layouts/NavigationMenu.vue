@@ -177,7 +177,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                             @click.stop="showTeamDropdown = !showTeamDropdown"
                         >
                             <span class="max-w-[12rem] truncate">{{
-                                auth.currentTeam.company_name ||
                                 auth.currentTeam.name
                             }}</span>
                             <svg
@@ -214,7 +213,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                     @click="selectTeam(team.id)"
                                 >
                                     <span class="truncate">{{
-                                        team.company_name || team.name
+                                        team.name
                                     }}</span>
                                     <svg
                                         v-if="auth.currentTeam?.id === team.id"
@@ -481,9 +480,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                         class="flex w-full items-center justify-between gap-2 px-4 py-2 text-left text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800"
                         @click="selectTeam(team.id)"
                     >
-                        <span class="truncate">{{
-                            team.company_name || team.name
-                        }}</span>
+                        <span class="truncate">{{ team.name }}</span>
                         <svg
                             v-if="auth.currentTeam?.id === team.id"
                             class="h-4 w-4 text-brand-600"

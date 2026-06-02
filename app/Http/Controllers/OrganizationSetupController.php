@@ -153,8 +153,9 @@ class OrganizationSetupController extends Controller
 
     private function saveStep1(Request $request, Organization $organization): void
     {
+        // Only set company_name (the legal/business name on invoices). The org's
+        // `name` is the switcher label set at creation and must not be overwritten.
         $organization->update([
-            'name' => $request->input('company_name'),
             'company_name' => $request->input('company_name'),
             'tax_number' => $request->input('tax_number') ?: null,
             'registration_number' => $request->input('registration_number') ?: null,
@@ -170,7 +171,7 @@ class OrganizationSetupController extends Controller
         $organization->update(['country_code' => $countryCode]);
 
         $locationData = [
-            'name' => $request->input('location_name') ?: ($organization->company_name ?: 'Main Office'),
+            'name' => $request->input('location_name') ?: 'Head Office',
             'gstin' => $request->input('gstin') ?: null,
             'address_line_1' => $request->input('address_line_1'),
             'address_line_2' => $request->input('address_line_2') ?: null,
