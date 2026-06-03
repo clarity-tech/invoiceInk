@@ -6,6 +6,7 @@ import ItemRow from './ItemRow.vue';
 import { useFormatMoney } from '@/composables/useFormatMoney';
 import { useInvoiceCalculator } from '@/composables/useInvoiceCalculator';
 import type { LineItem } from '@/composables/useInvoiceCalculator';
+import { taxLabelFor } from '@/composables/useTaxLabel';
 import type {
     Invoice,
     Customer,
@@ -24,6 +25,7 @@ const props = defineProps<{
     taxTemplates: TaxTemplate[];
     numberingSeries: InvoiceNumberingSeries[];
     statusOptions: Record<string, string>;
+    taxLabels: Record<string, string>;
     defaults?: {
         organization_id: number | null;
         organization_location_id: number | null;
@@ -580,11 +582,18 @@ const flash = computed(() => (page.props as any).flash ?? {});
                                     {{ selectedBillingLocation.country }}
                                 </p>
                                 <p
-                                    v-if="selectedBillingLocation.gstin"
+                                    v-if="selectedBillingLocation.tax_id"
                                     class="mt-1 font-medium text-gray-700"
                                 >
-                                    <span class="text-gray-500">GSTIN:</span>
-                                    {{ selectedBillingLocation.gstin }}
+                                    <span class="text-gray-500"
+                                        >{{
+                                            taxLabelFor(
+                                                selectedBillingLocation.country,
+                                                taxLabels,
+                                            )
+                                        }}:</span
+                                    >
+                                    {{ selectedBillingLocation.tax_id }}
                                 </p>
                             </div>
                         </div>
@@ -675,11 +684,18 @@ const flash = computed(() => (page.props as any).flash ?? {});
                                     {{ selectedShippingLocation.country }}
                                 </p>
                                 <p
-                                    v-if="selectedShippingLocation.gstin"
+                                    v-if="selectedShippingLocation.tax_id"
                                     class="mt-1 font-medium text-gray-700"
                                 >
-                                    <span class="text-gray-500">GSTIN:</span>
-                                    {{ selectedShippingLocation.gstin }}
+                                    <span class="text-gray-500"
+                                        >{{
+                                            taxLabelFor(
+                                                selectedShippingLocation.country,
+                                                taxLabels,
+                                            )
+                                        }}:</span
+                                    >
+                                    {{ selectedShippingLocation.tax_id }}
                                 </p>
                             </div>
                         </div>

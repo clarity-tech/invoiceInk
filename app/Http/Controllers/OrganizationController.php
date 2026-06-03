@@ -55,6 +55,7 @@ class OrganizationController extends Controller
             'organization' => $organization,
             'numberingSeries' => $numberingSeries,
             'canManage' => $request->user()->hasTeamPermission($organization, 'manage'),
+            'taxLabels' => Country::taxLabels(),
         ]);
     }
 
@@ -159,7 +160,7 @@ class OrganizationController extends Controller
 
         $validated = $request->validate([
             'location_name' => ['nullable', 'string', 'max:255'],
-            'gstin' => ['nullable', 'string', 'max:50'],
+            'tax_id' => ['nullable', 'string', 'max:50'],
             'address_line_1' => ['required', 'string', 'max:500'],
             'address_line_2' => ['nullable', 'string', 'max:500'],
             'city' => ['required', 'string', 'max:100'],
@@ -170,7 +171,7 @@ class OrganizationController extends Controller
 
         $locationData = [
             'name' => ($validated['location_name'] ?? '') ?: ($organization->name ?: 'Main Office'),
-            'gstin' => ($validated['gstin'] ?? '') ?: null,
+            'tax_id' => ($validated['tax_id'] ?? '') ?: null,
             'address_line_1' => $validated['address_line_1'],
             'address_line_2' => ($validated['address_line_2'] ?? '') ?: null,
             'city' => $validated['city'],

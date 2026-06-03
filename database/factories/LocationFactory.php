@@ -22,7 +22,7 @@ class LocationFactory extends Factory
     {
         return [
             'name' => fake()->company().' Office',
-            'gstin' => fake()->optional(0.7)->bothify('##???#####?#?#'),
+            'tax_id' => fake()->optional(0.7)->bothify('##???#####?#?#'),
             'address_line_1' => fake()->streetAddress(),
             'address_line_2' => fake()->optional(0.3)->secondaryAddress(),
             'city' => fake()->city(),
@@ -64,7 +64,7 @@ class LocationFactory extends Factory
     public function withGstin(): static
     {
         return $this->state(fn (array $attributes) => [
-            'gstin' => fake()->bothify('##???#####?#?#'),
+            'tax_id' => fake()->bothify('##???#####?#?#'),
             'country' => 'IN',
             'state' => fake()->randomElement([
                 'Maharashtra', 'Delhi', 'Karnataka', 'Tamil Nadu',
@@ -79,7 +79,7 @@ class LocationFactory extends Factory
     public function withoutGstin(): static
     {
         return $this->state(fn (array $attributes) => [
-            'gstin' => null,
+            'tax_id' => null,
         ]);
     }
 }

@@ -228,7 +228,7 @@ describe('Organizations/Setup', () => {
             organization: makeOrganization({
                 primary_location: {
                     name: 'Head Office',
-                    gstin: 'GST123',
+                    tax_id: 'GST123',
                     address_line_1: '123 Main St',
                     address_line_2: '',
                     city: 'Mumbai',

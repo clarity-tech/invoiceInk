@@ -55,7 +55,7 @@ function seedDemoData(): array
         'state' => 'Karnataka',
         'country' => 'IN',
         'postal_code' => '560048',
-        'gstin' => '29ABCDE1234F1Z5',
+        'tax_id' => '29ABCDE1234F1Z5',
     ], $org);
 
     // UAE customer

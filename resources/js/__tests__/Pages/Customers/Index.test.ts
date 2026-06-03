@@ -336,4 +336,30 @@ describe('Customers/Index', () => {
         const modal = wrapper.find('[data-testid="location-modal"]');
         expect(modal.exists()).toBe(true);
     });
+
+    it('labels each location tax number by its country', async () => {
+        const c = {
+            ...makeCustomerWithCount({
+                id: 7,
+                locations: [
+                    makeLocation({
+                        id: 1,
+                        name: 'US Office',
+                        country: 'US',
+                        tax_id: '12-3456789',
+                    }),
+                ],
+            }),
+            locations_count: 1,
+        };
+        const wrapper = mountComponent({
+            customers: makePaginatedCustomers([c]),
+        });
+
+        // Expand the row to reveal the locations list (chevron is the first button).
+        await wrapper.find('tbody button').trigger('click');
+
+        expect(wrapper.text()).toContain('EIN: 12-3456789');
+        expect(wrapper.text()).not.toContain('GSTIN: 12-3456789');
+    });
 });

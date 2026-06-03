@@ -22,6 +22,7 @@ defineProps<{
     taxTemplates: TaxTemplate[];
     numberingSeries: InvoiceNumberingSeries[];
     statusOptions: Record<string, string>;
+    taxLabels: Record<string, string>;
     defaults: {
         organization_id: number | null;
         organization_location_id: number | null;
@@ -61,6 +62,7 @@ defineProps<{
                 :tax-templates="taxTemplates"
                 :numbering-series="numberingSeries"
                 :status-options="statusOptions"
+                :tax-labels="taxLabels"
                 :defaults="defaults"
             />
         </div>

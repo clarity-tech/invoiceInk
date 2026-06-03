@@ -12,11 +12,11 @@ test('public invoice template renders with all new elements', function () {
             'pan' => 'ABCDE1234F',
         ],
     ], [
-        'gstin' => '18AAACC1234C1Z5',
+        'tax_id' => '18AAACC1234C1Z5',
     ]);
 
     $customer = createCustomerWithLocation([], [
-        'gstin' => '36AAACR5678R1ZQ',
+        'tax_id' => '36AAACR5678R1ZQ',
         'state' => 'Telangana',
     ], $organization);
 
@@ -48,7 +48,7 @@ test('public invoice template renders with all new elements', function () {
 
 test('public invoice template renders INVOICE header when no GSTIN', function () {
     $organization = createOrganizationWithLocation([], [
-        'gstin' => null,
+        'tax_id' => null,
     ]);
     $customer = createCustomerWithLocation([], [], $organization);
     $invoice = createInvoiceWithItems([
@@ -68,13 +68,13 @@ test('public invoice renders TRN label for UAE organization location', function 
         'country_code' => 'AE',
     ], [
         'country' => 'AE',
-        'gstin' => '100123456700003',
+        'tax_id' => '100123456700003',
     ]);
     $customer = createCustomerWithLocation([
         'currency' => 'AED',
     ], [
         'country' => 'AE',
-        'gstin' => '100987654300003',
+        'tax_id' => '100987654300003',
     ], $organization);
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
@@ -94,7 +94,7 @@ test('public invoice does not show TAX INVOICE header for non-Indian organizatio
         'country_code' => 'AE',
     ], [
         'country' => 'AE',
-        'gstin' => '100123456700003',
+        'tax_id' => '100123456700003',
     ]);
     $customer = createCustomerWithLocation([
         'currency' => 'AED',

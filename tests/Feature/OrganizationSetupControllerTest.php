@@ -105,7 +105,7 @@ test('can save step 2 location data', function () {
     $response = $this->post("/organization/setup/{$organization->id}/step", [
         'step' => 2,
         'location_name' => 'Main Office',
-        'gstin' => '27AABCG9603R1ZV',
+        'tax_id' => '27AABCG9603R1ZV',
         'country_code' => 'IN',
         'address_line_1' => '123 Test Street',
         'address_line_2' => 'Suite 100',
@@ -118,7 +118,7 @@ test('can save step 2 location data', function () {
 
     $this->assertDatabaseHas('locations', [
         'name' => 'Main Office',
-        'gstin' => '27AABCG9603R1ZV',
+        'tax_id' => '27AABCG9603R1ZV',
         'address_line_1' => '123 Test Street',
         'city' => 'Mumbai',
         'country' => 'IN',

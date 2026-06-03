@@ -8,7 +8,7 @@ use App\ValueObjects\ContactCollection;
 test('can create location with all fields', function () {
     $location = Location::create([
         'name' => 'Test Office',
-        'gstin' => '27AAAAA0000A1Z5',
+        'tax_id' => '27AAAAA0000A1Z5',
         'address_line_1' => '123 Test Street',
         'address_line_2' => 'Suite 100',
         'city' => 'Test City',
@@ -20,7 +20,7 @@ test('can create location with all fields', function () {
     ]);
 
     expect($location->name)->toBe('Test Office');
-    expect($location->gstin)->toBe('27AAAAA0000A1Z5');
+    expect($location->tax_id)->toBe('27AAAAA0000A1Z5');
     expect($location->address_line_1)->toBe('123 Test Street');
     expect($location->address_line_2)->toBe('Suite 100');
     expect($location->city)->toBe('Test City');
@@ -44,7 +44,7 @@ test('can create location with minimal required fields', function () {
     ]);
 
     expect($location->name)->toBe('Minimal Office');
-    expect($location->gstin)->toBeNull();
+    expect($location->tax_id)->toBeNull();
     expect($location->address_line_2)->toBeNull();
 });
 
@@ -93,7 +93,7 @@ test('location belongs to customer through polymorphic relationship', function (
 test('location fillable attributes work correctly', function () {
     $data = [
         'name' => 'Test Location',
-        'gstin' => '27AAAAA0000A1Z5',
+        'tax_id' => '27AAAAA0000A1Z5',
         'address_line_1' => '123 Test St',
         'address_line_2' => 'Floor 2',
         'city' => 'Test City',
@@ -107,7 +107,7 @@ test('location fillable attributes work correctly', function () {
     $location = new Location($data);
 
     expect($location->name)->toBe('Test Location');
-    expect($location->gstin)->toBe('27AAAAA0000A1Z5');
+    expect($location->tax_id)->toBe('27AAAAA0000A1Z5');
     expect($location->address_line_1)->toBe('123 Test St');
     expect($location->address_line_2)->toBe('Floor 2');
     expect($location->locatable_type)->toBe(Organization::class);

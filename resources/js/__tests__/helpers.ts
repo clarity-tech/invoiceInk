@@ -20,7 +20,7 @@ export function makeLocation(overrides: Partial<Location> = {}): Location {
     return {
         id: 1,
         name: 'Head Office',
-        gstin: null,
+        tax_id: null,
         address_line_1: '123 Main St',
         address_line_2: null,
         city: 'Mumbai',

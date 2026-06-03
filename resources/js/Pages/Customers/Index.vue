@@ -5,6 +5,7 @@ import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import CustomerForm from '@/Components/CustomerForm.vue';
 import LocationModal from '@/Components/LocationModal.vue';
 import { usePermissions } from '@/composables/usePermissions';
+import { taxLabelFor } from '@/composables/useTaxLabel';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import type { Customer, Location, Contact } from '@/types';
 
@@ -539,10 +540,14 @@ function locationSummary(customer: Customer): string {
                                                     {{ loc.state }}</span
                                                 >
                                                 <span
-                                                    v-if="loc.gstin"
+                                                    v-if="loc.tax_id"
                                                     class="ml-2 text-gray-400"
-                                                    >GSTIN:
-                                                    {{ loc.gstin }}</span
+                                                    >{{
+                                                        taxLabelFor(
+                                                            loc.country,
+                                                            taxLabels,
+                                                        )
+                                                    }}: {{ loc.tax_id }}</span
                                                 >
                                             </div>
                                             <div class="flex gap-2">
@@ -621,10 +626,14 @@ function locationSummary(customer: Customer): string {
                                                     {{ loc.state }}</span
                                                 >
                                                 <span
-                                                    v-if="loc.gstin"
+                                                    v-if="loc.tax_id"
                                                     class="ml-2"
-                                                    >GSTIN:
-                                                    {{ loc.gstin }}</span
+                                                    >{{
+                                                        taxLabelFor(
+                                                            loc.country,
+                                                            taxLabels,
+                                                        )
+                                                    }}: {{ loc.tax_id }}</span
                                                 >
                                             </div>
                                             <div class="flex gap-2">

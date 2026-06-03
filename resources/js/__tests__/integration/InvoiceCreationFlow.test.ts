@@ -130,6 +130,7 @@ const defaultProps = () => ({
     taxTemplates: [makeTaxTemplate()],
     numberingSeries: [makeNumberingSeries()],
     statusOptions: { draft: 'Draft', sent: 'Sent', paid: 'Paid' },
+    taxLabels: { IN: 'GSTIN', US: 'EIN' },
     defaults: {
         organization_id: 1,
         organization_location_id: 10,

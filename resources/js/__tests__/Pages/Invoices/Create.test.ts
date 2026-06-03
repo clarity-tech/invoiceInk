@@ -73,6 +73,7 @@ function mountComponent(propsOverride = {}) {
             taxTemplates: [makeTaxTemplate()],
             numberingSeries: [makeNumberingSeries()],
             statusOptions: { draft: 'Draft', sent: 'Sent' },
+            taxLabels: { IN: 'GSTIN', US: 'EIN' },
             defaults,
             ...propsOverride,
         },

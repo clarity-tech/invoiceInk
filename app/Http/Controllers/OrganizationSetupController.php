@@ -63,7 +63,7 @@ class OrganizationSetupController extends Controller
                 'financial_year_start_day' => $organization->financial_year_start_day ?? 1,
                 'primary_location' => $organization->primaryLocation ? [
                     'name' => $organization->primaryLocation->name,
-                    'gstin' => $organization->primaryLocation->gstin ?? '',
+                    'tax_id' => $organization->primaryLocation->tax_id ?? '',
                     'address_line_1' => $organization->primaryLocation->address_line_1,
                     'address_line_2' => $organization->primaryLocation->address_line_2 ?? '',
                     'city' => $organization->primaryLocation->city,
@@ -128,7 +128,7 @@ class OrganizationSetupController extends Controller
             ]),
             2 => $request->validate([
                 'location_name' => ['nullable', 'string', 'max:255'],
-                'gstin' => ['nullable', 'string', 'max:50'],
+                'tax_id' => ['nullable', 'string', 'max:50'],
                 'country_code' => ['required', 'string', ValidationRule::enum(Country::class)],
                 'address_line_1' => ['required', 'string', 'max:500'],
                 'address_line_2' => ['nullable', 'string', 'max:500'],
@@ -172,7 +172,7 @@ class OrganizationSetupController extends Controller
 
         $locationData = [
             'name' => $request->input('location_name') ?: 'Head Office',
-            'gstin' => $request->input('gstin') ?: null,
+            'tax_id' => $request->input('tax_id') ?: null,
             'address_line_1' => $request->input('address_line_1'),
             'address_line_2' => $request->input('address_line_2') ?: null,
             'city' => $request->input('city'),

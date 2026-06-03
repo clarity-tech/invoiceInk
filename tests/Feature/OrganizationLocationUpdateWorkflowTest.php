@@ -22,7 +22,7 @@ test('user can go to organization show page and then edit location', function ()
     // Update location details via HTTP
     $response = $this->actingAs($user)->put("/organizations/{$organization->id}/location", [
         'location_name' => 'Updated Head Office',
-        'gstin' => '29AABCU9603R1ZV',
+        'tax_id' => '29AABCU9603R1ZV',
         'address_line_1' => '123 Updated Business Park',
         'address_line_2' => 'Tower B, Floor 5',
         'city' => 'Bangalore',
@@ -37,7 +37,7 @@ test('user can go to organization show page and then edit location', function ()
     $location = $organization->primaryLocation;
     expect($location)->not->toBeNull();
     expect($location->name)->toBe('Updated Head Office');
-    expect($location->gstin)->toBe('29AABCU9603R1ZV');
+    expect($location->tax_id)->toBe('29AABCU9603R1ZV');
     expect($location->address_line_1)->toBe('123 Updated Business Park');
     expect($location->address_line_2)->toBe('Tower B, Floor 5');
     expect($location->city)->toBe('Bangalore');

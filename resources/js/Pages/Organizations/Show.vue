@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { Pencil } from 'lucide-vue-next';
+import { computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { useTaxLabel, type TaxLabels } from '@/composables/useTaxLabel';
 
 interface Location {
     id: number;
     name: string;
-    gstin: string | null;
+    tax_id: string | null;
     address_line_1: string;
     address_line_2: string | null;
     city: string;
@@ -58,9 +60,13 @@ const props = defineProps<{
     organization: Organization;
     numberingSeries: NumberingSeries[];
     canManage: boolean;
+    taxLabels: TaxLabels;
 }>();
 
 const org = props.organization;
+
+const locationCountry = computed(() => org.primary_location?.country ?? null);
+const { label: taxLabel } = useTaxLabel(locationCountry, props.taxLabels);
 
 const hasBank = !!(
     org.bank_details?.bank_name ||
@@ -279,10 +285,10 @@ function previewNumber(series: NumberingSeries): string {
                             {{ org.primary_location.postal_code }}
                         </p>
                         <p
-                            v-if="org.primary_location.gstin"
+                            v-if="org.primary_location.tax_id"
                             class="mt-2 font-mono text-xs text-gray-500"
                         >
-                            GSTIN: {{ org.primary_location.gstin }}
+                            {{ taxLabel }}: {{ org.primary_location.tax_id }}
                         </p>
                     </div>
                     <p v-else class="text-sm text-gray-400 italic">

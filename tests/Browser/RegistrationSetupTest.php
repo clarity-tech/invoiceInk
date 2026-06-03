@@ -90,7 +90,7 @@ it('completes Indian company setup with all fields', function () {
     $page->assertSee('Primary Location')
         ->fill('#location_name', 'Head Office')
         ->select('#country_code', 'IN')
-        ->fill('#gstin', '29AAFCC1234A1ZV')
+        ->fill('#tax_id', '29AAFCC1234A1ZV')
         ->fill('#address_line_1', '42 MG Road, Indiranagar')
         ->fill('#address_line_2', '2nd Floor, Prestige Tower')
         ->fill('#city', 'Bangalore')
@@ -179,7 +179,7 @@ it('completes minimal setup with only required fields', function () {
     $page->fill('#company_name', 'Minimal Corp')
         ->click('Next');
 
-    // Step 2: Country + required address fields (skip location_name, gstin, address_line_2)
+    // Step 2: Country + required address fields (skip location_name, tax_id, address_line_2)
     $page->select('#country_code', 'US')
         ->fill('#address_line_1', '100 Main Street')
         ->fill('#city', 'New York')

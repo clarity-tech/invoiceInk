@@ -6,9 +6,9 @@
 </div>
 
 <div>
-    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.gstin') }}</label>
-    <input wire:model="gstin" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" aria-describedby="error-gstin">
-    @error('gstin') <span id="error-gstin" class="text-red-600 text-sm">{{ $message }}</span> @enderror
+    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('forms.labels.tax_id') }}</label>
+    <input wire:model="tax_id" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" aria-describedby="error-tax_id">
+    @error('tax_id') <span id="error-tax_id" class="text-red-600 text-sm">{{ $message }}</span> @enderror
 </div>
 
 <div class="{{ $fullWidth ?? false ? '' : 'md:col-span-2' }}">

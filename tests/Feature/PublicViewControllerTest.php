@@ -17,7 +17,7 @@ beforeEach(function () {
         'emails' => new ContactCollection([['name' => 'Company Contact', 'email' => 'company@test.com']]),
     ], [
         'name' => 'Company HQ',
-        'gstin' => '27AAAAA0000A1Z5',
+        'tax_id' => '27AAAAA0000A1Z5',
         'address_line_1' => '123 Business Street',
         'address_line_2' => 'Suite 100',
         'city' => 'Mumbai',
@@ -35,7 +35,7 @@ beforeEach(function () {
         'emails' => new ContactCollection([['name' => 'Customer Contact', 'email' => 'customer@test.com']]),
     ], [
         'name' => 'Customer Office',
-        'gstin' => '29BBBBB1111B2Z6',
+        'tax_id' => '29BBBBB1111B2Z6',
         'address_line_1' => '456 Client Avenue',
         'city' => 'Bangalore',
         'state' => 'Karnataka',

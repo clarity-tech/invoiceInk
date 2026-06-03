@@ -221,7 +221,7 @@ describe('OrganizationSetupFlow', () => {
             await nextBtn!.trigger('click');
             await wrapper.vm.$nextTick();
             expect(wrapper.find('#location_name').exists()).toBe(true);
-            expect(wrapper.find('#gstin').exists()).toBe(true);
+            expect(wrapper.find('#tax_id').exists()).toBe(true);
             expect(wrapper.find('#address_line_1').exists()).toBe(true);
             expect(wrapper.find('#city').exists()).toBe(true);
             expect(wrapper.find('#state').exists()).toBe(true);

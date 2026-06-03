@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Contracts\Services\InvoiceNumberingServiceInterface;
 use App\Contracts\Services\PdfServiceInterface;
+use App\Enums\Country;
 use App\Enums\InvoiceStatus;
 use App\Mail\DocumentMailer;
 use App\Models\Customer;
@@ -96,6 +97,7 @@ class InvoiceController extends Controller
             'taxTemplates' => $taxTemplates,
             'numberingSeries' => $numberingSeries,
             'statusOptions' => InvoiceStatus::options(),
+            'taxLabels' => Country::taxLabels(),
             'defaults' => [
                 'organization_id' => $organization?->id,
                 'organization_location_id' => $organization?->primary_location_id,
@@ -311,6 +313,7 @@ class InvoiceController extends Controller
             'taxTemplates' => $taxTemplates,
             'numberingSeries' => $numberingSeries,
             'statusOptions' => InvoiceStatus::options(),
+            'taxLabels' => Country::taxLabels(),
         ]);
     }
 

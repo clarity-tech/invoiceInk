@@ -104,7 +104,7 @@ describe('EditLocationForm', () => {
     it('renders all address fields', () => {
         const wrapper = mountComponent();
         expect(wrapper.find('#loc-name').exists()).toBe(true);
-        expect(wrapper.find('#loc-gstin').exists()).toBe(true);
+        expect(wrapper.find('#loc-tax_id').exists()).toBe(true);
         expect(wrapper.find('#loc-addr1').exists()).toBe(true);
         expect(wrapper.find('#loc-addr2').exists()).toBe(true);
         expect(wrapper.find('#loc-city').exists()).toBe(true);
@@ -119,7 +119,7 @@ describe('EditLocationForm', () => {
                 primary_location: {
                     id: 1,
                     name: 'Head Office',
-                    gstin: 'GSTIN123',
+                    tax_id: 'GSTIN123',
                     address_line_1: '123 Main St',
                     address_line_2: 'Suite 100',
                     city: 'Mumbai',

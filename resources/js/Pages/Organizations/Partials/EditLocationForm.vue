@@ -14,7 +14,7 @@ const loc = props.organization.primary_location;
 
 const form = useForm({
     location_name: loc?.name ?? '',
-    gstin: loc?.gstin ?? '',
+    tax_id: loc?.tax_id ?? '',
     address_line_1: loc?.address_line_1 ?? '',
     address_line_2: loc?.address_line_2 ?? '',
     city: loc?.city ?? '',
@@ -103,18 +103,18 @@ function submit() {
 
             <div>
                 <label
-                    for="loc-gstin"
+                    for="loc-tax_id"
                     class="block text-sm font-medium text-gray-700"
                     >{{ taxLabel }}</label
                 >
                 <input
-                    id="loc-gstin"
-                    v-model="form.gstin"
+                    id="loc-tax_id"
+                    v-model="form.tax_id"
                     type="text"
                     class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
                 />
-                <p v-if="form.errors.gstin" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.gstin }}
+                <p v-if="form.errors.tax_id" class="mt-1 text-sm text-red-600">
+                    {{ form.errors.tax_id }}
                 </p>
             </div>
 

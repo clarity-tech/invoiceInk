@@ -92,7 +92,7 @@ export interface BankDetails {
 export interface Location {
     id: number;
     name: string | null;
-    gstin: string | null;
+    tax_id: string | null;
     address_line_1: string;
     address_line_2: string | null;
     city: string;

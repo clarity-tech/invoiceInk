@@ -28,6 +28,7 @@ const props = defineProps<{
     taxTemplates: TaxTemplate[];
     numberingSeries: InvoiceNumberingSeries[];
     statusOptions: Record<string, string>;
+    taxLabels: Record<string, string>;
 }>();
 
 const showPaymentModal = ref(false);
@@ -82,6 +83,7 @@ function deletePayment(paymentId: number) {
                 :tax-templates="taxTemplates"
                 :numbering-series="numberingSeries"
                 :status-options="statusOptions"
+                :tax-labels="taxLabels"
             />
 
             <!-- Payment Section (invoices only, not estimates) -->

@@ -86,7 +86,7 @@ return [
         'state_required' => 'State *',
         'postal_code' => 'Postal Code',
         'postal_code_required' => 'Postal Code *',
-        'gstin' => 'GSTIN',
+        'tax_id' => 'GSTIN',
         'email_addresses_required' => 'Email Addresses *',
         'set_primary_location' => 'Set as primary location',
         'organization_logo' => 'Organization Logo',

@@ -26,6 +26,8 @@ test('create page renders with correct props', function () {
             ->has('numberingSeries')
             ->has('statusOptions')
             ->has('defaults')
+            ->where('taxLabels.IN', 'GSTIN')
+            ->where('taxLabels.US', 'EIN')
             ->where('type', 'invoice')
         );
 });
@@ -168,6 +170,8 @@ test('edit page renders with invoice data', function () {
             ->has('customers')
             ->has('organizationLocations')
             ->has('statusOptions')
+            ->where('taxLabels.IN', 'GSTIN')
+            ->where('taxLabels.US', 'EIN')
             ->where('invoice.id', $invoice->id)
         );
 });

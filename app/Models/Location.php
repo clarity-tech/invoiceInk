@@ -14,7 +14,10 @@ class Location extends Model
 
     protected $fillable = [
         'name',
-        'gstin',
+        // Per-location tax *registration* number — GSTIN (IN) / VAT (EU/GB) / TRN (UAE) / EIN (US)
+        // equivalent. Distinct from the organization's `tax_number`, which is the entity-level
+        // tax *identity* number (the PAN equivalent in India).
+        'tax_id',
         'address_line_1',
         'address_line_2',
         'city',

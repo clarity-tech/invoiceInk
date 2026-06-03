@@ -65,7 +65,6 @@ return [
         'customer_location' => 'Customer Location',
         'numbering_series' => 'Numbering Series',
         'numbering_series_optional' => 'Numbering Series (Optional)',
-        'gstin' => 'GSTIN:',
         'tax_id' => 'Tax ID:',
         'sac' => 'SAC:',
         'email' => 'Email:',

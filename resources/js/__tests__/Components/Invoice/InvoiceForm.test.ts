@@ -153,6 +153,7 @@ const defaultProps = () => ({
         paid: 'Paid',
         overdue: 'Overdue',
     },
+    taxLabels: { IN: 'GSTIN', US: 'EIN' },
     defaults: {
         organization_id: 1,
         organization_location_id: 10,

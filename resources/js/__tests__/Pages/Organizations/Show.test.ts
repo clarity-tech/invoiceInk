@@ -53,12 +53,20 @@ function makeOrg(overrides = {}) {
     };
 }
 
+const taxLabels = {
+    IN: 'GSTIN',
+    US: 'EIN',
+    AE: 'TRN',
+    GB: 'VAT Registration Number',
+};
+
 function mountComponent(propsOverride = {}) {
     return mount(Show, {
         props: {
             organization: makeOrg(),
             numberingSeries: [],
             canManage: true,
+            taxLabels,
             ...propsOverride,
         },
         global: {
@@ -134,7 +142,7 @@ describe('Organizations/Show', () => {
                 primary_location: {
                     id: 1,
                     name: 'Head Office',
-                    gstin: '29ABCDE1234F1Z5',
+                    tax_id: '29ABCDE1234F1Z5',
                     address_line_1: '123 Main St',
                     address_line_2: 'Suite 100',
                     city: 'Mumbai',
@@ -148,6 +156,45 @@ describe('Organizations/Show', () => {
         expect(wrapper.text()).toContain('123 Main St');
         expect(wrapper.text()).toContain('Mumbai');
         expect(wrapper.text()).toContain('29ABCDE1234F1Z5');
+    });
+
+    it('labels the tax number with the country-appropriate name', () => {
+        const wrapper = mountComponent({
+            organization: makeOrg({
+                primary_location: {
+                    id: 1,
+                    name: 'US Office',
+                    tax_id: '12-3456789',
+                    address_line_1: '500 Market St',
+                    address_line_2: null,
+                    city: 'San Francisco',
+                    state: 'CA',
+                    country: 'US',
+                    postal_code: '94105',
+                },
+            }),
+        });
+        expect(wrapper.text()).toContain('EIN: 12-3456789');
+        expect(wrapper.text()).not.toContain('GSTIN: 12-3456789');
+    });
+
+    it('falls back to "Tax ID" for unknown countries', () => {
+        const wrapper = mountComponent({
+            organization: makeOrg({
+                primary_location: {
+                    id: 1,
+                    name: 'Office',
+                    tax_id: 'TAX-001',
+                    address_line_1: '1 Some St',
+                    address_line_2: null,
+                    city: 'City',
+                    state: 'State',
+                    country: 'ZZ',
+                    postal_code: '00000',
+                },
+            }),
+        });
+        expect(wrapper.text()).toContain('Tax ID: TAX-001');
     });
 
     it('shows no location message when no primary location', () => {

@@ -18,7 +18,7 @@ const emit = defineEmits<{
 
 const form = useForm({
     name: '',
-    gstin: '',
+    tax_id: '',
     address_line_1: '',
     address_line_2: '',
     city: '',
@@ -33,10 +33,10 @@ const formCountry = computed(() => form.country);
 const { label: taxLabel, isIndia } = useTaxLabel(formCountry, props.taxLabels);
 
 function validateGstin() {
-    const val = form.gstin.trim();
+    const val = form.tax_id.trim();
 
     if (!val) {
-        delete fieldErrors.value.gstin;
+        delete fieldErrors.value.tax_id;
 
         return;
     }
@@ -46,14 +46,14 @@ function validateGstin() {
             /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 
         if (!gstinRegex.test(val.toUpperCase())) {
-            fieldErrors.value.gstin =
+            fieldErrors.value.tax_id =
                 'Invalid GSTIN format. Expected: 29ABCDE1234F1Z5 (15 characters)';
 
             return;
         }
     }
 
-    delete fieldErrors.value.gstin;
+    delete fieldErrors.value.tax_id;
 }
 
 function validateRequired(field: string, label: string) {
@@ -71,7 +71,7 @@ watch(
     (val) => {
         if (val && props.location) {
             form.name = props.location.name ?? '';
-            form.gstin = props.location.gstin ?? '';
+            form.tax_id = props.location.tax_id ?? '';
             form.address_line_1 = props.location.address_line_1;
             form.address_line_2 = props.location.address_line_2 ?? '';
             form.city = props.location.city;
@@ -225,11 +225,11 @@ function submit() {
                                         >{{ taxLabel }}</label
                                     >
                                     <input
-                                        v-model="form.gstin"
+                                        v-model="form.tax_id"
                                         type="text"
                                         class="mt-1 block w-full rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
                                         :class="
-                                            fieldErrors.gstin
+                                            fieldErrors.tax_id
                                                 ? 'border-red-300'
                                                 : 'border-gray-300'
                                         "
@@ -241,7 +241,7 @@ function submit() {
                                         :maxlength="isIndia ? 15 : 50"
                                         @blur="validateGstin"
                                         @input="
-                                            form.gstin = isIndia
+                                            form.tax_id = isIndia
                                                 ? (
                                                       $event.target as HTMLInputElement
                                                   ).value.toUpperCase()
@@ -251,16 +251,16 @@ function submit() {
                                         "
                                     />
                                     <p
-                                        v-if="fieldErrors.gstin"
+                                        v-if="fieldErrors.tax_id"
                                         class="mt-1 text-sm text-red-600"
                                     >
-                                        {{ fieldErrors.gstin }}
+                                        {{ fieldErrors.tax_id }}
                                     </p>
                                     <p
-                                        v-else-if="form.errors.gstin"
+                                        v-else-if="form.errors.tax_id"
                                         class="mt-1 text-sm text-red-600"
                                     >
-                                        {{ form.errors.gstin }}
+                                        {{ form.errors.tax_id }}
                                     </p>
                                     <p
                                         v-else-if="isIndia"

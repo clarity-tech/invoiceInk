@@ -22,7 +22,7 @@ interface CountryInfo {
 
 interface LocationData {
     name: string;
-    gstin: string;
+    tax_id: string;
     address_line_1: string;
     address_line_2: string;
     city: string;
@@ -75,7 +75,7 @@ const form = useForm({
     website: props.organization.website || '',
     notes: props.organization.notes || '',
     location_name: props.organization.primary_location?.name || '',
-    gstin: props.organization.primary_location?.gstin || '',
+    tax_id: props.organization.primary_location?.tax_id || '',
     address_line_1: props.organization.primary_location?.address_line_1 || '',
     address_line_2: props.organization.primary_location?.address_line_2 || '',
     city: props.organization.primary_location?.city || '',
@@ -418,8 +418,8 @@ function goToStep(step: number): void {
                                         >{{ taxLabel }}</label
                                     >
                                     <input
-                                        id="gstin"
-                                        v-model="form.gstin"
+                                        id="tax_id"
+                                        v-model="form.tax_id"
                                         type="text"
                                         class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
                                     />
