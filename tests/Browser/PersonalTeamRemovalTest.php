@@ -55,14 +55,16 @@ it('shows the org switcher dropdown for a multi-org user', function () {
     $user = User::factory()->withPersonalTeam()->create([
         'email' => 'multi-org@example.test',
     ]);
+    // The switcher renders the org `name` (not `company_name`), so seed and
+    // assert on `name` to match what the navbar dropdown actually displays.
     $user->currentTeam->update([
-        'company_name' => 'Primary Co',
+        'name' => 'Primary Co',
         'setup_completed_at' => now(),
     ]);
 
     Organization::factory()->completedSetup()->create([
         'user_id' => $user->id,
-        'company_name' => 'Secondary Co',
+        'name' => 'Secondary Co',
     ]);
 
     $this->actingAs($user);
