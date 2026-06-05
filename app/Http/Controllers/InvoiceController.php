@@ -578,6 +578,15 @@ class InvoiceController extends Controller
 
         $invoice->load('items');
 
+        // The duplicate is a fresh document issued today, so recompute the rate
+        // from its currency to the org currency — copying without this would let
+        // the column fall back to its 1.0 default and distort cross-currency totals.
+        $invoiceCurrency = $invoice->currency?->value;
+        $orgCurrency = Organization::find($invoice->organization_id)?->currency?->value;
+        $exchangeRate = $invoiceCurrency && $orgCurrency
+            ? app(ExchangeRateService::class)->getRate($invoiceCurrency, $orgCurrency, now())
+            : 1.0;
+
         $newInvoice = Invoice::create([
             'type' => $invoice->type,
             'organization_id' => $invoice->organization_id,
@@ -593,6 +602,7 @@ class InvoiceController extends Controller
             'tax' => $invoice->tax,
             'total' => $invoice->total,
             'currency' => $invoice->currency,
+            'exchange_rate' => $exchangeRate,
             'notes' => $invoice->notes,
         ]);
 

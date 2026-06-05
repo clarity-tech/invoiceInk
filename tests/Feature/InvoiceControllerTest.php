@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\ExchangeRate;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use Illuminate\Support\Facades\Http;
 
 test('can render invoice list page', function () {
     $organization = createOrganizationWithLocation();
@@ -157,6 +159,31 @@ test('can duplicate invoice', function () {
         ->assertRedirect();
 
     expect(Invoice::withoutGlobalScopes()->count())->toBe(2);
+});
+
+test('duplicating a foreign-currency invoice recomputes its exchange rate', function () {
+    $organization = createOrganizationWithLocation(['currency' => 'INR']);
+    $customer = createCustomerWithLocation([], [], $organization);
+    $this->actingAs($organization->owner);
+
+    // Seed today's USD-based rates so getRate() resolves without hitting the network.
+    Http::fake();
+    ExchangeRate::insert([
+        ['date' => now()->toDateString(), 'base' => 'USD', 'quote' => 'USD', 'rate' => 1.0, 'created_at' => now(), 'updated_at' => now()],
+        ['date' => now()->toDateString(), 'base' => 'USD', 'quote' => 'INR', 'rate' => 95.0, 'created_at' => now(), 'updated_at' => now()],
+    ]);
+
+    // Original USD invoice in an INR org — should convert at 95 INR per USD.
+    $invoice = createInvoiceWithItems(['currency' => 'USD', 'exchange_rate' => 95.0], null, $organization, $customer);
+
+    $this->post("/invoices/{$invoice->id}/duplicate")
+        ->assertRedirect();
+
+    $duplicate = Invoice::withoutGlobalScopes()->latest('id')->first();
+
+    // Without the fix this would fall back to the column default of 1.0.
+    expect((float) $duplicate->exchange_rate)->toBe(95.0)
+        ->and($duplicate->currency->value)->toBe('USD');
 });
 
 test('can convert estimate to invoice', function () {
