@@ -52,8 +52,7 @@ USER root
 
 # Install PHP extensions + supervisor in one layer (cached independently of app code)
 RUN install-php-extensions \
-    pdo_pgsql \
-    pgsql \
+    pdo_mysql \
     redis \
     gd \
     bcmath \

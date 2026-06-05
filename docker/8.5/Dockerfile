@@ -4,8 +4,7 @@ LABEL maintainer="Taylor Otwell"
 
 ARG WWWGROUP
 ARG NODE_VERSION=24
-# ARG MYSQL_CLIENT="mysql-client"
-ARG POSTGRES_VERSION=18
+ARG MYSQL_CLIENT="mysql-client"
 
 WORKDIR /var/www/html
 
@@ -30,7 +29,6 @@ RUN apt-get update && apt-get upgrade -y \
         libgd3 \
         php8.5-cli \
         php8.5-dev \
-        php8.5-pgsql \
         php8.5-sqlite3 \
         php8.5-gd \
         php8.5-curl \
@@ -58,11 +56,7 @@ RUN apt-get update && apt-get upgrade -y \
     && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_VERSION.x nodistro main" > /etc/apt/sources.list.d/nodesource.list \
     && apt-get update \
     && apt-get install -y nodejs \
-    && curl -sS https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | tee /etc/apt/keyrings/pgdg.gpg >/dev/null \
-    && echo "deb [signed-by=/etc/apt/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt noble-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
-    && apt-get update \
-    # && apt-get install -y $MYSQL_CLIENT \
-    && apt-get install -y postgresql-client-$POSTGRES_VERSION \
+    && apt-get install -y $MYSQL_CLIENT \
     && apt-get -y autoremove \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

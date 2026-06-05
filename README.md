@@ -70,10 +70,10 @@ Downloads Chromium for Pest Browser tests (~60s, one-time).
 | Application    | http://localhost       | Main application               |
 | Vite           | http://localhost:5173  | Vite dev server (HMR)          |
 | Mailpit        | http://localhost:8025  | Email testing dashboard         |
-| pgweb          | http://localhost:8081  | Web-based PostgreSQL browser    |
+| Adminer        | http://localhost:8081  | Web-based MySQL browser         |
 | RustFS Console | http://localhost:9001  | S3-compatible object storage    |
 
-Ports can be customized via `.env` (e.g., `APP_PORT`, `FORWARD_PGWEB_PORT`, `FORWARD_RUSTFS_CONSOLE_PORT`).
+Ports can be customized via `.env` (e.g., `APP_PORT`, `FORWARD_ADMINER_PORT`, `FORWARD_RUSTFS_CONSOLE_PORT`).
 
 ## Running Tests
 
@@ -100,7 +100,7 @@ sail pint --dirty && sail bun run lint && sail bun run format
 sail up -d                    # Start all services
 sail down                     # Stop all services
 sail composer dev             # Dev server with queue, logs, and vite
-sail psql                     # Access PostgreSQL CLI
+sail mysql                    # Access MySQL CLI
 sail php artisan app:setup-storage  # Recreate S3 bucket (local dev only)
 ```
 
@@ -114,7 +114,7 @@ See `CLAUDE.md` for the full command reference (testing, formatting, database, f
 | **Frontend**   | Vue 3 (Composition API), Inertia.js v3, TypeScript            |
 | **Styling**    | Tailwind CSS v4, lucide-vue-next icons                        |
 | **Routing**    | Laravel Wayfinder (type-safe frontend route generation)       |
-| **Database**   | PostgreSQL 17                                                 |
+| **Database**   | MySQL 8.4                                                     |
 | **Testing**    | Pest 4, Pest Browser (Playwright), 957+ tests, 83% coverage  |
 | **PDF**        | Gotenberg (HTML-to-PDF via Docker sidecar)                    |
 | **Storage**    | RustFS (local S3-compatible), S3/Spaces (production)          |

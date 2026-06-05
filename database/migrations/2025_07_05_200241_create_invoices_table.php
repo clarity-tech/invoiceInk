@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['invoice', 'estimate']);
+            $table->string('type'); // 'invoice' | 'estimate' (validated via App\Enums, not a DB enum)
             $table->ulid('ulid')->unique();
             $table->foreignId('organization_id')->constrained('teams')->onDelete('cascade');
             $table->foreignId('organization_location_id')->constrained('locations');
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->foreignId('customer_location_id')->constrained('locations');
             $table->string('invoice_number');
             $table->foreignId('invoice_numbering_series_id')->nullable()->constrained('invoice_numbering_series')->onDelete('set null');
-            $table->enum('status', ['draft', 'sent', 'accepted', 'paid', 'void']);
+            $table->string('status')->default('draft'); // validated via App\Enums\InvoiceStatus, not a DB enum
             $table->timestamp('issued_at')->nullable();
             $table->timestamp('due_at')->nullable();
 

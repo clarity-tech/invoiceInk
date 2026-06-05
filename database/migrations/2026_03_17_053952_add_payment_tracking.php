@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -13,12 +12,8 @@ return new class extends Migration
             $table->unsignedBigInteger('amount_paid')->default(0)->after('total');
         });
 
-        // Update status enum to include 'partially_paid'
-        // PostgreSQL requires dropping and re-adding the constraint
-        if (DB::getDriverName() === 'pgsql') {
-            DB::statement('ALTER TABLE invoices DROP CONSTRAINT IF EXISTS invoices_status_check');
-            DB::statement("ALTER TABLE invoices ADD CONSTRAINT invoices_status_check CHECK (status::text = ANY (ARRAY['draft', 'sent', 'accepted', 'partially_paid', 'paid', 'void']))");
-        }
+        // `status` is a plain string column validated via App\Enums\InvoiceStatus,
+        // so no DB-level enum/constraint update is needed to allow 'partially_paid'.
 
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
@@ -36,11 +31,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('payments');
-
-        if (DB::getDriverName() === 'pgsql') {
-            DB::statement('ALTER TABLE invoices DROP CONSTRAINT IF EXISTS invoices_status_check');
-            DB::statement("ALTER TABLE invoices ADD CONSTRAINT invoices_status_check CHECK (status::text = ANY (ARRAY['draft', 'sent', 'accepted', 'paid', 'void']))");
-        }
 
         Schema::table('invoices', function (Blueprint $table) {
             $table->dropColumn('amount_paid');

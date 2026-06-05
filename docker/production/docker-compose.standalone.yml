@@ -27,9 +27,9 @@ services:
       - APP_TIMEZONE=${APP_TIMEZONE:-UTC}
 
       # Database Configuration (External services recommended for production)
-      - DB_CONNECTION=pgsql
-      - DB_HOST=${DB_HOST:-postgres.external.com}
-      - DB_PORT=${DB_PORT:-5432}
+      - DB_CONNECTION=mysql
+      - DB_HOST=${DB_HOST:-mysql.external.com}
+      - DB_PORT=${DB_PORT:-3306}
       - DB_DATABASE=${DB_DATABASE:-invoicing}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
@@ -134,9 +134,9 @@ services:
       - APP_ENV=production
       - APP_KEY=${APP_KEY}
       - APP_DEBUG=false
-      - DB_CONNECTION=pgsql
-      - DB_HOST=${DB_HOST:-postgres.external.com}
-      - DB_PORT=${DB_PORT:-5432}
+      - DB_CONNECTION=mysql
+      - DB_HOST=${DB_HOST:-mysql.external.com}
+      - DB_PORT=${DB_PORT:-3306}
       - DB_DATABASE=${DB_DATABASE:-invoicing}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
@@ -181,9 +181,9 @@ services:
       - APP_ENV=production
       - APP_KEY=${APP_KEY}
       - APP_DEBUG=false
-      - DB_CONNECTION=pgsql
-      - DB_HOST=${DB_HOST:-postgres.external.com}
-      - DB_PORT=${DB_PORT:-5432}
+      - DB_CONNECTION=mysql
+      - DB_HOST=${DB_HOST:-mysql.external.com}
+      - DB_PORT=${DB_PORT:-3306}
       - DB_DATABASE=${DB_DATABASE:-invoicing}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}

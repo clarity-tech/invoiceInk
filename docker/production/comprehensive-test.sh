@@ -32,38 +32,38 @@ log_error() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - ERROR: $1" >> "$RESULTS_DIR/test-execution.log"
 }
 
-# Setup PostgreSQL for testing
-setup_postgres() {
-    log_info "Setting up PostgreSQL test database..."
-    
-    # Start PostgreSQL container
-    docker run -d --name test-postgres \
-        -e POSTGRES_DB=laravel \
-        -e POSTGRES_USER=sail \
-        -e POSTGRES_PASSWORD=secret \
-        -e PGPASSWORD=secret \
-        -p 5433:5432 \
-        postgres:17 > "$RESULTS_DIR/postgres-setup.log" 2>&1
-    
+# Setup MySQL for testing
+setup_mysql() {
+    log_info "Setting up MySQL test database..."
+
+    # Start MySQL container
+    docker run -d --name test-mysql \
+        -e MYSQL_DATABASE=laravel \
+        -e MYSQL_USER=sail \
+        -e MYSQL_PASSWORD=secret \
+        -e MYSQL_ROOT_PASSWORD=secret \
+        -p 3307:3306 \
+        mysql:8.4 > "$RESULTS_DIR/mysql-setup.log" 2>&1
+
     # Create test network
     docker network create test-network > "$RESULTS_DIR/network-setup.log" 2>&1
-    docker network connect test-network test-postgres
-    
-    # Wait for PostgreSQL to be ready
-    log_info "Waiting for PostgreSQL to be ready..."
-    sleep 15
-    
+    docker network connect test-network test-mysql
+
+    # Wait for MySQL to be ready
+    log_info "Waiting for MySQL to be ready..."
+    sleep 20
+
     # Create testing database
-    docker exec test-postgres psql -U sail -d laravel -c "CREATE DATABASE testing;" > "$RESULTS_DIR/database-setup.log" 2>&1
-    
-    log_success "PostgreSQL setup completed"
+    docker exec test-mysql mysql -u root -psecret -e "CREATE DATABASE IF NOT EXISTS testing; GRANT ALL ON testing.* TO 'sail'@'%';" > "$RESULTS_DIR/database-setup.log" 2>&1
+
+    log_success "MySQL setup completed"
 }
 
 # Cleanup function
 cleanup() {
     log_info "Cleaning up test infrastructure..."
-    docker stop test-postgres 2>/dev/null || true
-    docker rm test-postgres 2>/dev/null || true
+    docker stop test-mysql 2>/dev/null || true
+    docker rm test-mysql 2>/dev/null || true
     docker network rm test-network 2>/dev/null || true
     log_success "Cleanup completed"
 }
@@ -99,9 +99,9 @@ test_container() {
     # Test database migrations
     if docker run --rm --entrypoint="" --network test-network \
         -e APP_ENV=testing \
-        -e DB_CONNECTION=pgsql \
-        -e DB_HOST=test-postgres \
-        -e DB_PORT=5432 \
+        -e DB_CONNECTION=mysql \
+        -e DB_HOST=test-mysql \
+        -e DB_PORT=3306 \
         -e DB_DATABASE=testing \
         -e DB_USERNAME=sail \
         -e DB_PASSWORD=secret \
@@ -124,9 +124,9 @@ test_container() {
     local test_start_time=$(date +%s)
     if docker run --rm --entrypoint="" --network test-network \
         -e APP_ENV=testing \
-        -e DB_CONNECTION=pgsql \
-        -e DB_HOST=test-postgres \
-        -e DB_PORT=5432 \
+        -e DB_CONNECTION=mysql \
+        -e DB_HOST=test-mysql \
+        -e DB_PORT=3306 \
         -e DB_DATABASE=testing \
         -e DB_USERNAME=sail \
         -e DB_PASSWORD=secret \
@@ -166,7 +166,7 @@ This document contains comprehensive test results for all Docker container varia
 
 ## Test Environment
 
-- **Database**: PostgreSQL 17 (matching Laravel Sail configuration)
+- **Database**: MySQL 8.4 (matching Laravel Sail configuration)
 - **Test Framework**: Laravel Pest
 - **Environment**: Production containers with testing database
 - **Network**: Docker bridge network for container communication
@@ -175,7 +175,7 @@ This document contains comprehensive test results for all Docker container varia
 
 1. **Container Build Verification**: Ensure container builds successfully
 2. **Laravel Framework Test**: Verify Laravel can start and show version
-3. **Database Migration Test**: Run all migrations on fresh PostgreSQL database
+3. **Database Migration Test**: Run all migrations on fresh MySQL database
 4. **Full Test Suite**: Execute complete application test suite (544 tests)
 
 ## Container Variants Tested
@@ -211,7 +211,7 @@ main() {
     log_info "Starting comprehensive container testing..."
     
     # Setup test infrastructure
-    setup_postgres
+    setup_mysql
     
     # Test available containers
     local containers_tested=0
