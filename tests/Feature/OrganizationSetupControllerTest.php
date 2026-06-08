@@ -87,13 +87,28 @@ test('validates step 1 requires company name', function () {
     $response->assertSessionHasErrors(['company_name']);
 });
 
-test('validates step 1 website must be valid url', function () {
+test('step 1 accepts a bare domain and stores it as a full url', function () {
+    $organization = $this->user->currentTeam;
+
+    $this->post("/organization/setup/{$organization->id}/step", [
+        'step' => 1,
+        'company_name' => 'Test Company',
+        'website' => 'example.com',
+    ])->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('teams', [
+        'id' => $organization->id,
+        'website' => 'https://example.com',
+    ]);
+});
+
+test('validates step 1 website must be a valid url', function () {
     $organization = $this->user->currentTeam;
 
     $response = $this->post("/organization/setup/{$organization->id}/step", [
         'step' => 1,
         'company_name' => 'Test Company',
-        'website' => 'invalid-url',
+        'website' => 'not a valid website',
     ]);
 
     $response->assertSessionHasErrors(['website']);

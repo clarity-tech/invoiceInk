@@ -118,6 +118,12 @@ class OrganizationSetupController extends Controller
 
     private function validateStep(Request $request, int $step): void
     {
+        // Accept a bare domain (e.g. "example.com") and normalize to a full URL
+        // before validation so the `url` rule doesn't reject scheme-less input.
+        if ($step === 1) {
+            $request->merge(['website' => Organization::normalizeWebsite($request->input('website'))]);
+        }
+
         match ($step) {
             1 => $request->validate([
                 'company_name' => ['required', 'string', 'max:255'],

@@ -332,8 +332,8 @@ function goToStep(step: number): void {
                                     <input
                                         id="website"
                                         v-model="form.website"
-                                        type="url"
-                                        placeholder="https://example.com"
+                                        type="text"
+                                        placeholder="example.com"
                                         class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
                                     />
                                     <p

@@ -194,8 +194,8 @@ function submit() {
                     <input
                         id="org-web"
                         v-model="form.website"
-                        type="url"
-                        placeholder="https://example.com"
+                        type="text"
+                        placeholder="example.com"
                         class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
                     />
                     <p

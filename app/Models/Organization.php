@@ -247,6 +247,35 @@ class Organization extends Model implements HasMedia
     }
 
     /**
+     * Normalize a website value so a bare domain becomes a valid URL.
+     *
+     * Users shouldn't be forced to type the scheme; prepend https:// when
+     * it's missing so the stored value works as an href everywhere.
+     */
+    public static function normalizeWebsite(?string $value): ?string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        if (! preg_match('~^https?://~i', $value)) {
+            $value = "https://{$value}";
+        }
+
+        return $value;
+    }
+
+    /**
+     * Always store the website as a normalized URL.
+     */
+    public function setWebsiteAttribute(?string $value): void
+    {
+        $this->attributes['website'] = self::normalizeWebsite($value);
+    }
+
+    /**
      * Get the organization's currency symbol.
      */
     public function getCurrencySymbolAttribute(): string

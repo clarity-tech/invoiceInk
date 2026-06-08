@@ -84,6 +84,20 @@ test('can update organization basics', function () {
     expect($organization->currency->value)->toBe('USD');
 });
 
+test('accepts a website without a scheme and stores it as a full url', function () {
+    $organization = createOrganizationWithLocation([], [], $this->user);
+
+    $this->put("/organizations/{$organization->id}", [
+        'name' => 'Updated Org Name',
+        'emails' => ['updated@test.com'],
+        'currency' => 'INR',
+        'country_code' => 'IN',
+        'website' => 'example.com',
+    ])->assertSessionHasNoErrors();
+
+    expect($organization->refresh()->website)->toBe('https://example.com');
+});
+
 test('can update the company name independently of the organization name', function () {
     $organization = createOrganizationWithLocation(['name' => 'Acme Workspace', 'company_name' => 'Old Co'], [], $this->user);
 

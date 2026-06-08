@@ -278,6 +278,31 @@ test('organization can be created with all fillable attributes', function () {
     expect($organization->custom_domain)->toBe('custom.example.com');
 });
 
+test('website mutator prepends https when scheme is missing', function () {
+    $organization = Organization::factory()->create(['website' => 'example.com']);
+
+    expect($organization->website)->toBe('https://example.com');
+});
+
+test('website mutator leaves an existing scheme untouched', function () {
+    expect(Organization::factory()->create(['website' => 'http://example.com'])->website)
+        ->toBe('http://example.com')
+        ->and(Organization::factory()->create(['website' => 'https://secure.test'])->website)
+        ->toBe('https://secure.test');
+});
+
+test('website mutator normalizes blank values to null', function () {
+    expect(Organization::factory()->create(['website' => '   '])->website)->toBeNull();
+});
+
+test('normalizeWebsite handles bare domains, schemes, and blanks', function () {
+    expect(Organization::normalizeWebsite('example.com'))->toBe('https://example.com')
+        ->and(Organization::normalizeWebsite('https://example.com'))->toBe('https://example.com')
+        ->and(Organization::normalizeWebsite('HTTP://example.com'))->toBe('HTTP://example.com')
+        ->and(Organization::normalizeWebsite(''))->toBeNull()
+        ->and(Organization::normalizeWebsite(null))->toBeNull();
+});
+
 test('organization handles empty emails collection', function () {
     $user = User::factory()->create();
     $organization = Organization::create([

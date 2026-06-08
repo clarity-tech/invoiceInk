@@ -94,6 +94,10 @@ class OrganizationController extends Controller
     {
         $this->authorizeAccess($request, $organization);
 
+        // Accept a bare domain (e.g. "example.com") and normalize to a full URL
+        // before validation so the `url` rule doesn't reject scheme-less input.
+        $request->merge(['website' => Organization::normalizeWebsite($request->input('website'))]);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'company_name' => ['nullable', 'string', 'max:255'],
