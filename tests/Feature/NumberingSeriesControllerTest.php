@@ -3,15 +3,6 @@
 use App\Models\InvoiceNumberingSeries;
 use App\Models\User;
 
-test('numbering series index redirects to email templates', function () {
-    $user = User::factory()->withPersonalTeam()->create();
-    $this->actingAs($user);
-
-    $response = $this->get('/numbering-series');
-
-    $response->assertRedirect('/email-templates');
-});
-
 test('can create numbering series', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $this->actingAs($user);

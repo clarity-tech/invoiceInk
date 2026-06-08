@@ -118,8 +118,7 @@ Route::middleware([
         Route::post('/invoices/{invoice}/payments', [InvoiceController::class, 'recordPayment'])->name('invoices.payments.store');
         Route::delete('/invoices/{invoice}/payments/{payment}', [InvoiceController::class, 'deletePayment'])->name('invoices.payments.destroy');
 
-        // Numbering series management (index redirects to email-templates, CRUD routes kept)
-        Route::redirect('/numbering-series', '/email-templates');
+        // Numbering series management (managed via Organization edit; CRUD routes only)
         Route::post('/numbering-series', [NumberingSeriesController::class, 'store'])->name('numbering-series.store');
         Route::post('/numbering-series/preview', [NumberingSeriesController::class, 'preview'])->name('numbering-series.preview');
         Route::put('/numbering-series/{series}', [NumberingSeriesController::class, 'update'])->name('numbering-series.update');

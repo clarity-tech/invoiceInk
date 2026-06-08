@@ -735,7 +735,7 @@ const totalStatusCount = computed(() =>
                     >
                 </a>
                 <a
-                    href="/numbering-series"
+                    href="/settings"
                     class="flex items-center gap-3 rounded-lg bg-white p-4 shadow transition-colors hover:bg-gray-50"
                 >
                     <svg

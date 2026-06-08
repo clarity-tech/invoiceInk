@@ -3,40 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\Services\InvoiceNumberingServiceInterface;
-use App\Enums\ResetFrequency;
 use App\Models\InvoiceNumberingSeries;
 use App\Models\Location;
 use App\Models\Organization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class NumberingSeriesController extends Controller
 {
-    public function index(Request $request): Response
-    {
-        $userTeamIds = $request->user()->allTeams()->pluck('id');
-
-        $series = InvoiceNumberingSeries::with(['organization', 'location'])
-            ->whereIn('organization_id', $userTeamIds)
-            ->orderBy('is_default', 'desc')
-            ->orderBy('organization_id')
-            ->orderBy('name')
-            ->paginate(10);
-
-        $organizations = Organization::with('primaryLocation')
-            ->whereIn('id', $userTeamIds)
-            ->get();
-
-        return Inertia::render('NumberingSeries/Index', [
-            'series' => $series,
-            'organizations' => $organizations,
-            'resetFrequencyOptions' => ResetFrequency::getOptions(),
-        ]);
-    }
-
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([

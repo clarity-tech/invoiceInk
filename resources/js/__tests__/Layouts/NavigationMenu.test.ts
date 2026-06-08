@@ -60,10 +60,6 @@ vi.mock('@/routes/invoices', () => ({
     index: { url: () => '/invoices' },
 }));
 
-vi.mock('@/routes/numbering-series', () => ({
-    index: { url: () => '/numbering-series' },
-}));
-
 vi.mock('@/routes/organizations', () => ({
     index: { url: () => '/organizations' },
 }));

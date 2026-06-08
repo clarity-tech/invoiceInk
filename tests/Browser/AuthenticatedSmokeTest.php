@@ -12,7 +12,7 @@ dataset('authenticated pages', [
     'invoice create' => ['/invoices/create', 'Create Invoice'],
     'estimate create' => ['/estimates/create', 'Create Estimate'],
     'customers' => ['/customers', 'Customers'],
-    'numbering series' => ['/numbering-series', 'InvoiceInk'],
+    'settings' => ['/settings', 'Settings'],
     'email templates' => ['/email-templates', 'Email Templates'],
     'profile' => ['/user/profile', 'Profile'],
 ]);
@@ -110,7 +110,7 @@ it('renders pages with data without JS errors', function () {
     $this->visit('/dashboard')->assertNoJavascriptErrors();
     $this->visit('/invoices')->assertNoJavascriptErrors();
     $this->visit('/customers')->assertNoJavascriptErrors();
-    $this->visit('/numbering-series')->assertNoJavascriptErrors();
+    $this->visit('/settings')->assertNoJavascriptErrors();
 });
 
 it('renders pages for fresh user with no data without JS errors', function () {
@@ -121,7 +121,7 @@ it('renders pages for fresh user with no data without JS errors', function () {
     $this->visit('/dashboard')->assertNoJavascriptErrors();
     $this->visit('/invoices')->assertNoJavascriptErrors();
     $this->visit('/customers')->assertNoJavascriptErrors();
-    $this->visit('/numbering-series')->assertNoJavascriptErrors();
+    $this->visit('/settings')->assertNoJavascriptErrors();
 });
 
 it('navigation bar is visible on all authenticated pages', function (string $path, string $_expectedText) {
