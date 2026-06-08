@@ -9,6 +9,7 @@
         "php": "^8.5",
         "akaunting/laravel-money": "^6.0",
         "bacon/bacon-qr-code": "^3.0",
+        "enshrined/svg-sanitize": "^0.22.0",
         "inertiajs/inertia-laravel": "^3.0.6",
         "laravel/fortify": "^1.34",
         "laravel/framework": "^13.0",

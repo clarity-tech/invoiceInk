@@ -227,6 +227,7 @@ return [
         'invalid_email' => 'Please enter a valid email address',
         'invalid_number' => 'Please enter a valid number',
         'invalid_date' => 'Please enter a valid date',
+        'invalid_svg' => 'The uploaded SVG could not be processed safely. Please try a different file.',
         'min_value' => 'Value must be at least :min',
         'max_value' => 'Value must not exceed :max',
         'positive_number' => 'Value must be a positive number',

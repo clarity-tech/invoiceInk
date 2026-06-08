@@ -9,6 +9,7 @@ use App\Enums\ResetFrequency;
 use App\Models\Location;
 use App\Models\Organization;
 use App\Rules\CurrencyCode;
+use App\Services\SvgSanitizer;
 use App\Support\Jetstream;
 use App\Support\JetstreamFeatures;
 use App\ValueObjects\BankDetails;
@@ -226,15 +227,23 @@ class OrganizationController extends Controller
         return back()->with('message', __('messages.notifications.organization_updated'));
     }
 
-    public function uploadLogo(Request $request, Organization $organization): RedirectResponse
+    public function uploadLogo(Request $request, Organization $organization, SvgSanitizer $svgSanitizer): RedirectResponse
     {
         $this->authorizeAccess($request, $organization);
 
         $request->validate([
-            'logo' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+            'logo' => ['required', 'image:allow_svg', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
         ]);
 
-        $organization->addMedia($request->file('logo'))
+        $file = $request->file('logo');
+
+        if (! $svgSanitizer->sanitizeInPlace($file)) {
+            throw ValidationException::withMessages([
+                'logo' => __('forms.validation.invalid_svg'),
+            ]);
+        }
+
+        $organization->addMedia($file)
             ->toMediaCollection('logo');
 
         return back()->with('message', __('messages.notifications.organization_updated'));

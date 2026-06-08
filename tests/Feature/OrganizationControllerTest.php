@@ -4,6 +4,7 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Organization;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     Storage::fake('s3');
@@ -362,6 +363,47 @@ test('can upload organization logo', function () {
     $organization->refresh();
     expect($organization->getFirstMedia('logo'))->not->toBeNull();
     expect($organization->logo_url)->not->toBeNull();
+});
+
+test('can upload SVG organization logo', function () {
+    $organization = createOrganizationWithLocation([], [], $this->user);
+
+    $svg = '<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#000"/></svg>';
+    $file = UploadedFile::fake()->createWithContent('logo.svg', $svg);
+
+    $response = $this->post("/organizations/{$organization->id}/logo", [
+        'logo' => $file,
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasNoErrors();
+
+    $organization->refresh();
+    expect($organization->getFirstMedia('logo'))->not->toBeNull();
+});
+
+test('sanitizes malicious SVG logo before storing', function () {
+    $organization = createOrganizationWithLocation([], [], $this->user);
+
+    $malicious = '<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)" width="100" height="100"><script>alert(document.cookie)</script><rect width="100" height="100"/></svg>';
+    $file = UploadedFile::fake()->createWithContent('logo.svg', $malicious);
+
+    $response = $this->post("/organizations/{$organization->id}/logo", [
+        'logo' => $file,
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasNoErrors();
+
+    $organization->refresh();
+    $media = $organization->getFirstMedia('logo');
+    $stored = Storage::disk($media->disk)->get($media->getPathRelativeToRoot());
+
+    expect($stored)
+        ->not->toContain('<script')
+        ->not->toContain('onload')
+        ->not->toContain('alert(')
+        ->toContain('<rect');
 });
 
 test('validates logo file type', function () {
