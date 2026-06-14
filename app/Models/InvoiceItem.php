@@ -119,13 +119,6 @@ class InvoiceItem extends Model
      */
     public function getFormattedTaxRateAttribute(): string
     {
-        if (! $this->tax_rate) {
-            return '0.00%';
-        }
-
-        // Convert basis points to percentage (1800 -> 18.00%)
-        $percentage = $this->tax_rate / 100;
-
-        return number_format($percentage, 2).'%';
+        return sprintf('%g', $this->tax_rate / 100).'%';
     }
 }

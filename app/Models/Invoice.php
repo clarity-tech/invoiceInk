@@ -23,6 +23,7 @@ class Invoice extends Model implements HasMedia
 
     protected $fillable = [
         'type',
+        'subject',
         'ulid',
         'organization_id',
         'organization_location_id',
@@ -103,6 +104,11 @@ class Invoice extends Model implements HasMedia
     public function isEstimate(): bool
     {
         return $this->type === 'estimate';
+    }
+
+    public function typeLabel(): string
+    {
+        return ucfirst($this->type);
     }
 
     /** @param Builder<Invoice> $query */
@@ -247,6 +253,40 @@ class Invoice extends Model implements HasMedia
     public function getCurrencySymbolAttribute(): string
     {
         return Money::{$this->currency->value}(0)->getCurrency()->getSymbol();
+    }
+
+    public function isGstInvoice(): bool
+    {
+        $orgLocation = $this->organizationLocation;
+
+        return $this->isInvoice() && ! empty($orgLocation?->tax_id) && (bool) $orgLocation?->isIndian();
+    }
+
+    public function hasShippingAddress(): bool
+    {
+        $shipping = $this->customerShippingLocation;
+
+        return $shipping !== null && $shipping->id !== $this->customerLocation?->id;
+    }
+
+    public function paymentTermsLabel(): ?string
+    {
+        if (! $this->issued_at || ! $this->due_at) {
+            return null;
+        }
+
+        $daysDiff = (int) $this->issued_at->diffInDays($this->due_at);
+
+        return match ($daysDiff) {
+            0 => 'Due on Receipt',
+            7 => 'Net 7',
+            15 => 'Net 15',
+            30 => 'Net 30',
+            45 => 'Net 45',
+            60 => 'Net 60',
+            90 => 'Net 90',
+            default => "Due in {$daysDiff} days",
+        };
     }
 
     public function registerMediaCollections(): void

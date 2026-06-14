@@ -48,4 +48,9 @@ class Location extends Model
     {
         return $this->country === Country::IN->value;
     }
+
+    public function countryName(): string
+    {
+        return Country::tryFrom((string) $this->country)?->name() ?? (string) $this->country;
+    }
 }

@@ -135,6 +135,8 @@ const form = useForm({
     invoice_numbering_series_id:
         props.defaults?.invoice_numbering_series_id ?? (null as number | null),
     notes: props.mode === 'edit' ? (props.invoice!.notes ?? '') : '',
+    subject: props.mode === 'edit' ? (props.invoice?.subject ?? '') : '',
+    terms: props.mode === 'edit' ? (props.invoice?.terms ?? '') : '',
     items: [] as LineItem[],
 });
 
@@ -800,6 +802,23 @@ const flash = computed(() => (page.props as any).flash ?? {});
                 </div>
             </div>
 
+            <!-- Subject Section -->
+            <div class="rounded-lg bg-white p-6 shadow">
+                <label class="mb-2 block text-sm font-medium text-gray-700"
+                    >Subject</label
+                >
+                <input
+                    v-model="form.subject"
+                    type="text"
+                    placeholder="e.g. Development work for April"
+                    maxlength="255"
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                />
+                <p v-if="form.errors.subject" class="mt-1 text-sm text-red-600">
+                    {{ form.errors.subject }}
+                </p>
+            </div>
+
             <!-- Notes Section -->
             <div class="rounded-lg bg-white p-6 shadow">
                 <label class="mb-2 block text-sm font-medium text-gray-700"
@@ -816,6 +835,22 @@ const flash = computed(() => (page.props as any).flash ?? {});
                 </p>
                 <p class="mt-1 text-xs text-gray-500">
                     Displayed on the PDF document.
+                </p>
+            </div>
+
+            <!-- Terms & Conditions Section -->
+            <div class="rounded-lg bg-white p-6 shadow">
+                <label class="mb-2 block text-sm font-medium text-gray-700"
+                    >Terms &amp; Conditions</label
+                >
+                <textarea
+                    v-model="form.terms"
+                    rows="3"
+                    placeholder="e.g. Payment due within 7 days..."
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                />
+                <p v-if="form.errors.terms" class="mt-1 text-sm text-red-600">
+                    {{ form.errors.terms }}
                 </p>
             </div>
 

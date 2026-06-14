@@ -48,6 +48,14 @@ readonly class BankDetails implements Arrayable, JsonSerializable
         return ! $this->isConfigured();
     }
 
+    public function formattedBranchLine(): string
+    {
+        return implode(' | ', array_filter([
+            $this->ifsc ? 'IFSC '.$this->ifsc : null,
+            $this->branch ? $this->branch.' Branch' : null,
+        ]));
+    }
+
     public function toArray(): array
     {
         return array_filter([

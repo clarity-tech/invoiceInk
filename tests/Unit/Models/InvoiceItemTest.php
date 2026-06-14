@@ -24,7 +24,7 @@ test('can create invoice item with all fields', function () {
     expect($item->quantity)->toBe(2);
     expect($item->unit_price)->toBe(1000);
     expect($item->tax_rate)->toBe(1800); // Should return basis points as integer
-    expect($item->formatted_tax_rate)->toBe('18.00%'); // Should format for display
+    expect($item->formatted_tax_rate)->toBe('18%'); // Should format for display
 });
 
 test('invoice item belongs to invoice', function () {
@@ -385,12 +385,12 @@ test('invoice item tax rate precision is maintained', function () {
 
     // Test various rates stored as basis points
     $testCases = [
-        ['rate' => 1, 'percentage' => 0.01],    // 0.01% = 1 basis point
-        ['rate' => 10, 'percentage' => 0.10],   // 0.10% = 10 basis points
-        ['rate' => 125, 'percentage' => 1.25],  // 1.25% = 125 basis points
-        ['rate' => 1250, 'percentage' => 12.50], // 12.50% = 1250 basis points
-        ['rate' => 2800, 'percentage' => 28.00], // 28.00% = 2800 basis points
-        ['rate' => 9999, 'percentage' => 99.99], // 99.99% = 9999 basis points
+        ['rate' => 1, 'percentage' => 0.01, 'expected' => '0.01%'],
+        ['rate' => 10, 'percentage' => 0.10, 'expected' => '0.1%'],
+        ['rate' => 125, 'percentage' => 1.25, 'expected' => '1.25%'],
+        ['rate' => 1250, 'percentage' => 12.50, 'expected' => '12.5%'],
+        ['rate' => 2800, 'percentage' => 28.00, 'expected' => '28%'],
+        ['rate' => 9999, 'percentage' => 99.99, 'expected' => '99.99%'],
     ];
 
     foreach ($testCases as $test) {
@@ -403,7 +403,7 @@ test('invoice item tax rate precision is maintained', function () {
         ]);
 
         expect($item->tax_rate)->toBe($test['rate']); // Should return basis points as integer
-        expect($item->formatted_tax_rate)->toBe(number_format($test['percentage'], 2).'%'); // Should format for display
+        expect($item->formatted_tax_rate)->toBe($test['expected']); // Should format with trailing zeros stripped
     }
 });
 
