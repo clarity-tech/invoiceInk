@@ -83,8 +83,8 @@ test('public invoice renders TRN label for UAE organization location', function 
     $response = $this->get(route('invoices.public', $invoice->ulid));
 
     $response->assertStatus(200);
-    $response->assertSee('TRN: 100123456700003', false);
-    $response->assertSee('TRN: 100987654300003', false);
+    $response->assertSee('TRN 100123456700003', false);
+    $response->assertSee('TRN 100987654300003', false);
     $response->assertDontSee('GSTIN');
 });
 
