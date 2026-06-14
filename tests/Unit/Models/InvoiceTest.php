@@ -165,6 +165,14 @@ test('invoice type checking methods work correctly', function () {
     expect($estimate->isEstimate())->toBeTrue();
 });
 
+test('typeLabel returns capitalised type string', function () {
+    $invoice = createInvoiceWithItems(['type' => 'invoice', 'invoice_number' => 'INV-002', 'status' => 'draft']);
+    $estimate = createInvoiceWithItems(['type' => 'estimate', 'invoice_number' => 'EST-002', 'status' => 'draft']);
+
+    expect($invoice->typeLabel())->toBe('Invoice');
+    expect($estimate->typeLabel())->toBe('Estimate');
+});
+
 test('invoice dates are cast to Carbon instances', function () {
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',
