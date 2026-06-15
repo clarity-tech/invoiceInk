@@ -37,6 +37,7 @@
     $showPaymentInfo = $isInvoice && $document->amount_paid > 0;
     $remainingBalance = $isInvoice ? $document->remaining_balance : $document->total;
     $paymentTerms = $document->paymentTermsLabel();
+    // Show Ship To only when a separate shipping location is set (different from billing).
     $hasShipping = $document->hasShippingAddress();
     $shipLocation = $document->customerShippingLocation;
 
@@ -63,7 +64,7 @@
 
         @page {
             size: A4;
-            margin: 1mm 5mm;
+            margin: 12mm 10mm 8mm;
         }
 
         @media print {
@@ -159,7 +160,7 @@
             margin-top: 2px;
         }
 
-        .doc-title-block { text-align: right; }
+        .doc-title-block { text-align: right; flex-shrink: 0; padding-left: 16px; }
         .doc-title {
             font-size: 20px;
             font-weight: 500;
@@ -398,7 +399,7 @@
                     @endif
 
                     <div style="margin-top: 12px; text-align: right;">
-                        <div style="font-size: 11px; font-weight: 600; color: #6b7280; letter-spacing: 0.04em;">{{ $balanceLabel }}</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #374151; letter-spacing: 0.04em;">{{ $balanceLabel }}</div>
                         <div style="font-weight: 700;" class="nums">{{ $formattedBalance }}</div>
                     </div>
                 </div>
@@ -469,9 +470,9 @@
                 </div>
             @endif
 
-            {{-- B2. Ship To (if different from Bill To) ────── --}}
+            {{-- B2. Ship To (only when different from Bill To) ────── --}}
             @if($hasShipping)
-                <div class="meta-row" style="margin-top: -8px; padding-top: 0;">
+                <div class="meta-row" style="margin-top: 12px; padding-top: 0;">
                     <div class="meta-col">
                         <div class="section-label">Ship To</div>
                         <div class="customer-name">{{ $shipLocation->name ?? '' }}</div>
