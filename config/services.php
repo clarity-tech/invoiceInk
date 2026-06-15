@@ -23,9 +23,12 @@ return [
     ],
 
     'ses' => [
-        'key' => env('AWS_ACCESS_KEY_ID'),
-        'secret' => env('AWS_SECRET_ACCESS_KEY'),
-        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+        // Dedicated SES credentials so mail delivery does not collide with the
+        // AWS_* env vars used by the S3/RustFS object storage disk. Falls back
+        // to the shared AWS_* values when SES-specific ones are not provided.
+        'key' => env('SES_KEY', env('AWS_ACCESS_KEY_ID')),
+        'secret' => env('SES_SECRET', env('AWS_SECRET_ACCESS_KEY')),
+        'region' => env('SES_REGION', env('AWS_DEFAULT_REGION', 'ap-south-1')),
     ],
 
     'slack' => [
