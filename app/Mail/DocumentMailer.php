@@ -10,6 +10,7 @@ use App\ValueObjects\ContactCollection;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -41,6 +42,7 @@ class DocumentMailer extends Mailable implements ShouldQueue
 
         $envelope = new Envelope(
             to: $this->recipients->getEmails(),
+            replyTo: $this->resolveReplyTo(),
             subject: $subject,
         );
 
@@ -49,6 +51,23 @@ class DocumentMailer extends Mailable implements ShouldQueue
         }
 
         return $envelope;
+    }
+
+    /**
+     * Set the organization's primary contact as the Reply-To address so that
+     * customer replies reach the business rather than the SES "from" sender.
+     *
+     * @return array<int, Address>
+     */
+    private function resolveReplyTo(): array
+    {
+        $contact = $this->invoice->organization?->emails?->first();
+
+        if (empty($contact['email'])) {
+            return [];
+        }
+
+        return [new Address($contact['email'], $contact['name'] ?? null)];
     }
 
     public function content(): Content
