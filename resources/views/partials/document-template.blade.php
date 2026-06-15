@@ -45,8 +45,10 @@
     $orgEmails = $organization->emails;
     $orgPhone = $organization->phone;
 
-    // Strip currency symbol for PDF amounts (e.g. ₹1,234.00 → 1,234.00)
-    $amt = fn(string $formatted): string => $isPdf ? ltrim(preg_replace('/[^\d,\.]+/', '', $formatted)) : $formatted;
+    // Display amounts as-is, including the currency symbol (renders fine in the PDF).
+    $amt = fn(string $formatted): string => $formatted;
+    // Line-item amounts are shown without the currency symbol (kept on totals only).
+    $amtPlain = fn(string $formatted): string => ltrim(preg_replace('/[^\d,\.]+/', '', $formatted));
     $formattedBalance = $amt($isInvoice ? $document->formatted_remaining_balance : $document->formatted_total);
 @endphp
 <!DOCTYPE html>
@@ -512,14 +514,14 @@
                                 @endif
                             </td>
                             <td class="col-qty nums">{{ number_format($item->quantity, 2) }}</td>
-                            <td class="col-rate nums">{{ $amt($item->formatted_unit_price) }}</td>
+                            <td class="col-rate nums">{{ $amtPlain($item->formatted_unit_price) }}</td>
                             <td class="col-tax nums">
-                                {{ $amt($item->formatted_tax_amount) }}
+                                {{ $amtPlain($item->formatted_tax_amount) }}
                                 @if($item->tax_rate)
                                     <div class="tax-detail">{{ $item->formatted_tax_rate }}</div>
                                 @endif
                             </td>
-                            <td class="col-amount nums">{{ $amt($item->formatted_pre_tax_line_total) }}</td>
+                            <td class="col-amount nums">{{ $amtPlain($item->formatted_pre_tax_line_total) }}</td>
                         </tr>
                     @endforeach
                 </tbody>

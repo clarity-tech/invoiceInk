@@ -256,8 +256,8 @@ test('public invoice page displays multiple items correctly', function () {
     $response->assertSee('SEO Optimization');
     $response->assertSee('18%'); // First item tax rate
     $response->assertSee('12%'); // Second item tax rate
-    $response->assertSee('₹80.00'); // First item unit price
-    $response->assertSee('₹35.00'); // Second item unit price
+    $response->assertSee('80.00'); // First item unit price (no symbol on line items)
+    $response->assertSee('35.00'); // Second item unit price (no symbol on line items)
 });
 
 test('can download invoice PDF', function () {
