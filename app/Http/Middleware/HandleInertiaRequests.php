@@ -41,6 +41,7 @@ class HandleInertiaRequests extends Middleware
                     'name' => $request->user()->currentTeam->name,
                     'company_name' => $request->user()->currentTeam->company_name,
                     'currency' => $request->user()->currentTeam->currency,
+                    'emails' => $request->user()->currentTeam->emails,
                     'role' => $request->user()->teamRole($request->user()->currentTeam)?->key,
                     'permissions' => $request->user()->teamPermissions($request->user()->currentTeam),
                 ] : null,
