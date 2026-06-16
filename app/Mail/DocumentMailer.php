@@ -39,6 +39,7 @@ class DocumentMailer extends Mailable implements ShouldQueue
     {
         $type = $this->invoice->isInvoice() ? 'Invoice' : 'Estimate';
         $subject = $this->customSubject ?? "{$type} #{$this->invoice->invoice_number}";
+        $subject .= ' - Sent Using '.config('app.name');
 
         $envelope = new Envelope(
             to: $this->recipients->getEmails(),

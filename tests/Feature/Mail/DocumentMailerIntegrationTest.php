@@ -54,7 +54,7 @@ test('uses custom subject when provided', function () {
     $mailer = new DocumentMailer($invoice, $recipients, 'Payment Due: INV-SUBJ-001');
     $envelope = $mailer->envelope();
 
-    expect($envelope->subject)->toBe('Payment Due: INV-SUBJ-001');
+    expect($envelope->subject)->toBe('Payment Due: INV-SUBJ-001 - Sent Using '.config('app.name'));
 });
 
 // --- Custom body / view selection tests ---
@@ -310,7 +310,7 @@ test('accepts all constructor parameters', function () {
     $envelope = $mailer->envelope();
     $html = $mailer->renderHtml();
 
-    expect($envelope->subject)->toBe('Custom Subject')
+    expect($envelope->subject)->toBe('Custom Subject - Sent Using '.config('app.name'))
         ->and($envelope->to[0]->address)->toBe('main@example.test')
         ->and(collect($envelope->cc)->first()->address)->toBe('cc@example.test')
         ->and($html)->toContain('Please pay');

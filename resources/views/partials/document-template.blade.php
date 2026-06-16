@@ -293,7 +293,7 @@
             padding: 0 10px;
         }
         .totals-row .t-label { color: #333319; text-align: right; flex: 1; }
-        .totals-row .t-value { text-align: right; white-space: nowrap; padding-left: 16px; }
+        .totals-row .t-value { text-align: right; white-space: nowrap; width: 120px; flex-shrink: 0; }
         .totals-row.total-line {
         }
         .totals-row.total-line .t-label,
@@ -353,6 +353,45 @@
         .doc-footer .footer-text {
             font-size: 11px;
         }
+        .doc-footer .powered-by {
+            margin-top: 12px;
+            color: #9ca3af;
+        }
+        .doc-footer .powered-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .doc-footer .powered-brand {
+            color: #7A5A9E;
+            font-weight: 700;
+            text-decoration: none;
+        }
+@if(! $isPdf)
+        /* ── Mobile (web view only) ───────────────────────── */
+        .items-scroll { width: 100%; }
+        @media screen and (max-width: 640px) {
+            .page-wrapper { padding: 16px 12px; }
+            .document-card { padding: 22px 18px; }
+
+            /* Stack the logo/title header */
+            .doc-header { flex-direction: column; }
+            .doc-title-block { text-align: left; padding-left: 0; margin-top: 14px; }
+
+            /* Stack Bill To / details */
+            .meta-row { flex-direction: column; gap: 18px; }
+            .detail-table { margin-left: 0; width: 100%; }
+            .detail-table .dt-label { padding-right: 16px; }
+
+            /* Let the items table scroll horizontally instead of overflowing the page */
+            .items-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .items-table { min-width: 460px; }
+
+            /* Totals span the full width */
+            .totals-wrapper { justify-content: stretch; }
+            .totals-box { width: 100%; }
+        }
+@endif
     </style>
 </head>
 <body class="text-inv-gray">
@@ -400,7 +439,7 @@
                         <span class="status-pill status-{{ $document->status->value }}">{{ $document->status->label() }}</span>
                     @endif
 
-                    <div style="margin-top: 12px; text-align: right;">
+                    <div style="margin-top: 12px;">
                         <div style="font-size: 11px; font-weight: 700; color: #374151; letter-spacing: 0.04em;">{{ $balanceLabel }}</div>
                         <div style="font-weight: 700;" class="nums">{{ $formattedBalance }}</div>
                     </div>
@@ -492,6 +531,7 @@
             @endif
 
             {{-- C. Line Items ──────────────────────────────── --}}
+            <div class="items-scroll">
             <table class="items-table" style="margin-top: 15px;">
                 <thead class="bg-brand-theme">
                     <tr>
@@ -526,6 +566,7 @@
                     @endforeach
                 </tbody>
             </table>
+            </div>
 
             {{-- D. Totals ──────────────────────────────────── --}}
             <div class="totals-wrapper">
@@ -623,7 +664,12 @@
                 @if($logoUrl)
                     <img src="{{ $logoUrl }}" alt="{{ $organization->name }}" class="footer-logo"><br>
                 @endif
-                <span class="footer-text">{{ $footerMessage }}</span>
+
+                <div class="powered-by">
+                    <span class="powered-label">Invoicing powered by</span><br>
+                    <a href="{{ config('app.url') }}" class="powered-brand">{{ config('app.name', 'InvoiceInk') }}</a>
+                    &mdash; Smart Invoicing for Modern Businesses
+                </div>
             </div>
         </div>
     </div>

@@ -50,7 +50,7 @@ test('document mailer has correct subject for invoice', function () {
     $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'Test', 'email' => 'test@example.com']]));
     $envelope = $mailer->envelope();
 
-    expect($envelope->subject)->toBe('Invoice #INV-003');
+    expect($envelope->subject)->toBe('Invoice #INV-003 - Sent Using '.config('app.name'));
 });
 
 test('document mailer has correct subject for estimate', function () {
@@ -66,7 +66,7 @@ test('document mailer has correct subject for estimate', function () {
     $mailer = new DocumentMailer($estimate, new ContactCollection([['name' => 'Test', 'email' => 'test@example.com']]));
     $envelope = $mailer->envelope();
 
-    expect($envelope->subject)->toBe('Estimate #EST-001');
+    expect($envelope->subject)->toBe('Estimate #EST-001 - Sent Using '.config('app.name'));
 });
 
 test('document mailer implements ShouldQueue', function () {

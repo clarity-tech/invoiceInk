@@ -145,6 +145,16 @@
                                         </p>
                                     @endif
                                 @endif
+
+                                <div style="margin: 22px auto 18px; border-top: 1px solid #e5e7eb; width: 70%;"></div>
+
+                                <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;">
+                                    Invoicing powered by
+                                </p>
+                                <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                                    <a href="{{ config('app.url') }}" style="color: #7c3aed; font-weight: 700; text-decoration: none;">{{ config('app.name', 'InvoiceInk') }}</a>
+                                    &mdash; Smart Invoicing for Modern Businesses
+                                </p>
                             </div>
                         </td>
                     </tr>
