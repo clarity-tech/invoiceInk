@@ -3,6 +3,7 @@
 use App\Mail\TeamInvitation;
 use App\Models\Organization;
 use App\Models\TeamInvitation as TeamInvitationModel;
+use Illuminate\Support\Facades\Mail;
 
 beforeEach(function () {
     $this->organization = Organization::factory()->create();
@@ -17,4 +18,24 @@ test('team invitation email carries the shared platform branding', function () {
         ->and($html)->toContain('cid:'.config('branding.logo_cid'))
         // Slogan rendered under the header wordmark.
         ->and($html)->toContain((string) config('branding.slogan'));
+});
+
+test('team invitation subject carries the attribution tag when enabled', function () {
+    config(['mail.default' => 'array', 'queue.default' => 'sync', 'branding.subject_tag' => true]);
+
+    Mail::to('invitee@example.test')->send(new TeamInvitation($this->invitation));
+
+    $email = Mail::mailer('array')->getSymfonyTransport()->messages()->first()->getOriginalMessage();
+
+    expect($email->getSubject())->toContain('Sent Using '.config('app.name'));
+});
+
+test('team invitation subject is clean when the tag is disabled', function () {
+    config(['mail.default' => 'array', 'queue.default' => 'sync', 'branding.subject_tag' => false]);
+
+    Mail::to('invitee@example.test')->send(new TeamInvitation($this->invitation));
+
+    $email = Mail::mailer('array')->getSymfonyTransport()->messages()->first()->getOriginalMessage();
+
+    expect($email->getSubject())->not->toContain('Sent Using');
 });

@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Contracts\Services\PdfServiceInterface;
 use App\Enums\EmailTemplateType;
+use App\Mail\Concerns\AppendsBrandSubjectTag;
 use App\Mail\Concerns\EmbedsBrandLogo;
 use App\Mail\Templates\EmailTemplateService;
 use App\Models\Invoice;
@@ -21,7 +22,7 @@ use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
 
 class DocumentMailer extends Mailable implements ShouldQueue
 {
-    use EmbedsBrandLogo, Queueable, SerializesModels;
+    use AppendsBrandSubjectTag, EmbedsBrandLogo, Queueable, SerializesModels;
 
     /**
      * @param  array<int, array{disk: string, path: string, name: string, mime: string}>  $extraAttachments
@@ -41,7 +42,7 @@ class DocumentMailer extends Mailable implements ShouldQueue
     {
         $type = $this->invoice->isInvoice() ? 'Invoice' : 'Estimate';
         $subject = $this->customSubject ?? "{$type} #{$this->invoice->invoice_number}";
-        $subject .= ' - Sent Using '.config('app.name');
+        $subject = $this->withBrandSubjectTag($subject);
 
         $envelope = new Envelope(
             to: $this->recipients->getEmails(),

@@ -35,4 +35,13 @@ return [
     // preview (preheader) text.
     'slogan' => env('BRAND_SLOGAN', 'Invoices that get paid faster.'),
 
+    // When enabled, every outgoing email subject is suffixed with an
+    // attribution tag (e.g. "Invoice #INV-001 - Sent Using InvoiceInk").
+    // Disable for a fully white-labelled, clean subject line.
+    'subject_tag' => (bool) env('BRAND_SUBJECT_TAG', true),
+
+    // Attribution text appended to the subject when subject_tag is on. When
+    // null it defaults to "Sent Using <app name>".
+    'subject_tag_text' => env('BRAND_SUBJECT_TAG_TEXT'),
+
 ];

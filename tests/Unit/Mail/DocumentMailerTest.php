@@ -70,6 +70,27 @@ test('document mailer has correct subject for estimate', function () {
     expect($envelope->subject)->toBe('Estimate #EST-001 - Sent Using '.config('app.name'));
 });
 
+test('document mailer omits the subject attribution tag when disabled', function () {
+    config(['branding.subject_tag' => false]);
+
+    $invoice = createInvoiceWithItems(['invoice_number' => 'INV-NOTAG']);
+
+    $envelope = (new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']])))->envelope();
+
+    expect($envelope->subject)->toBe('Invoice #INV-NOTAG')
+        ->and($envelope->subject)->not->toContain('Sent Using');
+});
+
+test('document mailer subject tag honours custom attribution text', function () {
+    config(['branding.subject_tag' => true, 'branding.subject_tag_text' => 'via Acme Billing']);
+
+    $invoice = createInvoiceWithItems(['invoice_number' => 'INV-CUSTOMTAG']);
+
+    $envelope = (new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']])))->envelope();
+
+    expect($envelope->subject)->toBe('Invoice #INV-CUSTOMTAG - via Acme Billing');
+});
+
 test('document mailer implements ShouldQueue', function () {
     $invoice = createInvoiceWithItems([
         'invoice_number' => 'INV-004',
