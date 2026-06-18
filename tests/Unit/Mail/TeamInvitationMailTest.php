@@ -14,7 +14,7 @@ test('team invitation email carries the shared platform branding', function () {
 
     // Same footer logo lockup + tagline as the transactional emails.
     expect($html)->toContain(config('branding.tagline'))
-        ->and($html)->toContain('email-logo-mark')
+        ->and($html)->toContain('cid:'.config('branding.logo_cid'))
         // Slogan rendered under the header wordmark.
         ->and($html)->toContain((string) config('branding.slogan'));
 });

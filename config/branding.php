@@ -15,9 +15,15 @@ return [
     |
     */
 
-    // Public path resolved via asset(). Use the PNG mark for email: Gmail
-    // strips inline SVG and Outlook never supported it.
+    // Public path (relative to public/) of the PNG mark. Used as the source
+    // for the inline CID-embedded logo. Use PNG for email: Gmail strips inline
+    // SVG and Outlook never supported it.
     'logo' => 'images/email-logo-mark.png',
+
+    // Content-ID used to reference the inline-embedded logo from email markup
+    // (<img src="cid:..."/>). Any mailable rendering the shared mail templates
+    // must embed the logo under this id via the EmbedsBrandLogo trait.
+    'logo_cid' => 'brandlogo',
 
     // Primary brand color (violet-600). Mirrored in default.css.
     'color' => env('BRAND_COLOR', '#7c3aed'),

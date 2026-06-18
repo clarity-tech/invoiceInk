@@ -3,6 +3,7 @@
 use App\Mail\DocumentMailer;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Mail;
 
 test('can create document mailer for invoice', function () {
     $invoice = createInvoiceWithItems([
@@ -195,9 +196,24 @@ test('document mailer renders the platform logo and tagline in the footer brandi
     $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']]));
     $html = $mailer->renderHtml();
 
-    expect($html)->toContain(config('branding.logo'))           // logo asset is referenced
-        ->and($html)->toContain(config('branding.tagline'))     // centralized footer tagline
-        ->and($html)->toContain('class="footer-brand"');        // footer lockup wrapper
+    expect($html)->toContain('cid:'.config('branding.logo_cid'))  // inline (CID) logo reference
+        ->and($html)->toContain(config('branding.tagline'))       // centralized footer tagline
+        ->and($html)->toContain('class="footer-brand"');          // footer lockup wrapper
+});
+
+test('document mailer embeds the brand logo inline so it renders without a remote fetch', function () {
+    config(['mail.default' => 'array', 'queue.default' => 'sync']);
+
+    $invoice = createInvoiceWithItems(['invoice_number' => 'INV-CID-001']);
+
+    Mail::send(new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']])));
+
+    $email = Mail::mailer('array')->getSymfonyTransport()->messages()->first()->getOriginalMessage();
+
+    $embeddedNames = collect($email->getAttachments())->map->getName()->filter()->all();
+
+    expect($email->getHtmlBody())->toContain('cid:'.config('branding.logo_cid'))
+        ->and($embeddedNames)->toContain(config('branding.logo_cid'));
 });
 
 test('document mailer surfaces the brand slogan in the preheader and header', function () {

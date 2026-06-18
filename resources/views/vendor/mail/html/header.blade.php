@@ -8,7 +8,7 @@
 <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin: 0 auto; border-collapse: collapse;">
 <tr>
 <td style="vertical-align: middle; padding-right: 10px;">
-<img src="{{ asset(config('branding.logo')) }}" alt="" width="36" height="36" style="display: block; border: 0;">
+<img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="" width="36" height="36" style="display: block; border: 0;">
 </td>
 <td style="vertical-align: middle;">
 <span class="logo-text">{!! $slot !!}</span>

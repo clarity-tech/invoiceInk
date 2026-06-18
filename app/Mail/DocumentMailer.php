@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Contracts\Services\PdfServiceInterface;
 use App\Enums\EmailTemplateType;
+use App\Mail\Concerns\EmbedsBrandLogo;
 use App\Mail\Templates\EmailTemplateService;
 use App\Models\Invoice;
 use App\ValueObjects\ContactCollection;
@@ -15,11 +16,12 @@ use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Symfony\Component\Mime\Email;
 use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
 
 class DocumentMailer extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels;
+    use EmbedsBrandLogo, Queueable, SerializesModels;
 
     /**
      * @param  array<int, array{disk: string, path: string, name: string, mime: string}>  $extraAttachments
@@ -45,6 +47,7 @@ class DocumentMailer extends Mailable implements ShouldQueue
             to: $this->recipients->getEmails(),
             replyTo: $this->resolveReplyTo(),
             subject: $subject,
+            using: [fn (Email $message) => $this->embedBrandLogo($message)],
         );
 
         if (! empty($this->ccEmails)) {

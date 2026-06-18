@@ -173,7 +173,7 @@
                             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
                                     <td style="vertical-align: middle;">
-                                        <img src="{{ asset(config('branding.logo')) }}" alt="{{ config('app.name') }}" width="26" height="26" class="brand-mark">
+                                        <img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="26" height="26" class="brand-mark">
                                     </td>
                                     <td style="vertical-align: middle;">
                                         <span class="brand-name">{{ config('app.name') }}</span>
@@ -215,7 +215,7 @@
                                     Invoicing powered by
                                 </p>
                                 <a href="{{ config('app.url') }}" class="footer-brand" style="text-decoration: none; display: inline-block;">
-                                    <img src="{{ asset(config('branding.logo')) }}" alt="{{ config('app.name') }}" width="28" height="28" class="brand-mark">
+                                    <img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="28" height="28" class="brand-mark">
                                     <span class="brand-name">{{ config('app.name') }}</span>
                                 </a>
                                 <p style="margin: 8px 0 0 0; color: #6b7280; font-size: 13px;">{{ config('branding.tagline') }}</p>
