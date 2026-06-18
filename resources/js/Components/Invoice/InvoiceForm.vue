@@ -140,6 +140,18 @@ const form = useForm({
     items: [] as LineItem[],
 });
 
+// Reflect the server's status when it changes the invoice (e.g. draft -> sent
+// after an email is sent). The backend is the source of truth; we only mirror
+// the returned prop, never decide the status on the client.
+watch(
+    () => props.invoice?.status,
+    (serverStatus) => {
+        if (props.mode === 'edit' && serverStatus) {
+            form.status = serverStatus;
+        }
+    },
+);
+
 // Sync items into form before submit
 function syncItems() {
     form.items = items.value.map((item) => ({

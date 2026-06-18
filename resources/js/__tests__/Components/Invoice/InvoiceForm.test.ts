@@ -369,6 +369,89 @@ describe('Invoice/InvoiceForm', () => {
             expect(wrapper.text()).toContain('Paid');
             expect(wrapper.text()).toContain('Overdue');
         });
+
+        it('mirrors the server status onto the dropdown when the invoice prop changes (draft -> sent after sending email)', async () => {
+            const draftInvoice = makeInvoice({
+                id: 99,
+                customer_id: 1,
+                organization_id: 1,
+                status: 'draft',
+                organization_location: orgLocation,
+                customer_location: custLocation,
+                customer_shipping_location: custLocation,
+            });
+
+            const wrapper = mountComponent({
+                mode: 'edit',
+                invoice: draftInvoice,
+            });
+
+            const statusSelect = wrapper
+                .findAll('select')
+                .find((select) =>
+                    select
+                        .findAll('option')
+                        .some(
+                            (option) => option.attributes('value') === 'draft',
+                        ),
+                );
+
+            expect(statusSelect).toBeDefined();
+            expect((statusSelect!.element as HTMLSelectElement).value).toBe(
+                'draft',
+            );
+
+            // Simulate the server redirect returning the invoice with the
+            // backend-promoted status. The frontend must reflect it, not decide it.
+            await wrapper.setProps({
+                invoice: { ...draftInvoice, status: 'sent' },
+            });
+
+            expect((statusSelect!.element as HTMLSelectElement).value).toBe(
+                'sent',
+            );
+        });
+
+        it('does not change the dropdown when the server status is unchanged', async () => {
+            const sentInvoice = makeInvoice({
+                id: 100,
+                customer_id: 1,
+                organization_id: 1,
+                status: 'sent',
+                organization_location: orgLocation,
+                customer_location: custLocation,
+                customer_shipping_location: custLocation,
+            });
+
+            const wrapper = mountComponent({
+                mode: 'edit',
+                invoice: sentInvoice,
+            });
+
+            const statusSelect = wrapper
+                .findAll('select')
+                .find((select) =>
+                    select
+                        .findAll('option')
+                        .some(
+                            (option) => option.attributes('value') === 'draft',
+                        ),
+                );
+
+            expect((statusSelect!.element as HTMLSelectElement).value).toBe(
+                'sent',
+            );
+
+            // A re-render that does not touch status (e.g. unrelated prop update)
+            // must leave the dropdown untouched.
+            await wrapper.setProps({
+                invoice: { ...sentInvoice, notes: 'Updated notes' },
+            });
+
+            expect((statusSelect!.element as HTMLSelectElement).value).toBe(
+                'sent',
+            );
+        });
     });
 
     describe('date fields', () => {
