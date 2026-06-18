@@ -8,7 +8,7 @@
 <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin: 0 auto; border-collapse: collapse;">
 <tr>
 <td style="vertical-align: middle; padding-right: 10px;">
-<img src="{{ asset('images/email-logo-mark.png') }}" alt="" width="36" height="36" style="display: block; border: 0;">
+<img src="{{ asset(config('branding.logo')) }}" alt="" width="36" height="36" style="display: block; border: 0;">
 </td>
 <td style="vertical-align: middle;">
 <span class="logo-text">{!! $slot !!}</span>
@@ -17,5 +17,8 @@
 </table>
 @endif
 </a>
+@unless (trim($slot) === 'Laravel')
+<p style="margin: 8px 0 0 0; color: #9ca3af; font-size: 12px; letter-spacing: 0.04em; text-align: center;">{{ config('branding.slogan') }}</p>
+@endunless
 </td>
 </tr>

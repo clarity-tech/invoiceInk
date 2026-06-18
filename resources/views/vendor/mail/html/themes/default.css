@@ -1,4 +1,7 @@
 /* Base */
+/* Brand color below (#7c3aed) is the single source of truth's mirror — keep in
+   sync with config('branding.color') in config/branding.php. This is static CSS
+   and cannot read config at runtime. */
 
 body,
 body *:not(html):not(style):not(br):not(tr):not(code) {

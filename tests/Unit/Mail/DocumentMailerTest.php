@@ -189,6 +189,38 @@ test('document mailer omits the view-online button when disabled', function () {
     expect($mailer->renderHtml())->not->toContain('class="cta-button"');
 });
 
+test('document mailer renders the platform logo and tagline in the footer branding area', function () {
+    $invoice = createInvoiceWithItems(['invoice_number' => 'INV-BRAND-001']);
+
+    $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']]));
+    $html = $mailer->renderHtml();
+
+    expect($html)->toContain(config('branding.logo'))           // logo asset is referenced
+        ->and($html)->toContain(config('branding.tagline'))     // centralized footer tagline
+        ->and($html)->toContain('class="footer-brand"');        // footer lockup wrapper
+});
+
+test('document mailer surfaces the brand slogan in the preheader and header', function () {
+    $invoice = createInvoiceWithItems(['invoice_number' => 'INV-BRAND-002']);
+
+    $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']]));
+    $html = $mailer->renderHtml();
+
+    // Slogan appears in both the hidden preheader and the slim platform header.
+    expect(substr_count($html, (string) config('branding.slogan')))->toBeGreaterThanOrEqual(2);
+});
+
+test('platform header is rendered outside the customer body block', function () {
+    $invoice = createInvoiceWithItems(['invoice_number' => 'INV-BRAND-003']);
+
+    $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']]));
+    $html = $mailer->renderHtml();
+
+    // The platform header must precede .email-body so it never shifts the
+    // positional selectors that style the org name / invoice banner.
+    expect(strpos($html, 'class="email-header"'))->toBeLessThan(strpos($html, 'class="email-body"'));
+});
+
 test('document mailer handles different recipient emails', function () {
     $invoice = createInvoiceWithItems([
         'invoice_number' => 'INV-007',
