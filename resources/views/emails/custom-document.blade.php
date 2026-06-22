@@ -134,23 +134,40 @@
             font-size: 12px;
             text-align: center;
         }
-        /* Footer platform branding lockup */
+        /* Platform branding lockup — sits on the gray background below the card */
+        .platform-footer {
+            padding: 28px 30px 6px 30px;
+            text-align: center;
+        }
+        .platform-footer .powered-by {
+            margin: 0 0 8px 0;
+            color: #9ca3af;
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
         .footer-brand {
-            margin-top: 14px;
+            text-decoration: none;
+            display: inline-block;
         }
         .footer-brand .brand-mark {
-            width: 28px;
-            height: 28px;
+            width: 22px;
+            height: 22px;
             vertical-align: middle;
             border: 0;
         }
         .footer-brand .brand-name {
             vertical-align: middle;
-            color: #7c3aed;
+            color: #4b5563;
             font-weight: 700;
-            font-size: 15px;
+            font-size: 13px;
             text-decoration: none;
-            padding-left: 8px;
+            padding-left: 7px;
+        }
+        .platform-footer .brand-tagline {
+            margin: 7px 0 0 0;
+            color: #9ca3af;
+            font-size: 11px;
         }
         @media only screen and (max-width: 600px) {
             .email-container {
@@ -176,7 +193,7 @@
                                         <img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="26" height="26" class="brand-mark">
                                     </td>
                                     <td style="vertical-align: middle;">
-                                        <span class="brand-name">{{ config('app.name') }}</span>
+                                        <span class="brand-name">Invoice<span style="color: #8b5cf6;">Ink</span></span>
                                     </td>
                                 </tr>
                             </table>
@@ -208,21 +225,18 @@
                                         </p>
                                     @endif
                                 @endif
-
-                                <div style="margin: 22px auto 18px; border-top: 1px solid #e5e7eb; width: 70%;"></div>
-
-                                <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;">
-                                    Invoicing powered by
-                                </p>
-                                <a href="{{ config('app.url') }}" class="footer-brand" style="text-decoration: none; display: inline-block;">
-                                    <img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="28" height="28" class="brand-mark">
-                                    <span class="brand-name">{{ config('app.name') }}</span>
-                                </a>
-                                <p style="margin: 8px 0 0 0; color: #6b7280; font-size: 13px;">{{ config('branding.tagline') }}</p>
                             </div>
                         </td>
                     </tr>
                 </table>
+                <div class="platform-footer">
+                    <p class="powered-by">Invoicing powered by</p>
+                    <a href="{{ config('app.url') }}" class="footer-brand">
+                        <img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="22" height="22" class="brand-mark">
+                        <span class="brand-name">Invoice<span style="color: #7c3aed;">Ink</span></span>
+                    </a>
+                    <p class="brand-tagline">{{ config('branding.tagline') }}</p>
+                </div>
             </td>
         </tr>
     </table>
