@@ -66,7 +66,7 @@
 
         @page {
             size: A4;
-            margin: 12mm 10mm 8mm;
+            margin: 1mm 5mm;
         }
 
         @media print {
