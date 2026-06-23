@@ -43,7 +43,7 @@
             font-size: 15px;
             font-weight: 700;
             letter-spacing: 0.01em;
-            padding-left: 8px;
+            padding-left: 5px;
         }
         .email-header .brand-slogan {
             margin: 6px 0 0 0;
@@ -162,7 +162,7 @@
             font-weight: 700;
             font-size: 13px;
             text-decoration: none;
-            padding-left: 7px;
+            padding-left: 5px;
         }
         .platform-footer .brand-tagline {
             margin: 7px 0 0 0;
@@ -232,8 +232,7 @@
                 <div class="platform-footer">
                     <p class="powered-by">Invoicing powered by</p>
                     <a href="{{ config('app.url') }}" class="footer-brand">
-                        <img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="22" height="22" class="brand-mark">
-                        <span class="brand-name">Invoice<span style="color: #7c3aed;">Ink</span></span>
+                        <img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="22" height="22" class="brand-mark"><span class="brand-name">Invoice<span style="color: #7c3aed;">Ink</span></span>
                     </a>
                     <p class="brand-tagline">{{ config('branding.tagline') }}</p>
                 </div>
