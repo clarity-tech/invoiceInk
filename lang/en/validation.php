@@ -180,37 +180,37 @@ return [
 
     'custom' => [
         'items.*.description' => [
-            'required' => 'The description for line item :position is required.',
-            'string' => 'The description for line item :position must be text.',
-            'max' => 'The description for line item :position may not be greater than :max characters.',
+            'required' => 'The description for line item is required.',
+            'string' => 'The description for line item must be text.',
+            'max' => 'The description for line item may not be greater than :max characters.',
         ],
         'items.*.quantity' => [
-            'required' => 'The quantity for line item :position is required.',
-            'integer' => 'The quantity for line item :position must be a whole number.',
-            'min' => 'The quantity for line item :position must be at least :min.',
+            'required' => 'The quantity for line item is required.',
+            'integer' => 'The quantity for line item must be a whole number.',
+            'min' => 'The quantity for line item must be at least :min.',
         ],
         'items.*.unit_price' => [
-            'required' => 'The unit price for line item :position is required.',
-            'integer' => 'The unit price for line item :position must be a number.',
-            'min' => 'The unit price for line item :position must be at least :min.',
+            'required' => 'The unit price for line item is required.',
+            'integer' => 'The unit price for line item must be a number.',
+            'min' => 'The unit price for line item must be at least :min.',
         ],
         'items.*.tax_rate' => [
-            'integer' => 'The tax rate for line item :position must be a number.',
-            'min' => 'The tax rate for line item :position must be at least :min.',
-            'max' => 'The tax rate for line item :position may not be greater than :max.',
+            'integer' => 'The tax rate for line item must be a number.',
+            'min' => 'The tax rate for line item must be at least :min.',
+            'max' => 'The tax rate for line item may not be greater than :max.',
         ],
         'items.*.sac_code' => [
-            'string' => 'The SAC code for line item :position must be text.',
-            'max' => 'The SAC code for line item :position may not be greater than :max characters.',
+            'string' => 'The SAC code for line item must be text.',
+            'max' => 'The SAC code for line item may not be greater than :max characters.',
         ],
         'contacts.*.name' => [
-            'string' => 'The name for contact :position must be text.',
-            'max' => 'The name for contact :position may not be greater than :max characters.',
+            'string' => 'The name for contact must be text.',
+            'max' => 'The name for contact may not be greater than :max characters.',
         ],
         'contacts.*.email' => [
-            'required' => 'The email for contact :position is required.',
-            'email' => 'The email for contact :position must be a valid email address.',
-            'max' => 'The email for contact :position may not be greater than :max characters.',
+            'required' => 'The email for contact is required.',
+            'email' => 'The email for contact must be a valid email address.',
+            'max' => 'The email for contact may not be greater than :max characters.',
         ],
         'recipients.*' => [
             'required' => 'Recipient :position email is required.',
@@ -247,6 +247,11 @@ return [
         'recipients.*' => 'recipient email',
         'cc.*' => 'CC email',
         'emails.*' => 'email',
+        'customer_id' => 'customer',
+        'organization_location_id' => 'organization location',
+        'customer_location_id' => 'customer location',
+        'customer_shipping_location_id' => 'customer shipping location',
+        'invoice_numbering_series_id' => 'numbering series',
     ],
 
 ];
