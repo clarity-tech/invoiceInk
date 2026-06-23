@@ -2,6 +2,7 @@
 import { Form, Head, Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
+import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request as forgotPasswordRequest } from '@/routes/password';
 
@@ -148,5 +149,15 @@ defineProps<{
                 </button>
             </div>
         </Form>
+
+        <p class="mt-6 text-center text-sm text-gray-600">
+            Don't have an account?
+            <Link
+                :href="register.url()"
+                class="rounded-md font-medium text-brand-600 underline hover:text-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none"
+            >
+                Register
+            </Link>
+        </p>
     </GuestLayout>
 </template>

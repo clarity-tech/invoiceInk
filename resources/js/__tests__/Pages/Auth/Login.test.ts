@@ -35,6 +35,10 @@ vi.mock('@/routes/password', () => ({
     update: { url: () => '/reset-password' },
 }));
 
+vi.mock('@/routes', () => ({
+    register: { url: () => '/register' },
+}));
+
 vi.mock('@/Layouts/GuestLayout.vue', () => ({
     default: { template: '<div><slot /></div>' },
 }));
@@ -73,6 +77,12 @@ describe('Login', () => {
     it('renders forgot password link', () => {
         const wrapper = mountLogin();
         expect(wrapper.text()).toContain('Forgot your password?');
+    });
+
+    it('renders register link', () => {
+        const wrapper = mountLogin();
+        expect(wrapper.text()).toContain("Don't have an account?");
+        expect(wrapper.text()).toContain('Register');
     });
 
     it('displays status message when provided', () => {
