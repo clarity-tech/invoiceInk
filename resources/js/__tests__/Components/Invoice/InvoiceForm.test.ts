@@ -348,6 +348,90 @@ describe('Invoice/InvoiceForm', () => {
         });
     });
 
+    describe('same as billing address', () => {
+        // Selects that list the customer's locations (billing + shipping share
+        // the same option list). Used to tell whether the shipping dropdown is
+        // rendered alongside the billing one.
+        const customerLocationSelects = (
+            wrapper: ReturnType<typeof mountComponent>,
+        ) =>
+            wrapper
+                .findAll('select')
+                .filter((select) =>
+                    select
+                        .findAll('option')
+                        .some((option) =>
+                            option.text().includes('Client Office - Delhi'),
+                        ),
+                );
+
+        it('checks the box and hides the shipping dropdown when shipping matches billing', () => {
+            const invoice = makeInvoice({
+                id: 1,
+                customer_id: 1,
+                organization_location: orgLocation,
+                customer_location: custLocation,
+                customer_shipping_location: custLocation,
+            });
+            const wrapper = mountComponent({ mode: 'edit', invoice });
+
+            const checkbox = wrapper.find('input[type="checkbox"]');
+            expect(checkbox.exists()).toBe(true);
+            expect((checkbox.element as HTMLInputElement).checked).toBe(true);
+            expect(wrapper.text()).toContain(
+                'Shipping address is the same as the billing address.',
+            );
+            // Only the billing dropdown remains; shipping one is hidden.
+            expect(customerLocationSelects(wrapper).length).toBe(1);
+        });
+
+        it('unchecks the box and shows the shipping dropdown when shipping differs from billing', () => {
+            const invoice = makeInvoice({
+                id: 1,
+                customer_id: 1,
+                organization_location: orgLocation,
+                customer_location: custLocation,
+                customer_shipping_location: custLocation2,
+            });
+            const wrapper = mountComponent({ mode: 'edit', invoice });
+
+            const checkbox = wrapper.find('input[type="checkbox"]');
+            expect((checkbox.element as HTMLInputElement).checked).toBe(false);
+            expect(wrapper.text()).not.toContain(
+                'Shipping address is the same as the billing address.',
+            );
+            // Both billing and shipping dropdowns are rendered.
+            expect(customerLocationSelects(wrapper).length).toBe(2);
+        });
+
+        it('mirrors shipping to billing when toggled on, and keeps it after toggling off', async () => {
+            const invoice = makeInvoice({
+                id: 1,
+                customer_id: 1,
+                organization_location: orgLocation,
+                customer_location: custLocation,
+                customer_shipping_location: custLocation2,
+            });
+            const wrapper = mountComponent({ mode: 'edit', invoice });
+            const checkbox = wrapper.find('input[type="checkbox"]');
+
+            await checkbox.setValue(true);
+            expect(wrapper.text()).toContain(
+                'Shipping address is the same as the billing address.',
+            );
+            expect(customerLocationSelects(wrapper).length).toBe(1);
+
+            await checkbox.setValue(false);
+            // Shipping dropdown reappears and now reflects the billing location
+            // (id 20) it was mirrored to while the box was checked.
+            const shippingSelect = customerLocationSelects(wrapper)[1];
+            expect(shippingSelect).toBeDefined();
+            expect((shippingSelect.element as HTMLSelectElement).value).toBe(
+                '20',
+            );
+        });
+    });
+
     describe('organization location dropdown', () => {
         it('renders organization locations', () => {
             const wrapper = mountComponent();

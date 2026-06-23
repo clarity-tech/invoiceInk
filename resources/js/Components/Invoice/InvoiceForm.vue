@@ -230,6 +230,30 @@ const selectedShippingLocation = computed(() =>
     ),
 );
 
+// "Same as billing" toggle for the shipping address. Defaults to enabled when
+// shipping already matches billing (always the case in create mode after the
+// customer auto-fill, and in edit mode when no separate shipping was chosen).
+const sameAsBilling = ref(
+    form.customer_shipping_location_id === form.customer_location_id,
+);
+
+// While enabled, mirror shipping to billing so any billing change (or customer
+// switch) is reflected in the shipping address too.
+watch(sameAsBilling, (enabled) => {
+    if (enabled) {
+        form.customer_shipping_location_id = form.customer_location_id;
+    }
+});
+
+watch(
+    () => form.customer_location_id,
+    (billingId) => {
+        if (sameAsBilling.value) {
+            form.customer_shipping_location_id = billingId;
+        }
+    },
+);
+
 const page = usePage();
 const flash = computed(() => (page.props as any).flash ?? {});
 </script>
@@ -622,12 +646,30 @@ const flash = computed(() => (page.props as any).flash ?? {});
                             "
                             class="mt-20 rounded-md border border-gray-200 bg-gray-50 p-4"
                         >
-                            <h3
-                                class="mb-2 text-sm font-semibold text-gray-700"
+                            <div class="mb-2 flex items-center justify-between">
+                                <h3 class="text-sm font-semibold text-gray-700">
+                                    Shipping Address
+                                </h3>
+                                <label
+                                    class="flex cursor-pointer items-center gap-2 text-sm text-gray-600"
+                                >
+                                    <input
+                                        v-model="sameAsBilling"
+                                        type="checkbox"
+                                        class="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                                    />
+                                    Same as billing address
+                                </label>
+                            </div>
+                            <p
+                                v-if="sameAsBilling"
+                                class="text-sm text-gray-500"
                             >
-                                Shipping Address
-                            </h3>
+                                Shipping address is the same as the billing
+                                address.
+                            </p>
                             <select
+                                v-if="!sameAsBilling"
                                 v-model="form.customer_shipping_location_id"
                                 class="mb-3 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
                             >
@@ -654,7 +696,9 @@ const flash = computed(() => (page.props as any).flash ?? {});
                             </p>
 
                             <div
-                                v-if="selectedShippingLocation"
+                                v-if="
+                                    selectedShippingLocation && !sameAsBilling
+                                "
                                 class="space-y-1 text-sm text-gray-600"
                             >
                                 <p
