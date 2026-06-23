@@ -51,7 +51,6 @@ enum Country: string
         return match ($this) {
             self::IN => [
                 'april_march' => 'April - March (Standard)',
-                'january_december' => 'January - December (Alternative)',
             ],
             self::GB => [
                 'april_march' => 'April - March (Standard)',
