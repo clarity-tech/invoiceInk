@@ -105,7 +105,6 @@ function removeContact(index: number) {
                 v-model="form.phone"
                 type="text"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
-                placeholder="+91 12345 67890"
             />
             <p v-if="form.errors.phone" class="mt-1 text-sm text-red-600">
                 {{ form.errors.phone }}

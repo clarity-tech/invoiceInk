@@ -620,7 +620,7 @@ function goToStep(step: number): void {
                                     Contact Details
                                 </h2>
                                 <p class="mb-6 text-gray-600">
-                                    Your email and phone information
+                                    Your company's email and phone number
                                 </p>
                             </div>
                             <div class="space-y-6">
@@ -689,7 +689,6 @@ function goToStep(step: number): void {
                                         id="phone"
                                         v-model="form.phone"
                                         type="tel"
-                                        placeholder="+1-555-0123"
                                         class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
                                     />
                                     <p
