@@ -138,7 +138,7 @@ enum Country: string
         return match ($this) {
             self::IN => [
                 'name' => 'GST (Goods & Services Tax)',
-                'rates' => ['5%', '12%', '18%', '28%'],
+                'rates' => ['0%', '5%', '18%', '40%'],
                 'number_format' => 'GSTIN',
                 'number_length' => 15,
             ],
