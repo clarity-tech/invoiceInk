@@ -300,9 +300,7 @@ function submit() {
                         {{ selectedCountry.tax_system.name }}
                         <span class="ml-2 text-blue-600"
                             >({{
-                                selectedCountry.tax_system.rates
-                                    .slice(0, 3)
-                                    .join(', ')
+                                selectedCountry.tax_system.rates.join(', ')
                             }})</span
                         >
                     </div>
