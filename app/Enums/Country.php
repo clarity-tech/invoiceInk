@@ -3,6 +3,8 @@
 namespace App\Enums;
 
 use App\Currency;
+use App\Models\InvoiceItem;
+use App\Models\TaxTemplate;
 
 enum Country: string
 {
@@ -189,6 +191,64 @@ enum Country: string
                 'rates' => ['7%', '19%'],
                 'number_format' => 'VAT Registration Number',
                 'number_length' => 11,
+            ],
+        };
+    }
+
+    /**
+     * Default tax templates created for an organization of this country.
+     *
+     * Rates are stored in basis points where 1% = 100 (e.g. 18% = 1800), matching
+     * the scale used by {@see TaxTemplate::$rate} and
+     * {@see InvoiceItem::$tax_rate}.
+     *
+     * @return array<int, array{name: string, type: string, rate: int, category: string, description: string}>
+     */
+    public function getDefaultTaxTemplates(): array
+    {
+        return match ($this) {
+            self::IN => [
+                ['name' => 'GST 0%', 'type' => 'GST', 'rate' => 0, 'category' => 'Exempt', 'description' => 'GST exempt / nil-rated goods and services'],
+                ['name' => 'GST 5%', 'type' => 'GST', 'rate' => 500, 'category' => 'Standard Rate', 'description' => 'Goods and Services Tax at 5%'],
+                ['name' => 'GST 18%', 'type' => 'GST', 'rate' => 1800, 'category' => 'Standard Rate', 'description' => 'Goods and Services Tax at 18%'],
+                ['name' => 'GST 40%', 'type' => 'GST', 'rate' => 4000, 'category' => 'Special Rate', 'description' => 'Goods and Services Tax at 40% (sin & luxury goods)'],
+            ],
+            self::GB => [
+                ['name' => 'VAT 20%', 'type' => 'VAT', 'rate' => 2000, 'category' => 'Standard Rate', 'description' => 'Value Added Tax at the standard rate of 20%'],
+                ['name' => 'VAT 5%', 'type' => 'VAT', 'rate' => 500, 'category' => 'Reduced Rate', 'description' => 'Value Added Tax at the reduced rate of 5%'],
+                ['name' => 'VAT 0%', 'type' => 'VAT', 'rate' => 0, 'category' => 'Zero Rate', 'description' => 'Zero-rated VAT for certain goods and services'],
+            ],
+            self::US => [
+                ['name' => 'No Tax', 'type' => 'Exempt', 'rate' => 0, 'category' => 'Tax Exempt', 'description' => 'No sales tax applied'],
+                ['name' => 'Sales Tax 6%', 'type' => 'Sales Tax', 'rate' => 600, 'category' => 'Standard Rate', 'description' => 'State Sales Tax at 6%'],
+                ['name' => 'Sales Tax 8.25%', 'type' => 'Sales Tax', 'rate' => 825, 'category' => 'Sample Rate', 'description' => 'State Sales Tax at 8.25%'],
+            ],
+            self::AE => [
+                ['name' => 'VAT 5%', 'type' => 'VAT', 'rate' => 500, 'category' => 'Standard Rate', 'description' => 'Value Added Tax at the standard rate of 5%'],
+                ['name' => 'VAT 0%', 'type' => 'VAT', 'rate' => 0, 'category' => 'Zero Rate', 'description' => 'Zero-rated VAT for exports and certain goods/services'],
+                ['name' => 'VAT Exempt', 'type' => 'VAT', 'rate' => 0, 'category' => 'Exempt', 'description' => 'VAT exempt goods and services'],
+            ],
+            self::AU => [
+                ['name' => 'GST 10%', 'type' => 'GST', 'rate' => 1000, 'category' => 'Standard Rate', 'description' => 'Goods and Services Tax at 10%'],
+                ['name' => 'GST 0%', 'type' => 'GST', 'rate' => 0, 'category' => 'Zero Rate', 'description' => 'GST-free goods and services'],
+            ],
+            self::CA => [
+                ['name' => 'GST 5%', 'type' => 'GST', 'rate' => 500, 'category' => 'Federal Rate', 'description' => 'Federal Goods and Services Tax at 5%'],
+                ['name' => 'HST 13%', 'type' => 'HST', 'rate' => 1300, 'category' => 'Harmonized Rate', 'description' => 'Harmonized Sales Tax at 13%'],
+                ['name' => 'HST 15%', 'type' => 'HST', 'rate' => 1500, 'category' => 'Harmonized Rate', 'description' => 'Harmonized Sales Tax at 15%'],
+            ],
+            self::SG => [
+                ['name' => 'GST 8%', 'type' => 'GST', 'rate' => 800, 'category' => 'Standard Rate', 'description' => 'Goods and Services Tax at 8%'],
+                ['name' => 'GST 0%', 'type' => 'GST', 'rate' => 0, 'category' => 'Zero Rate', 'description' => 'Zero-rated GST for exports and international services'],
+            ],
+            self::JP => [
+                ['name' => 'Consumption Tax 10%', 'type' => 'Consumption Tax', 'rate' => 1000, 'category' => 'Standard Rate', 'description' => 'Consumption Tax at the standard rate of 10%'],
+                ['name' => 'Consumption Tax 8%', 'type' => 'Consumption Tax', 'rate' => 800, 'category' => 'Reduced Rate', 'description' => 'Consumption Tax at the reduced rate of 8%'],
+            ],
+            self::DE => [
+                ['name' => 'VAT 19%', 'type' => 'VAT', 'rate' => 1900, 'category' => 'Standard Rate', 'description' => 'Value Added Tax at the standard rate of 19%'],
+                ['name' => 'VAT 7%', 'type' => 'VAT', 'rate' => 700, 'category' => 'Reduced Rate', 'description' => 'Value Added Tax at the reduced rate of 7%'],
+                ['name' => 'VAT 0%', 'type' => 'VAT', 'rate' => 0, 'category' => 'Zero Rate', 'description' => 'Zero-rated VAT for exports and certain services'],
             ],
         };
     }

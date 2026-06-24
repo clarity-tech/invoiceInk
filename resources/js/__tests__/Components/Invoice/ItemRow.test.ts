@@ -85,3 +85,93 @@ describe('ItemRow', () => {
         expect(wrapper.text()).toContain('SAC: 998311');
     });
 });
+
+describe('ItemRow tax control', () => {
+    const taxTemplates = [
+        { id: 1, name: 'GST 18%', rate: 1800 },
+        { id: 2, name: 'GST 5%', rate: 500 },
+    ] as any;
+
+    it('renders an option per tax template plus a custom option', () => {
+        const wrapper = mount(ItemRow, {
+            props: { ...defaultProps, taxTemplates },
+        });
+        const options = wrapper.findAll('select option').map((o) => o.text());
+        expect(options).toContain('GST 18%');
+        expect(options).toContain('GST 5%');
+        expect(options.some((o) => o.includes('Custom'))).toBe(true);
+    });
+
+    it('orders template options by rate ascending', () => {
+        const wrapper = mount(ItemRow, {
+            props: { ...defaultProps, taxTemplates },
+        });
+        const templateOptions = wrapper
+            .findAll('select option')
+            .map((o) => o.text())
+            .filter((t) => t.startsWith('GST'));
+        expect(templateOptions).toEqual(['GST 5%', 'GST 18%']);
+    });
+
+    it('preselects the template matching the item tax rate', () => {
+        const wrapper = mount(ItemRow, {
+            props: {
+                ...defaultProps,
+                item: { ...defaultProps.item, tax_rate: 1800 },
+                taxTemplates,
+            },
+        });
+        expect(
+            (wrapper.find('select').element as HTMLSelectElement).value,
+        ).toBe('1');
+        // No custom input while a template is selected.
+        expect(
+            wrapper.find('input[aria-label="Custom tax rate"]').exists(),
+        ).toBe(false);
+    });
+
+    it('emits update with the template rate when a template is selected', async () => {
+        const wrapper = mount(ItemRow, {
+            props: {
+                ...defaultProps,
+                item: { ...defaultProps.item, tax_rate: 0 },
+                taxTemplates,
+            },
+        });
+        await wrapper.find('select').setValue('2'); // GST 5%
+        const emitted = wrapper.emitted('update')!;
+        expect((emitted[emitted.length - 1][0] as any).tax_rate).toBe(500);
+    });
+
+    it('reveals a custom input and emits the manually entered rate', async () => {
+        const wrapper = mount(ItemRow, {
+            props: {
+                ...defaultProps,
+                item: { ...defaultProps.item, tax_rate: 0 },
+                taxTemplates,
+            },
+        });
+        await wrapper.find('select').setValue('custom');
+        const input = wrapper.find('input[aria-label="Custom tax rate"]');
+        expect(input.exists()).toBe(true);
+        await input.setValue('7.5');
+        const emitted = wrapper.emitted('update')!;
+        expect((emitted[emitted.length - 1][0] as any).tax_rate).toBe(750);
+    });
+
+    it('falls back to the custom input when the rate matches no template', () => {
+        const wrapper = mount(ItemRow, {
+            props: {
+                ...defaultProps,
+                item: { ...defaultProps.item, tax_rate: 1234 },
+                taxTemplates,
+            },
+        });
+        expect(
+            (wrapper.find('select').element as HTMLSelectElement).value,
+        ).toBe('custom');
+        expect(
+            wrapper.find('input[aria-label="Custom tax rate"]').exists(),
+        ).toBe(true);
+    });
+});

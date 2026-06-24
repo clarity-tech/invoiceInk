@@ -31,3 +31,32 @@ test('taxLabels returns country-specific names for non-Indian countries', functi
     expect($labels['JP'])->toBe('Invoice Registration Number');
     expect($labels['DE'])->toBe('VAT Registration Number');
 });
+
+test('getDefaultTaxTemplates returns a non-empty, well-formed set for every country', function () {
+    foreach (Country::cases() as $country) {
+        $templates = $country->getDefaultTaxTemplates();
+
+        expect($templates)->toBeArray()->not->toBeEmpty();
+
+        foreach ($templates as $template) {
+            expect($template)
+                ->toHaveKeys(['name', 'type', 'rate', 'category', 'description']);
+            expect($template['name'])->toBeString()->not->toBeEmpty();
+            expect($template['rate'])->toBeInt()->toBeGreaterThanOrEqual(0);
+        }
+    }
+});
+
+test('getDefaultTaxTemplates stores rates in basis points where 1% = 100', function () {
+    $india = collect(Country::IN->getDefaultTaxTemplates());
+
+    // GST 2.0 slabs (0/5/18/40), at the same scale as TaxTemplate::$rate.
+    expect($india->firstWhere('name', 'GST 0%')['rate'])->toBe(0);
+    expect($india->firstWhere('name', 'GST 5%')['rate'])->toBe(500);
+    expect($india->firstWhere('name', 'GST 18%')['rate'])->toBe(1800);
+    expect($india->firstWhere('name', 'GST 40%')['rate'])->toBe(4000);
+
+    // The legacy 12% and 28% slabs are gone under GST 2.0.
+    expect($india->pluck('name'))->not->toContain('GST 12%');
+    expect($india->pluck('name'))->not->toContain('GST 28%');
+});

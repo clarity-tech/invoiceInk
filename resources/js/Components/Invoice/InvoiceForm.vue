@@ -82,6 +82,11 @@ function buildInitialItems(): LineItem[] {
 const items = ref<LineItem[]>(buildInitialItems());
 const { totals } = useInvoiceCalculator(items);
 
+// Stable keys for the v-for so each ItemRow keeps its own local UI state
+// (e.g. the tax-rate selection) when rows are added or removed.
+let nextItemKey = items.value.length;
+const itemKeys = ref<number[]>(items.value.map((_, index) => index));
+
 // Determine currency from selected customer
 const selectedCustomerId = ref<number | null>(
     props.mode === 'edit' ? (props.invoice?.customer_id ?? null) : null,
@@ -190,11 +195,13 @@ function addItem() {
         unit_price: 0,
         tax_rate: 0,
     });
+    itemKeys.value.push(nextItemKey++);
 }
 
 function removeItem(index: number) {
     if (items.value.length > 1) {
         items.value.splice(index, 1);
+        itemKeys.value.splice(index, 1);
     }
 }
 
@@ -815,7 +822,7 @@ const flash = computed(() => (page.props as any).flash ?? {});
                         <tbody class="divide-y divide-gray-200 bg-white">
                             <ItemRow
                                 v-for="(item, index) in items"
-                                :key="index"
+                                :key="itemKeys[index]"
                                 :item="item"
                                 :index="index"
                                 :currency="currentCurrency"

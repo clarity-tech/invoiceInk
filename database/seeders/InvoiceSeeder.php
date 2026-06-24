@@ -347,13 +347,17 @@ class InvoiceSeeder extends ProductionSafeSeeder
 
     private function getTaxRate(Organization $organization): int
     {
-        return match ($organization->currency->value) {
+        // Whole-percent rates, converted to basis points where 1% = 100
+        // (e.g. 18% = 1800) to match InvoiceItem::$tax_rate.
+        $percent = match ($organization->currency->value) {
             'USD' => fake()->randomElement([0, 4, 6, 8]), // US state sales tax rates
             'EUR' => fake()->randomElement([0, 7, 19]), // German VAT rates
             'GBP' => fake()->randomElement([0, 5, 20]), // UK VAT rates
-            'INR' => fake()->randomElement([0, 5, 12, 18, 28]), // GST rates
+            'INR' => fake()->randomElement([0, 5, 18, 40]), // GST 2.0 rates
             'AED' => fake()->randomElement([0, 5]), // UAE VAT rates
             default => 10,
         };
+
+        return $percent * 100;
     }
 }

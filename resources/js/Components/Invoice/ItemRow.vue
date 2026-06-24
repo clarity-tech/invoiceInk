@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useFormatMoney } from '@/composables/useFormatMoney';
 import { calcLineTotalWithTax } from '@/composables/useInvoiceCalculator';
 import type { LineItem } from '@/composables/useInvoiceCalculator';
@@ -59,14 +59,57 @@ function updateField(field: keyof LineItem, value: string | number | null) {
     emit('update', updated);
 }
 
-function applyTaxTemplate(templateId: string) {
-    if (!templateId) {
+// Tax-rate control: a single dropdown of the org's tax templates plus a
+// "Custom rate…" option that reveals the manual percentage input.
+const CUSTOM_TAX = 'custom';
+const NO_TAX = '0';
+
+// Show a synthetic "No tax (0%)" entry only when no template already covers 0%.
+const hasZeroRateTemplate = computed(() =>
+    props.taxTemplates.some((t) => t.rate === 0),
+);
+
+// Order the dropdown by rate ascending (e.g. 0% → 5% → 20%), keeping a stable
+// order for templates that share a rate.
+const sortedTaxTemplates = computed(() =>
+    [...props.taxTemplates].sort((a, b) => a.rate - b.rate),
+);
+
+function resolveInitialTaxMode(): string {
+    const match = props.taxTemplates.find(
+        (t) => t.rate === props.item.tax_rate,
+    );
+
+    if (match) {
+        return String(match.id);
+    }
+
+    if (props.item.tax_rate === 0) {
+        return NO_TAX;
+    }
+
+    return CUSTOM_TAX;
+}
+
+const taxMode = ref<string>(resolveInitialTaxMode());
+
+const showCustomRate = computed(() => taxMode.value === CUSTOM_TAX);
+
+function onTaxModeChange(value: string) {
+    taxMode.value = value;
+
+    if (value === CUSTOM_TAX) {
+        // Keep the current rate; reveal the manual input for editing.
         return;
     }
 
-    const template = props.taxTemplates.find(
-        (t) => t.id === Number(templateId),
-    );
+    if (value === NO_TAX) {
+        updateField('tax_rate', 0);
+
+        return;
+    }
+
+    const template = props.taxTemplates.find((t) => String(t.id) === value);
 
     if (template) {
         updateField('tax_rate', template.rate);
@@ -171,7 +214,27 @@ function errorFor(field: string): string | undefined {
             </p>
         </td>
         <td class="px-4 py-3">
-            <div class="relative">
+            <select
+                :value="taxMode"
+                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                @change="
+                    onTaxModeChange(($event.target as HTMLSelectElement).value)
+                "
+            >
+                <option v-if="!hasZeroRateTemplate" value="0">
+                    No tax (0%)
+                </option>
+                <option
+                    v-for="t in sortedTaxTemplates"
+                    :key="t.id"
+                    :value="String(t.id)"
+                >
+                    {{ t.name }}
+                </option>
+                <option value="custom">Custom rate…</option>
+            </select>
+
+            <div v-if="showCustomRate" class="relative mt-2">
                 <input
                     :value="item.tax_rate / 100"
                     type="number"
@@ -179,6 +242,7 @@ function errorFor(field: string): string | undefined {
                     max="100"
                     step="0.01"
                     placeholder="0"
+                    aria-label="Custom tax rate"
                     class="w-full rounded-md border border-gray-300 px-3 py-2 pr-8 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
                     @input="
                         updateField(
@@ -196,21 +260,10 @@ function errorFor(field: string): string | undefined {
                     >%</span
                 >
             </div>
+
             <p v-if="errorFor('tax_rate')" class="mt-1 text-xs text-red-600">
                 {{ errorFor('tax_rate') }}
             </p>
-            <select
-                v-if="taxTemplates.length > 0"
-                class="mt-1 w-full rounded-md border border-gray-200 px-2 py-1 text-xs focus:ring-1 focus:ring-brand-500 focus:outline-none"
-                @change="
-                    applyTaxTemplate(($event.target as HTMLSelectElement).value)
-                "
-            >
-                <option value="">Apply template...</option>
-                <option v-for="t in taxTemplates" :key="t.id" :value="t.id">
-                    {{ t.name }} ({{ t.rate / 100 }}%)
-                </option>
-            </select>
         </td>
         <td class="px-4 py-3 text-right">
             <span class="text-sm font-medium text-gray-900">

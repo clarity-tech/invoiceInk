@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('organization_id')->constrained('teams')->onDelete('cascade');
             $table->string('name'); // e.g., "GST 18%", "VAT 20%", "Sales Tax 8.25%"
             $table->string('type'); // e.g., "GST", "VAT", "Sales Tax", "TDS", "TCS"
-            $table->unsignedInteger('rate'); // Rate in basis points (18.000% = 180000)
+            $table->unsignedInteger('rate'); // Rate in basis points where 1% = 100 (18% = 1800)
             $table->string('category')->nullable(); // e.g., "CGST", "SGST", "IGST", "Standard Rate"
             $table->char('country_code', 2); // ISO 3166-1 alpha-2 country codes
             $table->string('description')->nullable();

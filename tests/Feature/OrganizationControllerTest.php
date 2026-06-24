@@ -1,10 +1,21 @@
 <?php
 
+use App\Enums\Country;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Organization;
+use App\Models\Scopes\OrganizationScope;
+use App\Models\TaxTemplate;
+use App\Services\TaxTemplateProvisioner;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+
+function taxTemplatesFor(Organization $organization)
+{
+    return TaxTemplate::withoutGlobalScope(OrganizationScope::class)
+        ->where('organization_id', $organization->id)
+        ->get();
+}
 
 beforeEach(function () {
     Storage::fake('s3');
@@ -83,6 +94,55 @@ test('can update organization basics', function () {
     expect($organization->phone)->toBe('+1-555-9999');
     expect($organization->emails->getFirstEmail())->toBe('updated@test.com');
     expect($organization->currency->value)->toBe('USD');
+});
+
+test('changing the organization country regenerates its tax templates', function () {
+    $organization = createOrganizationWithLocation(
+        ['country_code' => 'IN', 'currency' => 'INR'],
+        [],
+        $this->user,
+    );
+    app(TaxTemplateProvisioner::class)->replaceWithCountryDefaults($organization, Country::IN);
+
+    expect(taxTemplatesFor($organization)->pluck('country_code')->unique()->all())->toBe(['IN']);
+
+    $this->put("/organizations/{$organization->id}", [
+        'name' => $organization->name,
+        'emails' => ['owner@test.com'],
+        'currency' => 'GBP',
+        'country_code' => 'GB',
+        'financial_year_type' => 'april_march',
+        'financial_year_start_month' => 4,
+        'financial_year_start_day' => 1,
+    ])->assertRedirect();
+
+    $templates = taxTemplatesFor($organization);
+    expect($templates->pluck('country_code')->unique()->all())->toBe(['GB']);
+    expect($templates->pluck('name'))->toContain('VAT 20%');
+    expect($templates->firstWhere('name', 'VAT 20%')->rate)->toBe(2000);
+});
+
+test('updating the organization without changing country leaves tax templates intact', function () {
+    $organization = createOrganizationWithLocation(
+        ['country_code' => 'IN', 'currency' => 'INR'],
+        [],
+        $this->user,
+    );
+    app(TaxTemplateProvisioner::class)->replaceWithCountryDefaults($organization, Country::IN);
+    $before = taxTemplatesFor($organization)->pluck('id')->sort()->values()->all();
+
+    $this->put("/organizations/{$organization->id}", [
+        'name' => 'Renamed Org',
+        'emails' => ['owner@test.com'],
+        'currency' => 'INR',
+        'country_code' => 'IN',
+        'financial_year_type' => 'april_march',
+        'financial_year_start_month' => 4,
+        'financial_year_start_day' => 1,
+    ])->assertRedirect();
+
+    $after = taxTemplatesFor($organization)->pluck('id')->sort()->values()->all();
+    expect($after)->toBe($before);
 });
 
 test('accepts a website without a scheme and stores it as a full url', function () {
