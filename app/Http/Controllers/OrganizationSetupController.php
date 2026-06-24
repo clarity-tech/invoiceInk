@@ -102,11 +102,10 @@ class OrganizationSetupController extends Controller
             1 => $this->saveStep1($request, $organization),
             2 => $this->saveStep2($request, $organization),
             3 => $this->saveStep3($request, $organization),
-            4 => $this->saveStep4($request, $organization),
             default => null,
         };
 
-        if ($step >= 4) {
+        if ($step >= 3) {
             $organization->markSetupComplete();
 
             return redirect()->route('dashboard')
@@ -131,6 +130,9 @@ class OrganizationSetupController extends Controller
                 'registration_number' => ['nullable', 'string', 'max:255'],
                 'website' => ['nullable', 'string', 'max:255', 'url'],
                 'notes' => ['nullable', 'string', 'max:1000'],
+                'emails' => ['required', 'array', 'min:1'],
+                'emails.*' => ['required', 'email'],
+                'phone' => ['nullable', 'string', 'max:20'],
             ]),
             2 => $request->validate([
                 'location_name' => ['nullable', 'string', 'max:255'],
@@ -148,17 +150,26 @@ class OrganizationSetupController extends Controller
                 'financial_year_start_month' => ['nullable', 'integer', 'min:1', 'max:12'],
                 'financial_year_start_day' => ['nullable', 'integer', 'min:1', 'max:31'],
             ]),
-            4 => $request->validate([
-                'emails' => ['required', 'array', 'min:1'],
-                'emails.*' => ['required', 'email'],
-                'phone' => ['nullable', 'string', 'max:20'],
-            ]),
             default => null,
         };
     }
 
     private function saveStep1(Request $request, Organization $organization): void
     {
+        $filteredEmails = array_filter(
+            array_map(fn ($email) => is_string($email) ? trim($email) : '', $request->input('emails', [])),
+            fn ($email) => $email !== ''
+        );
+
+        if (empty($filteredEmails)) {
+            throw ValidationException::withMessages([
+                'emails.0' => __('forms.validation.at_least_one_email'),
+            ]);
+        }
+
+        $contactData = array_map(fn ($email) => ['name' => '', 'email' => $email], $filteredEmails);
+        $contactCollection = new ContactCollection($contactData);
+
         // Only set company_name (the legal/business name on invoices). The org's
         // `name` is the switcher label set at creation and must not be overwritten.
         $organization->update([
@@ -167,6 +178,8 @@ class OrganizationSetupController extends Controller
             'registration_number' => $request->input('registration_number') ?: null,
             'website' => $request->input('website') ?: null,
             'notes' => $request->input('notes') ?: null,
+            'emails' => $contactCollection,
+            'phone' => $request->input('phone') ?: null,
         ]);
     }
 
@@ -233,28 +246,6 @@ class OrganizationSetupController extends Controller
             'financial_year_type' => $defaultFinancialYearType,
             'financial_year_start_month' => $request->input('financial_year_start_month'),
             'financial_year_start_day' => $request->input('financial_year_start_day'),
-        ]);
-    }
-
-    private function saveStep4(Request $request, Organization $organization): void
-    {
-        $filteredEmails = array_filter(
-            array_map(fn ($email) => is_string($email) ? trim($email) : '', $request->input('emails', [])),
-            fn ($email) => $email !== ''
-        );
-
-        if (empty($filteredEmails)) {
-            throw ValidationException::withMessages([
-                'emails.0' => __('forms.validation.at_least_one_email'),
-            ]);
-        }
-
-        $contactData = array_map(fn ($email) => ['name' => '', 'email' => $email], $filteredEmails);
-        $contactCollection = new ContactCollection($contactData);
-
-        $organization->update([
-            'emails' => $contactCollection,
-            'phone' => $request->input('phone') ?: null,
         ]);
     }
 }

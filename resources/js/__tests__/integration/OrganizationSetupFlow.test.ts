@@ -158,7 +158,7 @@ describe('OrganizationSetupFlow', () => {
         it('starts at step 1', () => {
             const wrapper = mountComponent();
             expect(wrapper.text()).toContain('Company Information');
-            expect(wrapper.text()).toContain('Step 1 of 4');
+            expect(wrapper.text()).toContain('Step 1 of 3');
         });
 
         it('shows company name, tax number, registration number, website, notes fields', () => {
@@ -168,6 +168,14 @@ describe('OrganizationSetupFlow', () => {
             expect(wrapper.find('#registration_number').exists()).toBe(true);
             expect(wrapper.find('#website').exists()).toBe(true);
             expect(wrapper.find('#notes').exists()).toBe(true);
+        });
+
+        it('shows contact fields (email + phone) on step 1', () => {
+            const wrapper = mountComponent();
+            expect(wrapper.find('input[type="email"]').exists()).toBe(true);
+            expect(wrapper.find('#phone').exists()).toBe(true);
+            expect(wrapper.text()).toContain('Email Addresses');
+            expect(wrapper.text()).toContain('Phone Number');
         });
 
         it('does not show Previous button on step 1', () => {
@@ -301,7 +309,7 @@ describe('OrganizationSetupFlow', () => {
         it('shows configuration fields on step 3', async () => {
             const wrapper = mountComponent();
             await goToStep3(wrapper);
-            expect(wrapper.text()).toContain('Configuration');
+            expect(wrapper.text()).toContain('Financial Settings');
             expect(wrapper.text()).toContain('Currency');
             expect(wrapper.find('#currency').exists()).toBe(true);
             // Country dropdown is no longer on step 3 (moved to step 2)
@@ -351,49 +359,25 @@ describe('OrganizationSetupFlow', () => {
         });
     });
 
-    describe('step 4 - contact details', () => {
-        async function goToStep4(wrapper: ReturnType<typeof mountComponent>) {
-            simulateStepSuccess();
-            for (let i = 0; i < 3; i++) {
-                const nextBtn = wrapper
-                    .findAll('button')
-                    .find((b) => b.text() === 'Next');
-                await nextBtn!.trigger('click');
-                await wrapper.vm.$nextTick();
-            }
-        }
-
-        it('shows contact details on step 4', async () => {
+    describe('step 1 - contact details', () => {
+        it('shows contact details on step 1', () => {
             const wrapper = mountComponent();
-            await goToStep4(wrapper);
-            expect(wrapper.text()).toContain('Contact Details');
             expect(wrapper.text()).toContain('Email Addresses');
             expect(wrapper.text()).toContain('Phone Number');
         });
 
-        it('shows "Complete Setup" button on step 4', async () => {
+        it('shows "+ Add email" button', () => {
             const wrapper = mountComponent();
-            await goToStep4(wrapper);
-            const completeBtn = wrapper
-                .findAll('button')
-                .find((b) => b.text() === 'Complete Setup');
-            expect(completeBtn).toBeDefined();
-        });
-
-        it('shows "+ Add email" button', async () => {
-            const wrapper = mountComponent();
-            await goToStep4(wrapper);
             const addBtn = wrapper
                 .findAll('button')
                 .find((b) => b.text().includes('Add email'));
             expect(addBtn).toBeDefined();
         });
 
-        it('shows "+ Add email" button and email input exists', async () => {
+        it('shows "+ Add email" button and email input exists', () => {
             const wrapper = mountComponent({
                 organization: makeOrg({ emails: ['admin@co.test'] }),
             });
-            await goToStep4(wrapper);
             const emailInputs = wrapper.findAll('input[type="email"]');
             expect(emailInputs.length).toBeGreaterThanOrEqual(1);
             const addBtn = wrapper
@@ -402,13 +386,12 @@ describe('OrganizationSetupFlow', () => {
             expect(addBtn).toBeDefined();
         });
 
-        it('shows remove button for additional email inputs', async () => {
+        it('shows remove button for additional email inputs', () => {
             const wrapper = mountComponent({
                 organization: makeOrg({
                     emails: ['one@co.test', 'two@co.test'],
                 }),
             });
-            await goToStep4(wrapper);
             const emailInputs = wrapper.findAll('input[type="email"]');
             expect(emailInputs.length).toBe(2);
             // Remove button should exist (for index > 0)
@@ -417,11 +400,35 @@ describe('OrganizationSetupFlow', () => {
             });
             expect(removeBtn).toBeDefined();
         });
+    });
 
-        it('calls form.post with step=4 on Complete Setup click', async () => {
+    describe('step 3 - completion', () => {
+        async function goToLastStep(
+            wrapper: ReturnType<typeof mountComponent>,
+        ) {
+            simulateStepSuccess();
+            for (let i = 0; i < 2; i++) {
+                const nextBtn = wrapper
+                    .findAll('button')
+                    .find((b) => b.text() === 'Next');
+                await nextBtn!.trigger('click');
+                await wrapper.vm.$nextTick();
+            }
+        }
+
+        it('shows "Complete Setup" button on the last step', async () => {
             const wrapper = mountComponent();
-            await goToStep4(wrapper);
-            // Reset mock to capture the step 4 call
+            await goToLastStep(wrapper);
+            const completeBtn = wrapper
+                .findAll('button')
+                .find((b) => b.text() === 'Complete Setup');
+            expect(completeBtn).toBeDefined();
+        });
+
+        it('calls form.post on Complete Setup click', async () => {
+            const wrapper = mountComponent();
+            await goToLastStep(wrapper);
+            // Reset mock to capture the final step call
             mockPost.mockReset();
             mockPost.mockImplementation(() => {});
             const completeBtn = wrapper
@@ -436,20 +443,19 @@ describe('OrganizationSetupFlow', () => {
     });
 
     describe('step navigation', () => {
-        it('progress bar shows all 4 step titles', () => {
+        it('progress bar shows all 3 step titles', () => {
             const wrapper = mountComponent();
             expect(wrapper.text()).toContain('Company Information');
             expect(wrapper.text()).toContain('Primary Location');
-            expect(wrapper.text()).toContain('Configuration');
-            expect(wrapper.text()).toContain('Contact Details');
+            expect(wrapper.text()).toContain('Financial Settings');
         });
 
         it('step number buttons are rendered', () => {
             const wrapper = mountComponent();
             const stepBtns = wrapper
                 .findAll('button')
-                .filter((b) => /^[1-4]$/.test(b.text().trim()));
-            expect(stepBtns.length).toBe(4);
+                .filter((b) => /^[1-3]$/.test(b.text().trim()));
+            expect(stepBtns.length).toBe(3);
         });
 
         it('pre-fills form when organization has existing data', () => {

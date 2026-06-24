@@ -55,16 +55,21 @@ const props = defineProps<{
 }>();
 
 const currentStep = ref(1);
-const totalSteps = 4;
+const totalSteps = 3;
 
 const steps = [
-    { title: 'Company Information', description: 'Basic company details' },
+    {
+        title: 'Company Information',
+        description: 'Company & contact details',
+    },
     {
         title: 'Primary Location',
         description: 'Country, address & tax details',
     },
-    { title: 'Configuration', description: 'Currency & financial settings' },
-    { title: 'Contact Details', description: 'Email and phone information' },
+    {
+        title: 'Financial Settings',
+        description: 'Currency & financial year',
+    },
 ];
 
 const form = useForm({
@@ -355,6 +360,85 @@ function goToStep(step: number): void {
                                         class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
                                     />
                                 </div>
+                                <div class="md:col-span-2">
+                                    <label
+                                        class="mb-2 block text-sm font-medium text-gray-700"
+                                        >Email Addresses *</label
+                                    >
+                                    <div
+                                        v-for="(email, index) in form.emails"
+                                        :key="index"
+                                        class="mb-2"
+                                    >
+                                        <div class="flex items-center gap-2">
+                                            <input
+                                                v-model="form.emails[index]"
+                                                :aria-describedby="`error-emails-${index}`"
+                                                type="email"
+                                                placeholder="email@company.com"
+                                                class="flex-1 rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                                            />
+                                            <button
+                                                v-if="index > 0"
+                                                type="button"
+                                                class="text-red-600 hover:text-red-800"
+                                                @click="removeEmail(index)"
+                                            >
+                                                <svg
+                                                    class="h-5 w-5"
+                                                    fill="currentColor"
+                                                    viewBox="0 0 20 20"
+                                                >
+                                                    <path
+                                                        fill-rule="evenodd"
+                                                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                                        clip-rule="evenodd"
+                                                    />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <p
+                                            v-if="
+                                                form.errors[`emails.${index}`]
+                                            "
+                                            :id="`error-emails-${index}`"
+                                            class="mt-1 text-sm text-red-600"
+                                        >
+                                            {{ form.errors[`emails.${index}`] }}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        class="mt-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+                                        @click="addEmail"
+                                    >
+                                        + Add email
+                                    </button>
+                                    <p
+                                        v-if="form.errors.emails"
+                                        class="mt-1 text-sm text-red-600"
+                                    >
+                                        {{ form.errors.emails }}
+                                    </p>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label
+                                        class="mb-2 block text-sm font-medium text-gray-700"
+                                        >Phone Number</label
+                                    >
+                                    <input
+                                        id="phone"
+                                        v-model="form.phone"
+                                        type="tel"
+                                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                                    />
+                                    <p
+                                        v-if="form.errors.phone"
+                                        class="mt-1 text-sm text-red-600"
+                                    >
+                                        {{ form.errors.phone }}
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
@@ -511,13 +595,13 @@ function goToStep(step: number): void {
                             </div>
                         </div>
 
-                        <!-- Step 3: Configuration -->
+                        <!-- Step 3: Financial Settings -->
                         <div v-if="currentStep === 3" class="space-y-6">
                             <div>
                                 <h2
                                     class="mb-4 text-2xl font-semibold text-gray-900"
                                 >
-                                    Configuration
+                                    Financial Settings
                                 </h2>
                                 <p class="mb-6 text-gray-600">
                                     Set your currency and financial year
@@ -607,96 +691,6 @@ function goToStep(step: number): void {
                                             }}
                                         </p>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Step 4: Contact Details -->
-                        <div v-if="currentStep === 4" class="space-y-6">
-                            <div>
-                                <h2
-                                    class="mb-4 text-2xl font-semibold text-gray-900"
-                                >
-                                    Contact Details
-                                </h2>
-                                <p class="mb-6 text-gray-600">
-                                    Your company's email and phone number
-                                </p>
-                            </div>
-                            <div class="space-y-6">
-                                <div>
-                                    <label
-                                        class="mb-2 block text-sm font-medium text-gray-700"
-                                        >Email Addresses *</label
-                                    >
-                                    <div
-                                        v-for="(email, index) in form.emails"
-                                        :key="index"
-                                        class="mb-2 flex items-center gap-2"
-                                    >
-                                        <input
-                                            v-model="form.emails[index]"
-                                            :aria-describedby="`error-emails-${index}`"
-                                            type="email"
-                                            placeholder="email@company.com"
-                                            class="flex-1 rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
-                                        />
-                                        <button
-                                            v-if="index > 0"
-                                            type="button"
-                                            class="text-red-600 hover:text-red-800"
-                                            @click="removeEmail(index)"
-                                        >
-                                            <svg
-                                                class="h-5 w-5"
-                                                fill="currentColor"
-                                                viewBox="0 0 20 20"
-                                            >
-                                                <path
-                                                    fill-rule="evenodd"
-                                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                                    clip-rule="evenodd"
-                                                />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        class="mt-2 text-sm font-medium text-blue-600 hover:text-blue-800"
-                                        @click="addEmail"
-                                    >
-                                        + Add email
-                                    </button>
-                                    <p
-                                        v-if="form.errors['emails.0']"
-                                        class="mt-1 text-sm text-red-600"
-                                    >
-                                        {{ form.errors['emails.0'] }}
-                                    </p>
-                                    <p
-                                        v-if="form.errors.emails"
-                                        class="mt-1 text-sm text-red-600"
-                                    >
-                                        {{ form.errors.emails }}
-                                    </p>
-                                </div>
-                                <div>
-                                    <label
-                                        class="mb-2 block text-sm font-medium text-gray-700"
-                                        >Phone Number</label
-                                    >
-                                    <input
-                                        id="phone"
-                                        v-model="form.phone"
-                                        type="tel"
-                                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
-                                    />
-                                    <p
-                                        v-if="form.errors.phone"
-                                        class="mt-1 text-sm text-red-600"
-                                    >
-                                        {{ form.errors.phone }}
-                                    </p>
                                 </div>
                             </div>
                         </div>

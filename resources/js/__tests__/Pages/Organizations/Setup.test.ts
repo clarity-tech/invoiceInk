@@ -165,6 +165,14 @@ describe('Organizations/Setup', () => {
         expect(wrapper.find('#notes').exists()).toBe(true);
     });
 
+    it('shows contact fields (email + phone) on step 1', () => {
+        const wrapper = mountComponent();
+        expect(wrapper.find('input[type="email"]').exists()).toBe(true);
+        expect(wrapper.find('#phone').exists()).toBe(true);
+        expect(wrapper.text()).toContain('Email Addresses');
+        expect(wrapper.text()).toContain('Phone Number');
+    });
+
     it('does not show Previous button on step 1', () => {
         const wrapper = mountComponent();
         const prevBtn = wrapper
@@ -195,15 +203,14 @@ describe('Organizations/Setup', () => {
 
     it('shows step progress indicator', () => {
         const wrapper = mountComponent();
-        expect(wrapper.text()).toContain('Step 1 of 4');
+        expect(wrapper.text()).toContain('Step 1 of 3');
     });
 
     it('displays all step titles in desktop progress bar', () => {
         const wrapper = mountComponent();
         expect(wrapper.text()).toContain('Company Information');
         expect(wrapper.text()).toContain('Primary Location');
-        expect(wrapper.text()).toContain('Configuration');
-        expect(wrapper.text()).toContain('Contact Details');
+        expect(wrapper.text()).toContain('Financial Settings');
     });
 
     it('pre-fills form when organization has data', () => {
@@ -256,17 +263,17 @@ describe('Organizations/Setup', () => {
             .findAll('button')
             .find((b) => b.text() === 'Next');
         expect(nextBtn).toBeDefined();
-        // "Complete Setup" only appears on step 4
+        // "Complete Setup" only appears on the last step (step 3)
         expect(wrapper.text()).not.toContain('Complete Setup');
     });
 
     it('shows step number buttons in desktop view', () => {
         const wrapper = mountComponent();
-        // Step buttons with numbers 1-4
+        // Step buttons with numbers 1-3
         const stepBtns = wrapper
             .findAll('button')
-            .filter((b) => /^[1-4]$/.test(b.text().trim()));
-        expect(stepBtns.length).toBe(4);
+            .filter((b) => /^[1-3]$/.test(b.text().trim()));
+        expect(stepBtns.length).toBe(3);
     });
 
     it('disables submit button when processing', () => {

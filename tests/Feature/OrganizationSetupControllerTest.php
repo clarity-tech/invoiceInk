@@ -38,7 +38,7 @@ test('redirects to dashboard when setup is already complete', function () {
     $response->assertRedirect(route('dashboard'));
 });
 
-test('can save step 1 company information', function () {
+test('can save step 1 company and contact information', function () {
     $organization = $this->user->currentTeam;
 
     $response = $this->post("/organization/setup/{$organization->id}/step", [
@@ -48,6 +48,8 @@ test('can save step 1 company information', function () {
         'registration_number' => 'REG456',
         'website' => 'https://example.com',
         'notes' => 'Test notes',
+        'emails' => ['test@example.test'],
+        'phone' => '+91-9876543210',
     ]);
 
     $response->assertRedirect();
@@ -56,6 +58,7 @@ test('can save step 1 company information', function () {
         'id' => $organization->id,
         'company_name' => 'New Test Company',
         'tax_number' => 'TAX123',
+        'phone' => '+91-9876543210',
     ]);
 });
 
@@ -66,6 +69,7 @@ test('step 1 sets company name without overwriting the organization name', funct
     $this->post("/organization/setup/{$organization->id}/step", [
         'step' => 1,
         'company_name' => 'Acme Manufacturing Pvt Ltd',
+        'emails' => ['test@example.test'],
     ])->assertRedirect();
 
     // The switcher label (name) is preserved; only the legal company_name changes.
@@ -94,6 +98,7 @@ test('step 1 accepts a bare domain and stores it as a full url', function () {
         'step' => 1,
         'company_name' => 'Test Company',
         'website' => 'example.com',
+        'emails' => ['test@example.test'],
     ])->assertSessionHasNoErrors();
 
     $this->assertDatabaseHas('teams', [
@@ -109,9 +114,34 @@ test('validates step 1 website must be a valid url', function () {
         'step' => 1,
         'company_name' => 'Test Company',
         'website' => 'not a valid website',
+        'emails' => ['test@example.test'],
     ]);
 
     $response->assertSessionHasErrors(['website']);
+});
+
+test('validates step 1 requires valid emails', function () {
+    $organization = $this->user->currentTeam;
+
+    $response = $this->post("/organization/setup/{$organization->id}/step", [
+        'step' => 1,
+        'company_name' => 'Test Company',
+        'emails' => ['invalid-email'],
+    ]);
+
+    $response->assertSessionHasErrors(['emails.0']);
+});
+
+test('validates step 1 requires at least one email', function () {
+    $organization = $this->user->currentTeam;
+
+    $response = $this->post("/organization/setup/{$organization->id}/step", [
+        'step' => 1,
+        'company_name' => 'Test Company',
+        'emails' => [],
+    ]);
+
+    $response->assertSessionHasErrors(['emails']);
 });
 
 test('can save step 2 location data', function () {
@@ -166,7 +196,7 @@ test('validates step 2 requires address fields and country', function () {
     ]);
 });
 
-test('can save step 3 configuration when country was set in step 2', function () {
+test('can save step 3 configuration and complete setup when country was set in step 2', function () {
     $organization = $this->user->currentTeam;
     $organization->update(['country_code' => 'IN']);
 
@@ -178,13 +208,15 @@ test('can save step 3 configuration when country was set in step 2', function ()
         'financial_year_start_day' => 1,
     ]);
 
-    $response->assertRedirect();
+    $response->assertRedirect(route('dashboard'));
 
     $this->assertDatabaseHas('teams', [
         'id' => $organization->id,
         'currency' => 'INR',
         'country_code' => 'IN',
     ]);
+
+    expect($organization->fresh()->setup_completed_at)->not->toBeNull();
 });
 
 test('validates step 3 requires currency', function () {
@@ -209,44 +241,6 @@ test('step 3 errors out gracefully when country was not set in step 2', function
     ]);
 
     $response->assertSessionHasErrors(['currency']);
-});
-
-test('can save step 4 and complete setup', function () {
-    $organization = $this->user->currentTeam;
-
-    $response = $this->post("/organization/setup/{$organization->id}/step", [
-        'step' => 4,
-        'emails' => ['test@example.test'],
-        'phone' => '+91-9876543210',
-    ]);
-
-    $response->assertRedirect(route('dashboard'));
-
-    $organization->refresh();
-    expect($organization->setup_completed_at)->not->toBeNull();
-    expect($organization->phone)->toBe('+91-9876543210');
-});
-
-test('validates step 4 requires valid emails', function () {
-    $organization = $this->user->currentTeam;
-
-    $response = $this->post("/organization/setup/{$organization->id}/step", [
-        'step' => 4,
-        'emails' => ['invalid-email'],
-    ]);
-
-    $response->assertSessionHasErrors(['emails.0']);
-});
-
-test('validates step 4 requires at least one email', function () {
-    $organization = $this->user->currentTeam;
-
-    $response = $this->post("/organization/setup/{$organization->id}/step", [
-        'step' => 4,
-        'emails' => [],
-    ]);
-
-    $response->assertSessionHasErrors(['emails']);
 });
 
 test('step 2 updates existing location', function () {

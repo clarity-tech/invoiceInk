@@ -77,12 +77,16 @@ it('completes Indian company setup with all fields', function () {
     $page->assertSee('Company Information')
         ->screenshot(fullPage: true, filename: 'demo/16-setup-step1-empty');
 
-    // Step 1: Fill all fields
+    // Step 1: Fill all fields (company info + contact details)
     $page->fill('#company_name', 'Clarity Technologies Pvt Ltd')
         ->fill('#tax_number', '29AAFCC1234A1ZV')
         ->fill('#registration_number', 'U72200KA2020PTC123456')
         ->fill('#website', 'https://claritytech.io')
         ->fill('#notes', 'Indian IT services company specializing in web development')
+        ->fill('input[aria-describedby="error-emails-0"]', 'accounts@claritytech.io')
+        ->click('button.text-blue-600')
+        ->fill('input[aria-describedby="error-emails-1"]', 'maya@example.test')
+        ->fill('#phone', '+91-9876543210')
         ->screenshot(fullPage: true, filename: 'demo/17-setup-step1-filled')
         ->click('Next');
 
@@ -99,20 +103,11 @@ it('completes Indian company setup with all fields', function () {
         ->screenshot(fullPage: true, filename: 'demo/18-setup-step2-filled')
         ->click('Next');
 
-    // Step 3: Configuration - currency only; GST info panel comes from country picked in step 2
-    $page->assertSee('Configuration')
+    // Step 3: Financial Settings - currency only; GST info panel comes from country picked in step 2. Final step completes setup.
+    $page->assertSee('Financial Settings')
         ->assertSee('GST')
         ->select('#currency', 'INR')
         ->screenshot(fullPage: true, filename: 'demo/19-setup-step3-india')
-        ->click('Next');
-
-    // Step 4: Contact Details - emails and phone
-    $page->assertSee('Contact Details')
-        ->fill('input[aria-describedby="error-emails-0"]', 'accounts@claritytech.io')
-        ->click('button.text-blue-600')
-        ->fill('input[aria-describedby="error-emails-1"]', 'maya@example.test')
-        ->fill('#phone', '+91-9876543210')
-        ->screenshot(fullPage: true, filename: 'demo/20-setup-step4-filled')
         ->click('Complete Setup')
         ->waitForEvent('networkidle');
 
@@ -131,10 +126,12 @@ it('completes UAE company setup with different currency', function () {
 
     $page = $this->visit('/organization/setup');
 
-    // Step 1: Company Information
+    // Step 1: Company Information + contact details
     $page->fill('#company_name', 'Dubai Trading LLC')
         ->fill('#tax_number', '100234567890003')
         ->fill('#registration_number', 'DXB-LLC-2024-001')
+        ->fill('input[aria-describedby="error-emails-0"]', 'info@dubaitrading.test')
+        ->fill('#phone', '+971-4-1234567')
         ->screenshot(fullPage: true, filename: 'demo/22-setup-uae-step1')
         ->click('Next');
 
@@ -149,15 +146,10 @@ it('completes UAE company setup with different currency', function () {
         ->fill('#postal_code', '505055')
         ->click('Next');
 
-    // Step 3: Configuration - currency only; VAT info panel comes from UAE selected in step 2
+    // Step 3: Financial Settings - currency only; VAT info panel comes from UAE selected in step 2. Final step completes setup.
     $page->assertSee('VAT')
         ->select('#currency', 'AED')
         ->screenshot(fullPage: true, filename: 'demo/23-setup-uae-step3')
-        ->click('Next');
-
-    // Step 4: Contact Details
-    $page->fill('input[aria-describedby="error-emails-0"]', 'info@dubaitrading.test')
-        ->fill('#phone', '+971-4-1234567')
         ->click('Complete Setup')
         ->waitForEvent('networkidle');
 
@@ -175,8 +167,9 @@ it('completes minimal setup with only required fields', function () {
 
     $page = $this->visit('/organization/setup');
 
-    // Step 1: Only company name (required)
+    // Step 1: Company name + one email (both required); skip optional fields
     $page->fill('#company_name', 'Minimal Corp')
+        ->fill('input[aria-describedby="error-emails-0"]', 'admin@minimalcorp.test')
         ->click('Next');
 
     // Step 2: Country + required address fields (skip location_name, tax_id, address_line_2)
@@ -187,12 +180,8 @@ it('completes minimal setup with only required fields', function () {
         ->fill('#postal_code', '10001')
         ->click('Next');
 
-    // Step 3: Currency auto-sets to USD when US was picked; just confirm and continue
+    // Step 3: Currency auto-sets to USD when US was picked; confirm to complete setup
     $page->select('#currency', 'USD')
-        ->click('Next');
-
-    // Step 4: One email only (skip phone)
-    $page->fill('input[aria-describedby="error-emails-0"]', 'admin@minimalcorp.test')
         ->click('Complete Setup')
         ->waitForEvent('networkidle');
 
@@ -211,6 +200,7 @@ it('adds additional location after setup completion', function () {
     // Complete setup
     $page = $this->visit('/organization/setup');
     $page->fill('#company_name', 'Multi-Location Corp')
+        ->fill('input[aria-describedby="error-emails-0"]', 'admin@multiloc.test')
         ->click('Next')
         ->select('#country_code', 'US')
         ->fill('#address_line_1', '200 Broadway')
@@ -219,8 +209,6 @@ it('adds additional location after setup completion', function () {
         ->fill('#postal_code', '94102')
         ->click('Next')
         ->select('#currency', 'USD')
-        ->click('Next')
-        ->fill('input[aria-describedby="error-emails-0"]', 'admin@multiloc.test')
         ->click('Complete Setup')
         ->waitForEvent('networkidle');
 
@@ -250,8 +238,9 @@ it('validates required fields on each step', function () {
         ->waitForEvent('networkidle')
         ->assertSee('Company Information');
 
-    // Fill company_name and proceed to step 2
+    // Fill required step 1 fields (company name + email) and proceed to step 2
     $page->fill('#company_name', 'Validation Test Corp')
+        ->fill('input[aria-describedby="error-emails-0"]', 'admin@validationcorp.test')
         ->click('Next')
         ->assertSee('Primary Location');
 
@@ -273,6 +262,7 @@ it('navigates back and preserves data', function () {
     // Fill Step 1 and advance
     $page->fill('#company_name', 'NavTest Corp')
         ->fill('#tax_number', 'TX-NAV-001')
+        ->fill('input[aria-describedby="error-emails-0"]', 'admin@navtest.test')
         ->click('Next');
 
     // Fill Step 2

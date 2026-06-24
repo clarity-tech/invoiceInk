@@ -220,8 +220,8 @@ return [
             'email' => 'CC recipient :position must be a valid email address.',
         ],
         'emails.*' => [
-            'required' => 'Email :position is required.',
-            'email' => 'Email :position must be a valid email address.',
+            'required' => 'Email is required.',
+            'email' => 'Please enter a valid email address.',
         ],
     ],
 

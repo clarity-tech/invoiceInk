@@ -63,6 +63,7 @@ test('the owner can drive the setup wizard on an incomplete org', function () {
         ->post("/organization/setup/{$org->id}/step", [
             'step' => 1,
             'company_name' => 'Legit Co',
+            'emails' => ['owner@legit.test'],
         ])
         ->assertRedirect();
 
