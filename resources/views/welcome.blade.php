@@ -56,11 +56,8 @@
         <nav class="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-gray-950/70 border-b border-white/5">
             <div class="max-w-7xl mx-auto flex items-center justify-between px-6 h-16">
                 {{-- Logo --}}
-                <a href="/" class="flex items-center gap-2.5 group">
-                    <x-application-mark class="size-8 transition-transform group-hover:scale-110" />
-                    <span class="text-lg font-extrabold tracking-tight">
-                        Invoice<span class="text-brand-400">Ink</span>
-                    </span>
+                <a href="/" class="flex items-center group" aria-label="InvoiceInk home">
+                    <x-application-logo class="h-7 w-auto transition-transform group-hover:scale-105" />
                 </a>
 
                 {{-- Nav links --}}

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-
-const appName = import.meta.env.VITE_APP_NAME || 'InvoiceInk';
+import AppLogo from '@/Components/AppLogo.vue';
 
 defineProps<{
     title?: string;
@@ -15,10 +14,8 @@ defineProps<{
         <Head :title="title" />
 
         <div>
-            <a href="/">
-                <span class="text-2xl font-bold text-brand-600">{{
-                    appName
-                }}</span>
+            <a href="/" aria-label="InvoiceInk home">
+                <AppLogo class="h-10 w-auto text-gray-900" />
             </a>
         </div>
 

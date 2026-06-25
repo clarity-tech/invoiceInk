@@ -15,10 +15,11 @@ return [
     |
     */
 
-    // Public path (relative to public/) of the PNG mark. Used as the source
-    // for the inline CID-embedded logo. Use PNG for email: Gmail strips inline
-    // SVG and Outlook never supported it.
-    'logo' => 'images/email-logo-mark.png',
+    // Public path (relative to public/) of the combined logo lockup (ink-drop
+    // mark + "InvoiceInk" wordmark). Used as the source for the inline
+    // CID-embedded logo image shown in email headers/footers. Use PNG for
+    // email: Gmail strips inline SVG and Outlook never supported it.
+    'logo' => 'images/email-logo-lockup.png',
 
     // Content-ID used to reference the inline-embedded logo from email markup
     // (<img src="cid:..."/>). Any mailable rendering the shared mail templates

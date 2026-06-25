@@ -222,16 +222,16 @@ test('document mailer renders the platform logo and tagline in the footer brandi
         ->and($html)->toContain('class="footer-brand"');          // footer lockup wrapper
 });
 
-test('document mailer renders the two-color InvoiceInk wordmark in header and footer', function () {
+test('document mailer renders the brand logo lockup image in header and footer', function () {
     $invoice = createInvoiceWithItems(['invoice_number' => 'INV-BRAND-WM']);
 
     $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']]));
     $html = $mailer->renderHtml();
 
-    // "Ink" is split into its own span so the wordmark reads two-tone: muted
-    // violet in the header, brand violet in the footer "powered by" lockup.
-    expect($html)->toContain('Invoice<span style="color: #8b5cf6;">Ink</span>')  // header
-        ->and($html)->toContain('Invoice<span style="color: #7c3aed;">Ink</span>'); // footer
+    // The combined InvoiceInk logo lockup (mark + wordmark) is embedded as a
+    // single inline image in both the header and the footer "powered by"
+    // lockup, referenced via the CID-embedded brand logo.
+    expect(substr_count($html, 'src="cid:'.config('branding.logo_cid').'"'))->toBeGreaterThanOrEqual(2);
 });
 
 test('document mailer embeds the brand logo inline so it renders without a remote fetch', function () {

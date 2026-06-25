@@ -10,6 +10,7 @@ import { create as teamsCreate } from '@/routes/teams';
 import { update as switchTeam } from '@/routes/current-team';
 import { show as profileShow } from '@/routes/profile';
 import { usePermissions } from '@/composables/usePermissions';
+import AppLogo from '@/Components/AppLogo.vue';
 
 interface TeamSummary {
     id: number;
@@ -17,7 +18,6 @@ interface TeamSummary {
     company_name: string | null;
 }
 
-const appName = import.meta.env.VITE_APP_NAME || 'InvoiceInk';
 const page = usePage();
 const showMobileMenu = ref(false);
 const showUserDropdown = ref(false);
@@ -94,10 +94,12 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                 <!-- Left side -->
                 <div class="flex">
                     <div class="flex shrink-0 items-center">
-                        <Link :href="dashboard.url()">
-                            <span class="text-xl font-bold text-brand-600">{{
-                                appName
-                            }}</span>
+                        <Link
+                            :href="dashboard.url()"
+                            class="flex items-center"
+                            aria-label="InvoiceInk home"
+                        >
+                            <AppLogo class="h-8 w-auto text-gray-900" />
                         </Link>
                     </div>
 

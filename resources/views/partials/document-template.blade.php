@@ -666,7 +666,7 @@
                 @endif
 
                 <div class="powered-by">
-                    <span class="powered-label">Invoicing powered by</span><br>
+                    <span class="powered-label">{{ __('messages.email.powered_by') }}</span><br>
                     <a href="{{ config('app.url') }}" class="powered-brand">{{ config('app.name', 'InvoiceInk') }}</a>
                     &mdash; Smart Invoicing for Modern Businesses
                 </div>
