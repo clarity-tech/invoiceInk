@@ -218,7 +218,7 @@
                 <table role="presentation" class="email-container" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" align="center">
                     <tr>
                         <td class="email-header">
-                            <img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="149" height="34" style="display: block; border: 0;">
+                            <img src="{{ config('branding.logo_url') ?: asset(config('branding.logo')) }}" alt="{{ config('app.name') }}" width="149" height="34" style="display: block; border: 0;">
                             <p class="brand-slogan">{{ config('branding.slogan') }}</p>
                         </td>
                     </tr>
@@ -254,7 +254,7 @@
                 <div class="platform-footer">
                     <p class="powered-by">{{ __('messages.email.powered_by') }}</p>
                     <a href="{{ config('app.url') }}" class="footer-brand">
-                        <img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="114" height="26" style="display: inline-block; border: 0;">
+                        <img src="{{ config('branding.logo_url') ?: asset(config('branding.logo')) }}" alt="{{ config('app.name') }}" width="114" height="26" style="display: inline-block; border: 0;">
                         </a>
                     <p class="brand-tagline">{{ config('branding.tagline') }}</p>
                 </div>

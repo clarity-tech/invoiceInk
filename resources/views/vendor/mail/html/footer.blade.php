@@ -4,7 +4,7 @@
 <tr>
 <td class="content-cell" align="center">
 <a href="{{ config('app.url') }}" style="text-decoration: none; display: inline-block; margin-bottom: 10px;">
-<img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="123" height="28" style="display: inline-block; border: 0;">
+<img src="{{ config('branding.logo_url') ?: asset(config('branding.logo')) }}" alt="{{ config('app.name') }}" width="123" height="28" style="display: inline-block; border: 0;">
 </a>
 <p style="margin: 0 0 14px 0; color: #6b7280; font-size: 13px;">{{ config('branding.tagline') }}</p>
 {{ Illuminate\Mail\Markdown::parse($slot) }}

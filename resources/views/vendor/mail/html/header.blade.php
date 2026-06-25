@@ -5,7 +5,7 @@
 @if (trim($slot) === 'Laravel')
 <img src="https://laravel.com/img/notification-logo-v2.1.png" class="logo" alt="Laravel Logo">
 @else
-<img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="158" height="36" style="display: block; margin: 0 auto; border: 0;">
+<img src="{{ config('branding.logo_url') ?: asset(config('branding.logo')) }}" alt="{{ config('app.name') }}" width="158" height="36" style="display: block; margin: 0 auto; border: 0;">
 @endif
 </a>
 @unless (trim($slot) === 'Laravel')

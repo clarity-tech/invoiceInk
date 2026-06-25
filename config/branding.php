@@ -16,15 +16,16 @@ return [
     */
 
     // Public path (relative to public/) of the combined logo lockup (ink-drop
-    // mark + "InvoiceInk" wordmark). Used as the source for the inline
-    // CID-embedded logo image shown in email headers/footers. Use PNG for
-    // email: Gmail strips inline SVG and Outlook never supported it.
+    // mark + "InvoiceInk" wordmark). Emails reference it by absolute URL via
+    // asset() so the image is fetched remotely instead of being attached to
+    // the message — CID-embedded images get listed in the client's attachment
+    // area. Use PNG: Gmail strips inline SVG and Outlook never supported it.
     'logo' => 'images/email-logo-lockup.png',
 
-    // Content-ID used to reference the inline-embedded logo from email markup
-    // (<img src="cid:..."/>). Any mailable rendering the shared mail templates
-    // must embed the logo under this id via the EmbedsBrandLogo trait.
-    'logo_cid' => 'brandlogo',
+    // Optional absolute URL override for the email logo (e.g. a CDN/asset
+    // host). When null, emails fall back to asset(config('branding.logo')),
+    // which resolves against APP_URL per environment (localhost or production).
+    'logo_url' => env('BRAND_LOGO_URL'),
 
     // Primary brand color (violet-600). Mirrored in default.css.
     'color' => env('BRAND_COLOR', '#7c3aed'),

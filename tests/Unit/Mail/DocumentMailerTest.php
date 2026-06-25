@@ -217,7 +217,7 @@ test('document mailer renders the platform logo and tagline in the footer brandi
     $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']]));
     $html = $mailer->renderHtml();
 
-    expect($html)->toContain('cid:'.config('branding.logo_cid'))  // inline (CID) logo reference
+    expect($html)->toContain(config('branding.logo'))             // hosted logo URL reference
         ->and($html)->toContain(config('branding.tagline'))       // centralized footer tagline
         ->and($html)->toContain('class="footer-brand"');          // footer lockup wrapper
 });
@@ -228,13 +228,14 @@ test('document mailer renders the brand logo lockup image in header and footer',
     $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']]));
     $html = $mailer->renderHtml();
 
-    // The combined InvoiceInk logo lockup (mark + wordmark) is embedded as a
-    // single inline image in both the header and the footer "powered by"
-    // lockup, referenced via the CID-embedded brand logo.
-    expect(substr_count($html, 'src="cid:'.config('branding.logo_cid').'"'))->toBeGreaterThanOrEqual(2);
+    // The combined InvoiceInk logo lockup (mark + wordmark) is rendered as a
+    // single image in both the header and the footer "powered by" lockup,
+    // referenced by hosted URL (not attached) so it never shows as an
+    // attachment in the recipient's mail client.
+    expect(substr_count($html, asset(config('branding.logo'))))->toBeGreaterThanOrEqual(2);
 });
 
-test('document mailer embeds the brand logo inline so it renders without a remote fetch', function () {
+test('document mailer references the brand logo by hosted url without attaching it', function () {
     config(['mail.default' => 'array', 'queue.default' => 'sync']);
 
     $invoice = createInvoiceWithItems(['invoice_number' => 'INV-CID-001']);
@@ -243,10 +244,13 @@ test('document mailer embeds the brand logo inline so it renders without a remot
 
     $email = Mail::mailer('array')->getSymfonyTransport()->messages()->first()->getOriginalMessage();
 
-    $embeddedNames = collect($email->getAttachments())->map->getName()->filter()->all();
+    $attachmentTypes = collect($email->getAttachments())->map->getContentType()->all();
 
-    expect($email->getHtmlBody())->toContain('cid:'.config('branding.logo_cid'))
-        ->and($embeddedNames)->toContain(config('branding.logo_cid'));
+    // Logo is referenced by absolute URL, not embedded — so the message carries
+    // no image attachment (which would otherwise surface in the client's
+    // attachment list).
+    expect($email->getHtmlBody())->toContain(asset(config('branding.logo')))
+        ->and($attachmentTypes)->not->toContain('image/png');
 });
 
 test('document mailer surfaces the brand slogan in the preheader and header', function () {
