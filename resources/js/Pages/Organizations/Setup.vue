@@ -305,61 +305,6 @@ function goToStep(step: number): void {
                                         {{ form.errors.company_name }}
                                     </p>
                                 </div>
-                                <div>
-                                    <label
-                                        class="mb-2 block text-sm font-medium text-gray-700"
-                                        >Tax Number</label
-                                    >
-                                    <input
-                                        id="tax_number"
-                                        v-model="form.tax_number"
-                                        type="text"
-                                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label
-                                        class="mb-2 block text-sm font-medium text-gray-700"
-                                        >Registration Number</label
-                                    >
-                                    <input
-                                        id="registration_number"
-                                        v-model="form.registration_number"
-                                        type="text"
-                                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
-                                    />
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label
-                                        class="mb-2 block text-sm font-medium text-gray-700"
-                                        >Website</label
-                                    >
-                                    <input
-                                        id="website"
-                                        v-model="form.website"
-                                        type="text"
-                                        placeholder="example.com"
-                                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
-                                    />
-                                    <p
-                                        v-if="form.errors.website"
-                                        class="mt-1 text-sm text-red-600"
-                                    >
-                                        {{ form.errors.website }}
-                                    </p>
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label
-                                        class="mb-2 block text-sm font-medium text-gray-700"
-                                        >Notes</label
-                                    >
-                                    <textarea
-                                        id="notes"
-                                        v-model="form.notes"
-                                        rows="3"
-                                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
-                                    />
-                                </div>
                                 <div class="md:col-span-2">
                                     <label
                                         class="mb-2 block text-sm font-medium text-gray-700"
@@ -438,6 +383,61 @@ function goToStep(step: number): void {
                                     >
                                         {{ form.errors.phone }}
                                     </p>
+                                </div>
+                                <div>
+                                    <label
+                                        class="mb-2 block text-sm font-medium text-gray-700"
+                                        >Tax Number</label
+                                    >
+                                    <input
+                                        id="tax_number"
+                                        v-model="form.tax_number"
+                                        type="text"
+                                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label
+                                        class="mb-2 block text-sm font-medium text-gray-700"
+                                        >Registration Number</label
+                                    >
+                                    <input
+                                        id="registration_number"
+                                        v-model="form.registration_number"
+                                        type="text"
+                                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                                    />
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label
+                                        class="mb-2 block text-sm font-medium text-gray-700"
+                                        >Website</label
+                                    >
+                                    <input
+                                        id="website"
+                                        v-model="form.website"
+                                        type="text"
+                                        placeholder="example.com"
+                                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                                    />
+                                    <p
+                                        v-if="form.errors.website"
+                                        class="mt-1 text-sm text-red-600"
+                                    >
+                                        {{ form.errors.website }}
+                                    </p>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label
+                                        class="mb-2 block text-sm font-medium text-gray-700"
+                                        >Notes</label
+                                    >
+                                    <textarea
+                                        id="notes"
+                                        v-model="form.notes"
+                                        rows="3"
+                                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                                    />
                                 </div>
                             </div>
                         </div>
