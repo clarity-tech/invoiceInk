@@ -50,6 +50,14 @@
     $orgEmails = $organization->emails;
     $orgPhone = $organization->formatted_phone;
 
+    // Platform brand logo (InvoiceInk lockup) shown in the footer. Embedded as
+    // base64 for the PDF so Gotenberg need not fetch it over the network (as
+    // with the org logo above); the web view links the hosted asset directly.
+    $brandLogoFile = public_path(config('branding.logo'));
+    $brandLogo = $isPdf && is_file($brandLogoFile)
+        ? 'data:image/png;base64,'.base64_encode(file_get_contents($brandLogoFile))
+        : (config('branding.logo_url') ?: asset(config('branding.logo')));
+
     // Display amounts as-is, including the currency symbol (renders fine in the PDF).
     $amt = fn(string $formatted): string => $formatted;
     // Line-item amounts are shown without the currency symbol (kept on totals only).
@@ -388,20 +396,22 @@
             border-top: 1px solid #e5e7eb;
             text-align: center;
         }
-        .doc-footer .footer-logo {
-            height: 56px;
-            opacity: 0.22;
-            margin-bottom: 6px;
-        }
-        .doc-footer .footer-text {
-            font-size: 11px;
+        .doc-footer .brand-logo {
+            height: 20px;
+            width: auto;
+            display: inline-block;
+            margin-top: 2px;
         }
         .doc-footer .powered-by {
-            margin-top: 12px;
+            margin-top: 4px;
             color: #9ca3af;
         }
-        .doc-footer .powered-label {
+        .doc-footer .powered-tagline {
+            margin-top: 5px;
             font-size: 10px;
+        }
+        .doc-footer .powered-label {
+            font-size: 9px;
             text-transform: uppercase;
             letter-spacing: 0.08em;
         }
@@ -705,14 +715,12 @@
 
             {{-- H. Footer ──────────────────────────────────── --}}
             <div class="doc-footer">
-                @if($logoUrl)
-                    <img src="{{ $logoUrl }}" alt="{{ $organization->name }}" class="footer-logo"><br>
-                @endif
-
                 <div class="powered-by">
                     <span class="powered-label">{{ __('messages.email.powered_by') }}</span><br>
-                    <a href="{{ config('app.url') }}" class="powered-brand">{{ config('app.name', 'InvoiceInk') }}</a>
-                    &mdash; Smart Invoicing for Modern Businesses
+                    <a href="{{ config('app.url') }}" class="powered-brand">
+                        <img src="{{ $brandLogo }}" alt="{{ config('app.name', 'InvoiceInk') }}" class="brand-logo">
+                    </a>
+                    <div class="powered-tagline">{{ config('branding.tagline', 'Smart Invoicing for Modern Businesses') }}</div>
                 </div>
             </div>
             </div>{{-- /.doc-bottom --}}
