@@ -57,6 +57,8 @@
     $brandLogo = $isPdf && is_file($brandLogoFile)
         ? 'data:image/png;base64,'.base64_encode(file_get_contents($brandLogoFile))
         : (config('branding.logo_url') ?: asset(config('branding.logo')));
+    // Brand link with UTM attribution for the placement (PDF or public web).
+    $brandUrl = \App\Support\Branding::poweredByUrl($isPdf ? 'pdf' : 'web');
 
     // Display amounts as-is, including the currency symbol (renders fine in the PDF).
     $amt = fn(string $formatted): string => $formatted;
@@ -717,7 +719,7 @@
             <div class="doc-footer">
                 <div class="powered-by">
                     <span class="powered-label">{{ __('messages.email.powered_by') }}</span><br>
-                    <a href="{{ config('app.url') }}" class="powered-brand">
+                    <a href="{{ $brandUrl }}" class="powered-brand">
                         <img src="{{ $brandLogo }}" alt="{{ config('app.name', 'InvoiceInk') }}" class="brand-logo">
                     </a>
                     <div class="powered-tagline">{{ config('branding.tagline', 'Smart Invoicing for Modern Businesses') }}</div>

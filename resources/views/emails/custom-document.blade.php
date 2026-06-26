@@ -253,7 +253,7 @@
                 </table>
                 <div class="platform-footer">
                     <p class="powered-by">{{ __('messages.email.powered_by') }}</p>
-                    <a href="{{ config('app.url') }}" class="footer-brand">
+                    <a href="{{ \App\Support\Branding::poweredByUrl('email') }}" class="footer-brand">
                         <img src="{{ config('branding.logo_url') ?: asset(config('branding.logo')) }}" alt="{{ config('app.name') }}" width="114" height="26" style="display: inline-block; border: 0;">
                         </a>
                     <p class="brand-tagline">{{ config('branding.tagline') }}</p>
