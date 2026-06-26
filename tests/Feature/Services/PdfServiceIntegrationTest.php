@@ -79,6 +79,46 @@ test('sends html as index.html multipart attachment with A4 options', function (
     });
 });
 
+test('renders a second pass to pin the footer when the page count is known', function () {
+    Config::set('services.gotenberg.enabled', true);
+    Config::set('services.gotenberg.url', 'http://gotenberg:3000');
+
+    // Mimic the page-tree /Count Chromium writes uncompressed into the catalog.
+    Http::fake([
+        'gotenberg:3000/forms/chromium/convert/html' => Http::response("%PDF-1.4\n/Type /Pages /Count 2\n", 200),
+    ]);
+
+    $invoice = createInvoiceWithItems([
+        'invoice_number' => 'INV-PDF-FILL',
+        'status' => 'sent',
+    ]);
+
+    $this->pdfService->generateInvoicePdf($invoice);
+
+    // One measuring render plus one final render that fills the two pages.
+    Http::assertSentCount(2);
+    Http::assertSent(fn (Request $request) => str_contains($request->body(), 'min-height: 200vh'));
+});
+
+test('renders a single pass when the page count cannot be read', function () {
+    Config::set('services.gotenberg.enabled', true);
+    Config::set('services.gotenberg.url', 'http://gotenberg:3000');
+
+    Http::fake([
+        'gotenberg:3000/forms/chromium/convert/html' => Http::response('no-count-here', 200),
+    ]);
+
+    $invoice = createInvoiceWithItems([
+        'invoice_number' => 'INV-PDF-NOCOUNT',
+        'status' => 'sent',
+    ]);
+
+    $pdf = $this->pdfService->generateInvoicePdf($invoice);
+
+    expect($pdf)->toBe('no-count-here');
+    Http::assertSentCount(1);
+});
+
 // --- Error handling tests ---
 
 test('throws runtime exception when gotenberg service disabled', function () {

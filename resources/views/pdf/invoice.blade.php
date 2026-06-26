@@ -2,4 +2,5 @@
     'document' => $invoice,
     'isInvoice' => true,
     'isPdf' => true,
+    'fillPages' => $fillPages ?? null,
 ])

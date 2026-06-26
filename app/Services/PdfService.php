@@ -26,9 +26,7 @@ class PdfService implements PdfServiceInterface
     {
         $invoice->load(['items', 'organizationLocation', 'customerLocation']);
 
-        $html = View::make('pdf.invoice', compact('invoice'))->render();
-
-        return $this->generatePdfFromHtml($html, "invoice-{$invoice->invoice_number}");
+        return $this->renderDocument('pdf.invoice', ['invoice' => $invoice], "invoice-{$invoice->invoice_number}");
     }
 
     /**
@@ -38,9 +36,50 @@ class PdfService implements PdfServiceInterface
     {
         $estimate->load(['items', 'organizationLocation', 'customerLocation']);
 
-        $html = View::make('pdf.estimate', compact('estimate'))->render();
+        return $this->renderDocument('pdf.estimate', ['estimate' => $estimate], "estimate-{$estimate->invoice_number}");
+    }
 
-        return $this->generatePdfFromHtml($html, "estimate-{$estimate->invoice_number}");
+    /**
+     * Render a document view to PDF.
+     *
+     * Chromium cannot anchor a block to the bottom of the final page on its
+     * own, so we render twice: the first pass measures the document's page
+     * count, and the second pass tells the template to stretch the card across
+     * exactly that many pages, letting it pin the footer to the bottom of the
+     * last page. The second pass is skipped when the page count can't be read.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function renderDocument(string $view, array $data, string $filename): string
+    {
+        $firstPass = View::make($view, $data + ['fillPages' => null])->render();
+        $pdf = $this->generatePdfFromHtml($firstPass, $filename);
+
+        $pages = $this->countPdfPages($pdf);
+
+        if ($pages < 1) {
+            return $pdf;
+        }
+
+        $secondPass = View::make($view, $data + ['fillPages' => $pages])->render();
+
+        return $this->generatePdfFromHtml($secondPass, $filename);
+    }
+
+    /**
+     * Count the pages in a Gotenberg/Chromium-generated PDF.
+     *
+     * Chromium writes the page-tree /Count entry uncompressed in the document
+     * catalog, so it is readable without a full PDF parser. Returns 0 when no
+     * count can be found.
+     */
+    private function countPdfPages(string $pdf): int
+    {
+        if (preg_match_all('/\/Count\s+(\d+)/', $pdf, $matches)) {
+            return max(array_map('intval', $matches[1]));
+        }
+
+        return 0;
     }
 
     /**

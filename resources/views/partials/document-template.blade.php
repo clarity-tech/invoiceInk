@@ -7,6 +7,11 @@
         $isPdf          - bool (true = PDF render, false = public web view)
 --}}
 @php
+    // Number of pages to stretch the PDF card across so the footer can be
+    // pinned to the bottom of the last page. Null on the web view and on the
+    // first (measuring) PDF render; set to the page count on the final render.
+    $fillPages = $fillPages ?? null;
+
     $organization = $document->organization;
     $logoUrl = $isPdf ? $organization->logo_base64 : $organization->logo_url;
     $orgLocation = $document->organizationLocation;
@@ -130,10 +135,48 @@
         .btn-primary:hover { background: #5b21b6; }
 
         /* ── Document Card ────────────────────────────────── */
+        /*
+           The footer block (notes, bank, terms, branding) is pinned to the
+           bottom of the (last) page so any spare vertical space sits above it.
+
+           Web view: a flex column with min-height fills the viewport and
+           margin-top:auto pushes the footer down — flexbox is reliable here.
+
+           PDF: flexbox does not fragment cleanly across print pages in
+           Chromium, so we use a block card whose min-height is set to the
+           exact page count ($fillPages × 100vh, where 100vh == one printable
+           page) and absolutely position the footer at its bottom. $fillPages
+           is resolved by PdfService via a first measuring render.
+        */
         .document-card {
             background: #fff;
-            {{ $isPdf ? 'padding: 0;' : 'border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 6px 16px rgba(0,0,0,0.04); padding: 48px;' }}
+@if($isPdf)
+            {{ $fillPages ? 'position: relative; min-height: '.((int) $fillPages * 100).'vh;' : '' }}
+            padding: 0;
+@else
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 6px 16px rgba(0,0,0,0.04);
+            padding: 48px;
+@endif
         }
+
+@if($isPdf)
+@if($fillPages)
+        .doc-bottom {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+@endif
+@else
+        .doc-bottom {
+            margin-top: auto;
+        }
+@endif
 
         /* ── Header ───────────────────────────────────────── */
         .doc-header {
@@ -618,6 +661,7 @@
                 </div>
             </div>
 
+            <div class="doc-bottom">
             {{-- E. Notes ───────────────────────────────────── --}}
             @if($document->notes)
                 <div class="info-section">
@@ -671,6 +715,7 @@
                     &mdash; Smart Invoicing for Modern Businesses
                 </div>
             </div>
+            </div>{{-- /.doc-bottom --}}
         </div>
     </div>
 </body>
