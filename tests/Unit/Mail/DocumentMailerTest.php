@@ -253,6 +253,34 @@ test('document mailer references the brand logo by hosted url without attaching 
         ->and($attachmentTypes)->not->toContain('image/png');
 });
 
+test('document mailer falls back to the embedded icon + html wordmark when logo_external is off', function () {
+    config(['branding.logo_external' => false]);
+
+    $invoice = createInvoiceWithItems(['invoice_number' => 'INV-EMBED-001']);
+
+    $html = (new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']])))->renderHtml();
+
+    // Embedded mode: CID icon mark + two-tone HTML wordmark in header and footer,
+    // and no external lockup URL.
+    expect(substr_count($html, 'src="cid:'.config('branding.logo_cid').'"'))->toBeGreaterThanOrEqual(2)
+        ->and(substr_count($html, 'Invoice<span style="color: #7c3aed;">Ink</span>'))->toBeGreaterThanOrEqual(2)
+        ->and($html)->not->toContain(asset(config('branding.logo')));
+});
+
+test('document mailer attaches the icon mark only in embedded mode', function () {
+    config(['branding.logo_external' => false, 'mail.default' => 'array', 'queue.default' => 'sync']);
+
+    $invoice = createInvoiceWithItems(['invoice_number' => 'INV-EMBED-002']);
+
+    Mail::send(new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']])));
+
+    $email = Mail::mailer('array')->getSymfonyTransport()->messages()->first()->getOriginalMessage();
+    $attachmentTypes = collect($email->getAttachments())->map->getContentType()->all();
+
+    // Embedded mode re-attaches the small mark under the brand CID.
+    expect($attachmentTypes)->toContain('image/png');
+});
+
 test('document mailer surfaces the brand slogan in the preheader and header', function () {
     $invoice = createInvoiceWithItems(['invoice_number' => 'INV-BRAND-002']);
 

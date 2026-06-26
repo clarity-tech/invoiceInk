@@ -15,17 +15,28 @@ return [
     |
     */
 
-    // Public path (relative to public/) of the combined logo lockup (ink-drop
-    // mark + "InvoiceInk" wordmark). Emails reference it by absolute URL via
-    // asset() so the image is fetched remotely instead of being attached to
-    // the message — CID-embedded images get listed in the client's attachment
-    // area. Use PNG: Gmail strips inline SVG and Outlook never supported it.
+    // Email logo strategy. Two modes:
+    //  • external (default): reference the combined lockup as a hosted image
+    //    URL. No attachment, but some clients block external images by default.
+    //  • embedded: inline the ink-drop mark via CID + render the "InvoiceInk"
+    //    wordmark as HTML text. Always displays (survives image-blocking) at
+    //    the cost of the small mark riding along as a CID attachment.
+    'logo_external' => (bool) env('BRAND_LOGO_EXTERNAL', true),
+
+    // External mode: combined logo lockup (mark + wordmark), referenced by URL.
+    // Use PNG: Gmail strips inline SVG and Outlook never supported it.
     'logo' => 'images/email-logo-lockup.png',
 
-    // Optional absolute URL override for the email logo (e.g. a CDN/asset
+    // Optional absolute URL override for the external logo (e.g. a CDN/asset
     // host). When null, emails fall back to asset(config('branding.logo')),
     // which resolves against APP_URL per environment (localhost or production).
     'logo_url' => env('BRAND_LOGO_URL'),
+
+    // Embedded mode: the square ink-drop mark, embedded inline under logo_cid
+    // via the EmbedsBrandLogo trait and referenced from markup as
+    // <img src="cid:{{ config('branding.logo_cid') }}">.
+    'logo_mark' => 'images/email-logo-mark.png',
+    'logo_cid' => 'brandlogo',
 
     // Primary brand color (violet-600). Mirrored in default.css.
     'color' => env('BRAND_COLOR', '#7c3aed'),

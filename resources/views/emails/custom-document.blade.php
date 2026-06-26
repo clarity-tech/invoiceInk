@@ -218,7 +218,20 @@
                 <table role="presentation" class="email-container" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" align="center">
                     <tr>
                         <td class="email-header">
+                            @if(config('branding.logo_external'))
                             <img src="{{ config('branding.logo_url') ?: asset(config('branding.logo')) }}" alt="{{ config('app.name') }}" width="149" height="34" style="display: block; border: 0;">
+                            @else
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td style="vertical-align: middle;">
+                                        <img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="26" height="26" class="brand-mark">
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <span class="brand-name">Invoice<span style="color: #7c3aed;">Ink</span></span>
+                                    </td>
+                                </tr>
+                            </table>
+                            @endif
                             <p class="brand-slogan">{{ config('branding.slogan') }}</p>
                         </td>
                     </tr>
@@ -254,7 +267,11 @@
                 <div class="platform-footer">
                     <p class="powered-by">{{ __('messages.email.powered_by') }}</p>
                     <a href="{{ \App\Support\Branding::poweredByUrl('email') }}" class="footer-brand">
+                        @if(config('branding.logo_external'))
                         <img src="{{ config('branding.logo_url') ?: asset(config('branding.logo')) }}" alt="{{ config('app.name') }}" width="114" height="26" style="display: inline-block; border: 0;">
+                        @else
+                        <img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="22" height="22" class="brand-mark"><span class="brand-name">Invoice<span style="color: #7c3aed;">Ink</span></span>
+                        @endif
                         </a>
                     <p class="brand-tagline">{{ config('branding.tagline') }}</p>
                 </div>

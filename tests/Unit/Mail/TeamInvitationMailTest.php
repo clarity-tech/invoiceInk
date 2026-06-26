@@ -20,6 +20,16 @@ test('team invitation email carries the shared platform branding', function () {
         ->and($html)->toContain((string) config('branding.slogan'));
 });
 
+test('team invitation uses the embedded icon + wordmark when logo_external is off', function () {
+    config(['branding.logo_external' => false]);
+
+    $html = (new TeamInvitation($this->invitation))->render();
+
+    // Embedded mode references the CID mark and not the external lockup URL.
+    expect($html)->toContain('cid:'.config('branding.logo_cid'))
+        ->and($html)->not->toContain(asset(config('branding.logo')));
+});
+
 test('team invitation subject carries the attribution tag when enabled', function () {
     config(['mail.default' => 'array', 'queue.default' => 'sync', 'branding.subject_tag' => true]);
 
