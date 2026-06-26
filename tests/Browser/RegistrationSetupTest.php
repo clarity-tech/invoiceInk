@@ -131,7 +131,7 @@ it('completes UAE company setup with different currency', function () {
         ->fill('#tax_number', '100234567890003')
         ->fill('#registration_number', 'DXB-LLC-2024-001')
         ->fill('input[aria-describedby="error-emails-0"]', 'info@dubaitrading.test')
-        ->fill('#phone', '+971-4-1234567')
+        ->fill('#phone', '+971 4 401 9999')
         ->screenshot(fullPage: true, filename: 'demo/22-setup-uae-step1')
         ->click('Next');
 
