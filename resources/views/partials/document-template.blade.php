@@ -506,8 +506,8 @@
             {{-- B1. Subject Line --}}
             @if($document->subject)
                 <div style="font-size: 13px;">
-                    <div>Subject :</div>
-                    <div>{{ $document->subject }}</div>
+                    <span>Subject:</span>
+                    <span>{{ $document->subject }}</span>
                 </div>
             @endif
 
