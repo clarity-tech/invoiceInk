@@ -9,6 +9,7 @@ use App\Models\Location;
 use App\Models\Organization;
 use App\Rules\CurrencyCode;
 use App\Services\TaxTemplateProvisioner;
+use App\Support\PhoneNumber;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,6 +17,7 @@ use Illuminate\Validation\Rule as ValidationRule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Propaganistas\LaravelPhone\Rules\Phone;
 
 class OrganizationSetupController extends Controller
 {
@@ -58,6 +60,7 @@ class OrganizationSetupController extends Controller
                 'website' => $organization->website ?? '',
                 'notes' => $organization->notes ?? '',
                 'phone' => $organization->phone ?? '',
+                'phone_country' => $organization->phone_country ?? '',
                 'emails' => $organization->emails ? $organization->emails->getEmails() : [],
                 'currency' => $organization->currency?->value ?? '',
                 'country_code' => $organization->country_code?->value ?? '',
@@ -135,7 +138,8 @@ class OrganizationSetupController extends Controller
                 'notes' => ['nullable', 'string', 'max:1000'],
                 'emails' => ['required', 'array', 'min:1'],
                 'emails.*' => ['required', 'email'],
-                'phone' => ['nullable', 'string', 'max:20'],
+                'phone_country' => ['nullable', 'string', 'size:2'],
+                'phone' => ['nullable', (new Phone)->countryField('phone_country')->international()],
             ]),
             2 => $request->validate([
                 'location_name' => ['nullable', 'string', 'max:255'],
@@ -182,7 +186,8 @@ class OrganizationSetupController extends Controller
             'website' => $request->input('website') ?: null,
             'notes' => $request->input('notes') ?: null,
             'emails' => $contactCollection,
-            'phone' => $request->input('phone') ?: null,
+            'phone' => PhoneNumber::normalize($request->input('phone'), $request->input('phone_country')),
+            'phone_country' => $request->input('phone_country') ?: null,
         ]);
     }
 

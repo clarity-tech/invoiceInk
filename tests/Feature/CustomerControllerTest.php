@@ -40,17 +40,37 @@ test('can create customer', function () {
 
     $this->post('/customers', [
         'name' => 'Test Customer Corp',
-        'phone' => '+1234567890',
+        'phone' => '(415) 555-2671',
+        'phone_country' => 'US',
         'currency' => 'INR',
         'contacts' => [
             ['name' => 'John Doe', 'email' => 'customer@test.com'],
         ],
     ])->assertRedirect();
 
+    // Phone is normalized to E.164 and the picked country is remembered.
     $this->assertDatabaseHas('customers', [
         'name' => 'Test Customer Corp',
-        'phone' => '+1234567890',
+        'phone' => '+14155552671',
+        'phone_country' => 'US',
     ]);
+});
+
+test('rejects an invalid phone number when creating customer', function () {
+    $user = createUserWithTeam();
+    $this->actingAs($user);
+
+    $this->post('/customers', [
+        'name' => 'Bad Phone Corp',
+        'phone' => '123',
+        'phone_country' => 'US',
+        'currency' => 'INR',
+        'contacts' => [
+            ['name' => 'John Doe', 'email' => 'customer@test.com'],
+        ],
+    ])->assertSessionHasErrors('phone');
+
+    $this->assertDatabaseMissing('customers', ['name' => 'Bad Phone Corp']);
 });
 
 test('stores email when contact name is empty', function () {
@@ -136,7 +156,8 @@ test('can update existing customer', function () {
 
     $this->put("/customers/{$customer->id}", [
         'name' => 'Updated Customer',
-        'phone' => '+8888888888',
+        'phone' => '020 7183 8750',
+        'phone_country' => 'GB',
         'currency' => 'INR',
         'contacts' => [
             ['name' => 'Updated Contact', 'email' => 'updated@customer.com'],
@@ -145,7 +166,8 @@ test('can update existing customer', function () {
 
     $customer->refresh();
     expect($customer->name)->toBe('Updated Customer');
-    expect($customer->phone)->toBe('+8888888888');
+    expect($customer->phone)->toBe('+442071838750');
+    expect($customer->phone_country)->toBe('GB');
     expect($customer->emails->getEmails())->toBe(['updated@customer.com']);
 });
 

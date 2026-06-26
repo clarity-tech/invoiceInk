@@ -94,7 +94,8 @@ class CustomerSeeder extends ProductionSafeSeeder
                 ->create([
                     'name' => 'Sandline LLC',
                     'emails' => new ContactCollection([['name' => 'Billing', 'email' => 'billing@sandline.test'], ['name' => 'Finance', 'email' => 'finance@sandline.test']]),
-                    'phone' => '+971-4-1234567',
+                    'phone' => '+97141234567',
+                    'phone_country' => 'AE',
                 ]);
 
             // Create Dubai location for Sandline
@@ -119,7 +120,8 @@ class CustomerSeeder extends ProductionSafeSeeder
                 ->create([
                     'name' => 'Corniche Labs',
                     'emails' => new ContactCollection([['name' => 'Priya', 'email' => 'priya@cornichelabs.test'], ['name' => 'Consultant', 'email' => 'consult@cornichelabs.test']]),
-                    'phone' => '+971-4-7654321',
+                    'phone' => '+97147654321',
+                    'phone_country' => 'AE',
                 ]);
 
             $cornicheLocation = Location::create([

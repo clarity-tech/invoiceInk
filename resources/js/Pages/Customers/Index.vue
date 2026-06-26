@@ -25,6 +25,7 @@ const props = defineProps<{
     currencies: Record<string, string>;
     countries: Record<string, string>;
     taxLabels: Record<string, string>;
+    defaultPhoneCountry?: string | null;
 }>();
 
 const isMounted = ref(false);
@@ -59,6 +60,7 @@ const editingCustomer = ref<Customer | null>(null);
 const form = useForm({
     name: '',
     phone: '',
+    phone_country: '',
     currency: 'INR',
     contacts: [{ name: '', email: '' }] as Contact[],
 });
@@ -75,6 +77,7 @@ function openEdit(customer: Customer) {
     editingCustomer.value = customer;
     form.name = customer.name;
     form.phone = customer.phone ?? '';
+    form.phone_country = customer.phone_country ?? '';
     form.currency = customer.currency ?? 'INR';
     form.contacts = customer.emails?.length
         ? [...customer.emails]
@@ -365,6 +368,9 @@ function locationSummary(customer: Customer): string {
                                     :currencies="currencies"
                                     :countries="countries"
                                     :is-editing="!!editingCustomer"
+                                    :default-country="
+                                        defaultPhoneCountry ?? 'US'
+                                    "
                                     @submit="submitCustomer"
                                     @cancel="cancelForm"
                                 />
@@ -458,7 +464,7 @@ function locationSummary(customer: Customer): string {
                                 <td
                                     class="px-6 py-4 text-sm whitespace-nowrap text-gray-500"
                                 >
-                                    {{ customer.phone ?? '-' }}
+                                    {{ customer.formatted_phone ?? '-' }}
                                 </td>
                                 <td
                                     class="px-6 py-4 text-sm whitespace-nowrap text-gray-500"

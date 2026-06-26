@@ -7,6 +7,7 @@ use App\Casts\ContactCollectionCast;
 use App\Currency;
 use App\Enums\Country;
 use App\Enums\FinancialYearType;
+use App\Support\PhoneNumber;
 use Carbon\Carbon;
 use Database\Factories\OrganizationFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -55,6 +56,7 @@ class Organization extends Model implements HasMedia
         'registration_number',
         'emails',
         'phone',
+        'phone_country',
         'website',
         'currency',
         'notes',
@@ -75,6 +77,7 @@ class Organization extends Model implements HasMedia
      */
     protected $appends = [
         'logo_url',
+        'formatted_phone',
     ];
 
     /**
@@ -244,6 +247,16 @@ class Organization extends Model implements HasMedia
     public function getDisplayNameAttribute(): string
     {
         return $this->company_name ?: $this->name;
+    }
+
+    /**
+     * The phone number rendered in a human-readable international format
+     * (e.g. "+1 415 555 2671"). Falls back to the raw stored value when the
+     * E.164 string can't be parsed, and null when no phone is set.
+     */
+    public function getFormattedPhoneAttribute(): ?string
+    {
+        return PhoneNumber::format($this->phone);
     }
 
     /**

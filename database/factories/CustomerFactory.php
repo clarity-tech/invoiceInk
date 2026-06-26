@@ -27,7 +27,7 @@ class CustomerFactory extends Factory
                 fake()->lastName().' & Co.',
                 fake()->firstName().' Solutions',
             ]),
-            'phone' => fake()->optional(0.8)->phoneNumber(),
+            ...(fake()->boolean(80) ? $this->e164Phone() : ['phone' => null, 'phone_country' => null]),
             'emails' => new ContactCollection(array_filter([
                 ['name' => fake()->name(), 'email' => fake()->unique()->userName().'@'.fake()->domainName(1).'.test'],
                 fake()->randomFloat() < 0.4 ? ['name' => fake()->name(), 'email' => fake()->unique()->userName().'@'.fake()->domainName(1).'.test'] : null,
@@ -35,6 +35,24 @@ class CustomerFactory extends Factory
             'organization_id' => Organization::factory(),
             'primary_location_id' => null, // Will be set after location creation
         ];
+    }
+
+    /**
+     * A valid international phone number paired with its ISO 3166-1 alpha-2
+     * country, matching how the app stores phones (E.164 + picked country).
+     *
+     * @return array{phone: string, phone_country: string}
+     */
+    protected function e164Phone(): array
+    {
+        return fake()->randomElement([
+            ['phone' => '+14155552671', 'phone_country' => 'US'],
+            ['phone' => '+442071838750', 'phone_country' => 'GB'],
+            ['phone' => '+919812345678', 'phone_country' => 'IN'],
+            ['phone' => '+493012345678', 'phone_country' => 'DE'],
+            ['phone' => '+97142345678', 'phone_country' => 'AE'],
+            ['phone' => '+61412345678', 'phone_country' => 'AU'],
+        ]);
     }
 
     /**
@@ -114,6 +132,7 @@ class CustomerFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'phone' => null,
+            'phone_country' => null,
         ]);
     }
 
@@ -124,6 +143,7 @@ class CustomerFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'phone' => null,
+            'phone_country' => null,
             'emails' => new ContactCollection([['name' => fake()->name(), 'email' => fake()->unique()->userName().'@'.fake()->domainName(1).'.test']]),
         ]);
     }
@@ -152,7 +172,8 @@ class CustomerFactory extends Factory
                 ['name' => 'Purchasing Department', 'email' => 'purchasing@'.fake()->lexify('????????').'.test'],
                 ['name' => 'Accounting Department', 'email' => 'accounting@'.fake()->lexify('????????').'.test'],
             ]),
-            'phone' => '+1-'.fake()->numerify('###').'-'.fake()->numerify('###').'-'.fake()->numerify('####'),
+            'phone' => '+1415'.fake()->numerify('#######'),
+            'phone_country' => 'US',
         ]);
     }
 
@@ -176,7 +197,8 @@ class CustomerFactory extends Factory
                 ['name' => 'Billing Department', 'email' => 'billing@'.fake()->lexify('????????').'.test'],
                 ['name' => 'Finance Department', 'email' => 'finance@'.fake()->lexify('????????').'.test'],
             ]),
-            'phone' => '+1-'.fake()->numerify('###').'-'.fake()->numerify('###').'-'.fake()->numerify('####'),
+            'phone' => '+1415'.fake()->numerify('#######'),
+            'phone_country' => 'US',
         ]);
     }
 
@@ -201,7 +223,8 @@ class CustomerFactory extends Factory
                 ['name' => 'Procurement', 'email' => 'procurement@'.fake()->lexify('????????').'.test'],
                 ['name' => 'Supplier Management', 'email' => 'supplier.management@'.fake()->lexify('????????').'.test'],
             ]),
-            'phone' => '+49-'.fake()->numerify('##').'-'.fake()->numerify('########'),
+            'phone' => '+4930'.fake()->numerify('########'),
+            'phone_country' => 'DE',
         ]);
     }
 
@@ -225,7 +248,8 @@ class CustomerFactory extends Factory
                 ['name' => 'Procurement', 'email' => 'procurement@'.fake()->lexify('????????').'.test'],
                 ['name' => 'Orders Department', 'email' => 'orders@'.fake()->lexify('????????').'.test'],
             ]),
-            'phone' => '+91-'.fake()->numerify('##').'-'.fake()->numerify('########'),
+            'phone' => '+9198'.fake()->numerify('########'),
+            'phone_country' => 'IN',
         ]);
     }
 
@@ -250,7 +274,8 @@ class CustomerFactory extends Factory
 
             $customer->update(['primary_location_id' => $location->id]);
         })->state([
-            'phone' => '+1-'.fake()->numerify('###').'-'.fake()->numerify('###').'-'.fake()->numerify('####'),
+            'phone' => '+1415'.fake()->numerify('#######'),
+            'phone_country' => 'US',
         ]);
     }
 
@@ -271,7 +296,8 @@ class CustomerFactory extends Factory
 
             $customer->update(['primary_location_id' => $location->id]);
         })->state([
-            'phone' => '+91-'.fake()->numerify('##').'-'.fake()->numerify('########'),
+            'phone' => '+9198'.fake()->numerify('########'),
+            'phone_country' => 'IN',
         ]);
     }
 
@@ -292,7 +318,8 @@ class CustomerFactory extends Factory
 
             $customer->update(['primary_location_id' => $location->id]);
         })->state([
-            'phone' => '+49-'.fake()->numerify('##').'-'.fake()->numerify('########'),
+            'phone' => '+4930'.fake()->numerify('########'),
+            'phone_country' => 'DE',
         ]);
     }
 
@@ -315,7 +342,8 @@ class CustomerFactory extends Factory
                 [['name' => 'Priya', 'email' => 'priya@cornichelabs.test'], ['name' => 'Consultant', 'email' => 'consult@cornichelabs.test']],
                 [['name' => 'Info', 'email' => 'info@'.fake()->lexify('????????').'.test']],
             ])),
-            'phone' => '+971-4-'.fake()->numerify('#######'),
+            'phone' => '+9714'.fake()->numerify('#######'),
+            'phone_country' => 'AE',
         ])->afterCreating(function (Customer $customer) {
             $location = Location::factory()
                 ->forCustomer($customer->id)

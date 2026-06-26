@@ -7,6 +7,7 @@ function makeFormData(overrides = {}) {
     return makeMockForm({
         name: '',
         phone: '',
+        phone_country: '',
         currency: 'INR',
         contacts: [{ name: '', email: '' }],
         ...overrides,
@@ -30,6 +31,10 @@ describe('CustomerForm', () => {
         expect(wrapper.find('#customer-name').exists()).toBe(true);
         expect(wrapper.find('#customer-phone').exists()).toBe(true);
         expect(wrapper.find('#customer-currency').exists()).toBe(true);
+        // Phone field is now a country selector + national number input.
+        expect(wrapper.find('select[aria-label="Country code"]').exists()).toBe(
+            true,
+        );
     });
 
     it('shows "Create Customer" button when not editing', () => {

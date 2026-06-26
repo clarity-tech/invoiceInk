@@ -2,19 +2,28 @@
 /* eslint-disable vue/no-mutating-props -- InertiaForm is designed to be mutated by child components */
 import type { InertiaForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import PhoneInput from '@/Components/PhoneInput.vue';
 import type { Contact } from '@/types';
 
-const props = defineProps<{
-    form: InertiaForm<{
-        name: string;
-        phone: string;
-        currency: string;
-        contacts: Contact[];
-    }>;
-    currencies: Record<string, string>;
-    countries: Record<string, string>;
-    isEditing: boolean;
-}>();
+const props = withDefaults(
+    defineProps<{
+        form: InertiaForm<{
+            name: string;
+            phone: string;
+            phone_country: string;
+            currency: string;
+            contacts: Contact[];
+        }>;
+        currencies: Record<string, string>;
+        countries: Record<string, string>;
+        isEditing: boolean;
+        /** ISO alpha-2 used to seed the phone country on a new customer. */
+        defaultCountry?: string;
+    }>(),
+    {
+        defaultCountry: 'US',
+    },
+);
 
 const emit = defineEmits<{
     (e: 'submit'): void;
@@ -100,15 +109,14 @@ function removeContact(index: number) {
                 class="block text-sm font-medium text-gray-700"
                 >Phone</label
             >
-            <input
+            <PhoneInput
                 id="customer-phone"
                 v-model="form.phone"
-                type="text"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                v-model:country="form.phone_country"
+                class="mt-1"
+                :default-country="defaultCountry"
+                :error="form.errors.phone"
             />
-            <p v-if="form.errors.phone" class="mt-1 text-sm text-red-600">
-                {{ form.errors.phone }}
-            </p>
         </div>
 
         <!-- Currency -->

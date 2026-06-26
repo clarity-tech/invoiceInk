@@ -69,7 +69,8 @@ test('user can update organization via PUT request', function () {
 
     $response = $this->actingAs($user)->put("/organizations/{$organization->id}", [
         'name' => 'Updated Business Name',
-        'phone' => '+91-9876543210',
+        'phone' => '098765 43210',
+        'phone_country' => 'IN',
         'emails' => ['updated@business.test'],
         'currency' => 'INR',
         'country_code' => 'IN',
@@ -79,7 +80,8 @@ test('user can update organization via PUT request', function () {
 
     $organization->refresh();
     expect($organization->name)->toBe('Updated Business Name');
-    expect($organization->phone)->toBe('+91-9876543210');
+    expect($organization->phone)->toBe('+919876543210');
+    expect($organization->phone_country)->toBe('IN');
 });
 
 test('dashboard renders with Inertia', function () {

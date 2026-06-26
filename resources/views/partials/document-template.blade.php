@@ -43,7 +43,7 @@
 
     // Organization contact info
     $orgEmails = $organization->emails;
-    $orgPhone = $organization->phone;
+    $orgPhone = $organization->formatted_phone;
 
     // Display amounts as-is, including the currency symbol (renders fine in the PDF).
     $amt = fn(string $formatted): string => $formatted;

@@ -78,7 +78,8 @@ test('can update organization basics', function () {
 
     $response = $this->put("/organizations/{$organization->id}", [
         'name' => 'Updated Org Name',
-        'phone' => '+1-555-9999',
+        'phone' => '(415) 555-2671',
+        'phone_country' => 'US',
         'emails' => ['updated@test.com'],
         'currency' => 'USD',
         'country_code' => 'US',
@@ -91,9 +92,24 @@ test('can update organization basics', function () {
 
     $organization->refresh();
     expect($organization->name)->toBe('Updated Org Name');
-    expect($organization->phone)->toBe('+1-555-9999');
+    // Phone is normalized to E.164 and the picked country is remembered.
+    expect($organization->phone)->toBe('+14155552671');
+    expect($organization->phone_country)->toBe('US');
     expect($organization->emails->getFirstEmail())->toBe('updated@test.com');
     expect($organization->currency->value)->toBe('USD');
+});
+
+test('rejects an invalid phone number when updating organization basics', function () {
+    $organization = createOrganizationWithLocation([], [], $this->user);
+
+    $this->put("/organizations/{$organization->id}", [
+        'name' => 'Updated Org Name',
+        'phone' => '123',
+        'phone_country' => 'US',
+        'emails' => ['updated@test.com'],
+        'currency' => 'USD',
+        'country_code' => 'US',
+    ])->assertSessionHasErrors('phone');
 });
 
 test('changing the organization country regenerates its tax templates', function () {

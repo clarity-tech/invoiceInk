@@ -113,6 +113,7 @@ test('customer has correct fillable attributes', function () {
     $expectedFillable = [
         'name',
         'phone',
+        'phone_country',
         'currency',
         'emails',
         'primary_location_id',
@@ -122,6 +123,25 @@ test('customer has correct fillable attributes', function () {
     $customer = new Customer;
 
     expect($customer->getFillable())->toBe($expectedFillable);
+});
+
+test('customer exposes a formatted_phone in international format', function () {
+    $customer = Customer::factory()->create([
+        'phone' => '+14155552671',
+        'phone_country' => 'US',
+    ]);
+
+    expect($customer->formatted_phone)->toBe('+1 415-555-2671');
+    expect($customer->toArray())->toHaveKey('formatted_phone');
+});
+
+test('customer formatted_phone is null when no phone is set', function () {
+    $customer = Customer::factory()->create([
+        'phone' => null,
+        'phone_country' => null,
+    ]);
+
+    expect($customer->formatted_phone)->toBeNull();
 });
 
 test('customer morphMany locations relationship works', function () {

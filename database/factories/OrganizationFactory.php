@@ -27,11 +27,29 @@ class OrganizationFactory extends Factory
             'tax_number' => $this->faker->regexify('[A-Z]{2}-[0-9]{9}'),
             'registration_number' => $this->faker->regexify('REG-[A-Z]{4}-[0-9]{4}'),
             'emails' => [$this->faker->companyEmail()],
-            'phone' => $this->faker->phoneNumber(),
+            ...$this->e164Phone(),
             'website' => 'https://www.'.$this->faker->domainName(1).'.test',
             'currency' => 'INR',
             'notes' => $this->faker->optional()->sentence(),
         ];
+    }
+
+    /**
+     * A valid international phone number paired with its ISO 3166-1 alpha-2
+     * country, matching how the app stores phones (E.164 + picked country).
+     *
+     * @return array{phone: string, phone_country: string}
+     */
+    protected function e164Phone(): array
+    {
+        return $this->faker->randomElement([
+            ['phone' => '+14155552671', 'phone_country' => 'US'],
+            ['phone' => '+442071838750', 'phone_country' => 'GB'],
+            ['phone' => '+919812345678', 'phone_country' => 'IN'],
+            ['phone' => '+493012345678', 'phone_country' => 'DE'],
+            ['phone' => '+97142345678', 'phone_country' => 'AE'],
+            ['phone' => '+61412345678', 'phone_country' => 'AU'],
+        ]);
     }
 
     /**
@@ -94,6 +112,7 @@ class OrganizationFactory extends Factory
             'website' => null,
             'notes' => null,
             'phone' => null,
+            'phone_country' => null,
             'emails' => [],
         ]);
     }
@@ -109,7 +128,7 @@ class OrganizationFactory extends Factory
             'tax_number' => $this->faker->regexify('[A-Z]{2}-[0-9]{9}'),
             'registration_number' => $this->faker->regexify('REG-[A-Z]{4}-[0-9]{4}'),
             'website' => 'https://www.'.$this->faker->domainName(1).'.test',
-            'phone' => $this->faker->phoneNumber(),
+            ...$this->e164Phone(),
             'emails' => [$this->faker->companyEmail()],
             'notes' => $this->faker->optional()->sentence(),
         ]);
@@ -126,7 +145,7 @@ class OrganizationFactory extends Factory
             'tax_number' => $this->faker->optional(0.7)->regexify('[A-Z]{2}-[0-9]{9}'),
             'registration_number' => $this->faker->optional(0.5)->regexify('REG-[A-Z]{4}-[0-9]{4}'),
             'website' => $this->faker->optional(0.6)->url(),
-            'phone' => $this->faker->optional(0.8)->phoneNumber(),
+            ...($this->faker->boolean(80) ? $this->e164Phone() : ['phone' => null, 'phone_country' => null]),
             'emails' => $this->faker->optional(0.9)->randomElements([$this->faker->companyEmail()]),
         ]);
     }

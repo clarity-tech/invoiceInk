@@ -13,6 +13,7 @@ use App\Services\SvgSanitizer;
 use App\Services\TaxTemplateProvisioner;
 use App\Support\Jetstream;
 use App\Support\JetstreamFeatures;
+use App\Support\PhoneNumber;
 use App\ValueObjects\BankDetails;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Http\RedirectResponse;
@@ -23,6 +24,7 @@ use Illuminate\Validation\Rule as ValidationRule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Propaganistas\LaravelPhone\Rules\Phone;
 
 class OrganizationController extends Controller
 {
@@ -105,7 +107,8 @@ class OrganizationController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'company_name' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:20', 'regex:/^[+]?[\d\s\-().]+$/'],
+            'phone_country' => ['nullable', 'string', 'size:2'],
+            'phone' => ['nullable', (new Phone)->countryField('phone_country')->international()],
             'emails' => ['required', 'array', 'min:1'],
             'emails.*' => ['nullable', 'email'],
             'currency' => ['required', 'string', new CurrencyCode],
@@ -138,7 +141,8 @@ class OrganizationController extends Controller
 
         $attributes = [
             'name' => $validated['name'],
-            'phone' => ($validated['phone'] ?? '') ?: null,
+            'phone' => PhoneNumber::normalize($validated['phone'] ?? null, $validated['phone_country'] ?? null),
+            'phone_country' => $validated['phone_country'] ?? null,
             'emails' => $contactCollection,
             'currency' => $validated['currency'],
             'country_code' => $validated['country_code'],

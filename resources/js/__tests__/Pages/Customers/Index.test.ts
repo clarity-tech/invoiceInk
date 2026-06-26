@@ -174,13 +174,14 @@ describe('Customers/Index', () => {
         const c = makeCustomerWithCount({
             id: 1,
             name: 'ACME Corp',
-            phone: '+91 12345',
+            phone: '+919812345678',
+            formatted_phone: '+91 98123 45678',
         });
         const wrapper = mountComponent({
             customers: makePaginatedCustomers([c]),
         });
         expect(wrapper.text()).toContain('ACME Corp');
-        expect(wrapper.text()).toContain('+91 12345');
+        expect(wrapper.text()).toContain('+91 98123 45678');
     });
 
     it('shows primary email', () => {

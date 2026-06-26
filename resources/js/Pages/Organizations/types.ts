@@ -25,6 +25,8 @@ export interface Organization {
     name: string;
     company_name: string | null;
     phone: string | null;
+    phone_country: string | null;
+    formatted_phone: string | null;
     emails: { email: string; name: string }[];
     currency: string | null;
     country_code: string | null;

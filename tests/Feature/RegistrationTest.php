@@ -101,7 +101,8 @@ test('registered user can immediately update their organization via HTTP', funct
     // Step 2: Update the organization via HTTP
     $response = $this->actingAs($user)->put("/organizations/{$organization->id}", [
         'name' => 'Updated Organization Name',
-        'phone' => '+1-555-0123',
+        'phone' => '(415) 555-2671',
+        'phone_country' => 'US',
         'country_code' => 'US',
         'currency' => 'USD',
         'emails' => ['jane@example.test'],
@@ -113,7 +114,7 @@ test('registered user can immediately update their organization via HTTP', funct
     // Step 3: Validate the organization was updated successfully
     $organization->refresh();
     expect($organization->name)->toBe('Updated Organization Name');
-    expect($organization->phone)->toBe('+1-555-0123');
+    expect($organization->phone)->toBe('+14155552671');
 
 })->skip(function () {
     return ! Features::enabled(Features::registration());

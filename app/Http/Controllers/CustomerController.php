@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateCustomerRequest;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Location;
+use App\Support\PhoneNumber;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,6 +36,7 @@ class CustomerController extends Controller
             'currencies' => Currency::options(),
             'countries' => Country::options(),
             'taxLabels' => Country::taxLabels(),
+            'defaultPhoneCountry' => request()->user()?->currentTeam?->country_code?->value,
         ]);
     }
 
@@ -53,7 +55,8 @@ class CustomerController extends Controller
 
         $customer = Customer::create([
             'name' => $validated['name'],
-            'phone' => $validated['phone'] ?? null,
+            'phone' => PhoneNumber::normalize($validated['phone'] ?? null, $validated['phone_country'] ?? null),
+            'phone_country' => $validated['phone_country'] ?? null,
             'currency' => $validated['currency'],
             'emails' => new ContactCollection($filteredContacts),
             'organization_id' => $organization->id,
@@ -74,7 +77,8 @@ class CustomerController extends Controller
 
         $customer->update([
             'name' => $validated['name'],
-            'phone' => $validated['phone'] ?? null,
+            'phone' => PhoneNumber::normalize($validated['phone'] ?? null, $validated['phone_country'] ?? null),
+            'phone_country' => $validated['phone_country'] ?? null,
             'currency' => $validated['currency'],
             'emails' => new ContactCollection($filteredContacts),
         ]);

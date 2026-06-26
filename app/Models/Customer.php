@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\ContactCollectionCast;
 use App\Currency;
 use App\Models\Scopes\OrganizationScope;
+use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,10 +20,20 @@ class Customer extends Model
     protected $fillable = [
         'name',
         'phone',
+        'phone_country',
         'currency',
         'emails',
         'primary_location_id',
         'organization_id',
+    ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'formatted_phone',
     ];
 
     protected function casts(): array
@@ -31,6 +42,16 @@ class Customer extends Model
             'emails' => ContactCollectionCast::class,
             'currency' => Currency::class,
         ];
+    }
+
+    /**
+     * The phone number rendered in a human-readable international format
+     * (e.g. "+1 415 555 2671"). Falls back to the raw stored value when the
+     * E.164 string can't be parsed, and null when no phone is set.
+     */
+    public function getFormattedPhoneAttribute(): ?string
+    {
+        return PhoneNumber::format($this->phone);
     }
 
     public function locations(): MorphMany

@@ -32,6 +32,7 @@ interface Organization {
     name: string;
     company_name: string | null;
     phone: string | null;
+    formatted_phone: string | null;
     emails: { email: string; name: string }[];
     currency: string | null;
     country_code: string | null;
@@ -221,12 +222,12 @@ function previewNumber(series: NumberingSeries): string {
                                 {{ contact.email }}
                             </dd>
                         </div>
-                        <div v-if="org.phone">
+                        <div v-if="org.formatted_phone">
                             <dt class="text-xs font-medium text-gray-500">
                                 Phone
                             </dt>
                             <dd class="text-sm text-gray-900">
-                                {{ org.phone }}
+                                {{ org.formatted_phone }}
                             </dd>
                         </div>
                         <div v-if="org.website">

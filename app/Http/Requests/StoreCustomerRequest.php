@@ -6,6 +6,7 @@ use App\Currency;
 use App\Models\Customer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Propaganistas\LaravelPhone\Rules\Phone;
 
 class StoreCustomerRequest extends FormRequest
 {
@@ -19,7 +20,8 @@ class StoreCustomerRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:20', 'regex:/^[+]?[\d\s\-().]+$/'],
+            'phone_country' => ['nullable', 'string', 'size:2'],
+            'phone' => ['nullable', (new Phone)->countryField('phone_country')->international()],
             'currency' => ['required', 'string', Rule::enum(Currency::class)],
             'contacts' => ['required', 'array', 'min:1'],
             'contacts.*.name' => ['nullable', 'string', 'max:255'],

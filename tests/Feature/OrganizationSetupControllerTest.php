@@ -50,16 +50,19 @@ test('can save step 1 company and contact information', function () {
         'website' => 'https://example.com',
         'notes' => 'Test notes',
         'emails' => ['test@example.test'],
-        'phone' => '+91-9876543210',
+        'phone' => '098765 43210',
+        'phone_country' => 'IN',
     ]);
 
     $response->assertRedirect();
 
+    // Phone is normalized to E.164 and the picked country is remembered.
     $this->assertDatabaseHas('teams', [
         'id' => $organization->id,
         'company_name' => 'New Test Company',
         'tax_number' => 'TAX123',
-        'phone' => '+91-9876543210',
+        'phone' => '+919876543210',
+        'phone_country' => 'IN',
     ]);
 });
 

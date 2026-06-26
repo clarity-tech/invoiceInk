@@ -86,6 +86,7 @@ function makeOrganization(overrides = {}) {
         website: '',
         notes: '',
         phone: '',
+        phone_country: '',
         emails: [],
         currency: '',
         country_code: '',

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import PhoneInput from '@/Components/PhoneInput.vue';
 import type { Organization, CountryInfo } from '../types';
 
 const props = defineProps<{
@@ -15,6 +16,7 @@ const form = useForm({
     name: props.organization.name ?? '',
     company_name: props.organization.company_name ?? '',
     phone: props.organization.phone ?? '',
+    phone_country: props.organization.phone_country ?? '',
     emails:
         (props.organization.emails?.map((e) => e.email) ?? ['']).length > 0
             ? (props.organization.emails?.map((e) => e.email) ?? [''])
@@ -142,18 +144,14 @@ function submit() {
                         class="block text-sm font-medium text-gray-700"
                         >Phone</label
                     >
-                    <input
+                    <PhoneInput
                         id="org-phone"
                         v-model="form.phone"
-                        type="tel"
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        v-model:country="form.phone_country"
+                        class="mt-1"
+                        :default-country="form.country_code || 'US'"
+                        :error="form.errors.phone"
                     />
-                    <p
-                        v-if="form.errors.phone"
-                        class="mt-1 text-sm text-red-600"
-                    >
-                        {{ form.errors.phone }}
-                    </p>
                 </div>
                 <div>
                     <label

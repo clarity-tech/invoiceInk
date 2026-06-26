@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useForm, router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
+import PhoneInput from '@/Components/PhoneInput.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { useTaxLabel } from '@/composables/useTaxLabel';
 
@@ -39,6 +40,7 @@ interface OrganizationData {
     website: string;
     notes: string;
     phone: string;
+    phone_country: string;
     emails: string[];
     currency: string;
     country_code: string;
@@ -96,6 +98,7 @@ const form = useForm({
         ? props.organization.emails
         : ['']) as string[],
     phone: props.organization.phone || '',
+    phone_country: props.organization.phone_country || '',
 });
 
 const selectedCountry = computed(() => {
@@ -371,18 +374,15 @@ function goToStep(step: number): void {
                                         class="mb-2 block text-sm font-medium text-gray-700"
                                         >Phone Number</label
                                     >
-                                    <input
+                                    <PhoneInput
                                         id="phone"
                                         v-model="form.phone"
-                                        type="tel"
-                                        class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                                        v-model:country="form.phone_country"
+                                        :default-country="
+                                            form.country_code || 'US'
+                                        "
+                                        :error="form.errors.phone"
                                     />
-                                    <p
-                                        v-if="form.errors.phone"
-                                        class="mt-1 text-sm text-red-600"
-                                    >
-                                        {{ form.errors.phone }}
-                                    </p>
                                 </div>
                                 <div>
                                     <label

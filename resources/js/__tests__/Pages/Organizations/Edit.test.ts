@@ -75,6 +75,8 @@ function makeOrg(overrides = {}) {
         name: 'Clarity Technologies',
         company_name: 'Clarity Tech',
         phone: null,
+        phone_country: null,
+        formatted_phone: null,
         emails: [{ email: 'test@test.test', name: 'Test' }],
         currency: 'INR',
         country_code: 'IN',

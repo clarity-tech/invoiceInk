@@ -55,6 +55,7 @@ test('organization has correct fillable attributes', function () {
         'registration_number',
         'emails',
         'phone',
+        'phone_country',
         'website',
         'currency',
         'notes',
@@ -258,7 +259,8 @@ test('organization can be created with all fillable attributes', function () {
         'tax_number' => 'TAX123456789',
         'registration_number' => 'REG987654321',
         'emails' => $contacts,
-        'phone' => '+1-555-0123',
+        'phone' => '+14155552671',
+        'phone_country' => 'US',
         'website' => 'https://example.com',
         'currency' => 'EUR',
         'notes' => 'Test notes for organization',
@@ -271,7 +273,9 @@ test('organization can be created with all fillable attributes', function () {
     expect($organization->registration_number)->toBe('REG987654321');
     expect($organization->emails)->toBeInstanceOf(ContactCollection::class);
     expect($organization->emails->count())->toBe(2);
-    expect($organization->phone)->toBe('+1-555-0123');
+    expect($organization->phone)->toBe('+14155552671');
+    expect($organization->phone_country)->toBe('US');
+    expect($organization->formatted_phone)->toBe('+1 415-555-2671');
     expect($organization->website)->toBe('https://example.com');
     expect($organization->currency)->toBe(Currency::EUR);
     expect($organization->notes)->toBe('Test notes for organization');

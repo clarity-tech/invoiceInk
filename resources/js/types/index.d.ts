@@ -60,6 +60,8 @@ export interface Organization {
     tax_number: string | null;
     registration_number: string | null;
     phone: string | null;
+    phone_country: string | null;
+    formatted_phone: string | null;
     website: string | null;
     notes: string | null;
     emails: Contact[];
@@ -110,6 +112,8 @@ export interface Customer {
     id: number;
     name: string;
     phone: string | null;
+    phone_country: string | null;
+    formatted_phone: string | null;
     currency: Currency | null;
     emails: Contact[];
     organization_id: number;
