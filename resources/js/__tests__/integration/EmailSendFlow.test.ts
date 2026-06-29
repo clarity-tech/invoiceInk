@@ -208,6 +208,20 @@ describe('EmailSendFlow', () => {
         expect((checkbox.element as HTMLInputElement).checked).toBe(true);
     });
 
+    it('shows include "View Online" button checkbox checked by default', () => {
+        const wrapper = mountComponent();
+        // Scope to the options row whose label mentions the "View ... Online"
+        // button so the assertion targets that toggle regardless of other
+        // checkboxes (e.g. attach-PDF) or their order in the modal.
+        const viewOnlineRow = wrapper
+            .findAll('label')
+            .find((label) => label.text().includes('Online" button'));
+        expect(viewOnlineRow?.exists()).toBe(true);
+        const checkbox = viewOnlineRow!.find('input[type="checkbox"]');
+        expect(checkbox.exists()).toBe(true);
+        expect((checkbox.element as HTMLInputElement).checked).toBe(true);
+    });
+
     it('displays invoice number in PDF attachment label', () => {
         const wrapper = mountComponent();
         expect(wrapper.text()).toContain('INV-2026-001.pdf');

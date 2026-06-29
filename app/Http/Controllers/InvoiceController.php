@@ -409,9 +409,9 @@ class InvoiceController extends Controller
             $validated['subject'],
             $ccEmails,
             $validated['body'],
-            (bool) ($validated['attach_pdf'] ?? false),
+            (bool) ($validated['attach_pdf'] ?? config('app.invoice_email.attach_pdf')),
             $extraAttachments,
-            (bool) ($validated['include_view_online_button'] ?? true),
+            (bool) ($validated['include_view_online_button'] ?? config('app.invoice_email.include_view_online_button')),
         );
 
         Mail::send($mailable);

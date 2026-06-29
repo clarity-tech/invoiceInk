@@ -398,6 +398,26 @@ test('send email defaults include_view_online_button to true when omitted', func
     Mail::assertQueued(DocumentMailer::class, fn (DocumentMailer $m) => $m->includeViewOnlineButton === true);
 });
 
+test('send email omitted toggles fall back to the configured email defaults', function () {
+    Mail::fake();
+    config([
+        'app.invoice_email.include_view_online_button' => false,
+        'app.invoice_email.attach_pdf' => false,
+    ]);
+    $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
+
+    $this->post(route('invoices.send-email', $invoice->id), [
+        'recipients' => ['test@example.test'],
+        'subject' => 'Test',
+        'body' => 'Body',
+    ])->assertRedirect();
+
+    Mail::assertQueued(
+        DocumentMailer::class,
+        fn (DocumentMailer $m) => $m->includeViewOnlineButton === false && $m->attachPdf === false,
+    );
+});
+
 test('send email forwards include_view_online_button=false to the mailer', function () {
     Mail::fake();
     $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);

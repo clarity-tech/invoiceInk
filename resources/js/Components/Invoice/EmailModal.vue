@@ -17,6 +17,15 @@ const emit = defineEmits<{
 const page = usePage();
 const auth = computed(() => (page.props as any).auth);
 
+// Default checkbox state for the optional send-options, sourced from
+// config('app.invoice_email') and shared via HandleInertiaRequests.
+// Falls back to `true` when the shared prop is absent (e.g. in unit tests).
+const emailDefaults = {
+    attach_pdf: (page.props as any).emailDefaults?.attach_pdf ?? true,
+    include_view_online_button:
+        (page.props as any).emailDefaults?.include_view_online_button ?? true,
+};
+
 const customer = computed(
     () =>
         props.customers.find((c) => c.id === props.invoice.customer_id) ?? null,
@@ -51,8 +60,8 @@ const form = useForm({
     cc: [] as string[],
     subject: '',
     body: '',
-    attach_pdf: true,
-    include_view_online_button: false,
+    attach_pdf: emailDefaults.attach_pdf,
+    include_view_online_button: emailDefaults.include_view_online_button,
     attachments: [] as File[],
 });
 
@@ -188,8 +197,9 @@ watch(
 
             form.recipients = [...customerEmails.value];
             form.cc = [...orgEmails.value];
-            form.attach_pdf = true;
-            form.include_view_online_button = false;
+            form.attach_pdf = emailDefaults.attach_pdf;
+            form.include_view_online_button =
+                emailDefaults.include_view_online_button;
             form.attachments = [];
             form.clearErrors();
             newToEmail.value = '';

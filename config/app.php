@@ -123,4 +123,28 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Invoice Email Send Defaults
+    |--------------------------------------------------------------------------
+    |
+    | Default state for the optional toggles in the "send document" email
+    | composer (the EmailModal). These seed the checkboxes when the modal is
+    | opened; the sender can still override them per email. Shared to the
+    | frontend via HandleInertiaRequests and used as the server-side fallback
+    | in InvoiceController::email().
+    |
+    */
+
+    'invoice_email' => [
+
+        // Attach the rendered PDF of the invoice/estimate to the email.
+        'attach_pdf' => (bool) env('INVOICE_EMAIL_ATTACH_PDF', true),
+
+        // Include the "View Invoice/Estimate Online" CTA button linking to the
+        // public document page.
+        'include_view_online_button' => (bool) env('INVOICE_EMAIL_VIEW_ONLINE_BUTTON', true),
+
+    ],
+
 ];

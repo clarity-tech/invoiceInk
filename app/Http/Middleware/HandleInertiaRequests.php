@@ -51,6 +51,7 @@ class HandleInertiaRequests extends Middleware
                 'error' => $request->session()->get('error'),
                 'message' => $request->session()->get('message'),
             ],
+            'emailDefaults' => fn () => config('app.invoice_email'),
         ];
     }
 }
