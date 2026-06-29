@@ -1,6 +1,7 @@
 <?php
 
 use App\Mail\DocumentMailer;
+use App\Support\Branding;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Mail;
@@ -220,6 +221,22 @@ test('document mailer renders the platform logo and tagline in the footer brandi
     expect($html)->toContain(config('branding.logo'))             // hosted logo URL reference
         ->and($html)->toContain(config('branding.tagline'))       // centralized footer tagline
         ->and($html)->toContain('class="footer-brand"');          // footer lockup wrapper
+});
+
+test('document mailer makes the header brand logo a clickable utm-tagged link', function () {
+    $invoice = createInvoiceWithItems(['invoice_number' => 'INV-BRAND-LINK']);
+
+    $html = (new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']])))->renderHtml();
+
+    // The header lockup is a clickable, UTM-tagged platform link. It carries
+    // its own placement-specific campaign (brand_header) rather than reusing
+    // the footer's "powered_by" campaign.
+    $headerUrl = e(Branding::attributedUrl('email', 'brand_header'));
+
+    expect($html)->toContain('href="'.$headerUrl.'" class="header-brand"')
+        ->and($headerUrl)->toContain('utm_medium=email')
+        ->and($headerUrl)->toContain('utm_campaign=brand_header')
+        ->and($headerUrl)->not->toContain('powered_by');
 });
 
 test('document mailer renders the brand logo lockup image in header and footer', function () {

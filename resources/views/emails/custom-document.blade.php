@@ -37,6 +37,11 @@
             padding: 22px 30px 0 30px;
         }
 
+        .email-header .header-brand {
+            text-decoration: none;
+            display: inline-block;
+        }
+
         .email-header .brand-mark {
             width: 26px;
             height: 26px;
@@ -219,18 +224,13 @@
                     <tr>
                         <td class="email-header">
                             @if(config('branding.logo_external'))
-                            <img src="{{ config('branding.logo_url') ?: asset(config('branding.logo')) }}" alt="{{ config('app.name') }}" width="149" height="34" style="display: block; border: 0;">
+                            <a href="{{ \App\Support\Branding::attributedUrl('email', 'brand_header') }}" class="header-brand">
+                                <img src="{{ config('branding.logo_url') ?: asset(config('branding.logo')) }}" alt="{{ config('app.name') }}" width="149" height="34" style="display: block; border: 0;">
+                            </a>
                             @else
-                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                                <tr>
-                                    <td style="vertical-align: middle;">
-                                        <img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="26" height="26" class="brand-mark">
-                                    </td>
-                                    <td style="vertical-align: middle;">
-                                        <span class="brand-name">Invoice<span style="color: #7c3aed;">Ink</span></span>
-                                    </td>
-                                </tr>
-                            </table>
+                            <a href="{{ \App\Support\Branding::attributedUrl('email', 'brand_header') }}" class="header-brand">
+                                <img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="26" height="26" class="brand-mark"><span class="brand-name">Invoice<span style="color: #7c3aed;">Ink</span></span>
+                            </a>
                             @endif
                             <p class="brand-slogan">{{ config('branding.slogan') }}</p>
                         </td>

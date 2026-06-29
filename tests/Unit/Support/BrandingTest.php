@@ -15,6 +15,18 @@ it('builds a powered-by url with utm attribution for the given medium', function
     expect($url)->toBe('https://invoiceink.test?utm_source=invoiceink&utm_medium=pdf&utm_campaign=powered_by');
 });
 
+it('builds an attributed url with an explicit placement campaign', function () {
+    $url = Branding::attributedUrl('email', 'brand_header');
+
+    expect($url)->toBe('https://invoiceink.test?utm_source=invoiceink&utm_medium=email&utm_campaign=brand_header');
+});
+
+it('omits the campaign when none is supplied to attributedUrl', function () {
+    $url = Branding::attributedUrl('email', null);
+
+    expect($url)->toBe('https://invoiceink.test?utm_source=invoiceink&utm_medium=email');
+});
+
 it('uses the supplied medium', function () {
     expect(Branding::poweredByUrl('email'))->toContain('utm_medium=email');
 });
