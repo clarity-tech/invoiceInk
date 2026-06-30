@@ -5,10 +5,11 @@ import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
 
-defineProps<{
+const props = defineProps<{
     invitation?: { email: string; organization: string } | null;
 }>();
 
+const email = ref(props.invitation?.email ?? '');
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 </script>
@@ -75,7 +76,7 @@ const showConfirmPassword = ref(false);
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm read-only:bg-gray-100 read-only:text-gray-500 focus:border-brand-500 focus:ring-brand-500"
                     required
                     autocomplete="username"
-                    :value="invitation?.email"
+                    v-model="email"
                     :readonly="!!invitation"
                 />
                 <p v-if="errors.email" class="mt-1 text-xs text-red-600">
