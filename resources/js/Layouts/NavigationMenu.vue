@@ -23,22 +23,25 @@ const showMobileMenu = ref(false);
 const showUserDropdown = ref(false);
 const showTeamDropdown = ref(false);
 
-const auth = (page.props.auth ?? {}) as {
-    user: {
-        id: number;
-        name: string;
-        email: string;
-        profile_photo_url: string;
-        all_teams: TeamSummary[];
-    } | null;
-    currentTeam: {
-        id: number;
-        name: string;
-        company_name: string | null;
-    } | null;
-};
+const auth = computed(
+    () =>
+        (page.props.auth ?? {}) as {
+            user: {
+                id: number;
+                name: string;
+                email: string;
+                profile_photo_url: string;
+                all_teams: TeamSummary[];
+            } | null;
+            currentTeam: {
+                id: number;
+                name: string;
+                company_name: string | null;
+            } | null;
+        },
+);
 
-const teams = computed<TeamSummary[]>(() => auth.user?.all_teams ?? []);
+const teams = computed<TeamSummary[]>(() => auth.value.user?.all_teams ?? []);
 const hasMultipleTeams = computed(() => teams.value.length > 1);
 
 const { canManage } = usePermissions();
@@ -54,7 +57,7 @@ function isCurrentPath(path: string): boolean {
 
 function selectTeam(teamId: number) {
     showTeamDropdown.value = false;
-    if (auth.currentTeam?.id === teamId) {
+    if (auth.value.currentTeam?.id === teamId) {
         return;
     }
     router.put(
