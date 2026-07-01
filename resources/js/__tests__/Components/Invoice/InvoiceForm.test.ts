@@ -825,6 +825,44 @@ describe('Invoice/InvoiceForm', () => {
         });
     });
 
+    describe('attachments', () => {
+        const attachments = [
+            {
+                id: 21,
+                name: 'quote.pdf',
+                size: 2048,
+                mime: 'application/pdf',
+                extension: 'pdf',
+                url: '/invoices/42/attachments/21',
+            },
+        ];
+
+        it('renders an Attachments section with a dropzone', () => {
+            const wrapper = mountComponent();
+            expect(wrapper.text()).toContain('Attachments');
+            expect(wrapper.text()).toContain('Click to attach files');
+        });
+
+        it('lists existing attachments with a view link', () => {
+            const wrapper = mountComponent({ attachments });
+            const link = wrapper.find('a[href="/invoices/42/attachments/21"]');
+            expect(link.exists()).toBe(true);
+            expect(link.text()).toContain('quote.pdf');
+        });
+
+        it('hides an existing attachment when its remove cross is clicked', async () => {
+            const wrapper = mountComponent({ attachments });
+
+            await wrapper
+                .find('button[aria-label="Remove attachment"]')
+                .trigger('click');
+
+            expect(
+                wrapper.find('a[href="/invoices/42/attachments/21"]').exists(),
+            ).toBe(false);
+        });
+    });
+
     describe('flash messages', () => {
         it('displays success flash message', () => {
             // Need to override usePage to return flash

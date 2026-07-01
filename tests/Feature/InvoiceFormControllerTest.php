@@ -103,6 +103,106 @@ test('store creates estimate', function () {
     expect($invoice->type)->toBe('estimate');
 });
 
+test('store persists uploaded attachments to the invoice', function () {
+    Storage::fake('s3');
+
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 5000, 'tax_rate' => 0],
+        ],
+        'attachments' => [
+            UploadedFile::fake()->create('spec.pdf', 200, 'application/pdf'),
+            UploadedFile::fake()->image('diagram.png'),
+        ],
+    ])->assertRedirect();
+
+    $invoice = Invoice::first();
+    expect($invoice->getMedia('attachments'))->toHaveCount(2);
+    expect($invoice->attachmentsForDisplay())->toHaveCount(2);
+});
+
+test('store rejects an unsupported attachment type', function () {
+    Storage::fake('s3');
+
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 5000, 'tax_rate' => 0],
+        ],
+        'attachments' => [UploadedFile::fake()->create('malware.exe', 10)],
+    ])->assertSessionHasErrors('attachments.0');
+
+    expect(Invoice::count())->toBe(0);
+});
+
+test('update adds new attachments and removes selected ones', function () {
+    Storage::fake('s3');
+
+    $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
+    $invoice->addMedia(UploadedFile::fake()->create('old.pdf', 100, 'application/pdf'))->toMediaCollection('attachments');
+    $removeId = $invoice->getMedia('attachments')->first()->id;
+
+    $this->put(route('invoices.update', $invoice->id), [
+        'type' => 'invoice',
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'sent',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(15)->format('Y-m-d'),
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 5000, 'tax_rate' => 0],
+        ],
+        'removed_attachment_ids' => [$removeId],
+        'attachments' => [UploadedFile::fake()->create('new.pdf', 100, 'application/pdf')],
+    ])->assertRedirect();
+
+    $media = $invoice->fresh()->getMedia('attachments');
+    expect($media)->toHaveCount(1);
+    expect($media->first()->file_name)->toBe('new.pdf');
+});
+
+test('show attachment redirects for the owner', function () {
+    Storage::fake('s3');
+
+    $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
+    $invoice->addMedia(UploadedFile::fake()->create('doc.pdf', 100, 'application/pdf'))->toMediaCollection('attachments');
+    $media = $invoice->getMedia('attachments')->first();
+
+    $this->get(route('invoices.attachments.show', ['invoice' => $invoice->id, 'media' => $media->id]))
+        ->assertRedirect();
+});
+
+test('show attachment 404s for media that belongs to another invoice', function () {
+    Storage::fake('s3');
+
+    $invoiceA = createInvoiceWithItems([], null, $this->organization, $this->customer);
+    $invoiceB = createInvoiceWithItems([], null, $this->organization, $this->customer);
+    $invoiceB->addMedia(UploadedFile::fake()->create('doc.pdf', 100, 'application/pdf'))->toMediaCollection('attachments');
+    $foreignMedia = $invoiceB->getMedia('attachments')->first();
+
+    $this->get(route('invoices.attachments.show', ['invoice' => $invoiceA->id, 'media' => $foreignMedia->id]))
+        ->assertNotFound();
+});
+
 test('store validates required fields', function () {
     // Need organization_id to pass the abort_unless check
     $this->post(route('invoices.store'), [
@@ -335,9 +435,9 @@ test('send email denies unauthenticated access', function () {
     ])->assertRedirect('/login');
 });
 
-test('send email stores uploaded attachments and forwards them to the mailer', function () {
+test('send email persists uploaded attachments to the invoice and forwards them to the mailer', function () {
     Mail::fake();
-    Storage::fake(config('filesystems.default'));
+    Storage::fake('s3');
 
     $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
 
@@ -363,9 +463,35 @@ test('send email stores uploaded attachments and forwards them to the mailer', f
             && $mail->extraAttachments[1]['name'] === 'photo.png';
     });
 
-    $disk = Storage::disk(config('filesystems.default'));
-    $stored = $disk->allFiles('email-attachments');
-    expect($stored)->toHaveCount(2);
+    // Files uploaded in the email editor are now stored on the invoice itself.
+    expect($invoice->fresh()->getMedia('attachments'))->toHaveCount(2);
+});
+
+test('send email includes selected invoice attachments and excludes removed ones', function () {
+    Mail::fake();
+    Storage::fake('s3');
+
+    $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
+    $invoice->addMedia(UploadedFile::fake()->create('keep.pdf', 100, 'application/pdf'))->toMediaCollection('attachments');
+    $invoice->addMedia(UploadedFile::fake()->create('drop.pdf', 100, 'application/pdf'))->toMediaCollection('attachments');
+
+    $keepId = $invoice->getMedia('attachments')->firstWhere('file_name', 'keep.pdf')->id;
+
+    $this->post(route('invoices.send-email', $invoice->id), [
+        'recipients' => ['test@example.test'],
+        'subject' => 'Test',
+        'body' => 'Body',
+        'attach_pdf' => false,
+        'attachment_ids' => [$keepId],
+    ])->assertRedirect();
+
+    Mail::assertQueued(DocumentMailer::class, function (DocumentMailer $mail) {
+        return count($mail->extraAttachments) === 1
+            && $mail->extraAttachments[0]['name'] === 'keep.pdf';
+    });
+
+    // Excluding "drop.pdf" from the send must not delete it from the invoice.
+    expect($invoice->fresh()->getMedia('attachments'))->toHaveCount(2);
 });
 
 test('send email rejects too many attachments', function () {

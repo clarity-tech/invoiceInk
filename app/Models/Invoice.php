@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Invoice extends Model implements HasMedia
 {
@@ -292,5 +293,28 @@ class Invoice extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('attachments');
+    }
+
+    /**
+     * Lightweight list of the invoice's attachments for the frontend. The URL
+     * points at an authorized view route rather than the raw storage URL.
+     *
+     * @return array<int, array{id: int, name: string, size: int, mime: string, extension: string, url: string}>
+     */
+    public function attachmentsForDisplay(): array
+    {
+        return $this->getMedia('attachments')
+            ->map(fn (Media $media): array => [
+                'id' => $media->id,
+                'name' => $media->file_name,
+                'size' => $media->size,
+                'mime' => $media->mime_type ?? 'application/octet-stream',
+                'extension' => strtolower(pathinfo($media->file_name, PATHINFO_EXTENSION)),
+                'url' => route('invoices.attachments.show', [
+                    'invoice' => $this->id,
+                    'media' => $media->id,
+                ]),
+            ])
+            ->all();
     }
 }

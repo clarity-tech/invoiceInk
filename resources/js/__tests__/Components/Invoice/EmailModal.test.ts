@@ -7,52 +7,64 @@ const { mockPost, mockClearErrors } = vi.hoisted(() => ({
     mockClearErrors: vi.fn(),
 }));
 
-vi.mock('@inertiajs/vue3', () => ({
-    useForm: (initial: Record<string, unknown>) => {
-        const data = { ...initial };
-        return new Proxy(data, {
-            get(target, prop) {
-                if (prop === 'post') return mockPost;
-                if (prop === 'put') return vi.fn();
-                if (prop === 'delete') return vi.fn();
-                if (prop === 'errors') return {};
-                if (prop === 'processing') return false;
-                if (prop === 'reset') return vi.fn();
-                if (prop === 'clearErrors') return mockClearErrors;
-                if (prop === 'transform') return vi.fn().mockReturnThis();
-                return target[prop as string];
-            },
-            set(target, prop, value) {
-                target[prop as string] = value;
-                return true;
-            },
-        });
-    },
-    Head: { template: '<div />' },
-    Link: { template: '<a><slot /></a>' },
-    router: { get: vi.fn(), post: vi.fn(), delete: vi.fn(), reload: vi.fn() },
-    usePage: () => ({
-        props: {
-            auth: {
-                user: {
-                    id: 1,
-                    name: 'Test',
-                    email: 'test@test.test',
-                    profile_photo_url: '',
-                    two_factor_enabled: false,
+vi.mock('@inertiajs/vue3', () => {
+    const { reactive } = require('vue');
+    return {
+        useForm: (initial: Record<string, unknown>) => {
+            // Reactive so computed props (e.g. included attachments) update when
+            // the component mutates a field, mirroring the real useForm.
+            const data = reactive({ ...initial });
+            return new Proxy(data, {
+                get(target, prop) {
+                    if (prop === 'post') return mockPost;
+                    if (prop === 'put') return vi.fn();
+                    if (prop === 'delete') return vi.fn();
+                    if (prop === 'errors') return {};
+                    if (prop === 'processing') return false;
+                    if (prop === 'reset') return vi.fn();
+                    if (prop === 'clearErrors') return mockClearErrors;
+                    if (prop === 'transform') return vi.fn().mockReturnThis();
+                    return target[prop as string];
                 },
-                currentTeam: {
-                    id: 1,
-                    name: 'Team',
-                    company_name: 'Co',
-                    currency: 'INR',
-                    emails: [{ name: 'Admin', email: 'admin@company.test' }],
+                set(target, prop, value) {
+                    target[prop as string] = value;
+                    return true;
                 },
-            },
-            flash: { success: null, error: null, message: null },
+            });
         },
-    }),
-}));
+        Head: { template: '<div />' },
+        Link: { template: '<a><slot /></a>' },
+        router: {
+            get: vi.fn(),
+            post: vi.fn(),
+            delete: vi.fn(),
+            reload: vi.fn(),
+        },
+        usePage: () => ({
+            props: {
+                auth: {
+                    user: {
+                        id: 1,
+                        name: 'Test',
+                        email: 'test@test.test',
+                        profile_photo_url: '',
+                        two_factor_enabled: false,
+                    },
+                    currentTeam: {
+                        id: 1,
+                        name: 'Team',
+                        company_name: 'Co',
+                        currency: 'INR',
+                        emails: [
+                            { name: 'Admin', email: 'admin@company.test' },
+                        ],
+                    },
+                },
+                flash: { success: null, error: null, message: null },
+            },
+        }),
+    };
+});
 
 import EmailModal from '@/Components/Invoice/EmailModal.vue';
 
@@ -79,6 +91,7 @@ function mountComponent(propsOverride = {}) {
                 customer_id: 1,
             }),
             customers: [customer],
+            invoiceAttachments: [],
             ...propsOverride,
         },
         global: {
@@ -188,5 +201,64 @@ describe('Invoice/EmailModal', () => {
         const link = wrapper.find('a[href="/email-templates"]');
         expect(link.exists()).toBe(true);
         expect(link.text()).toContain('Customize');
+    });
+
+    describe('invoice attachments', () => {
+        const invoiceAttachments = [
+            {
+                id: 11,
+                name: 'contract.pdf',
+                size: 2048,
+                mime: 'application/pdf',
+                extension: 'pdf',
+                url: '/invoices/5/attachments/11',
+            },
+            {
+                id: 12,
+                name: 'diagram.png',
+                size: 4096,
+                mime: 'image/png',
+                extension: 'png',
+                url: '/invoices/5/attachments/12',
+            },
+        ];
+
+        // The init happens in a watcher on `show`, so mount hidden then reveal.
+        async function mountOpened() {
+            const wrapper = mountComponent({
+                show: false,
+                invoiceAttachments,
+            });
+            await wrapper.setProps({ show: true });
+            return wrapper;
+        }
+
+        it("lists the invoice's saved attachments with a view link", async () => {
+            const wrapper = await mountOpened();
+
+            const link = wrapper.find('a[href="/invoices/5/attachments/11"]');
+            expect(link.exists()).toBe(true);
+            expect(link.text()).toContain('contract.pdf');
+            expect(wrapper.text()).toContain('diagram.png');
+        });
+
+        it('excludes an attachment from the send when its cross is clicked', async () => {
+            const wrapper = await mountOpened();
+
+            const removeButtons = wrapper.findAll(
+                'button[aria-label="Exclude attachment from this email"]',
+            );
+            expect(removeButtons).toHaveLength(2);
+
+            await removeButtons[0].trigger('click');
+
+            expect(
+                wrapper.find('a[href="/invoices/5/attachments/11"]').exists(),
+            ).toBe(false);
+            // The other attachment is still present.
+            expect(
+                wrapper.find('a[href="/invoices/5/attachments/12"]').exists(),
+            ).toBe(true);
+        });
     });
 });

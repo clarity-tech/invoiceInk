@@ -1,14 +1,22 @@
 <script setup lang="ts">
 import { useForm, usePage } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
+import AttachmentDropzone from './AttachmentDropzone.vue';
 import TipTapEditor from '@/Components/TipTapEditor.vue';
-import type { Invoice, Customer } from '@/types';
+import { formatBytes } from '@/composables/useFileAttachments';
+import type { Invoice, Customer, InvoiceAttachment } from '@/types';
 
-const props = defineProps<{
-    show: boolean;
-    invoice: Invoice;
-    customers: Customer[];
-}>();
+const props = withDefaults(
+    defineProps<{
+        show: boolean;
+        invoice: Invoice;
+        customers: Customer[];
+        invoiceAttachments?: InvoiceAttachment[];
+    }>(),
+    {
+        invoiceAttachments: () => [],
+    },
+);
 
 const emit = defineEmits<{
     close: [];
@@ -62,103 +70,23 @@ const form = useForm({
     body: '',
     attach_pdf: emailDefaults.attach_pdf,
     include_view_online_button: emailDefaults.include_view_online_button,
+    // Ids of the invoice's saved attachments to include in this send. Excluding
+    // one here never deletes it from the invoice.
+    attachment_ids: [] as number[],
+    // New files: uploaded to the invoice AND attached to this send.
     attachments: [] as File[],
 });
 
 const newToEmail = ref('');
 const newCcEmail = ref('');
-const fileInputRef = ref<HTMLInputElement | null>(null);
-const attachmentError = ref('');
-const isDragging = ref(false);
 
-const MAX_FILES = 10;
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
-const MAX_TOTAL_BYTES = 25 * 1024 * 1024;
-const ALLOWED_EXTENSIONS = [
-    'pdf',
-    'png',
-    'jpg',
-    'jpeg',
-    'gif',
-    'webp',
-    'doc',
-    'docx',
-    'xls',
-    'xlsx',
-    'ppt',
-    'pptx',
-    'csv',
-    'txt',
-];
+// Saved invoice attachments still selected for this send.
+const includedAttachments = computed(() =>
+    props.invoiceAttachments.filter((a) => form.attachment_ids.includes(a.id)),
+);
 
-function formatBytes(bytes: number): string {
-    if (bytes < 1024) {
-        return `${bytes} B`;
-    }
-
-    if (bytes < 1024 * 1024) {
-        return `${(bytes / 1024).toFixed(1)} KB`;
-    }
-
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function extensionOf(name: string): string {
-    const dot = name.lastIndexOf('.');
-
-    return dot >= 0 ? name.slice(dot + 1).toLowerCase() : '';
-}
-
-function addAttachments(files: FileList | File[] | null) {
-    if (!files || files.length === 0) {
-        return;
-    }
-
-    attachmentError.value = '';
-    const incoming = Array.from(files);
-
-    for (const file of incoming) {
-        if (form.attachments.length >= MAX_FILES) {
-            attachmentError.value = `You may attach at most ${MAX_FILES} files.`;
-            break;
-        }
-
-        if (!ALLOWED_EXTENSIONS.includes(extensionOf(file.name))) {
-            attachmentError.value = `Unsupported file type: ${file.name}`;
-            continue;
-        }
-
-        if (file.size > MAX_FILE_BYTES) {
-            attachmentError.value = `${file.name} exceeds the 10MB per-file limit.`;
-            continue;
-        }
-
-        const newTotal =
-            form.attachments.reduce((sum, f) => sum + f.size, 0) + file.size;
-
-        if (newTotal > MAX_TOTAL_BYTES) {
-            attachmentError.value = `Total attachments would exceed the 25MB limit.`;
-            break;
-        }
-
-        form.attachments.push(file);
-    }
-}
-
-function removeAttachment(index: number) {
-    form.attachments.splice(index, 1);
-    attachmentError.value = '';
-}
-
-function onFilesSelected(event: Event) {
-    const target = event.target as HTMLInputElement;
-    addAttachments(target.files);
-    target.value = '';
-}
-
-function onDrop(event: DragEvent) {
-    isDragging.value = false;
-    addAttachments(event.dataTransfer?.files ?? null);
+function removeInvoiceAttachment(id: number) {
+    form.attachment_ids = form.attachment_ids.filter((a) => a !== id);
 }
 
 async function loadTemplate(templateType: string) {
@@ -200,11 +128,11 @@ watch(
             form.attach_pdf = emailDefaults.attach_pdf;
             form.include_view_online_button =
                 emailDefaults.include_view_online_button;
+            form.attachment_ids = props.invoiceAttachments.map((a) => a.id);
             form.attachments = [];
             form.clearErrors();
             newToEmail.value = '';
             newCcEmail.value = '';
-            attachmentError.value = '';
 
             loadTemplate(selectedTemplateType.value);
         }
@@ -528,30 +456,35 @@ function send() {
                         </div>
                     </label>
 
+                    <!-- Saved invoice attachments (excluding one only omits it
+                         from this send; it stays on the invoice). -->
                     <ul
-                        v-if="form.attachments.length > 0"
+                        v-if="includedAttachments.length > 0"
                         class="mt-2 space-y-1"
                     >
                         <li
-                            v-for="(file, index) in form.attachments"
-                            :key="`${file.name}-${index}`"
+                            v-for="attachment in includedAttachments"
+                            :key="attachment.id"
                             class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2"
                         >
                             <div class="min-w-0 flex-1">
-                                <div
-                                    class="truncate text-sm font-medium text-gray-900"
+                                <a
+                                    :href="attachment.url"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="truncate text-sm font-medium text-brand-600 hover:underline"
                                 >
-                                    {{ file.name }}
-                                </div>
+                                    {{ attachment.name }}
+                                </a>
                                 <div class="text-xs text-gray-500">
-                                    {{ formatBytes(file.size) }}
+                                    {{ formatBytes(attachment.size) }}
                                 </div>
                             </div>
                             <button
                                 type="button"
                                 class="ml-2 text-gray-400 hover:text-red-600"
-                                aria-label="Remove attachment"
-                                @click="removeAttachment(index)"
+                                aria-label="Exclude attachment from this email"
+                                @click="removeInvoiceAttachment(attachment.id)"
                             >
                                 <svg
                                     class="h-4 w-4"
@@ -568,46 +501,11 @@ function send() {
                         </li>
                     </ul>
 
-                    <div
-                        class="mt-2 cursor-pointer rounded-md border border-dashed px-3 py-4 text-center transition"
-                        :class="
-                            isDragging
-                                ? 'border-brand-500 bg-brand-50'
-                                : 'border-gray-300 hover:bg-gray-50'
-                        "
-                        role="button"
-                        tabindex="0"
-                        @click="fileInputRef?.click()"
-                        @keydown.enter.prevent="fileInputRef?.click()"
-                        @keydown.space.prevent="fileInputRef?.click()"
-                        @dragover.prevent="isDragging = true"
-                        @dragleave.prevent="isDragging = false"
-                        @drop.prevent="onDrop"
-                    >
-                        <p class="text-sm text-gray-600">
-                            <span class="font-medium text-brand-600"
-                                >Click to attach files</span
-                            >
-                            or drag and drop
-                        </p>
-                        <p class="mt-0.5 text-xs text-gray-500">
-                            Up to 10 files, 10MB each, 25MB total
-                        </p>
-                        <input
-                            ref="fileInputRef"
-                            type="file"
-                            multiple
-                            class="hidden"
-                            :accept="
-                                ALLOWED_EXTENSIONS.map((e) => '.' + e).join(',')
-                            "
-                            @change="onFilesSelected"
-                        />
+                    <!-- New files: uploaded to the invoice and attached here. -->
+                    <div class="mt-2">
+                        <AttachmentDropzone v-model="form.attachments" />
                     </div>
 
-                    <p v-if="attachmentError" class="mt-2 text-xs text-red-600">
-                        {{ attachmentError }}
-                    </p>
                     <p
                         v-if="form.errors.attachments"
                         class="mt-1 text-xs text-red-600"

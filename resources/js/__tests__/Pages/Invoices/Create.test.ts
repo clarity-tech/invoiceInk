@@ -74,6 +74,7 @@ function mountComponent(propsOverride = {}) {
             numberingSeries: [makeNumberingSeries()],
             statusOptions: { draft: 'Draft', sent: 'Sent' },
             taxLabels: { IN: 'GSTIN', US: 'EIN' },
+            attachments: [],
             defaults,
             ...propsOverride,
         },

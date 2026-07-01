@@ -19,6 +19,7 @@ import type {
     Location,
     TaxTemplate,
     InvoiceNumberingSeries,
+    InvoiceAttachment,
 } from '@/types';
 
 const props = defineProps<{
@@ -29,6 +30,7 @@ const props = defineProps<{
     numberingSeries: InvoiceNumberingSeries[];
     statusOptions: Record<string, string>;
     taxLabels: Record<string, string>;
+    attachments: InvoiceAttachment[];
 }>();
 
 const showPaymentModal = ref(false);
@@ -84,6 +86,7 @@ function deletePayment(paymentId: number) {
                 :numbering-series="numberingSeries"
                 :status-options="statusOptions"
                 :tax-labels="taxLabels"
+                :attachments="attachments"
             />
 
             <!-- Payment Section (invoices only, not estimates) -->

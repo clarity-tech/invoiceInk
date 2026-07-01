@@ -13,6 +13,7 @@ import type {
     Location,
     TaxTemplate,
     InvoiceNumberingSeries,
+    InvoiceAttachment,
 } from '@/types';
 
 defineProps<{
@@ -23,6 +24,7 @@ defineProps<{
     numberingSeries: InvoiceNumberingSeries[];
     statusOptions: Record<string, string>;
     taxLabels: Record<string, string>;
+    attachments: InvoiceAttachment[];
     defaults: {
         organization_id: number | null;
         organization_location_id: number | null;
@@ -63,6 +65,7 @@ defineProps<{
                 :numbering-series="numberingSeries"
                 :status-options="statusOptions"
                 :tax-labels="taxLabels"
+                :attachments="attachments"
                 :defaults="defaults"
             />
         </div>

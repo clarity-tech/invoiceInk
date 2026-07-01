@@ -109,6 +109,7 @@ Route::middleware([
         Route::post('/invoices/{invoice}/duplicate', [InvoiceController::class, 'duplicate'])->name('invoices.duplicate');
         Route::post('/invoices/{invoice}/convert', [InvoiceController::class, 'convertEstimate'])->name('invoices.convert');
         Route::get('/invoices/{invoice}/download', [InvoiceController::class, 'downloadPdf'])->name('invoices.download');
+        Route::get('/invoices/{invoice}/attachments/{media}', [InvoiceController::class, 'showAttachment'])->name('invoices.attachments.show');
         Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
         Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
         Route::get('/invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit');

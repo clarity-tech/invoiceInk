@@ -166,6 +166,15 @@ export interface Invoice {
     deleted_at?: string | null;
 }
 
+export interface InvoiceAttachment {
+    id: number;
+    name: string;
+    size: number;
+    mime: string;
+    extension: string;
+    url: string;
+}
+
 export interface Payment {
     id: number;
     invoice_id: number;

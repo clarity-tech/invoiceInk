@@ -25,11 +25,13 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use InvalidArgumentException;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class InvoiceController extends Controller
 {
@@ -99,6 +101,7 @@ class InvoiceController extends Controller
 
         return Inertia::render('Invoices/Create', [
             'type' => $type,
+            'attachments' => [],
             'customers' => $customers,
             'organizationLocations' => $organizationLocations,
             'taxTemplates' => $taxTemplates,
@@ -155,6 +158,8 @@ class InvoiceController extends Controller
             ],
             'invoice_numbering_series_id' => ['nullable', 'exists:invoice_numbering_series,id'],
         ]));
+
+        $this->guardAttachmentsTotalSize($request->file('attachments', []));
 
         $invoice = DB::transaction(function () use ($validated) {
             $totals = $this->calculateTotals($validated['items']);
@@ -216,6 +221,8 @@ class InvoiceController extends Controller
 
             return $invoice;
         });
+
+        $this->syncInvoiceAttachments($invoice, $request);
 
         return redirect()->route('invoices.edit', $invoice->id)
             ->with('success', "{$invoice->typeLabel()} created successfully.");
@@ -283,6 +290,7 @@ class InvoiceController extends Controller
 
         return Inertia::render('Invoices/Edit', [
             'invoice' => $invoice,
+            'attachments' => $invoice->attachmentsForDisplay(),
             'customers' => $customers,
             'organizationLocations' => $organizationLocations,
             'taxTemplates' => $taxTemplates,
@@ -323,6 +331,8 @@ class InvoiceController extends Controller
             ],
         ]));
 
+        $this->guardAttachmentsTotalSize($request->file('attachments', []));
+
         DB::transaction(function () use ($invoice, $validated) {
             $totals = $this->calculateTotals($validated['items']);
 
@@ -356,6 +366,8 @@ class InvoiceController extends Controller
             $this->persistItems($invoice, $validated['items']);
         });
 
+        $this->syncInvoiceAttachments($invoice, $request);
+
         return back()->with('success', "{$invoice->typeLabel()} updated successfully.");
     }
 
@@ -372,28 +384,19 @@ class InvoiceController extends Controller
             'body' => ['required', 'string'],
             'attach_pdf' => ['boolean'],
             'include_view_online_button' => ['boolean'],
+            'attachment_ids' => ['nullable', 'array'],
+            'attachment_ids.*' => ['integer'],
             'attachments' => ['nullable', 'array', 'max:10'],
-            'attachments.*' => [
-                'file',
-                'max:10240',
-                'mimes:pdf,png,jpg,jpeg,gif,webp,doc,docx,xls,xlsx,ppt,pptx,csv,txt',
-            ],
+            'attachments.*' => self::ATTACHMENT_FILE_RULES,
         ], [
             'attachments.max' => 'You may attach at most 10 files.',
             'attachments.*.max' => 'Each attachment must be 10MB or smaller.',
             'attachments.*.mimes' => 'Unsupported file type.',
         ]);
 
-        $uploadedFiles = $request->file('attachments', []);
-        $totalBytes = collect($uploadedFiles)->sum(fn ($file) => $file->getSize());
+        $this->guardAttachmentsTotalSize($request->file('attachments', []));
 
-        if ($totalBytes > 25 * 1024 * 1024) {
-            return back()->withErrors([
-                'attachments' => 'Total attachments size must not exceed 25MB.',
-            ])->withInput();
-        }
-
-        $extraAttachments = $this->persistEmailAttachments($uploadedFiles);
+        $extraAttachments = $this->resolveEmailAttachments($invoice, $request, $validated['attachment_ids'] ?? []);
 
         $contacts = collect($validated['recipients'])->map(fn ($email) => [
             'name' => '',
@@ -424,36 +427,57 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Persist uploaded files to a temp location so the queued mailer can read them.
+     * Persist any newly uploaded files onto the invoice, then resolve the set of
+     * attachments to send: the kept invoice attachments (by id) plus the new
+     * uploads. Excluding an existing attachment in the email editor only omits
+     * it from this send — it stays on the invoice.
      *
-     * @param  array<int, UploadedFile>  $files
+     * @param  array<int, int|string>  $keepIds
      * @return array<int, array{disk: string, path: string, name: string, mime: string}>
      */
-    private function persistEmailAttachments(array $files): array
+    private function resolveEmailAttachments(Invoice $invoice, Request $request, array $keepIds): array
     {
-        if (empty($files)) {
-            return [];
-        }
+        $keepIds = array_map('intval', $keepIds);
 
-        $disk = config('filesystems.default');
-        $bucket = 'email-attachments/'.(string) Str::ulid();
+        $kept = $invoice->getMedia('attachments')
+            ->whereIn('id', $keepIds);
 
-        return collect($files)->map(function ($file) use ($disk, $bucket) {
-            $safeName = Str::of($file->getClientOriginalName())
-                ->replace(['\\', '/', "\0"], '-')
-                ->limit(120, '')
-                ->toString();
-            $storedName = Str::ulid().'-'.$safeName;
+        $added = collect($request->file('attachments', []))
+            ->map(fn (UploadedFile $file) => $invoice->addMedia($file)->toMediaCollection('attachments'));
 
-            $path = $file->storeAs($bucket, $storedName, ['disk' => $disk]);
+        return $kept->concat($added)
+            ->map(fn (Media $media) => [
+                'disk' => $media->disk,
+                'path' => $media->getPathRelativeToRoot(),
+                'name' => $media->file_name,
+                'mime' => $media->mime_type ?? 'application/octet-stream',
+            ])
+            ->values()
+            ->all();
+    }
 
-            return [
-                'disk' => $disk,
-                'path' => $path,
-                'name' => $safeName !== '' ? $safeName : 'attachment',
-                'mime' => $file->getMimeType() ?: 'application/octet-stream',
-            ];
-        })->all();
+    /**
+     * Stream/redirect to an invoice attachment for viewing, guarding that the
+     * media belongs to this invoice's attachments collection.
+     */
+    public function showAttachment(Invoice $invoice, Media $media): RedirectResponse
+    {
+        $this->authorize('view', $invoice);
+
+        abort_unless(
+            $media->model_type === Invoice::class
+                && (int) $media->model_id === $invoice->id
+                && $media->collection_name === 'attachments',
+            404
+        );
+
+        $disk = Storage::disk($media->disk);
+
+        $url = $disk->providesTemporaryUrls()
+            ? $media->getTemporaryUrl(now()->addMinutes(5))
+            : $media->getUrl();
+
+        return redirect($url);
     }
 
     public function destroy(Invoice $invoice): RedirectResponse
@@ -686,7 +710,62 @@ class InvoiceController extends Controller
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.unit_price' => ['required', 'integer', 'min:0'],
             'items.*.tax_rate' => ['nullable', 'integer', 'min:0', 'max:10000'],
+            'attachments' => ['nullable', 'array', 'max:10'],
+            'attachments.*' => self::ATTACHMENT_FILE_RULES,
+            'removed_attachment_ids' => ['nullable', 'array'],
+            'removed_attachment_ids.*' => ['integer'],
         ];
+    }
+
+    /**
+     * Validation rules for a single uploaded attachment, shared by the form
+     * (store/update) and the email sender.
+     *
+     * @var array<int, string>
+     */
+    private const ATTACHMENT_FILE_RULES = [
+        'file',
+        'max:10240',
+        'mimes:pdf,png,jpg,jpeg,gif,webp,doc,docx,xls,xlsx,ppt,pptx,csv,txt',
+    ];
+
+    private const ATTACHMENT_MAX_TOTAL_BYTES = 25 * 1024 * 1024;
+
+    /**
+     * Reject a batch of uploaded files whose combined size exceeds the limit.
+     *
+     * @param  array<int, UploadedFile>  $files
+     *
+     * @throws ValidationException
+     */
+    private function guardAttachmentsTotalSize(array $files): void
+    {
+        $totalBytes = collect($files)->sum(fn (UploadedFile $file) => $file->getSize());
+
+        if ($totalBytes > self::ATTACHMENT_MAX_TOTAL_BYTES) {
+            throw ValidationException::withMessages([
+                'attachments' => 'Total attachments size must not exceed 25MB.',
+            ]);
+        }
+    }
+
+    /**
+     * Persist newly uploaded files to the invoice and delete any the user
+     * removed. Removals are scoped to this invoice's attachments collection.
+     */
+    private function syncInvoiceAttachments(Invoice $invoice, Request $request): void
+    {
+        $removedIds = array_filter((array) $request->input('removed_attachment_ids', []));
+
+        if ($removedIds) {
+            $invoice->getMedia('attachments')
+                ->whereIn('id', $removedIds)
+                ->each(fn (Media $media) => $media->delete());
+        }
+
+        foreach ($request->file('attachments', []) as $file) {
+            $invoice->addMedia($file)->toMediaCollection('attachments');
+        }
     }
 
     private function generateFallbackNumber(string $type, int $organizationId): string

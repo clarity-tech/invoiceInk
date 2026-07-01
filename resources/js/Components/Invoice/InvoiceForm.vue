@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useForm, router, usePage } from '@inertiajs/vue3';
 import { ref, computed, watch, onUnmounted } from 'vue';
+import AttachmentDropzone from './AttachmentDropzone.vue';
 import EmailModal from './EmailModal.vue';
 import ItemRow from './ItemRow.vue';
 import { useFormatMoney } from '@/composables/useFormatMoney';
@@ -13,6 +14,7 @@ import {
     termFromDates,
     type PaymentTerm,
 } from '@/composables/usePaymentTerms';
+import { formatBytes } from '@/composables/useFileAttachments';
 import { taxLabelFor } from '@/composables/useTaxLabel';
 import type {
     Invoice,
@@ -20,6 +22,7 @@ import type {
     Location,
     TaxTemplate,
     InvoiceNumberingSeries,
+    InvoiceAttachment,
     Currency,
 } from '@/types';
 
@@ -33,6 +36,7 @@ const props = defineProps<{
     numberingSeries: InvoiceNumberingSeries[];
     statusOptions: Record<string, string>;
     taxLabels: Record<string, string>;
+    attachments?: InvoiceAttachment[];
     defaults?: {
         organization_id: number | null;
         organization_location_id: number | null;
@@ -150,7 +154,24 @@ const form = useForm({
     subject: props.mode === 'edit' ? (props.invoice?.subject ?? '') : '',
     terms: props.mode === 'edit' ? (props.invoice?.terms ?? '') : '',
     items: [] as LineItem[],
+    // Newly picked files (uploaded to the invoice on save) and ids of existing
+    // attachments the user removed (deleted on save).
+    attachments: [] as File[],
+    removed_attachment_ids: [] as number[],
 });
+
+// Existing invoice attachments still visible (i.e. not marked for removal).
+const visibleAttachments = computed(() =>
+    (props.attachments ?? []).filter(
+        (a) => !form.removed_attachment_ids.includes(a.id),
+    ),
+);
+
+function removeExistingAttachment(id: number) {
+    if (!form.removed_attachment_ids.includes(id)) {
+        form.removed_attachment_ids.push(id);
+    }
+}
 
 // Reflect the server's status when it changes the invoice (e.g. draft -> sent
 // after an email is sent). The backend is the source of truth; we only mirror
@@ -1007,6 +1028,69 @@ const flash = computed(() => (page.props as any).flash ?? {});
                 </p>
             </div>
 
+            <!-- Attachments Section -->
+            <div class="rounded-lg bg-white p-6 shadow">
+                <label class="mb-2 block text-sm font-medium text-gray-700"
+                    >Attachments</label
+                >
+                <p class="mb-3 text-xs text-gray-500">
+                    Files saved with this
+                    {{ type === 'estimate' ? 'estimate' : 'invoice' }}. They can
+                    be attached when emailing it.
+                </p>
+
+                <!-- Existing (saved) attachments -->
+                <ul v-if="visibleAttachments.length > 0" class="mb-3 space-y-1">
+                    <li
+                        v-for="attachment in visibleAttachments"
+                        :key="attachment.id"
+                        class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2"
+                    >
+                        <div class="min-w-0 flex-1">
+                            <a
+                                :href="attachment.url"
+                                target="_blank"
+                                rel="noopener"
+                                class="truncate text-sm font-medium text-brand-600 hover:text-brand-800 hover:underline"
+                            >
+                                {{ attachment.name }}
+                            </a>
+                            <div class="text-xs text-gray-500">
+                                {{ formatBytes(attachment.size) }}
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            class="ml-2 text-gray-400 hover:text-red-600"
+                            aria-label="Remove attachment"
+                            @click="removeExistingAttachment(attachment.id)"
+                        >
+                            <svg
+                                class="h-4 w-4"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                    clip-rule="evenodd"
+                                />
+                            </svg>
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- New files (uploaded on save) -->
+                <AttachmentDropzone v-model="form.attachments" />
+
+                <p
+                    v-if="form.errors.attachments"
+                    class="mt-1 text-sm text-red-600"
+                >
+                    {{ form.errors.attachments }}
+                </p>
+            </div>
+
             <!-- Action Buttons -->
             <div class="flex items-center justify-between pt-4">
                 <button
@@ -1039,6 +1123,7 @@ const flash = computed(() => (page.props as any).flash ?? {});
             :show="showEmailModal"
             :invoice="invoice"
             :customers="customers"
+            :invoice-attachments="attachments ?? []"
             @close="showEmailModal = false"
         />
     </div>

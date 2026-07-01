@@ -119,6 +119,7 @@ function mountEdit(invoiceOverrides = {}, propsOverride = {}) {
             numberingSeries: [makeNumberingSeries()],
             statusOptions: { draft: 'Draft', sent: 'Sent', paid: 'Paid' },
             taxLabels: { IN: 'GSTIN', US: 'EIN' },
+            attachments: [],
             ...propsOverride,
         },
         global: {
