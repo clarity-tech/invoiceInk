@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.2" baseProfile="tiny-ps" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>Clarity</title>
+  <rect x="0" y="0" width="512" height="512" fill="#ffffff"/>
+  <g transform="translate(28 18.5) scale(9.5)">
+    <path d="M24 4C24 4 10 22 10 32a14 14 0 0028 0C38 22 24 4 24 4z" fill="#7c3aed"/>
+    <path d="M24 14l-4 12h8L24 14z" fill="#ffffff"/>
+  </g>
+</svg>
