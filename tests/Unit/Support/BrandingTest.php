@@ -5,42 +5,42 @@ use Illuminate\Support\Facades\Config;
 
 beforeEach(function () {
     Config::set('app.url', 'https://invoiceink.test');
-    Config::set('branding.utm_source', 'invoiceink');
-    Config::set('branding.utm_campaign', 'powered_by');
+    Config::set('branding.utm_medium', 'referral');
+    Config::set('branding.utm_campaign', 'brand_attribution');
 });
 
-it('builds a powered-by url with utm attribution for the given medium', function () {
+it('builds a powered-by url with utm attribution for the given channel', function () {
     $url = Branding::poweredByUrl('pdf');
 
-    expect($url)->toBe('https://invoiceink.test?utm_source=invoiceink&utm_medium=pdf&utm_campaign=powered_by');
+    expect($url)->toBe('https://invoiceink.test?utm_source=pdf&utm_medium=referral&utm_campaign=brand_attribution&utm_content=powered_by');
 });
 
-it('builds an attributed url with an explicit placement campaign', function () {
+it('builds an attributed url with an explicit placement as utm_content', function () {
     $url = Branding::attributedUrl('email', 'brand_header');
 
-    expect($url)->toBe('https://invoiceink.test?utm_source=invoiceink&utm_medium=email&utm_campaign=brand_header');
+    expect($url)->toBe('https://invoiceink.test?utm_source=email&utm_medium=referral&utm_campaign=brand_attribution&utm_content=brand_header');
 });
 
-it('omits the campaign when none is supplied to attributedUrl', function () {
+it('omits the content when none is supplied to attributedUrl', function () {
     $url = Branding::attributedUrl('email', null);
 
-    expect($url)->toBe('https://invoiceink.test?utm_source=invoiceink&utm_medium=email');
+    expect($url)->toBe('https://invoiceink.test?utm_source=email&utm_medium=referral&utm_campaign=brand_attribution');
 });
 
-it('uses the supplied medium', function () {
-    expect(Branding::poweredByUrl('email'))->toContain('utm_medium=email');
+it('uses the channel as the utm_source', function () {
+    expect(Branding::poweredByUrl('email'))->toContain('utm_source=email');
 });
 
 it('omits utm params that are configured empty', function () {
-    Config::set('branding.utm_source', '');
+    Config::set('branding.utm_medium', '');
     Config::set('branding.utm_campaign', '');
 
-    expect(Branding::poweredByUrl('web'))->toBe('https://invoiceink.test?utm_medium=web');
+    expect(Branding::poweredByUrl('web'))->toBe('https://invoiceink.test?utm_source=web&utm_content=powered_by');
 });
 
 it('returns the bare url when no utm params resolve', function () {
-    Config::set('branding.utm_source', '');
+    Config::set('branding.utm_medium', '');
     Config::set('branding.utm_campaign', '');
 
-    expect(Branding::poweredByUrl(''))->toBe('https://invoiceink.test');
+    expect(Branding::attributedUrl('', null))->toBe('https://invoiceink.test');
 });

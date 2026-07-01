@@ -35,6 +35,7 @@
         /* Slim platform header — kept muted so the sender's business leads */
         .email-header {
             padding: 22px 30px 0 30px;
+            text-align: right;
         }
 
         .email-header .header-brand {
@@ -59,14 +60,15 @@
         }
 
         .email-header .brand-slogan {
-            margin: 6px 0 0 0;
+            margin: 1px 0 0 0;
+            line-height: 1;
             color: #9ca3af;
             font-size: 11px;
             letter-spacing: 0.04em;
         }
 
         .email-content {
-            padding: 28px 30px 30px 30px;
+            padding: 28px 30px 20px 30px;
         }
 
         .email-body {
@@ -154,8 +156,8 @@
         }
 
         .footer {
-            margin-top: 40px;
-            padding-top: 24px;
+            margin-top: 32px;
+            padding-top: 14px;
             border-top: 1px solid #e5e7eb;
             color: #6b7280;
             font-size: 12px;
@@ -254,9 +256,9 @@
                                 </p>
                                 @if($invoice->organizationLocation)
                                 <p style="color: #9ca3af; margin: 0;">
-                                    {{ $invoice->organizationLocation->address_line_1 }}<br>
-                                    {{ $invoice->organizationLocation->city }}, {{ $invoice->organizationLocation->state }} {{ $invoice->organizationLocation->postal_code }}<br>
-                                    {{ $invoice->organizationLocation->country }}
+                                    {{ $invoice->organizationLocation->address_line_1 }}@if($invoice->organizationLocation->address_line_2), {{ $invoice->organizationLocation->address_line_2 }}@endif<br>
+                                    {{ $invoice->organizationLocation->city }} {{ $invoice->organizationLocation->state }} {{ $invoice->organizationLocation->postal_code }}<br>
+                                    {{ $invoice->organizationLocation->countryName() }}
                                 </p>
                                 @endif
                                 @endif

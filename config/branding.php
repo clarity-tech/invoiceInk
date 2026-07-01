@@ -57,12 +57,14 @@ return [
     // null it defaults to "Sent Using <app name>".
     'subject_tag_text' => env('BRAND_SUBJECT_TAG_TEXT'),
 
-    // UTM parameters appended to the "powered by" brand logo links in
-    // generated documents (PDF/web) and emails, so referral traffic back to
-    // the marketing site can be attributed. The utm_medium is set per
-    // placement at the call site (pdf, web, email); set either value to an
-    // empty string to omit it. See App\Support\Branding::poweredByUrl().
-    'utm_source' => env('BRAND_UTM_SOURCE', 'invoiceink'),
-    'utm_campaign' => env('BRAND_UTM_CAMPAIGN', 'powered_by'),
+    // UTM parameters appended to the platform brand links in generated
+    // documents (PDF/web) and emails, so referral traffic back to the
+    // marketing site can be attributed. The utm_source is set per channel at
+    // the call site (pdf, web, email) and the utm_content per placement
+    // (brand_header, powered_by); the medium and campaign below stay constant
+    // across every placement. Set either to an empty string to omit it. See
+    // App\Support\Branding::attributedUrl().
+    'utm_medium' => env('BRAND_UTM_MEDIUM', 'referral'),
+    'utm_campaign' => env('BRAND_UTM_CAMPAIGN', 'brand_attribution'),
 
 ];

@@ -223,19 +223,38 @@ test('document mailer renders the platform logo and tagline in the footer brandi
         ->and($html)->toContain('class="footer-brand"');          // footer lockup wrapper
 });
 
+test('document mailer footer renders the organization country name and second address line, mirroring the PDF', function () {
+    $organization = createOrganizationWithLocation([], [
+        'address_line_1' => '221B Baker Street',
+        'address_line_2' => 'Suite 4',
+        'city' => 'London Town',
+        'state' => 'Greater Region',
+        'country' => 'IN',
+        'postal_code' => 'AB1 2CD',
+    ]);
+    $invoice = createInvoiceWithItems(['invoice_number' => 'INV-FOOTER-ADDR'], null, $organization);
+
+    $html = (new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']])))->renderHtml();
+
+    // The footer address mirrors the PDF/web view: the ISO country code is
+    // expanded to its full name (IN -> India) and address_line_2 is included.
+    expect($html)->toContain('India')
+        ->and($html)->toContain('Suite 4');
+});
+
 test('document mailer makes the header brand logo a clickable utm-tagged link', function () {
     $invoice = createInvoiceWithItems(['invoice_number' => 'INV-BRAND-LINK']);
 
     $html = (new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']])))->renderHtml();
 
-    // The header lockup is a clickable, UTM-tagged platform link. It carries
-    // its own placement-specific campaign (brand_header) rather than reusing
-    // the footer's "powered_by" campaign.
+    // The header lockup is a clickable, UTM-tagged platform link. The email
+    // channel is the utm_source and it carries its own placement-specific
+    // utm_content (brand_header) rather than the footer's "powered_by".
     $headerUrl = e(Branding::attributedUrl('email', 'brand_header'));
 
     expect($html)->toContain('href="'.$headerUrl.'" class="header-brand"')
-        ->and($headerUrl)->toContain('utm_medium=email')
-        ->and($headerUrl)->toContain('utm_campaign=brand_header')
+        ->and($headerUrl)->toContain('utm_source=email')
+        ->and($headerUrl)->toContain('utm_content=brand_header')
         ->and($headerUrl)->not->toContain('powered_by');
 });
 
