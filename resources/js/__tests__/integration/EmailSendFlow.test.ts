@@ -7,52 +7,64 @@ const { mockPost, mockClearErrors } = vi.hoisted(() => ({
     mockClearErrors: vi.fn(),
 }));
 
-vi.mock('@inertiajs/vue3', () => ({
-    useForm: (initial: Record<string, unknown>) => {
-        const data = { ...initial };
-        return new Proxy(data, {
-            get(target, prop) {
-                if (prop === 'post') return mockPost;
-                if (prop === 'put') return vi.fn();
-                if (prop === 'delete') return vi.fn();
-                if (prop === 'errors') return {};
-                if (prop === 'processing') return false;
-                if (prop === 'reset') return vi.fn();
-                if (prop === 'clearErrors') return mockClearErrors;
-                if (prop === 'transform') return vi.fn().mockReturnThis();
-                return target[prop as string];
-            },
-            set(target, prop, value) {
-                target[prop as string] = value;
-                return true;
-            },
-        });
-    },
-    Head: { template: '<div />' },
-    Link: { template: '<a><slot /></a>' },
-    router: { get: vi.fn(), post: vi.fn(), delete: vi.fn(), reload: vi.fn() },
-    usePage: () => ({
-        props: {
-            auth: {
-                user: {
-                    id: 1,
-                    name: 'Test',
-                    email: 'test@test.test',
-                    profile_photo_url: '',
-                    two_factor_enabled: false,
+vi.mock('@inertiajs/vue3', () => {
+    const { reactive } = require('vue');
+    return {
+        useForm: (initial: Record<string, unknown>) => {
+            // Reactive so v-model bindings on the recipient fields re-render when
+            // a chip is added/removed, mirroring the real useForm.
+            const data = reactive({ ...initial });
+            return new Proxy(data, {
+                get(target, prop) {
+                    if (prop === 'post') return mockPost;
+                    if (prop === 'put') return vi.fn();
+                    if (prop === 'delete') return vi.fn();
+                    if (prop === 'errors') return {};
+                    if (prop === 'processing') return false;
+                    if (prop === 'reset') return vi.fn();
+                    if (prop === 'clearErrors') return mockClearErrors;
+                    if (prop === 'transform') return vi.fn().mockReturnThis();
+                    return target[prop as string];
                 },
-                currentTeam: {
-                    id: 1,
-                    name: 'Team',
-                    company_name: 'Co',
-                    currency: 'INR',
-                    emails: [{ name: 'Admin', email: 'admin@company.test' }],
+                set(target, prop, value) {
+                    target[prop as string] = value;
+                    return true;
                 },
-            },
-            flash: { success: null, error: null, message: null },
+            });
         },
-    }),
-}));
+        Head: { template: '<div />' },
+        Link: { template: '<a><slot /></a>' },
+        router: {
+            get: vi.fn(),
+            post: vi.fn(),
+            delete: vi.fn(),
+            reload: vi.fn(),
+        },
+        usePage: () => ({
+            props: {
+                auth: {
+                    user: {
+                        id: 1,
+                        name: 'Test',
+                        email: 'test@test.test',
+                        profile_photo_url: '',
+                        two_factor_enabled: false,
+                    },
+                    currentTeam: {
+                        id: 1,
+                        name: 'Team',
+                        company_name: 'Co',
+                        currency: 'INR',
+                        emails: [
+                            { name: 'Admin', email: 'admin@company.test' },
+                        ],
+                    },
+                },
+                flash: { success: null, error: null, message: null },
+            },
+        }),
+    };
+});
 
 import EmailModal from '@/Components/Invoice/EmailModal.vue';
 

@@ -67,6 +67,7 @@ vi.mock('@inertiajs/vue3', () => {
 });
 
 import EmailModal from '@/Components/Invoice/EmailModal.vue';
+import EmailRecipientInput from '@/Components/Invoice/EmailRecipientInput.vue';
 
 // Mock fetch for template loading
 global.fetch = vi.fn().mockResolvedValue({
@@ -194,6 +195,21 @@ describe('Invoice/EmailModal', () => {
     it('shows Cc label', () => {
         const wrapper = mountComponent();
         expect(wrapper.text()).toContain('Cc');
+    });
+
+    it('offers the combined customer + org contacts to both recipient fields', () => {
+        const wrapper = mountComponent();
+        const inputs = wrapper.findAllComponents(EmailRecipientInput);
+        // Send To and Cc.
+        expect(inputs).toHaveLength(2);
+
+        for (const input of inputs) {
+            const emails = (
+                input.props('suggestions') as { email: string }[]
+            ).map((c) => c.email);
+            expect(emails).toContain('billing@acme.test');
+            expect(emails).toContain('admin@company.test');
+        }
     });
 
     it('renders customize templates link', () => {

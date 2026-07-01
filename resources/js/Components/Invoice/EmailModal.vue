@@ -2,9 +2,10 @@
 import { useForm, usePage } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import AttachmentDropzone from './AttachmentDropzone.vue';
+import EmailRecipientInput from './EmailRecipientInput.vue';
 import TipTapEditor from '@/Components/TipTapEditor.vue';
 import { formatBytes } from '@/composables/useFileAttachments';
-import type { Invoice, Customer, InvoiceAttachment } from '@/types';
+import type { Invoice, Customer, Contact, InvoiceAttachment } from '@/types';
 
 const props = withDefaults(
     defineProps<{
@@ -39,13 +40,39 @@ const customer = computed(
         props.customers.find((c) => c.id === props.invoice.customer_id) ?? null,
 );
 
-const customerEmails = computed(
-    () => customer.value?.emails?.map((c) => c.email) ?? [],
+const customerContacts = computed<Contact[]>(
+    () => customer.value?.emails ?? [],
 );
 
-const orgEmails = computed(
-    () => auth.value?.currentTeam?.emails?.map((c: any) => c.email) ?? [],
+const orgContacts = computed<Contact[]>(
+    () => auth.value?.currentTeam?.emails ?? [],
 );
+
+const customerEmails = computed(() =>
+    customerContacts.value.map((c) => c.email),
+);
+
+const orgEmails = computed(() => orgContacts.value.map((c) => c.email));
+
+// Suggestion pool for both recipient fields: the customer's contacts plus the
+// organization's contacts, deduped by email.
+const contactSuggestions = computed<Contact[]>(() => {
+    const seen = new Set<string>();
+
+    return [...customerContacts.value, ...orgContacts.value].filter(
+        (contact) => {
+            const email = contact.email?.trim();
+
+            if (!email || seen.has(email)) {
+                return false;
+            }
+
+            seen.add(email);
+
+            return true;
+        },
+    );
+});
 
 const templateTypes = computed(() => {
     const docType = props.invoice.type === 'estimate' ? 'estimate' : 'invoice';
@@ -76,9 +103,6 @@ const form = useForm({
     // New files: uploaded to the invoice AND attached to this send.
     attachments: [] as File[],
 });
-
-const newToEmail = ref('');
-const newCcEmail = ref('');
 
 // Saved invoice attachments still selected for this send.
 const includedAttachments = computed(() =>
@@ -131,8 +155,6 @@ watch(
             form.attachment_ids = props.invoiceAttachments.map((a) => a.id);
             form.attachments = [];
             form.clearErrors();
-            newToEmail.value = '';
-            newCcEmail.value = '';
 
             loadTemplate(selectedTemplateType.value);
         }
@@ -145,34 +167,6 @@ watch(selectedTemplateType, (newType) => {
         loadTemplate(newType);
     }
 });
-
-function addToRecipient() {
-    const email = newToEmail.value.trim();
-
-    if (email && !form.recipients.includes(email)) {
-        form.recipients.push(email);
-    }
-
-    newToEmail.value = '';
-}
-
-function removeRecipient(email: string) {
-    form.recipients = form.recipients.filter((e) => e !== email);
-}
-
-function addCcRecipient() {
-    const email = newCcEmail.value.trim();
-
-    if (email && !form.cc.includes(email)) {
-        form.cc.push(email);
-    }
-
-    newCcEmail.value = '';
-}
-
-function removeCcRecipient(email: string) {
-    form.cc = form.cc.filter((e) => e !== email);
-}
 
 function send() {
     form.post(`/invoices/${props.invoice.id}/send-email`, {
@@ -267,43 +261,10 @@ function send() {
                             >Send To</label
                         >
                         <div class="flex-1">
-                            <div
-                                class="flex min-h-[44px] flex-wrap items-center gap-2 rounded-md border border-gray-300 p-2 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500"
-                            >
-                                <div
-                                    v-for="email in form.recipients"
-                                    :key="email"
-                                    class="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1"
-                                >
-                                    <span class="text-sm text-gray-700">{{
-                                        email
-                                    }}</span>
-                                    <button
-                                        type="button"
-                                        class="text-gray-500 hover:text-gray-700"
-                                        @click="removeRecipient(email)"
-                                    >
-                                        <svg
-                                            class="h-4 w-4"
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path
-                                                fill-rule="evenodd"
-                                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                                clip-rule="evenodd"
-                                            />
-                                        </svg>
-                                    </button>
-                                </div>
-                                <input
-                                    v-model="newToEmail"
-                                    type="email"
-                                    placeholder="Type email and press Enter"
-                                    class="min-w-[200px] flex-1 border-none p-1 text-sm outline-none focus:ring-0"
-                                    @keydown.enter.prevent="addToRecipient"
-                                />
-                            </div>
+                            <EmailRecipientInput
+                                v-model="form.recipients"
+                                :suggestions="contactSuggestions"
+                            />
                             <p
                                 v-if="form.errors.recipients"
                                 class="mt-1 text-xs text-red-600"
@@ -322,43 +283,10 @@ function send() {
                             >Cc</label
                         >
                         <div class="flex-1">
-                            <div
-                                class="flex min-h-[44px] flex-wrap items-center gap-2 rounded-md border border-gray-300 p-2 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500"
-                            >
-                                <div
-                                    v-for="email in form.cc"
-                                    :key="email"
-                                    class="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1"
-                                >
-                                    <span class="text-sm text-gray-700">{{
-                                        email
-                                    }}</span>
-                                    <button
-                                        type="button"
-                                        class="text-gray-500 hover:text-gray-700"
-                                        @click="removeCcRecipient(email)"
-                                    >
-                                        <svg
-                                            class="h-4 w-4"
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path
-                                                fill-rule="evenodd"
-                                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                                clip-rule="evenodd"
-                                            />
-                                        </svg>
-                                    </button>
-                                </div>
-                                <input
-                                    v-model="newCcEmail"
-                                    type="email"
-                                    placeholder="Type email and press Enter"
-                                    class="min-w-[200px] flex-1 border-none p-1 text-sm outline-none focus:ring-0"
-                                    @keydown.enter.prevent="addCcRecipient"
-                                />
-                            </div>
+                            <EmailRecipientInput
+                                v-model="form.cc"
+                                :suggestions="contactSuggestions"
+                            />
                         </div>
                     </div>
                 </div>
