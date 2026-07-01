@@ -6,6 +6,13 @@ import ItemRow from './ItemRow.vue';
 import { useFormatMoney } from '@/composables/useFormatMoney';
 import { useInvoiceCalculator } from '@/composables/useInvoiceCalculator';
 import type { LineItem } from '@/composables/useInvoiceCalculator';
+import {
+    PAYMENT_TERM_OPTIONS,
+    CUSTOM_TERM,
+    dueFromTerm,
+    termFromDates,
+    type PaymentTerm,
+} from '@/composables/usePaymentTerms';
 import { taxLabelFor } from '@/composables/useTaxLabel';
 import type {
     Invoice,
@@ -154,6 +161,63 @@ watch(
         if (props.mode === 'edit' && serverStatus) {
             form.status = serverStatus;
         }
+    },
+);
+
+// Payment terms: a UI helper that keeps the issue date, term, and due date in
+// sync.
+const paymentTerm = ref<PaymentTerm>(
+    termFromDates(form.issued_at, form.due_at),
+);
+
+// Guard against watcher feedback: when we set a date/term programmatically we
+// don't want the reciprocal watcher to fight it.
+let syncingTerm = false;
+
+// Term picked (a preset) -> recompute the due date. "Custom" leaves it as-is.
+watch(paymentTerm, (term) => {
+    if (syncingTerm || term === CUSTOM_TERM || !form.issued_at) {
+        return;
+    }
+
+    const due = dueFromTerm(form.issued_at, term);
+
+    if (due) {
+        syncingTerm = true;
+        form.due_at = due;
+        syncingTerm = false;
+    }
+});
+
+// Issue date changed -> if a preset term is active, shift the due date with it.
+watch(
+    () => form.issued_at,
+    () => {
+        if (syncingTerm || paymentTerm.value === CUSTOM_TERM) {
+            return;
+        }
+
+        const due = dueFromTerm(form.issued_at, paymentTerm.value);
+
+        if (due) {
+            syncingTerm = true;
+            form.due_at = due;
+            syncingTerm = false;
+        }
+    },
+);
+
+// Due date edited directly -> snap the term to the matching preset or "Custom".
+watch(
+    () => form.due_at,
+    () => {
+        if (syncingTerm) {
+            return;
+        }
+
+        syncingTerm = true;
+        paymentTerm.value = termFromDates(form.issued_at, form.due_at);
+        syncingTerm = false;
     },
 );
 
@@ -460,15 +524,20 @@ const flash = computed(() => (page.props as any).flash ?? {});
                             {{ form.errors.invoice_numbering_series_id }}
                         </p>
                     </div>
+                </div>
 
+                <!-- Issue date, payment terms and due date are interdependent,
+                     so they share one row on md+ screens (single column below). -->
+                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div>
                         <label
                             class="mb-1 block text-sm font-medium text-gray-700"
-                            >Issue Date</label
+                            >Issue Date *</label
                         >
                         <input
                             v-model="form.issued_at"
                             type="date"
+                            required
                             class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
                         />
                         <p
@@ -482,11 +551,32 @@ const flash = computed(() => (page.props as any).flash ?? {});
                     <div>
                         <label
                             class="mb-1 block text-sm font-medium text-gray-700"
-                            >Due Date</label
+                            >Payment Terms *</label
+                        >
+                        <select
+                            v-model="paymentTerm"
+                            required
+                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        >
+                            <option
+                                v-for="option in PAYMENT_TERM_OPTIONS"
+                                :key="String(option.value)"
+                                :value="option.value"
+                            >
+                                {{ option.label }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label
+                            class="mb-1 block text-sm font-medium text-gray-700"
+                            >Due Date *</label
                         >
                         <input
                             v-model="form.due_at"
                             type="date"
+                            required
                             class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
                         />
                         <p

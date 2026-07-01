@@ -17,57 +17,63 @@ const { mockPost, mockPut, mockRouterGet } = vi.hoisted(() => ({
 let formProcessing = false;
 let formErrors: Record<string, string> = {};
 
-vi.mock('@inertiajs/vue3', () => ({
-    useForm: (initial: Record<string, unknown>) => {
-        const data = { ...initial };
-        return new Proxy(data, {
-            get(target, prop) {
-                if (prop === 'post') return mockPost;
-                if (prop === 'put') return mockPut;
-                if (prop === 'delete') return vi.fn();
-                if (prop === 'errors') return formErrors;
-                if (prop === 'processing') return formProcessing;
-                if (prop === 'reset') return vi.fn();
-                if (prop === 'clearErrors') return vi.fn();
-                if (prop === 'transform') return vi.fn().mockReturnThis();
-                return target[prop as string];
-            },
-            set(target, prop, value) {
-                target[prop as string] = value;
-                return true;
-            },
-        });
-    },
-    Head: { template: '<div />' },
-    Link: { template: '<a :href="href"><slot /></a>', props: ['href'] },
-    router: {
-        get: mockRouterGet,
-        post: vi.fn(),
-        delete: vi.fn(),
-        visit: vi.fn(),
-        put: vi.fn(),
-    },
-    usePage: () => ({
-        props: {
-            auth: {
-                user: {
-                    id: 1,
-                    name: 'Test',
-                    email: 'test@test.test',
-                    profile_photo_url: '',
-                    two_factor_enabled: false,
+vi.mock('@inertiajs/vue3', () => {
+    const { reactive } = require('vue');
+    return {
+        useForm: (initial: Record<string, unknown>) => {
+            // Reactive so that `watch(() => form.field)` fires and v-model bindings
+            // re-render when the component mutates a field (mirrors the real
+            // useForm, whose returned object is reactive).
+            const data = reactive({ ...initial });
+            return new Proxy(data, {
+                get(target, prop) {
+                    if (prop === 'post') return mockPost;
+                    if (prop === 'put') return mockPut;
+                    if (prop === 'delete') return vi.fn();
+                    if (prop === 'errors') return formErrors;
+                    if (prop === 'processing') return formProcessing;
+                    if (prop === 'reset') return vi.fn();
+                    if (prop === 'clearErrors') return vi.fn();
+                    if (prop === 'transform') return vi.fn().mockReturnThis();
+                    return target[prop as string];
                 },
-                currentTeam: {
-                    id: 1,
-                    name: 'Team',
-                    company_name: 'Co',
-                    currency: 'INR',
+                set(target, prop, value) {
+                    target[prop as string] = value;
+                    return true;
                 },
-            },
-            flash: { success: null, error: null, message: null },
+            });
         },
-    }),
-}));
+        Head: { template: '<div />' },
+        Link: { template: '<a :href="href"><slot /></a>', props: ['href'] },
+        router: {
+            get: mockRouterGet,
+            post: vi.fn(),
+            delete: vi.fn(),
+            visit: vi.fn(),
+            put: vi.fn(),
+        },
+        usePage: () => ({
+            props: {
+                auth: {
+                    user: {
+                        id: 1,
+                        name: 'Test',
+                        email: 'test@test.test',
+                        profile_photo_url: '',
+                        two_factor_enabled: false,
+                    },
+                    currentTeam: {
+                        id: 1,
+                        name: 'Team',
+                        company_name: 'Co',
+                        currency: 'INR',
+                    },
+                },
+                flash: { success: null, error: null, message: null },
+            },
+        }),
+    };
+});
 
 vi.mock('@/composables/useFormatMoney', () => ({
     formatMoney: (amount: number, currency: string) =>
@@ -706,6 +712,116 @@ describe('Invoice/InvoiceForm', () => {
             formErrors = { notes: 'Notes too long' };
             const wrapper = mountComponent();
             expect(wrapper.text()).toContain('Notes too long');
+        });
+    });
+
+    describe('payment terms sync', () => {
+        function paymentTermSelect(wrapper: ReturnType<typeof mountComponent>) {
+            return wrapper
+                .findAll('select')
+                .find((select) => select.text().includes('Net 30'))!;
+        }
+
+        // The <option> values are numbers / 'custom' (not strings), so select
+        // by marking the option's element selected and firing change — Vue's
+        // v-model then resolves the bound value. Read the current selection
+        // back via the option flagged selected.
+        async function selectTerm(
+            wrapper: ReturnType<typeof mountComponent>,
+            label: string,
+        ) {
+            const select = paymentTermSelect(wrapper);
+            const option = select
+                .findAll('option')
+                .find((o) => o.text() === label)!;
+            (option.element as HTMLOptionElement).selected = true;
+            await select.trigger('change');
+        }
+
+        function selectedTerm(wrapper: ReturnType<typeof mountComponent>) {
+            return paymentTermSelect(wrapper)
+                .findAll('option')
+                .find((o) => (o.element as HTMLOptionElement).selected)
+                ?.text();
+        }
+
+        function dateInputs(wrapper: ReturnType<typeof mountComponent>) {
+            const inputs = wrapper.findAll('input[type="date"]');
+            return {
+                issued: inputs[0],
+                due: inputs[1],
+            };
+        }
+
+        it('selects the preset implied by the default dates', () => {
+            const wrapper = mountComponent();
+            // Default issue 2026-03-01 / due 2026-03-31 => Net 30.
+            expect(selectedTerm(wrapper)).toBe('Net 30');
+        });
+
+        it('reflects the stored dates in edit mode', () => {
+            const editInvoice = makeInvoice({
+                id: 7,
+                customer_id: 1,
+                organization_id: 1,
+                issued_at: '2026-03-01',
+                due_at: '2026-03-08',
+            });
+            const wrapper = mountComponent({
+                mode: 'edit',
+                invoice: editInvoice,
+            });
+            // 7-day gap => Net 7.
+            expect(selectedTerm(wrapper)).toBe('Net 7');
+        });
+
+        it('recomputes the due date when a preset term is selected', async () => {
+            const wrapper = mountComponent();
+            const { due } = dateInputs(wrapper);
+
+            await selectTerm(wrapper, 'Net 15');
+
+            expect((due.element as HTMLInputElement).value).toBe('2026-03-16');
+        });
+
+        it('shifts the due date when the issue date changes and a preset is active', async () => {
+            const wrapper = mountComponent();
+            const { issued, due } = dateInputs(wrapper);
+
+            // Default term is Net 30.
+            await issued.setValue('2026-04-01');
+
+            expect((due.element as HTMLInputElement).value).toBe('2026-05-01');
+        });
+
+        it('snaps the term to the matching preset when the due date is edited', async () => {
+            const wrapper = mountComponent();
+            const { due } = dateInputs(wrapper);
+
+            await due.setValue('2026-03-08');
+
+            expect(selectedTerm(wrapper)).toBe('Net 7');
+        });
+
+        it('marks the term Custom for a non-preset due date and leaves it untouched', async () => {
+            const wrapper = mountComponent();
+            const { due } = dateInputs(wrapper);
+
+            await due.setValue('2026-03-21');
+
+            expect(selectedTerm(wrapper)).toBe('Custom');
+            // Custom due date is preserved, not overwritten.
+            expect((due.element as HTMLInputElement).value).toBe('2026-03-21');
+        });
+
+        it('leaves a custom due date alone when the issue date changes', async () => {
+            const wrapper = mountComponent();
+            const { issued, due } = dateInputs(wrapper);
+
+            await due.setValue('2026-03-21');
+            await issued.setValue('2026-04-01');
+
+            expect((due.element as HTMLInputElement).value).toBe('2026-03-21');
         });
     });
 

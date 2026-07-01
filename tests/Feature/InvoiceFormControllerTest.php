@@ -88,6 +88,7 @@ test('store creates estimate', function () {
         'customer_shipping_location_id' => $this->customer->primaryLocation->id,
         'status' => 'draft',
         'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
         'items' => [
             [
                 'description' => 'Estimate Item',
@@ -113,8 +114,27 @@ test('store validates required fields', function () {
         'customer_location_id',
         'customer_shipping_location_id',
         'status',
+        'issued_at',
+        'due_at',
         'items',
     ]);
+});
+
+test('store requires due date on or after issue date', function () {
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->subDay()->format('Y-m-d'),
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 10000, 'tax_rate' => 0],
+        ],
+    ])->assertSessionHasErrors(['due_at']);
 });
 
 test('store validates items', function () {
@@ -228,6 +248,8 @@ test('update validates required fields', function () {
             'customer_location_id',
             'customer_shipping_location_id',
             'status',
+            'issued_at',
+            'due_at',
             'items',
         ]);
 });

@@ -675,8 +675,8 @@ class InvoiceController extends Controller
         return [
             'type' => ['required', 'in:invoice,estimate'],
             'status' => ['required', 'string', Rule::enum(InvoiceStatus::class)],
-            'issued_at' => ['nullable', 'date'],
-            'due_at' => ['nullable', 'date'],
+            'issued_at' => ['required', 'date'],
+            'due_at' => ['required', 'date', 'after_or_equal:issued_at'],
             'subject' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'terms' => ['nullable', 'string', 'max:5000'],
