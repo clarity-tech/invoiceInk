@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils';
 import { describe, it, expect, vi } from 'vitest';
 import CustomerForm from '@/Components/CustomerForm.vue';
+import type { Contact } from '@/types';
 import { makeMockForm } from '../helpers';
 
 function makeFormData(overrides = {}) {
@@ -9,7 +10,8 @@ function makeFormData(overrides = {}) {
         phone: '',
         phone_country: '',
         currency: 'INR',
-        contacts: [{ name: '', email: '' }],
+        place_of_supply: '',
+        contacts: [{ name: '', email: '' }] as Contact[],
         ...overrides,
     });
 }
@@ -74,6 +76,23 @@ describe('CustomerForm', () => {
             .find((b) => b.text().includes('Add Contact'));
         await addBtn!.trigger('click');
         expect(form.contacts).toHaveLength(2);
+    });
+
+    it('hides Place of Supply when no indianStates are provided', () => {
+        const wrapper = mount(CustomerForm, { props: defaultProps });
+        expect(wrapper.find('#customer-place-of-supply').exists()).toBe(false);
+    });
+
+    it('shows a Place of Supply select when indianStates are provided', () => {
+        const wrapper = mount(CustomerForm, {
+            props: {
+                ...defaultProps,
+                indianStates: { '27': 'Maharashtra (27)' },
+            },
+        });
+        expect(wrapper.find('#customer-place-of-supply').exists()).toBe(true);
+        expect(wrapper.text()).toContain('Place of Supply');
+        expect(wrapper.text()).toContain('Maharashtra (27)');
     });
 
     it('renders an "Auto-add to emails" checkbox per contact', () => {

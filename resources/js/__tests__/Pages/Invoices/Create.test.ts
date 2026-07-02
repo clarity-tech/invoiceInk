@@ -75,6 +75,7 @@ function mountComponent(propsOverride = {}) {
             statusOptions: { draft: 'Draft', sent: 'Sent' },
             taxLabels: { IN: 'GSTIN', US: 'EIN' },
             attachments: [],
+            indianStates: {},
             defaults,
             ...propsOverride,
         },

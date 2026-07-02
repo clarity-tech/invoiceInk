@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Currency;
+use App\Enums\IndianState;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Propaganistas\LaravelPhone\Rules\Phone;
@@ -24,6 +25,7 @@ class UpdateCustomerRequest extends FormRequest
             'phone_country' => ['nullable', 'string', 'size:2'],
             'phone' => ['nullable', (new Phone)->countryField('phone_country')->international()],
             'currency' => ['required', 'string', Rule::enum(Currency::class)],
+            'place_of_supply' => ['nullable', Rule::enum(IndianState::class)],
             'contacts' => ['required', 'array', 'min:1'],
             'contacts.*.name' => ['nullable', 'string', 'max:255'],
             'contacts.*.email' => ['required', 'email', 'max:255'],

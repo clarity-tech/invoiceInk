@@ -118,6 +118,7 @@ export interface Customer {
     phone_country: string | null;
     formatted_phone: string | null;
     currency: Currency | null;
+    place_of_supply: string | null;
     emails: Contact[];
     organization_id: number;
     primary_location_id: number | null;
@@ -140,6 +141,7 @@ export interface Invoice {
     issued_at: string;
     due_at: string | null;
     currency: Currency;
+    place_of_supply: string | null;
     exchange_rate: number;
     subtotal: number;
     tax: number;

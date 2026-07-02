@@ -25,6 +25,7 @@ defineProps<{
     statusOptions: Record<string, string>;
     taxLabels: Record<string, string>;
     attachments: InvoiceAttachment[];
+    indianStates: Record<string, string>;
     defaults: {
         organization_id: number | null;
         organization_location_id: number | null;
@@ -66,6 +67,7 @@ defineProps<{
                 :status-options="statusOptions"
                 :tax-labels="taxLabels"
                 :attachments="attachments"
+                :indian-states="indianStates"
                 :defaults="defaults"
             />
         </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Currency;
 use App\Enums\Country;
+use App\Enums\IndianState;
 use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
 use App\Models\Customer;
@@ -31,12 +32,18 @@ class CustomerController extends Controller
             ->orderBy('id')
             ->paginate(10);
 
+        $organization = request()->user()?->currentTeam;
+
         return Inertia::render('Customers/Index', [
             'customers' => $customers,
             'currencies' => Currency::options(),
             'countries' => Country::options(),
             'taxLabels' => Country::taxLabels(),
-            'defaultPhoneCountry' => request()->user()?->currentTeam?->country_code?->value,
+            'defaultPhoneCountry' => $organization?->country_code?->value,
+            // Only Indian (GST) organizations deal with place of supply.
+            'indianStates' => $organization?->country_code === Country::IN
+                ? IndianState::options()
+                : [],
         ]);
     }
 
@@ -58,6 +65,7 @@ class CustomerController extends Controller
             'phone' => PhoneNumber::normalize($validated['phone'] ?? null, $validated['phone_country'] ?? null),
             'phone_country' => $validated['phone_country'] ?? null,
             'currency' => $validated['currency'],
+            'place_of_supply' => $validated['place_of_supply'] ?? null,
             'emails' => new ContactCollection($filteredContacts),
             'organization_id' => $organization->id,
         ]);
@@ -80,6 +88,7 @@ class CustomerController extends Controller
             'phone' => PhoneNumber::normalize($validated['phone'] ?? null, $validated['phone_country'] ?? null),
             'phone_country' => $validated['phone_country'] ?? null,
             'currency' => $validated['currency'],
+            'place_of_supply' => $validated['place_of_supply'] ?? null,
             'emails' => new ContactCollection($filteredContacts),
         ]);
 

@@ -203,6 +203,68 @@ test('show attachment 404s for media that belongs to another invoice', function 
         ->assertNotFound();
 });
 
+test('store persists the place of supply', function () {
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'place_of_supply' => '27',
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 5000, 'tax_rate' => 0],
+        ],
+    ])->assertRedirect();
+
+    expect(Invoice::first()->place_of_supply)->toBe('27');
+});
+
+test('overriding place of supply on an invoice does not change the customer', function () {
+    $this->customer->update(['place_of_supply' => '27']);
+    $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
+
+    $this->put(route('invoices.update', $invoice->id), [
+        'type' => 'invoice',
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'sent',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(15)->format('Y-m-d'),
+        'place_of_supply' => '29',
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 5000, 'tax_rate' => 0],
+        ],
+    ])->assertRedirect();
+
+    expect($invoice->fresh()->place_of_supply)->toBe('29');
+    // The customer's default place of supply is untouched.
+    expect($this->customer->fresh()->place_of_supply)->toBe('27');
+});
+
+test('store rejects an invalid place of supply code', function () {
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'place_of_supply' => '99',
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 5000, 'tax_rate' => 0],
+        ],
+    ])->assertSessionHasErrors('place_of_supply');
+});
+
 test('store validates required fields', function () {
     // Need organization_id to pass the abort_unless check
     $this->post(route('invoices.store'), [

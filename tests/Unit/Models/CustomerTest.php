@@ -115,6 +115,7 @@ test('customer has correct fillable attributes', function () {
         'phone',
         'phone_country',
         'currency',
+        'place_of_supply',
         'emails',
         'primary_location_id',
         'organization_id',

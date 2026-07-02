@@ -128,6 +128,52 @@ test('defaults receives_emails to true when the flag is omitted', function () {
     expect($customer->emails->first()['receives_emails'])->toBeTrue();
 });
 
+test('persists the place of supply', function () {
+    $user = createUserWithTeam();
+    $this->actingAs($user);
+
+    $this->post('/customers', [
+        'name' => 'GST Customer',
+        'currency' => 'INR',
+        'place_of_supply' => '27',
+        'contacts' => [['name' => 'A', 'email' => 'a@customer.test']],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    expect(Customer::where('name', 'GST Customer')->first()->place_of_supply)->toBe('27');
+});
+
+test('rejects an invalid place of supply code', function () {
+    $user = createUserWithTeam();
+    $this->actingAs($user);
+
+    $this->post('/customers', [
+        'name' => 'Bad POS Customer',
+        'currency' => 'INR',
+        'place_of_supply' => '99',
+        'contacts' => [['name' => 'A', 'email' => 'a@customer.test']],
+    ])->assertSessionHasErrors('place_of_supply');
+
+    expect(Customer::where('name', 'Bad POS Customer')->exists())->toBeFalse();
+});
+
+test('index exposes Indian state options for an Indian organization', function () {
+    $user = createUserWithTeam([], ['country_code' => 'IN']);
+    $this->actingAs($user);
+
+    $this->get('/customers')
+        ->assertInertia(fn ($page) => $page
+            ->where('indianStates.27', 'Maharashtra (27)')
+        );
+});
+
+test('index sends no Indian state options for a non-Indian organization', function () {
+    $user = createUserWithTeam([], ['country_code' => 'US']);
+    $this->actingAs($user);
+
+    $this->get('/customers')
+        ->assertInertia(fn ($page) => $page->where('indianStates', []));
+});
+
 test('can create customer with multiple contacts', function () {
     $user = createUserWithTeam();
     $this->actingAs($user);

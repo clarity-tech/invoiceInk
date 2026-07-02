@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Contracts\Services\InvoiceNumberingServiceInterface;
 use App\Contracts\Services\PdfServiceInterface;
 use App\Enums\Country;
+use App\Enums\IndianState;
 use App\Enums\InvoiceStatus;
 use App\Mail\DocumentMailer;
 use App\Models\Customer;
@@ -108,6 +109,9 @@ class InvoiceController extends Controller
             'numberingSeries' => $numberingSeries,
             'statusOptions' => InvoiceStatus::options(),
             'taxLabels' => Country::taxLabels(),
+            'indianStates' => $organization?->country_code === Country::IN
+                ? IndianState::options()
+                : [],
             'defaults' => [
                 'organization_id' => $organization?->id,
                 'organization_location_id' => $organization?->primary_location_id,
@@ -211,6 +215,7 @@ class InvoiceController extends Controller
                 'tax' => $totals->tax,
                 'total' => $totals->total,
                 'currency' => $currency,
+                'place_of_supply' => $validated['place_of_supply'] ?? null,
                 'exchange_rate' => $exchangeRate,
                 'subject' => $validated['subject'] ?? null,
                 'notes' => $validated['notes'] ?? null,
@@ -297,6 +302,9 @@ class InvoiceController extends Controller
             'numberingSeries' => $numberingSeries,
             'statusOptions' => InvoiceStatus::options(),
             'taxLabels' => Country::taxLabels(),
+            'indianStates' => $organization?->country_code === Country::IN
+                ? IndianState::options()
+                : [],
         ]);
     }
 
@@ -354,6 +362,7 @@ class InvoiceController extends Controller
                 'tax' => $totals->tax,
                 'total' => $totals->total,
                 'currency' => $currency,
+                'place_of_supply' => $validated['place_of_supply'] ?? null,
                 'exchange_rate' => $exchangeRate,
                 'subject' => $validated['subject'] ?? null,
                 'notes' => $validated['notes'] ?? null,
@@ -701,6 +710,7 @@ class InvoiceController extends Controller
             'status' => ['required', 'string', Rule::enum(InvoiceStatus::class)],
             'issued_at' => ['required', 'date'],
             'due_at' => ['required', 'date', 'after_or_equal:issued_at'],
+            'place_of_supply' => ['nullable', Rule::enum(IndianState::class)],
             'subject' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'terms' => ['nullable', 'string', 'max:5000'],

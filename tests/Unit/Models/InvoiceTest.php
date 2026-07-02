@@ -646,3 +646,16 @@ test('invoice can handle empty arrays for json fields', function () {
     expect($invoice->tax_breakdown)->toBeArray();
     expect($invoice->email_recipients)->toBeArray();
 });
+
+test('placeOfSupplyLabel resolves the stored state code', function () {
+    $invoice = createInvoiceWithItems(['place_of_supply' => '27']);
+
+    expect($invoice->placeOfSupplyLabel())->toBe('Maharashtra (27)');
+});
+
+test('placeOfSupplyLabel falls back to the customer location state when unset', function () {
+    // Legacy invoice: no stored place of supply, Indian customer location.
+    $invoice = createInvoiceWithItems(['place_of_supply' => null]);
+
+    expect($invoice->placeOfSupplyLabel())->toBe('Customer State');
+});

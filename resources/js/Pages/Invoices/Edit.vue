@@ -31,6 +31,7 @@ const props = defineProps<{
     statusOptions: Record<string, string>;
     taxLabels: Record<string, string>;
     attachments: InvoiceAttachment[];
+    indianStates: Record<string, string>;
 }>();
 
 const showPaymentModal = ref(false);
@@ -87,6 +88,7 @@ function deletePayment(paymentId: number) {
                 :status-options="statusOptions"
                 :tax-labels="taxLabels"
                 :attachments="attachments"
+                :indian-states="indianStates"
             />
 
             <!-- Payment Section (invoices only, not estimates) -->

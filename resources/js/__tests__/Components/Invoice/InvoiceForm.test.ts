@@ -863,6 +863,55 @@ describe('Invoice/InvoiceForm', () => {
         });
     });
 
+    describe('place of supply', () => {
+        const indianStates = {
+            '27': 'Maharashtra (27)',
+            '29': 'Karnataka (29)',
+        };
+
+        it('is hidden when no indianStates are provided', () => {
+            const wrapper = mountComponent();
+            expect(wrapper.text()).not.toContain('Place of Supply');
+        });
+
+        it('renders a Place of Supply select when indianStates are provided', () => {
+            const wrapper = mountComponent({ indianStates });
+            expect(wrapper.text()).toContain('Place of Supply');
+            expect(wrapper.text()).toContain('Maharashtra (27)');
+        });
+
+        it('prefills the place of supply from the selected customer', async () => {
+            const gstCustomer = makeCustomer({
+                id: 1,
+                name: 'ACME Corp',
+                currency: 'INR',
+                place_of_supply: '27',
+                primary_location_id: 20,
+                primary_location: custLocation,
+                locations: [custLocation, custLocation2],
+            });
+            const wrapper = mountComponent({
+                customers: [gstCustomer],
+                indianStates,
+            });
+
+            // Select the customer (numeric-bound select).
+            const customerSelect = wrapper
+                .findAll('select')
+                .find((s) => s.text().includes('ACME Corp'))!;
+            const option = customerSelect
+                .findAll('option')
+                .find((o) => o.text().includes('ACME Corp'))!;
+            (option.element as HTMLOptionElement).selected = true;
+            await customerSelect.trigger('change');
+
+            const posSelect = wrapper
+                .findAll('select')
+                .find((s) => s.text().includes('Maharashtra (27)'))!;
+            expect((posSelect.element as HTMLSelectElement).value).toBe('27');
+        });
+    });
+
     describe('flash messages', () => {
         it('displays success flash message', () => {
             // Need to override usePage to return flash

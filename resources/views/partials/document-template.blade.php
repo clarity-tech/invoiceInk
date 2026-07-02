@@ -42,6 +42,7 @@
     $showPaymentInfo = $isInvoice && $document->amount_paid > 0;
     $remainingBalance = $isInvoice ? $document->remaining_balance : $document->total;
     $paymentTerms = $document->paymentTermsLabel();
+    $placeOfSupply = $document->placeOfSupplyLabel();
     // Show Ship To only when a separate shipping location is set (different from billing).
     $hasShipping = $document->hasShippingAddress();
     $shipLocation = $document->customerShippingLocation;
@@ -517,9 +518,9 @@
                         @if($custLocation->tax_id)
                             <div class="tax_id">{{ $custLocation->taxIdLabel() }} {{ $custLocation->tax_id }}</div>
                         @endif
-                        @if($custLocation->isIndian() && $custLocation->state)
+                        @if($placeOfSupply)
                             <br>
-                            <div>{{ __('documents.fields.place_of_supply') }}: {{ $custLocation->state }}@if($custLocation->tax_id) ({{ substr($custLocation->tax_id, 0, 2) }})@endif</div>
+                            <div>{{ __('documents.fields.place_of_supply') }}: {{ $placeOfSupply }}</div>
                         @endif
                     </div>
                 </div>

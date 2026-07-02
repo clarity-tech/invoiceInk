@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /* eslint-disable vue/no-mutating-props -- InertiaForm is designed to be mutated by child components */
 import type { InertiaForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import PhoneInput from '@/Components/PhoneInput.vue';
 import type { Contact } from '@/types';
 
@@ -12,6 +12,7 @@ const props = withDefaults(
             phone: string;
             phone_country: string;
             currency: string;
+            place_of_supply: string;
             contacts: Contact[];
         }>;
         currencies: Record<string, string>;
@@ -19,9 +20,12 @@ const props = withDefaults(
         isEditing: boolean;
         /** ISO alpha-2 used to seed the phone country on a new customer. */
         defaultCountry?: string;
+        /** GST state options; empty for non-Indian organizations. */
+        indianStates?: Record<string, string>;
     }>(),
     {
         defaultCountry: 'US',
+        indianStates: () => ({}),
     },
 );
 
@@ -29,6 +33,11 @@ const emit = defineEmits<{
     (e: 'submit'): void;
     (e: 'cancel'): void;
 }>();
+
+// Place of supply only applies to Indian (GST) organizations.
+const showPlaceOfSupply = computed(
+    () => Object.keys(props.indianStates).length > 0,
+);
 
 const contactErrors = ref<Record<string, string>>({});
 const nameError = ref('');
@@ -141,6 +150,38 @@ function removeContact(index: number) {
             </select>
             <p v-if="form.errors.currency" class="mt-1 text-sm text-red-600">
                 {{ form.errors.currency }}
+            </p>
+        </div>
+
+        <!-- Place of Supply (GST organizations only) -->
+        <div v-if="showPlaceOfSupply">
+            <label
+                for="customer-place-of-supply"
+                class="block text-sm font-medium text-gray-700"
+                >Place of Supply</label
+            >
+            <select
+                id="customer-place-of-supply"
+                v-model="form.place_of_supply"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+            >
+                <option value="">Select a state…</option>
+                <option
+                    v-for="(label, value) in indianStates"
+                    :key="value"
+                    :value="value"
+                >
+                    {{ label }}
+                </option>
+            </select>
+            <p class="mt-1 text-xs text-gray-500">
+                Used as the default place of supply on this customer's invoices.
+            </p>
+            <p
+                v-if="form.errors.place_of_supply"
+                class="mt-1 text-sm text-red-600"
+            >
+                {{ form.errors.place_of_supply }}
             </p>
         </div>
 

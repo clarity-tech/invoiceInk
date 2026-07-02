@@ -120,6 +120,7 @@ function mountEdit(invoiceOverrides = {}, propsOverride = {}) {
             statusOptions: { draft: 'Draft', sent: 'Sent', paid: 'Paid' },
             taxLabels: { IN: 'GSTIN', US: 'EIN' },
             attachments: [],
+            indianStates: {},
             ...propsOverride,
         },
         global: {

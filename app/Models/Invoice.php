@@ -5,6 +5,7 @@ namespace App\Models;
 use Akaunting\Money\Money;
 use App\Casts\ExchangeRateCast;
 use App\Currency;
+use App\Enums\IndianState;
 use App\Enums\InvoiceStatus;
 use App\Models\Scopes\OrganizationScope;
 use Illuminate\Database\Eloquent\Builder;
@@ -37,6 +38,7 @@ class Invoice extends Model implements HasMedia
         'issued_at',
         'due_at',
         'currency',
+        'place_of_supply',
         'exchange_rate',
         'subtotal',
         'tax',
@@ -268,6 +270,29 @@ class Invoice extends Model implements HasMedia
         $shipping = $this->customerShippingLocation;
 
         return $shipping !== null && $shipping->id !== $this->customerLocation?->id;
+    }
+
+    /**
+     * The GST place of supply as "State (code)", or null when not applicable.
+     * Falls back to the customer location for invoices created before the field
+     * was stored explicitly.
+     */
+    public function placeOfSupplyLabel(): ?string
+    {
+        if ($this->place_of_supply) {
+            return IndianState::tryFrom($this->place_of_supply)?->displayName()
+                ?? $this->place_of_supply;
+        }
+
+        $location = $this->customerLocation;
+
+        if ($location?->isIndian() && $location->state) {
+            $code = $location->tax_id ? ' ('.substr($location->tax_id, 0, 2).')' : '';
+
+            return $location->state.$code;
+        }
+
+        return null;
     }
 
     public function paymentTermsLabel(): ?string

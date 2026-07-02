@@ -37,6 +37,7 @@ const props = defineProps<{
     statusOptions: Record<string, string>;
     taxLabels: Record<string, string>;
     attachments?: InvoiceAttachment[];
+    indianStates?: Record<string, string>;
     defaults?: {
         organization_id: number | null;
         organization_location_id: number | null;
@@ -119,6 +120,11 @@ const currentCurrency = computed<Currency>(
         'INR',
 );
 
+// Place of supply only applies to Indian (GST) organizations.
+const showPlaceOfSupply = computed(
+    () => Object.keys(props.indianStates ?? {}).length > 0,
+);
+
 // Form
 const form = useForm({
     type: props.type,
@@ -153,6 +159,8 @@ const form = useForm({
     notes: props.mode === 'edit' ? (props.invoice!.notes ?? '') : '',
     subject: props.mode === 'edit' ? (props.invoice?.subject ?? '') : '',
     terms: props.mode === 'edit' ? (props.invoice?.terms ?? '') : '',
+    place_of_supply:
+        props.mode === 'edit' ? (props.invoice?.place_of_supply ?? '') : '',
     items: [] as LineItem[],
     // Newly picked files (uploaded to the invoice on save) and ids of existing
     // attachments the user removed (deleted on save).
@@ -269,6 +277,9 @@ watch(selectedCustomerId, (newId) => {
         const fallback = primaryId ?? locs[0]?.id ?? null;
         form.customer_location_id = fallback;
         form.customer_shipping_location_id = fallback;
+        // Default the place of supply from the chosen customer. Editable here;
+        // it never writes back to the customer.
+        form.place_of_supply = customer.place_of_supply ?? '';
     }
 });
 
@@ -463,153 +474,6 @@ const flash = computed(() => (page.props as any).flash ?? {});
                 </div>
             </div>
 
-            <!-- Invoice Details Section -->
-            <div class="rounded-lg bg-white p-6 shadow">
-                <h2 class="mb-4 text-lg font-semibold text-gray-800">
-                    Invoice Details
-                </h2>
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div>
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                            >Document Type</label
-                        >
-                        <select
-                            v-model="form.type"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                            :disabled="mode === 'edit'"
-                        >
-                            <option value="invoice">Invoice</option>
-                            <option value="estimate">Estimate</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                            >Status *</label
-                        >
-                        <select
-                            v-model="form.status"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        >
-                            <option
-                                v-for="(label, value) in statusOptions"
-                                :key="value"
-                                :value="value"
-                            >
-                                {{ label }}
-                            </option>
-                        </select>
-                        <p
-                            v-if="form.errors.status"
-                            class="mt-1 text-sm text-red-600"
-                        >
-                            {{ form.errors.status }}
-                        </p>
-                    </div>
-
-                    <div
-                        v-if="
-                            type === 'invoice' &&
-                            numberingSeries.length > 0 &&
-                            mode === 'create'
-                        "
-                    >
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                            >Numbering Series</label
-                        >
-                        <select
-                            v-model="form.invoice_numbering_series_id"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        >
-                            <option :value="null">Auto-select</option>
-                            <option
-                                v-for="series in numberingSeries"
-                                :key="series.id"
-                                :value="series.id"
-                            >
-                                {{ series.name }}
-                                {{
-                                    series.location
-                                        ? `(${series.location.name})`
-                                        : '(Org-wide)'
-                                }}
-                            </option>
-                        </select>
-                        <p
-                            v-if="form.errors.invoice_numbering_series_id"
-                            class="mt-1 text-sm text-red-600"
-                        >
-                            {{ form.errors.invoice_numbering_series_id }}
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Issue date, payment terms and due date are interdependent,
-                     so they share one row on md+ screens (single column below). -->
-                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div>
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                            >Issue Date *</label
-                        >
-                        <input
-                            v-model="form.issued_at"
-                            type="date"
-                            required
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        />
-                        <p
-                            v-if="form.errors.issued_at"
-                            class="mt-1 text-sm text-red-600"
-                        >
-                            {{ form.errors.issued_at }}
-                        </p>
-                    </div>
-
-                    <div>
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                            >Payment Terms *</label
-                        >
-                        <select
-                            v-model="paymentTerm"
-                            required
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        >
-                            <option
-                                v-for="option in PAYMENT_TERM_OPTIONS"
-                                :key="String(option.value)"
-                                :value="option.value"
-                            >
-                                {{ option.label }}
-                            </option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                            >Due Date *</label
-                        >
-                        <input
-                            v-model="form.due_at"
-                            type="date"
-                            required
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        />
-                        <p
-                            v-if="form.errors.due_at"
-                            class="mt-1 text-sm text-red-600"
-                        >
-                            {{ form.errors.due_at }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-
             <!-- Customer & Address Section -->
             <div class="rounded-lg bg-white p-6 shadow">
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -757,12 +621,40 @@ const flash = computed(() => (page.props as any).flash ?? {});
 
                     <!-- Right: Shipping -->
                     <div class="space-y-4">
+                        <!-- Place of Supply (GST organizations only) -->
+                        <div v-if="showPlaceOfSupply">
+                            <label
+                                class="mb-1 block text-sm font-medium text-gray-700"
+                                >Place of Supply</label
+                            >
+                            <select
+                                v-model="form.place_of_supply"
+                                class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                            >
+                                <option value="">Select a state…</option>
+                                <option
+                                    v-for="(label, value) in indianStates"
+                                    :key="value"
+                                    :value="value"
+                                >
+                                    {{ label }}
+                                </option>
+                            </select>
+                            <p
+                                v-if="form.errors.place_of_supply"
+                                class="mt-1 text-sm text-red-600"
+                            >
+                                {{ form.errors.place_of_supply }}
+                            </p>
+                        </div>
+
                         <div
                             v-if="
                                 selectedCustomerId &&
                                 customerLocations.length > 0
                             "
-                            class="mt-20 rounded-md border border-gray-200 bg-gray-50 p-4"
+                            class="rounded-md border border-gray-200 bg-gray-50 p-4"
+                            :class="{ 'mt-20': !showPlaceOfSupply }"
                         >
                             <div class="mb-2 flex items-center justify-between">
                                 <h3 class="text-sm font-semibold text-gray-700">
@@ -875,6 +767,153 @@ const flash = computed(() => (page.props as any).flash ?? {});
                                 </p>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice Details Section -->
+            <div class="rounded-lg bg-white p-6 shadow">
+                <h2 class="mb-4 text-lg font-semibold text-gray-800">
+                    Invoice Details
+                </h2>
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                        <label
+                            class="mb-1 block text-sm font-medium text-gray-700"
+                            >Document Type</label
+                        >
+                        <select
+                            v-model="form.type"
+                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                            :disabled="mode === 'edit'"
+                        >
+                            <option value="invoice">Invoice</option>
+                            <option value="estimate">Estimate</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label
+                            class="mb-1 block text-sm font-medium text-gray-700"
+                            >Status *</label
+                        >
+                        <select
+                            v-model="form.status"
+                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        >
+                            <option
+                                v-for="(label, value) in statusOptions"
+                                :key="value"
+                                :value="value"
+                            >
+                                {{ label }}
+                            </option>
+                        </select>
+                        <p
+                            v-if="form.errors.status"
+                            class="mt-1 text-sm text-red-600"
+                        >
+                            {{ form.errors.status }}
+                        </p>
+                    </div>
+
+                    <div
+                        v-if="
+                            type === 'invoice' &&
+                            numberingSeries.length > 0 &&
+                            mode === 'create'
+                        "
+                    >
+                        <label
+                            class="mb-1 block text-sm font-medium text-gray-700"
+                            >Numbering Series</label
+                        >
+                        <select
+                            v-model="form.invoice_numbering_series_id"
+                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        >
+                            <option :value="null">Auto-select</option>
+                            <option
+                                v-for="series in numberingSeries"
+                                :key="series.id"
+                                :value="series.id"
+                            >
+                                {{ series.name }}
+                                {{
+                                    series.location
+                                        ? `(${series.location.name})`
+                                        : '(Org-wide)'
+                                }}
+                            </option>
+                        </select>
+                        <p
+                            v-if="form.errors.invoice_numbering_series_id"
+                            class="mt-1 text-sm text-red-600"
+                        >
+                            {{ form.errors.invoice_numbering_series_id }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Issue date, payment terms and due date are interdependent,
+                     so they share one row on md+ screens (single column below). -->
+                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                        <label
+                            class="mb-1 block text-sm font-medium text-gray-700"
+                            >Issue Date *</label
+                        >
+                        <input
+                            v-model="form.issued_at"
+                            type="date"
+                            required
+                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        />
+                        <p
+                            v-if="form.errors.issued_at"
+                            class="mt-1 text-sm text-red-600"
+                        >
+                            {{ form.errors.issued_at }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <label
+                            class="mb-1 block text-sm font-medium text-gray-700"
+                            >Payment Terms *</label
+                        >
+                        <select
+                            v-model="paymentTerm"
+                            required
+                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        >
+                            <option
+                                v-for="option in PAYMENT_TERM_OPTIONS"
+                                :key="String(option.value)"
+                                :value="option.value"
+                            >
+                                {{ option.label }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label
+                            class="mb-1 block text-sm font-medium text-gray-700"
+                            >Due Date *</label
+                        >
+                        <input
+                            v-model="form.due_at"
+                            type="date"
+                            required
+                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        />
+                        <p
+                            v-if="form.errors.due_at"
+                            class="mt-1 text-sm text-red-600"
+                        >
+                            {{ form.errors.due_at }}
+                        </p>
                     </div>
                 </div>
             </div>
