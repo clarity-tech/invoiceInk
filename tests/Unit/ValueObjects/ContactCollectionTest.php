@@ -10,7 +10,7 @@ describe('ContactCollection', function () {
         $result = $collection->add('  John Doe  ', '  john@example.com  ');
 
         expect($result->count())->toBe(1);
-        expect($result->first())->toBe(['name' => 'John Doe', 'email' => 'john@example.com']);
+        expect($result->first())->toBe(['name' => 'John Doe', 'email' => 'john@example.com', 'receives_emails' => true]);
     });
 
     it('throws exception when adding invalid email', function () {
@@ -60,7 +60,7 @@ describe('ContactCollection', function () {
             ['name' => 'John', 'email' => 'john@example.com'],
         ]);
 
-        expect($collection->getByEmail('  john@example.com  '))->toBe(['name' => 'John', 'email' => 'john@example.com']);
+        expect($collection->getByEmail('  john@example.com  '))->toBe(['name' => 'John', 'email' => 'john@example.com', 'receives_emails' => true]);
         expect($collection->getByEmail('missing@example.com'))->toBeNull();
     });
 
@@ -111,12 +111,13 @@ describe('ContactCollection', function () {
     // --- jsonSerialize() method (line 141) ---
 
     it('json serializes contacts', function () {
-        $contacts = [
+        $collection = new ContactCollection([
             ['name' => 'John', 'email' => 'john@example.com'],
-        ];
-        $collection = new ContactCollection($contacts);
+        ]);
 
-        expect($collection->jsonSerialize())->toBe($contacts);
+        expect($collection->jsonSerialize())->toBe([
+            ['name' => 'John', 'email' => 'john@example.com', 'receives_emails' => true],
+        ]);
     });
 
     // --- __toString() method (lines 144-149) ---
@@ -183,7 +184,7 @@ describe('ContactCollection', function () {
         $collection = new ContactCollection(['john@example.com']);
 
         expect($collection->count())->toBe(1);
-        expect($collection->first())->toBe(['name' => '', 'email' => 'john@example.com']);
+        expect($collection->first())->toBe(['name' => '', 'email' => 'john@example.com', 'receives_emails' => true]);
     });
 
     // --- fromJson error handling (lines 29-38) ---
@@ -196,5 +197,40 @@ describe('ContactCollection', function () {
         $collection = ContactCollection::fromJson('"just a string"');
 
         expect($collection->isEmpty())->toBeTrue();
+    });
+
+    // --- receives_emails flag ---
+
+    it('defaults receives_emails to true when absent', function () {
+        $collection = new ContactCollection([
+            ['name' => 'John', 'email' => 'john@example.com'],
+        ]);
+
+        expect($collection->first()['receives_emails'])->toBeTrue();
+    });
+
+    it('preserves an explicit receives_emails false', function () {
+        $collection = new ContactCollection([
+            ['name' => 'John', 'email' => 'john@example.com', 'receives_emails' => false],
+        ]);
+
+        expect($collection->first()['receives_emails'])->toBeFalse();
+    });
+
+    it('normalizes truthy/falsy receives_emails values to booleans', function () {
+        $collection = new ContactCollection([
+            ['name' => 'A', 'email' => 'a@example.com', 'receives_emails' => 0],
+            ['name' => 'B', 'email' => 'b@example.com', 'receives_emails' => '1'],
+        ]);
+
+        $contacts = $collection->toArray();
+        expect($contacts[0]['receives_emails'])->toBeFalse();
+        expect($contacts[1]['receives_emails'])->toBeTrue();
+    });
+
+    it('adds a contact with the receives_emails flag', function () {
+        $collection = (new ContactCollection)->add('John', 'john@example.com', false);
+
+        expect($collection->first()['receives_emails'])->toBeFalse();
     });
 });

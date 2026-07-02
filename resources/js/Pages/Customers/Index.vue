@@ -62,13 +62,13 @@ const form = useForm({
     phone: '',
     phone_country: '',
     currency: 'INR',
-    contacts: [{ name: '', email: '' }] as Contact[],
+    contacts: [{ name: '', email: '', receives_emails: true }] as Contact[],
 });
 
 function openCreate() {
     editingCustomer.value = null;
     form.reset();
-    form.contacts = [{ name: '', email: '' }];
+    form.contacts = [{ name: '', email: '', receives_emails: true }];
     form.clearErrors();
     showForm.value = true;
 }
@@ -80,8 +80,8 @@ function openEdit(customer: Customer) {
     form.phone_country = customer.phone_country ?? '';
     form.currency = customer.currency ?? 'INR';
     form.contacts = customer.emails?.length
-        ? [...customer.emails]
-        : [{ name: '', email: '' }];
+        ? customer.emails.map((c) => ({ receives_emails: true, ...c }))
+        : [{ name: '', email: '', receives_emails: true }];
     form.clearErrors();
     showForm.value = true;
 }

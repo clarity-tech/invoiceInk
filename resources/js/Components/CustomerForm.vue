@@ -67,7 +67,7 @@ function validateCustomerName() {
 }
 
 function addContact() {
-    props.form.contacts.push({ name: '', email: '' });
+    props.form.contacts.push({ name: '', email: '', receives_emails: true });
 }
 
 function removeContact(index: number) {
@@ -209,6 +209,17 @@ function removeContact(index: number) {
                         {{ (form.errors as any)[`contacts.${index}.email`] }}
                     </p>
                 </div>
+                <label
+                    class="flex items-center gap-1.5 pt-2 text-xs whitespace-nowrap text-gray-600"
+                    title="Auto-add this contact to the recipient list when emailing a document"
+                >
+                    <input
+                        v-model="contact.receives_emails"
+                        type="checkbox"
+                        class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                    />
+                    Auto-add to emails
+                </label>
                 <button
                     v-if="form.contacts.length > 1"
                     type="button"

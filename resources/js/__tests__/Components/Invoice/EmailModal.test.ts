@@ -212,6 +212,41 @@ describe('Invoice/EmailModal', () => {
         }
     });
 
+    it('auto-adds only customer contacts flagged to receive emails', async () => {
+        const flaggedCustomer = makeCustomer({
+            id: 1,
+            name: 'ACME Corp',
+            emails: [
+                makeContact({
+                    email: 'primary@acme.test',
+                    receives_emails: true,
+                }),
+                makeContact({
+                    email: 'silent@acme.test',
+                    receives_emails: false,
+                }),
+            ],
+        });
+
+        // Auto-add runs in the watcher on `show`, so mount hidden then reveal.
+        const wrapper = mountComponent({
+            show: false,
+            customers: [flaggedCustomer],
+        });
+        await wrapper.setProps({ show: true });
+
+        const toInput = wrapper.findAllComponents(EmailRecipientInput)[0];
+        const recipients = toInput.props('modelValue') as string[];
+        expect(recipients).toContain('primary@acme.test');
+        expect(recipients).not.toContain('silent@acme.test');
+
+        // The un-flagged contact is still available as a suggestion.
+        const suggestions = (
+            toInput.props('suggestions') as { email: string }[]
+        ).map((c) => c.email);
+        expect(suggestions).toContain('silent@acme.test');
+    });
+
     it('renders customize templates link', () => {
         const wrapper = mountComponent();
         const link = wrapper.find('a[href="/email-templates"]');

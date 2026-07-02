@@ -78,6 +78,9 @@ export interface Organization {
 export interface Contact {
     name: string;
     email: string;
+    // Whether this contact is auto-added to the recipient list when emailing a
+    // document. Absent is treated as true (server default).
+    receives_emails?: boolean;
 }
 
 export interface BankDetails {

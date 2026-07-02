@@ -48,8 +48,11 @@ const orgContacts = computed<Contact[]>(
     () => auth.value?.currentTeam?.emails ?? [],
 );
 
-const customerEmails = computed(() =>
-    customerContacts.value.map((c) => c.email),
+// Customer contacts flagged to auto-fill the recipient list.
+const autoRecipientEmails = computed(() =>
+    customerContacts.value
+        .filter((c) => c.receives_emails !== false)
+        .map((c) => c.email),
 );
 
 const orgEmails = computed(() => orgContacts.value.map((c) => c.email));
@@ -147,7 +150,7 @@ watch(
                 props.invoice.type === 'estimate' ? 'estimate' : 'invoice';
             selectedTemplateType.value = `${docType}_initial`;
 
-            form.recipients = [...customerEmails.value];
+            form.recipients = [...autoRecipientEmails.value];
             form.cc = [...orgEmails.value];
             form.attach_pdf = emailDefaults.attach_pdf;
             form.include_view_online_button =
