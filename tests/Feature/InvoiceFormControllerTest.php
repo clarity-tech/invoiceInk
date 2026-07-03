@@ -247,6 +247,28 @@ test('overriding place of supply on an invoice does not change the customer', fu
     expect($this->customer->fresh()->place_of_supply)->toBe('27');
 });
 
+test('store clears place of supply for an overseas customer', function () {
+    $this->customer->update(['gst_treatment' => 'overseas']);
+
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'place_of_supply' => '27',
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 5000, 'tax_rate' => 0],
+        ],
+    ])->assertRedirect();
+
+    expect(Invoice::first()->place_of_supply)->toBeNull();
+});
+
 test('store rejects an invalid place of supply code', function () {
     $this->post(route('invoices.store'), [
         'type' => 'invoice',

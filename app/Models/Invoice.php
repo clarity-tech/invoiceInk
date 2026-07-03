@@ -331,26 +331,17 @@ class Invoice extends Model implements HasMedia
     }
 
     /**
-     * The GST place of supply as "State (code)", or null when not applicable.
-     * Falls back to the customer location for invoices created before the field
-     * was stored explicitly.
+     * The GST place of supply as "State (code)", or null when not applicable
+     * (no state set, or the customer is an overseas/export supply).
      */
     public function placeOfSupplyLabel(): ?string
     {
-        if ($this->place_of_supply) {
-            return IndianState::tryFrom($this->place_of_supply)?->displayName()
-                ?? $this->place_of_supply;
+        if ($this->customer?->isOverseas() || ! $this->place_of_supply) {
+            return null;
         }
 
-        $location = $this->customerLocation;
-
-        if ($location?->isIndian() && $location->state) {
-            $code = $location->tax_id ? ' ('.substr($location->tax_id, 0, 2).')' : '';
-
-            return $location->state.$code;
-        }
-
-        return null;
+        return IndianState::tryFrom($this->place_of_supply)?->displayName()
+            ?? $this->place_of_supply;
     }
 
     public function paymentTermsLabel(): ?string

@@ -27,6 +27,7 @@ const props = defineProps<{
     taxLabels: Record<string, string>;
     defaultPhoneCountry?: string | null;
     indianStates: Record<string, string>;
+    gstTreatments: Record<string, string>;
 }>();
 
 const isMounted = ref(false);
@@ -64,6 +65,7 @@ const form = useForm({
     phone_country: '',
     currency: 'INR',
     place_of_supply: '',
+    gst_treatment: 'domestic',
     contacts: [{ name: '', email: '', receives_emails: true }] as Contact[],
 });
 
@@ -82,6 +84,7 @@ function openEdit(customer: Customer) {
     form.phone_country = customer.phone_country ?? '';
     form.currency = customer.currency ?? 'INR';
     form.place_of_supply = customer.place_of_supply ?? '';
+    form.gst_treatment = customer.gst_treatment ?? 'domestic';
     form.contacts = customer.emails?.length
         ? customer.emails.map((c) => ({ receives_emails: true, ...c }))
         : [{ name: '', email: '', receives_emails: true }];
@@ -375,6 +378,7 @@ function locationSummary(customer: Customer): string {
                                         defaultPhoneCountry ?? 'US'
                                     "
                                     :indian-states="indianStates"
+                                    :gst-treatments="gstTreatments"
                                     @submit="submitCustomer"
                                     @cancel="cancelForm"
                                 />

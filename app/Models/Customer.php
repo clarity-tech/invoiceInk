@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Casts\ContactCollectionCast;
 use App\Currency;
+use App\Enums\GstTreatment;
 use App\Models\Scopes\OrganizationScope;
 use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,6 +24,7 @@ class Customer extends Model
         'phone_country',
         'currency',
         'place_of_supply',
+        'gst_treatment',
         'emails',
         'primary_location_id',
         'organization_id',
@@ -42,7 +44,13 @@ class Customer extends Model
         return [
             'emails' => ContactCollectionCast::class,
             'currency' => Currency::class,
+            'gst_treatment' => GstTreatment::class,
         ];
+    }
+
+    public function isOverseas(): bool
+    {
+        return $this->gst_treatment === GstTreatment::Overseas;
     }
 
     /**

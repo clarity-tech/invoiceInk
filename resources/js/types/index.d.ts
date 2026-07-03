@@ -119,6 +119,7 @@ export interface Customer {
     formatted_phone: string | null;
     currency: Currency | null;
     place_of_supply: string | null;
+    gst_treatment: 'domestic' | 'overseas';
     emails: Contact[];
     organization_id: number;
     primary_location_id: number | null;

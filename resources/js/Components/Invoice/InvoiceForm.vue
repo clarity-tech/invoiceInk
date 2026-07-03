@@ -122,9 +122,12 @@ const currentCurrency = computed<Currency>(
         'INR',
 );
 
-// Place of supply only applies to Indian (GST) organizations.
+// Place of supply applies to Indian (GST) organizations, but not to overseas
+// (export) customers.
 const showPlaceOfSupply = computed(
-    () => Object.keys(props.indianStates ?? {}).length > 0,
+    () =>
+        Object.keys(props.indianStates ?? {}).length > 0 &&
+        selectedCustomer.value?.gst_treatment !== 'overseas',
 );
 
 // Form

@@ -11,6 +11,7 @@ function makeFormData(overrides = {}) {
         phone_country: '',
         currency: 'INR',
         place_of_supply: '',
+        gst_treatment: 'domestic',
         contacts: [{ name: '', email: '' }] as Contact[],
         ...overrides,
     });
@@ -93,6 +94,31 @@ describe('CustomerForm', () => {
         expect(wrapper.find('#customer-place-of-supply').exists()).toBe(true);
         expect(wrapper.text()).toContain('Place of Supply');
         expect(wrapper.text()).toContain('Maharashtra (27)');
+    });
+
+    it('shows a GST Treatment select when gstTreatments are provided', () => {
+        const wrapper = mount(CustomerForm, {
+            props: {
+                ...defaultProps,
+                gstTreatments: { domestic: 'Domestic', overseas: 'Overseas' },
+            },
+        });
+        expect(wrapper.find('#customer-gst-treatment').exists()).toBe(true);
+        expect(wrapper.text()).toContain('GST Treatment');
+    });
+
+    it('hides Place of Supply when GST Treatment is overseas', () => {
+        const wrapper = mount(CustomerForm, {
+            props: {
+                ...defaultProps,
+                form: makeFormData({ gst_treatment: 'overseas' }),
+                indianStates: { '27': 'Maharashtra (27)' },
+                gstTreatments: { domestic: 'Domestic', overseas: 'Overseas' },
+            },
+        });
+        // Treatment selector still shows, but Place of Supply is hidden.
+        expect(wrapper.find('#customer-gst-treatment').exists()).toBe(true);
+        expect(wrapper.find('#customer-place-of-supply').exists()).toBe(false);
     });
 
     it('renders an "Auto-add to emails" checkbox per contact', () => {

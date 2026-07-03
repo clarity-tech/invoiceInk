@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Currency;
 use App\Enums\Country;
+use App\Enums\GstTreatment;
 use App\Enums\IndianState;
 use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
@@ -44,6 +45,9 @@ class CustomerController extends Controller
             'indianStates' => $organization?->country_code === Country::IN
                 ? IndianState::options()
                 : [],
+            'gstTreatments' => $organization?->country_code === Country::IN
+                ? GstTreatment::options()
+                : [],
         ]);
     }
 
@@ -60,12 +64,18 @@ class CustomerController extends Controller
             return back()->withErrors(['contacts.0.email' => __('forms.validation.at_least_one_contact_email')]);
         }
 
+        $gstTreatment = $validated['gst_treatment'] ?? GstTreatment::Domestic->value;
+
         $customer = Customer::create([
             'name' => $validated['name'],
             'phone' => PhoneNumber::normalize($validated['phone'] ?? null, $validated['phone_country'] ?? null),
             'phone_country' => $validated['phone_country'] ?? null,
             'currency' => $validated['currency'],
-            'place_of_supply' => $validated['place_of_supply'] ?? null,
+            // Overseas (export) customers have no Indian place of supply.
+            'place_of_supply' => $gstTreatment === GstTreatment::Overseas->value
+                ? null
+                : ($validated['place_of_supply'] ?? null),
+            'gst_treatment' => $gstTreatment,
             'emails' => new ContactCollection($filteredContacts),
             'organization_id' => $organization->id,
         ]);
@@ -83,12 +93,18 @@ class CustomerController extends Controller
             return back()->withErrors(['contacts.0.email' => __('forms.validation.at_least_one_contact_email')]);
         }
 
+        $gstTreatment = $validated['gst_treatment'] ?? GstTreatment::Domestic->value;
+
         $customer->update([
             'name' => $validated['name'],
             'phone' => PhoneNumber::normalize($validated['phone'] ?? null, $validated['phone_country'] ?? null),
             'phone_country' => $validated['phone_country'] ?? null,
             'currency' => $validated['currency'],
-            'place_of_supply' => $validated['place_of_supply'] ?? null,
+            // Overseas (export) customers have no Indian place of supply.
+            'place_of_supply' => $gstTreatment === GstTreatment::Overseas->value
+                ? null
+                : ($validated['place_of_supply'] ?? null),
+            'gst_treatment' => $gstTreatment,
             'emails' => new ContactCollection($filteredContacts),
         ]);
 

@@ -910,6 +910,33 @@ describe('Invoice/InvoiceForm', () => {
                 .find((s) => s.text().includes('Maharashtra (27)'))!;
             expect((posSelect.element as HTMLSelectElement).value).toBe('27');
         });
+
+        it('hides Place of Supply when the selected customer is overseas', async () => {
+            const overseasCustomer = makeCustomer({
+                id: 1,
+                name: 'Globex Overseas',
+                currency: 'USD',
+                gst_treatment: 'overseas',
+                primary_location_id: 20,
+                primary_location: custLocation,
+                locations: [custLocation],
+            });
+            const wrapper = mountComponent({
+                customers: [overseasCustomer],
+                indianStates,
+            });
+
+            const customerSelect = wrapper
+                .findAll('select')
+                .find((s) => s.text().includes('Globex Overseas'))!;
+            const option = customerSelect
+                .findAll('option')
+                .find((o) => o.text().includes('Globex Overseas'))!;
+            (option.element as HTMLOptionElement).selected = true;
+            await customerSelect.trigger('change');
+
+            expect(wrapper.text()).not.toContain('Place of Supply');
+        });
     });
 
     describe('flash messages', () => {

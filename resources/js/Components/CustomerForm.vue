@@ -13,6 +13,7 @@ const props = withDefaults(
             phone_country: string;
             currency: string;
             place_of_supply: string;
+            gst_treatment: string;
             contacts: Contact[];
         }>;
         currencies: Record<string, string>;
@@ -22,10 +23,13 @@ const props = withDefaults(
         defaultCountry?: string;
         /** GST state options; empty for non-Indian organizations. */
         indianStates?: Record<string, string>;
+        /** GST treatment options; empty for non-Indian organizations. */
+        gstTreatments?: Record<string, string>;
     }>(),
     {
         defaultCountry: 'US',
         indianStates: () => ({}),
+        gstTreatments: () => ({}),
     },
 );
 
@@ -34,9 +38,16 @@ const emit = defineEmits<{
     (e: 'cancel'): void;
 }>();
 
-// Place of supply only applies to Indian (GST) organizations.
+// GST treatment (and place of supply) only apply to Indian (GST) organizations.
+const showGstTreatment = computed(
+    () => Object.keys(props.gstTreatments).length > 0,
+);
+
+// Place of supply is hidden for overseas (export) customers.
 const showPlaceOfSupply = computed(
-    () => Object.keys(props.indianStates).length > 0,
+    () =>
+        Object.keys(props.indianStates).length > 0 &&
+        props.form.gst_treatment !== 'overseas',
 );
 
 const contactErrors = ref<Record<string, string>>({});
@@ -150,6 +161,37 @@ function removeContact(index: number) {
             </select>
             <p v-if="form.errors.currency" class="mt-1 text-sm text-red-600">
                 {{ form.errors.currency }}
+            </p>
+        </div>
+
+        <!-- GST Treatment (GST organizations only) -->
+        <div v-if="showGstTreatment">
+            <label
+                for="customer-gst-treatment"
+                class="block text-sm font-medium text-gray-700"
+                >GST Treatment</label
+            >
+            <select
+                id="customer-gst-treatment"
+                v-model="form.gst_treatment"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+            >
+                <option
+                    v-for="(label, value) in gstTreatments"
+                    :key="value"
+                    :value="value"
+                >
+                    {{ label }}
+                </option>
+            </select>
+            <p class="mt-1 text-xs text-gray-500">
+                Overseas customers are treated as exports (no place of supply).
+            </p>
+            <p
+                v-if="form.errors.gst_treatment"
+                class="mt-1 text-sm text-red-600"
+            >
+                {{ form.errors.gst_treatment }}
             </p>
         </div>
 

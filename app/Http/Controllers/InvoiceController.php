@@ -198,7 +198,8 @@ class InvoiceController extends Controller
                 $invoiceNumber = $this->generateFallbackNumber($validated['type'], $validated['organization_id']);
             }
 
-            $currency = Customer::find($validated['customer_id'])?->currency?->value;
+            $customer = Customer::find($validated['customer_id']);
+            $currency = $customer?->currency?->value;
             $issuedAt = ! empty($validated['issued_at']) ? now()->parse($validated['issued_at']) : now();
             $orgCurrency = Organization::find($validated['organization_id'])?->currency?->value;
             $exchangeRate = $this->resolveExchangeRate($currency, $orgCurrency, $issuedAt);
@@ -226,7 +227,7 @@ class InvoiceController extends Controller
                 'tax' => $totals->tax,
                 'total' => $sourceTaxes['total'],
                 'currency' => $currency,
-                'place_of_supply' => $validated['place_of_supply'] ?? null,
+                'place_of_supply' => $customer?->isOverseas() ? null : ($validated['place_of_supply'] ?? null),
                 'tds_rate' => $validated['tds_rate'] ?? null,
                 'tds_amount' => $sourceTaxes['tds_amount'],
                 'tds_section' => $validated['tds_section'] ?? null,
@@ -362,7 +363,8 @@ class InvoiceController extends Controller
         DB::transaction(function () use ($invoice, $validated) {
             $totals = $this->calculateTotals($validated['items']);
 
-            $currency = Customer::find($validated['customer_id'])?->currency?->value;
+            $customer = Customer::find($validated['customer_id']);
+            $currency = $customer?->currency?->value;
             $issuedAt = ! empty($validated['issued_at']) ? now()->parse($validated['issued_at']) : now();
             $orgCurrency = $invoice->organization?->currency?->value;
             $exchangeRate = $this->resolveExchangeRate($currency, $orgCurrency, $issuedAt);
@@ -387,7 +389,7 @@ class InvoiceController extends Controller
                 'tax' => $totals->tax,
                 'total' => $sourceTaxes['total'],
                 'currency' => $currency,
-                'place_of_supply' => $validated['place_of_supply'] ?? null,
+                'place_of_supply' => $customer?->isOverseas() ? null : ($validated['place_of_supply'] ?? null),
                 'tds_rate' => $validated['tds_rate'] ?? null,
                 'tds_amount' => $sourceTaxes['tds_amount'],
                 'tds_section' => $validated['tds_section'] ?? null,

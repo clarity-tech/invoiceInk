@@ -653,9 +653,16 @@ test('placeOfSupplyLabel resolves the stored state code', function () {
     expect($invoice->placeOfSupplyLabel())->toBe('Maharashtra (27)');
 });
 
-test('placeOfSupplyLabel falls back to the customer location state when unset', function () {
-    // Legacy invoice: no stored place of supply, Indian customer location.
+test('placeOfSupplyLabel is null when no place of supply is set', function () {
     $invoice = createInvoiceWithItems(['place_of_supply' => null]);
 
-    expect($invoice->placeOfSupplyLabel())->toBe('Customer State');
+    expect($invoice->placeOfSupplyLabel())->toBeNull();
+});
+
+test('placeOfSupplyLabel is null for an overseas customer', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation(['gst_treatment' => 'overseas'], [], $organization);
+    $invoice = createInvoiceWithItems(['place_of_supply' => '27'], null, $organization, $customer);
+
+    expect($invoice->placeOfSupplyLabel())->toBeNull();
 });

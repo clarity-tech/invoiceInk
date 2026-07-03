@@ -25,6 +25,7 @@ test('public invoice template renders with all new elements', function () {
         'notes' => 'Test invoice notes',
         'terms' => 'Payment due within 30 days',
         'tax_type' => 'IGST',
+        'place_of_supply' => '36', // Telangana
     ], null, $organization, $customer);
 
     $response = $this->get(route('invoices.public', $invoice->ulid));

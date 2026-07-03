@@ -116,6 +116,7 @@ test('customer has correct fillable attributes', function () {
         'phone_country',
         'currency',
         'place_of_supply',
+        'gst_treatment',
         'emails',
         'primary_location_id',
         'organization_id',

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\GstTreatment;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Location;
@@ -172,6 +173,48 @@ test('index sends no Indian state options for a non-Indian organization', functi
 
     $this->get('/customers')
         ->assertInertia(fn ($page) => $page->where('indianStates', []));
+});
+
+test('persists the gst treatment and defaults to domestic', function () {
+    $user = createUserWithTeam();
+    $this->actingAs($user);
+
+    $this->post('/customers', [
+        'name' => 'Default Treatment Customer',
+        'currency' => 'INR',
+        'contacts' => [['name' => 'A', 'email' => 'a@customer.test']],
+    ])->assertRedirect();
+
+    expect(Customer::where('name', 'Default Treatment Customer')->first()->gst_treatment)
+        ->toBe(GstTreatment::Domestic);
+});
+
+test('clears place of supply when the customer is overseas', function () {
+    $user = createUserWithTeam();
+    $this->actingAs($user);
+
+    $this->post('/customers', [
+        'name' => 'Overseas Customer',
+        'currency' => 'USD',
+        'gst_treatment' => 'overseas',
+        'place_of_supply' => '27',
+        'contacts' => [['name' => 'A', 'email' => 'a@customer.test']],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    $customer = Customer::where('name', 'Overseas Customer')->first();
+    expect($customer->isOverseas())->toBeTrue();
+    expect($customer->place_of_supply)->toBeNull();
+});
+
+test('index exposes GST treatment options for an Indian organization', function () {
+    $user = createUserWithTeam([], ['country_code' => 'IN']);
+    $this->actingAs($user);
+
+    $this->get('/customers')
+        ->assertInertia(fn ($page) => $page
+            ->where('gstTreatments.overseas', 'Overseas')
+            ->where('gstTreatments.domestic', 'Domestic')
+        );
 });
 
 test('can create customer with multiple contacts', function () {

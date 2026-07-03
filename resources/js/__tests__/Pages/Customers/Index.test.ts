@@ -123,6 +123,7 @@ const defaultProps = () => ({
     countries: { IN: 'India', US: 'United States' },
     taxLabels: { IN: 'GSTIN', US: 'EIN' },
     indianStates: {},
+    gstTreatments: {},
 });
 
 function mountComponent(propsOverride = {}) {
