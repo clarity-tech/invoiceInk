@@ -26,6 +26,7 @@ test('public invoice template renders with all new elements', function () {
         'terms' => 'Payment due within 30 days',
         'tax_type' => 'IGST',
         'place_of_supply' => '36', // Telangana
+        'order_number' => 'PO-2026-4471',
     ], null, $organization, $customer);
 
     $response = $this->get(route('invoices.public', $invoice->ulid));
@@ -45,6 +46,8 @@ test('public invoice template renders with all new elements', function () {
     $response->assertSee('Place of Supply');
     $response->assertSee('Telangana');
     $response->assertSee('IGST');
+    $response->assertSee('Order Number');
+    $response->assertSee('PO-2026-4471');
 });
 
 test('public invoice template renders INVOICE header when no GSTIN', function () {

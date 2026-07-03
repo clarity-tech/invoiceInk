@@ -537,6 +537,16 @@
                                 </td>
                             </tr>
                         @endif
+                        @if($document->order_number)
+                            <tr>
+                                <td class="dt-label text-right">
+                                    {{ __('documents.fields.order_number') }}
+                                </td>
+                                <td class="dt-value text-right">
+                                    {{ $document->order_number }}
+                                </td>
+                            </tr>
+                        @endif
                         @if($paymentTerms)
                             <tr>
                                 <td class="dt-label text-right">

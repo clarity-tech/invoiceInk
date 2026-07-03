@@ -138,6 +138,8 @@ export interface Invoice {
     organization_id: number;
     customer_id: number | null;
     invoice_number: string;
+    order_number: string | null;
+    subject: string | null;
     status: InvoiceStatus;
     issued_at: string;
     due_at: string | null;

@@ -223,6 +223,65 @@ test('store persists the place of supply', function () {
     expect(Invoice::first()->place_of_supply)->toBe('27');
 });
 
+test('store persists the order number', function () {
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'order_number' => 'PO-2026-4471',
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 5000, 'tax_rate' => 0],
+        ],
+    ])->assertRedirect();
+
+    expect(Invoice::first()->order_number)->toBe('PO-2026-4471');
+});
+
+test('update persists the order number', function () {
+    $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
+
+    $this->put(route('invoices.update', $invoice->id), [
+        'type' => 'invoice',
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'sent',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(15)->format('Y-m-d'),
+        'order_number' => 'PO-9988',
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 5000, 'tax_rate' => 0],
+        ],
+    ])->assertRedirect();
+
+    expect($invoice->fresh()->order_number)->toBe('PO-9988');
+});
+
+test('store rejects an order number that is too long', function () {
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'order_number' => str_repeat('A', 256),
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 5000, 'tax_rate' => 0],
+        ],
+    ])->assertSessionHasErrors('order_number');
+});
+
 test('overriding place of supply on an invoice does not change the customer', function () {
     $this->customer->update(['place_of_supply' => '27']);
     $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);

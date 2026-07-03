@@ -50,6 +50,7 @@ return [
 
     'fields' => [
         'invoice_number' => 'Invoice Number',
+        'order_number' => 'Order Number',
         'estimate_number' => 'Estimate Number',
         'document_number' => 'Document Number',
         'issue_date' => 'Invoice Date',

@@ -219,6 +219,7 @@ class InvoiceController extends Controller
                 'customer_location_id' => $validated['customer_location_id'],
                 'customer_shipping_location_id' => $validated['customer_shipping_location_id'],
                 'invoice_number' => $invoiceNumber,
+                'order_number' => $validated['order_number'] ?? null,
                 'invoice_numbering_series_id' => $seriesId,
                 'status' => $validated['status'],
                 'issued_at' => ! empty($validated['issued_at']) ? now()->parse($validated['issued_at']) : null,
@@ -398,6 +399,7 @@ class InvoiceController extends Controller
                 'tcs_section' => $validated['tcs_section'] ?? null,
                 'exchange_rate' => $exchangeRate,
                 'subject' => $validated['subject'] ?? null,
+                'order_number' => $validated['order_number'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'terms' => $validated['terms'] ?? null,
             ]);
@@ -767,6 +769,7 @@ class InvoiceController extends Controller
             'tcs_rate' => ['nullable', 'integer', 'min:0', 'max:10000'],
             'tcs_section' => ['nullable', 'string', 'max:20'],
             'subject' => ['nullable', 'string', 'max:255'],
+            'order_number' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'terms' => ['nullable', 'string', 'max:5000'],
             'items' => ['required', 'array', 'min:1'],

@@ -33,6 +33,7 @@ class Invoice extends Model implements HasMedia
         'customer_location_id',
         'customer_shipping_location_id',
         'invoice_number',
+        'order_number',
         'invoice_numbering_series_id',
         'status',
         'issued_at',

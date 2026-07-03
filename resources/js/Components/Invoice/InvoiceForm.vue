@@ -163,6 +163,8 @@ const form = useForm({
         props.defaults?.invoice_numbering_series_id ?? (null as number | null),
     notes: props.mode === 'edit' ? (props.invoice!.notes ?? '') : '',
     subject: props.mode === 'edit' ? (props.invoice?.subject ?? '') : '',
+    order_number:
+        props.mode === 'edit' ? (props.invoice?.order_number ?? '') : '',
     terms: props.mode === 'edit' ? (props.invoice?.terms ?? '') : '',
     place_of_supply:
         props.mode === 'edit' ? (props.invoice?.place_of_supply ?? '') : '',
@@ -1013,6 +1015,28 @@ const flash = computed(() => (page.props as any).flash ?? {});
                             class="mt-1 text-sm text-red-600"
                         >
                             {{ form.errors.due_at }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                        <label
+                            class="mb-1 block text-sm font-medium text-gray-700"
+                            >Order Number</label
+                        >
+                        <input
+                            v-model="form.order_number"
+                            type="text"
+                            placeholder="Customer's purchase order number"
+                            maxlength="255"
+                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        />
+                        <p
+                            v-if="form.errors.order_number"
+                            class="mt-1 text-sm text-red-600"
+                        >
+                            {{ form.errors.order_number }}
                         </p>
                     </div>
                 </div>
