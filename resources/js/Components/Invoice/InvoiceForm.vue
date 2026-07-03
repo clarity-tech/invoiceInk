@@ -5,6 +5,7 @@ import AttachmentDropzone from './AttachmentDropzone.vue';
 import EmailModal from './EmailModal.vue';
 import ItemRow from './ItemRow.vue';
 import { useFormatMoney } from '@/composables/useFormatMoney';
+import { buildGstBreakdown } from '@/composables/useGstBreakdown';
 import { useInvoiceCalculator } from '@/composables/useInvoiceCalculator';
 import type { LineItem } from '@/composables/useInvoiceCalculator';
 import {
@@ -173,6 +174,45 @@ const visibleAttachments = computed(() =>
     (props.attachments ?? []).filter(
         (a) => !form.removed_attachment_ids.includes(a.id),
     ),
+);
+
+const selectedOrgLocation = computed(
+    () =>
+        props.organizationLocations.find(
+            (l) => l.id === form.organization_location_id,
+        ) ?? null,
+);
+
+// The supplier's GST state code — first two digits of the org GSTIN, only for
+// Indian locations. Drives the intra- vs inter-state CGST/SGST/IGST split.
+const supplierStateCode = computed<string | null>(() => {
+    const loc = selectedOrgLocation.value;
+
+    if (!loc || loc.country !== 'IN' || !loc.tax_id || loc.tax_id.length < 2) {
+        return null;
+    }
+
+    return loc.tax_id.slice(0, 2);
+});
+
+// A customer billed outside India is an export → inter-state → IGST.
+const isForeignCustomer = computed(() => {
+    const loc = customerLocations.value.find(
+        (l) => l.id === form.customer_location_id,
+    );
+
+    return loc != null && loc.country !== 'IN';
+});
+
+// Live CGST/SGST/UTGST/IGST split for the totals panel. Empty for non-GST
+// supplies, in which case the single aggregate tax line is shown instead.
+const gstBreakdown = computed(() =>
+    buildGstBreakdown({
+        items: items.value,
+        supplierStateCode: supplierStateCode.value,
+        placeOfSupplyCode: form.place_of_supply || null,
+        isForeignCustomer: isForeignCustomer.value,
+    }),
 );
 
 function removeExistingAttachment(id: number) {
@@ -995,7 +1035,21 @@ const flash = computed(() => (page.props as any).flash ?? {});
                                 formatMoney(totals.subtotal, currentCurrency)
                             }}</span>
                         </div>
-                        <div class="flex justify-between text-sm">
+                        <template v-if="gstBreakdown.length > 0">
+                            <div
+                                v-for="row in gstBreakdown"
+                                :key="row.label"
+                                class="flex justify-between text-sm"
+                            >
+                                <span class="text-gray-600"
+                                    >{{ row.label }}:</span
+                                >
+                                <span class="font-medium text-gray-900">{{
+                                    formatMoney(row.amount, currentCurrency)
+                                }}</span>
+                            </div>
+                        </template>
+                        <div v-else class="flex justify-between text-sm">
                             <span class="text-gray-600">Tax:</span>
                             <span class="font-medium text-gray-900">{{
                                 formatMoney(totals.tax, currentCurrency)

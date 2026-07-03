@@ -98,6 +98,27 @@ enum IndianState: string
     }
 
     /**
+     * Whether an intra-territory supply here attracts UTGST (rather than SGST)
+     * for the state component of GST.
+     *
+     * Union Territories *without* their own legislature levy UTGST. Delhi,
+     * Puducherry and Jammu and Kashmir are excluded because they have
+     * legislatures and levy SGST instead.
+     */
+    public function leviesUtgst(): bool
+    {
+        return match ($this) {
+            self::Chandigarh,
+            self::DadraAndNagarHaveliAndDamanAndDiu,
+            self::Lakshadweep,
+            self::AndamanAndNicobarIslands,
+            self::Ladakh,
+            self::OtherTerritory => true,
+            default => false,
+        };
+    }
+
+    /**
      * Dropdown options keyed by GST code, sorted alphabetically by name.
      *
      * @return array<string, string>

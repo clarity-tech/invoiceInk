@@ -10,7 +10,8 @@ class EstimateToInvoiceConverter
 {
     public function __construct(
         private InvoiceCalculator $invoiceCalculator,
-        private InvoiceNumberingServiceInterface $numberingService
+        private InvoiceNumberingServiceInterface $numberingService,
+        private GstBreakdownService $gstBreakdownService = new GstBreakdownService,
     ) {}
 
     public function convert(Invoice $estimate): Invoice
@@ -39,6 +40,7 @@ class EstimateToInvoiceConverter
             'issued_at' => $estimate->issued_at,
             'due_at' => $estimate->due_at,
             'currency' => $estimate->currency,
+            'place_of_supply' => $estimate->place_of_supply,
             'exchange_rate' => $estimate->exchange_rate,
             'subtotal' => $estimate->subtotal,
             'tax' => $estimate->tax,
@@ -51,6 +53,7 @@ class EstimateToInvoiceConverter
             $invoiceItem = new InvoiceItem([
                 'invoice_id' => $invoice->id,
                 'description' => $estimateItem->description,
+                'sac_code' => $estimateItem->sac_code,
                 'quantity' => $estimateItem->quantity,
                 'unit_price' => $estimateItem->unit_price,
                 'tax_rate' => $estimateItem->tax_rate,
@@ -60,6 +63,13 @@ class EstimateToInvoiceConverter
 
         $this->invoiceCalculator->updateInvoiceTotals($invoice);
         $invoice->save();
+
+        $invoice->load(['items', 'organizationLocation', 'customerLocation']);
+        $breakdown = $this->gstBreakdownService->build($invoice);
+        $invoice->update([
+            'tax_breakdown' => $breakdown ?: null,
+            'tax_type' => $breakdown ? 'GST' : null,
+        ]);
 
         return $invoice;
     }

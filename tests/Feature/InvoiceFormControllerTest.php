@@ -660,3 +660,103 @@ test('send email rejects when combined attachment size exceeds the cap', functio
         'attachments' => $files,
     ])->assertSessionHasErrors('attachments');
 });
+
+test('store computes and persists the intra-state CGST/SGST breakdown', function () {
+    // Supplier and place of supply both Maharashtra (27) → intra-state.
+    $this->organization->primaryLocation->update(['tax_id' => '27ABCDE1234F1Z5']);
+
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'place_of_supply' => '27',
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 1800],
+        ],
+    ])->assertRedirect();
+
+    $invoice = Invoice::first();
+    expect($invoice->tax_type)->toBe('GST');
+    expect($invoice->tax_breakdown)->toBe([
+        'CGST @ 9%' => 9000,
+        'SGST @ 9%' => 9000,
+    ]);
+    expect(array_sum($invoice->tax_breakdown))->toBe($invoice->tax);
+});
+
+test('store computes and persists the inter-state IGST breakdown', function () {
+    // Supplier Maharashtra (27), place of supply Karnataka (29) → inter-state.
+    $this->organization->primaryLocation->update(['tax_id' => '27ABCDE1234F1Z5']);
+
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'place_of_supply' => '29',
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 1800],
+        ],
+    ])->assertRedirect();
+
+    $invoice = Invoice::first();
+    expect($invoice->tax_breakdown)->toBe(['IGST @ 18%' => 18000]);
+});
+
+test('store leaves the breakdown null for a non-GST supplier', function () {
+    // Default org location has no GSTIN, so there is no GST split.
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 1800],
+        ],
+    ])->assertRedirect();
+
+    $invoice = Invoice::first();
+    expect($invoice->tax_breakdown)->toBeNull();
+    expect($invoice->tax_type)->toBeNull();
+});
+
+test('store computes IGST for an overseas customer', function () {
+    // Indian GST supplier billing a US customer → export → inter-state IGST.
+    $this->organization->primaryLocation->update(['tax_id' => '27ABCDE1234F1Z5']);
+    $foreign = createCustomerWithLocation([], ['country' => 'US'], $this->organization);
+
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $foreign->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $foreign->primaryLocation->id,
+        'customer_shipping_location_id' => $foreign->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 1800],
+        ],
+    ])->assertRedirect();
+
+    $invoice = Invoice::first();
+    expect($invoice->tax_breakdown)->toBe(['IGST @ 18%' => 18000]);
+    expect($invoice->tax_type)->toBe('GST');
+});

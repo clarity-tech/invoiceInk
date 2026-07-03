@@ -17,6 +17,7 @@ use App\Models\Organization;
 use App\Models\Payment;
 use App\Services\EstimateToInvoiceConverter;
 use App\Services\ExchangeRateService;
+use App\Services\GstBreakdownService;
 use App\Services\InvoiceCalculator;
 use App\ValueObjects\ContactCollection;
 use App\ValueObjects\InvoiceTotals;
@@ -40,6 +41,7 @@ class InvoiceController extends Controller
         private readonly InvoiceCalculator $calculator,
         private readonly ExchangeRateService $exchangeRateService,
         private readonly InvoiceNumberingServiceInterface $numberingService,
+        private readonly GstBreakdownService $gstBreakdownService,
     ) {}
 
     public function index(Request $request): Response
@@ -223,6 +225,7 @@ class InvoiceController extends Controller
             ]);
 
             $this->persistItems($invoice, $validated['items']);
+            $this->applyGstBreakdown($invoice);
 
             return $invoice;
         });
@@ -373,6 +376,7 @@ class InvoiceController extends Controller
             $invoice->items()->delete();
 
             $this->persistItems($invoice, $validated['items']);
+            $this->applyGstBreakdown($invoice);
         });
 
         $this->syncInvoiceAttachments($invoice, $request);
@@ -678,6 +682,23 @@ class InvoiceController extends Controller
         ]));
 
         return $this->calculator->calculateFromItems($collection);
+    }
+
+    /**
+     * Derive the CGST/SGST/UTGST/IGST split from the place of supply and store
+     * it on the invoice. Leaves both fields null for non-GST invoices so the
+     * document falls back to a single aggregate tax line.
+     */
+    private function applyGstBreakdown(Invoice $invoice): void
+    {
+        $invoice->load(['items', 'organizationLocation', 'customerLocation']);
+
+        $breakdown = $this->gstBreakdownService->build($invoice);
+
+        $invoice->update([
+            'tax_breakdown' => $breakdown ?: null,
+            'tax_type' => $breakdown ? 'GST' : null,
+        ]);
     }
 
     private function resolveExchangeRate(?string $from, ?string $to, Carbon $date): float
