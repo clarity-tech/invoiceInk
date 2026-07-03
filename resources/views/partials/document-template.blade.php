@@ -650,6 +650,20 @@
                         @endif
                     @endif
 
+                    @if($document->hasTcs())
+                        <div class="totals-row">
+                            <span class="t-label">{{ $document->tcsLabel() }}</span>
+                            <span class="t-value nums">+ {{ $amt($document->formatted_tcs_amount) }}</span>
+                        </div>
+                    @endif
+
+                    @if($document->hasTds())
+                        <div class="totals-row">
+                            <span class="t-label">{{ $document->tdsLabel() }}</span>
+                            <span class="t-value nums">&minus; {{ $amt($document->formatted_tds_amount) }}</span>
+                        </div>
+                    @endif
+
                     <div class="totals-row total-line">
                         <span class="t-label">{{ __('documents.financial.total') }}</span>
                         <span class="t-value nums">{{ $amt($document->formatted_total) }}</span>

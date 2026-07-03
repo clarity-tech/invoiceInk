@@ -8,6 +8,7 @@ import { useFormatMoney } from '@/composables/useFormatMoney';
 import { buildGstBreakdown } from '@/composables/useGstBreakdown';
 import { useInvoiceCalculator } from '@/composables/useInvoiceCalculator';
 import type { LineItem } from '@/composables/useInvoiceCalculator';
+import { calcTdsAmount, calcTcsAmount } from '@/composables/useSourceTaxes';
 import {
     PAYMENT_TERM_OPTIONS,
     CUSTOM_TERM,
@@ -162,6 +163,18 @@ const form = useForm({
     terms: props.mode === 'edit' ? (props.invoice?.terms ?? '') : '',
     place_of_supply:
         props.mode === 'edit' ? (props.invoice?.place_of_supply ?? '') : '',
+    tds_rate:
+        props.mode === 'edit'
+            ? (props.invoice?.tds_rate ?? null)
+            : (null as number | null),
+    tds_section:
+        props.mode === 'edit' ? (props.invoice?.tds_section ?? '') : '',
+    tcs_rate:
+        props.mode === 'edit'
+            ? (props.invoice?.tcs_rate ?? null)
+            : (null as number | null),
+    tcs_section:
+        props.mode === 'edit' ? (props.invoice?.tcs_section ?? '') : '',
     items: [] as LineItem[],
     // Newly picked files (uploaded to the invoice on save) and ids of existing
     // attachments the user removed (deleted on save).
@@ -214,6 +227,50 @@ const gstBreakdown = computed(() =>
         isForeignCustomer: isForeignCustomer.value,
     }),
 );
+
+// TDS/TCS (India source taxes): TDS is deducted from the amount payable, TCS is
+// added on top. Only offered to Indian organizations.
+const showSourceTaxes = computed(() => showPlaceOfSupply.value);
+
+const tdsAmount = computed(() =>
+    calcTdsAmount(totals.value.subtotal, form.tds_rate ?? 0),
+);
+
+const tcsAmount = computed(() =>
+    calcTcsAmount(totals.value.subtotal, totals.value.tax, form.tcs_rate ?? 0),
+);
+
+const netTotal = computed(
+    () => totals.value.total + tcsAmount.value - tdsAmount.value,
+);
+
+function sourceTaxLabel(
+    type: 'TDS' | 'TCS',
+    rate: number | null,
+    section: string,
+): string {
+    const pct = parseFloat(((rate ?? 0) / 100).toPrecision(6));
+    const base = `${type} @ ${pct}%`;
+
+    return section ? `${base} (${section})` : base;
+}
+
+const tdsLabel = computed(() =>
+    sourceTaxLabel('TDS', form.tds_rate, form.tds_section),
+);
+const tcsLabel = computed(() =>
+    sourceTaxLabel('TCS', form.tcs_rate, form.tcs_section),
+);
+
+// A percentage rate stored as basis points (1000 = 10%). Empty clears it.
+function rateAsPercent(rate: number | null): string {
+    return rate == null ? '' : String(rate / 100);
+}
+
+function onSourceRateInput(field: 'tds_rate' | 'tcs_rate', value: string) {
+    const trimmed = value.trim();
+    form[field] = trimmed === '' ? null : Math.round(Number(trimmed) * 100);
+}
 
 function removeExistingAttachment(id: number) {
     if (!form.removed_attachment_ids.includes(id)) {
@@ -1056,14 +1113,137 @@ const flash = computed(() => (page.props as any).flash ?? {});
                             }}</span>
                         </div>
                         <div
+                            v-if="tcsAmount > 0"
+                            class="flex justify-between text-sm"
+                        >
+                            <span class="text-gray-600">{{ tcsLabel }}:</span>
+                            <span class="font-medium text-gray-900"
+                                >+
+                                {{
+                                    formatMoney(tcsAmount, currentCurrency)
+                                }}</span
+                            >
+                        </div>
+                        <div
+                            v-if="tdsAmount > 0"
+                            class="flex justify-between text-sm"
+                        >
+                            <span class="text-gray-600">{{ tdsLabel }}:</span>
+                            <span class="font-medium text-gray-900"
+                                >&minus;
+                                {{
+                                    formatMoney(tdsAmount, currentCurrency)
+                                }}</span
+                            >
+                        </div>
+                        <div
                             class="flex justify-between border-t border-gray-300 pt-2"
                         >
                             <span class="text-lg font-bold text-gray-900"
                                 >Total:</span
                             >
                             <span class="text-lg font-bold text-brand-600">{{
-                                formatMoney(totals.total, currentCurrency)
+                                formatMoney(netTotal, currentCurrency)
                             }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TDS / TCS Section (Indian organizations only) -->
+            <div v-if="showSourceTaxes" class="rounded-lg bg-white p-6 shadow">
+                <h2 class="mb-1 text-lg font-semibold text-gray-800">
+                    TDS / TCS
+                </h2>
+                <p class="mb-4 text-sm text-gray-500">
+                    Tax deducted or collected at source. TDS is subtracted from
+                    the total; TCS is added. Leave blank if not applicable.
+                </p>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div
+                        class="space-y-3 rounded-md border border-gray-200 p-4"
+                    >
+                        <h3 class="text-sm font-semibold text-gray-700">
+                            TDS (deducted)
+                        </h3>
+                        <div>
+                            <label
+                                class="mb-1 block text-xs font-medium text-gray-600"
+                                >Rate (%)</label
+                            >
+                            <input
+                                :value="rateAsPercent(form.tds_rate)"
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                placeholder="e.g. 10"
+                                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                                @input="
+                                    onSourceRateInput(
+                                        'tds_rate',
+                                        ($event.target as HTMLInputElement)
+                                            .value,
+                                    )
+                                "
+                            />
+                        </div>
+                        <div>
+                            <label
+                                class="mb-1 block text-xs font-medium text-gray-600"
+                                >Section</label
+                            >
+                            <input
+                                v-model="form.tds_section"
+                                type="text"
+                                maxlength="20"
+                                placeholder="e.g. 194J"
+                                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                            />
+                        </div>
+                    </div>
+
+                    <div
+                        class="space-y-3 rounded-md border border-gray-200 p-4"
+                    >
+                        <h3 class="text-sm font-semibold text-gray-700">
+                            TCS (collected)
+                        </h3>
+                        <div>
+                            <label
+                                class="mb-1 block text-xs font-medium text-gray-600"
+                                >Rate (%)</label
+                            >
+                            <input
+                                :value="rateAsPercent(form.tcs_rate)"
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                placeholder="e.g. 0.1"
+                                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                                @input="
+                                    onSourceRateInput(
+                                        'tcs_rate',
+                                        ($event.target as HTMLInputElement)
+                                            .value,
+                                    )
+                                "
+                            />
+                        </div>
+                        <div>
+                            <label
+                                class="mb-1 block text-xs font-medium text-gray-600"
+                                >Section</label
+                            >
+                            <input
+                                v-model="form.tcs_section"
+                                type="text"
+                                maxlength="20"
+                                placeholder="e.g. 206C(1H)"
+                                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                            />
                         </div>
                     </div>
                 </div>

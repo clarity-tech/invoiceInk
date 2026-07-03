@@ -149,6 +149,12 @@ export interface Invoice {
     amount_paid: number;
     tax_type: string | null;
     tax_breakdown: TaxBreakdownItem[] | null;
+    tds_rate: number | null;
+    tds_amount: number;
+    tds_section: string | null;
+    tcs_rate: number | null;
+    tcs_amount: number;
+    tcs_section: string | null;
     email_recipients: string[] | null;
     notes: string | null;
     terms: string | null;

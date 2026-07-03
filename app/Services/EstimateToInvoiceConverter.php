@@ -45,6 +45,10 @@ class EstimateToInvoiceConverter
             'subtotal' => $estimate->subtotal,
             'tax' => $estimate->tax,
             'total' => $estimate->total,
+            'tds_rate' => $estimate->tds_rate,
+            'tds_section' => $estimate->tds_section,
+            'tcs_rate' => $estimate->tcs_rate,
+            'tcs_section' => $estimate->tcs_section,
         ]);
 
         $invoice->save();

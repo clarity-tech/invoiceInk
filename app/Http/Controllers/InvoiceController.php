@@ -19,6 +19,7 @@ use App\Services\EstimateToInvoiceConverter;
 use App\Services\ExchangeRateService;
 use App\Services\GstBreakdownService;
 use App\Services\InvoiceCalculator;
+use App\Services\TdsTcsCalculator;
 use App\ValueObjects\ContactCollection;
 use App\ValueObjects\InvoiceTotals;
 use Illuminate\Http\RedirectResponse;
@@ -42,6 +43,7 @@ class InvoiceController extends Controller
         private readonly ExchangeRateService $exchangeRateService,
         private readonly InvoiceNumberingServiceInterface $numberingService,
         private readonly GstBreakdownService $gstBreakdownService,
+        private readonly TdsTcsCalculator $tdsTcsCalculator,
     ) {}
 
     public function index(Request $request): Response
@@ -201,6 +203,13 @@ class InvoiceController extends Controller
             $orgCurrency = Organization::find($validated['organization_id'])?->currency?->value;
             $exchangeRate = $this->resolveExchangeRate($currency, $orgCurrency, $issuedAt);
 
+            $sourceTaxes = $this->tdsTcsCalculator->compute(
+                $totals->subtotal,
+                $totals->tax,
+                $validated['tds_rate'] ?? null,
+                $validated['tcs_rate'] ?? null,
+            );
+
             $invoice = Invoice::create([
                 'type' => $validated['type'],
                 'organization_id' => $validated['organization_id'],
@@ -215,9 +224,15 @@ class InvoiceController extends Controller
                 'due_at' => ! empty($validated['due_at']) ? now()->parse($validated['due_at']) : null,
                 'subtotal' => $totals->subtotal,
                 'tax' => $totals->tax,
-                'total' => $totals->total,
+                'total' => $sourceTaxes['total'],
                 'currency' => $currency,
                 'place_of_supply' => $validated['place_of_supply'] ?? null,
+                'tds_rate' => $validated['tds_rate'] ?? null,
+                'tds_amount' => $sourceTaxes['tds_amount'],
+                'tds_section' => $validated['tds_section'] ?? null,
+                'tcs_rate' => $validated['tcs_rate'] ?? null,
+                'tcs_amount' => $sourceTaxes['tcs_amount'],
+                'tcs_section' => $validated['tcs_section'] ?? null,
                 'exchange_rate' => $exchangeRate,
                 'subject' => $validated['subject'] ?? null,
                 'notes' => $validated['notes'] ?? null,
@@ -352,6 +367,13 @@ class InvoiceController extends Controller
             $orgCurrency = $invoice->organization?->currency?->value;
             $exchangeRate = $this->resolveExchangeRate($currency, $orgCurrency, $issuedAt);
 
+            $sourceTaxes = $this->tdsTcsCalculator->compute(
+                $totals->subtotal,
+                $totals->tax,
+                $validated['tds_rate'] ?? null,
+                $validated['tcs_rate'] ?? null,
+            );
+
             $invoice->update([
                 'type' => $validated['type'],
                 'customer_id' => $validated['customer_id'],
@@ -363,9 +385,15 @@ class InvoiceController extends Controller
                 'due_at' => ! empty($validated['due_at']) ? now()->parse($validated['due_at']) : null,
                 'subtotal' => $totals->subtotal,
                 'tax' => $totals->tax,
-                'total' => $totals->total,
+                'total' => $sourceTaxes['total'],
                 'currency' => $currency,
                 'place_of_supply' => $validated['place_of_supply'] ?? null,
+                'tds_rate' => $validated['tds_rate'] ?? null,
+                'tds_amount' => $sourceTaxes['tds_amount'],
+                'tds_section' => $validated['tds_section'] ?? null,
+                'tcs_rate' => $validated['tcs_rate'] ?? null,
+                'tcs_amount' => $sourceTaxes['tcs_amount'],
+                'tcs_section' => $validated['tcs_section'] ?? null,
                 'exchange_rate' => $exchangeRate,
                 'subject' => $validated['subject'] ?? null,
                 'notes' => $validated['notes'] ?? null,
@@ -732,6 +760,10 @@ class InvoiceController extends Controller
             'issued_at' => ['required', 'date'],
             'due_at' => ['required', 'date', 'after_or_equal:issued_at'],
             'place_of_supply' => ['nullable', Rule::enum(IndianState::class)],
+            'tds_rate' => ['nullable', 'integer', 'min:0', 'max:10000'],
+            'tds_section' => ['nullable', 'string', 'max:20'],
+            'tcs_rate' => ['nullable', 'integer', 'min:0', 'max:10000'],
+            'tcs_section' => ['nullable', 'string', 'max:20'],
             'subject' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'terms' => ['nullable', 'string', 'max:5000'],

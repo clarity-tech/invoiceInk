@@ -8,6 +8,10 @@ use Illuminate\Support\Collection;
 
 class InvoiceCalculator
 {
+    public function __construct(
+        private TdsTcsCalculator $tdsTcsCalculator = new TdsTcsCalculator,
+    ) {}
+
     public function calculateInvoice(Invoice $invoice): InvoiceTotals
     {
         $items = $invoice->items;
@@ -43,9 +47,18 @@ class InvoiceCalculator
     {
         $totals = $this->calculateInvoice($invoice);
 
+        $sourceTaxes = $this->tdsTcsCalculator->compute(
+            $totals->subtotal,
+            $totals->tax,
+            $invoice->tds_rate,
+            $invoice->tcs_rate,
+        );
+
         $invoice->subtotal = $totals->subtotal;
         $invoice->tax = $totals->tax;
-        $invoice->total = $totals->total;
+        $invoice->tds_amount = $sourceTaxes['tds_amount'];
+        $invoice->tcs_amount = $sourceTaxes['tcs_amount'];
+        $invoice->total = $sourceTaxes['total'];
 
         return $invoice;
     }

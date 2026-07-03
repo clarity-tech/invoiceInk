@@ -760,3 +760,58 @@ test('store computes IGST for an overseas customer', function () {
     expect($invoice->tax_breakdown)->toBe(['IGST @ 18%' => 18000]);
     expect($invoice->tax_type)->toBe('GST');
 });
+
+test('store computes and persists TDS and TCS adjusting the total', function () {
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'tds_rate' => 1000,      // 10%
+        'tds_section' => '194J',
+        'tcs_rate' => 10,        // 0.1%
+        'tcs_section' => '206C(1H)',
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 0],
+        ],
+    ])->assertRedirect();
+
+    $invoice = Invoice::first();
+    expect($invoice->subtotal)->toBe(100000);
+    expect($invoice->tds_amount)->toBe(10000);
+    expect($invoice->tds_section)->toBe('194J');
+    expect($invoice->tcs_amount)->toBe(100); // 0.1% of 100000
+    expect($invoice->tcs_section)->toBe('206C(1H)');
+    expect($invoice->total)->toBe(90100); // 100000 + 100 - 10000
+});
+
+test('update recomputes the total when TDS is applied', function () {
+    $invoice = createInvoiceWithItems([], [
+        ['description' => 'Item', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 0],
+    ], $this->organization, $this->customer);
+
+    $this->put(route('invoices.update', $invoice->id), [
+        'type' => 'invoice',
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'tds_rate' => 1000,
+        'tds_section' => '194C',
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 0],
+        ],
+    ])->assertRedirect();
+
+    $fresh = $invoice->fresh();
+    expect($fresh->tds_amount)->toBe(10000);
+    expect($fresh->total)->toBe(90000); // 100000 - 10000
+});

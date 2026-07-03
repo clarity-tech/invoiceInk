@@ -46,6 +46,12 @@ class Invoice extends Model implements HasMedia
         'amount_paid',
         'tax_type',
         'tax_breakdown',
+        'tds_rate',
+        'tds_amount',
+        'tds_section',
+        'tcs_rate',
+        'tcs_amount',
+        'tcs_section',
         'email_recipients',
         'notes',
         'terms',
@@ -60,6 +66,10 @@ class Invoice extends Model implements HasMedia
             'currency' => Currency::class,
             'status' => InvoiceStatus::class,
             'tax_breakdown' => 'json',
+            'tds_rate' => 'integer',
+            'tds_amount' => 'integer',
+            'tcs_rate' => 'integer',
+            'tcs_amount' => 'integer',
             'email_recipients' => 'json',
         ];
     }
@@ -193,6 +203,54 @@ class Invoice extends Model implements HasMedia
     public function getFormattedTaxAttribute(): string
     {
         return $this->formatMoney($this->tax);
+    }
+
+    public function hasTds(): bool
+    {
+        return (int) $this->tds_amount > 0;
+    }
+
+    public function hasTcs(): bool
+    {
+        return (int) $this->tcs_amount > 0;
+    }
+
+    public function getFormattedTdsAmountAttribute(): string
+    {
+        return $this->formatMoney((int) $this->tds_amount);
+    }
+
+    public function getFormattedTcsAmountAttribute(): string
+    {
+        return $this->formatMoney((int) $this->tcs_amount);
+    }
+
+    /**
+     * Document label such as "TDS @ 10% (194J)", or null when no TDS applies.
+     */
+    public function tdsLabel(): ?string
+    {
+        return $this->hasTds()
+            ? $this->sourceTaxLabel('TDS', $this->tds_rate, $this->tds_section)
+            : null;
+    }
+
+    /**
+     * Document label such as "TCS @ 0.1% (206C(1H))", or null when no TCS applies.
+     */
+    public function tcsLabel(): ?string
+    {
+        return $this->hasTcs()
+            ? $this->sourceTaxLabel('TCS', $this->tcs_rate, $this->tcs_section)
+            : null;
+    }
+
+    private function sourceTaxLabel(string $type, ?int $rateBasisPoints, ?string $section): string
+    {
+        $rate = sprintf('%g', (int) $rateBasisPoints / 100);
+        $label = "{$type} @ {$rate}%";
+
+        return $section ? "{$label} ({$section})" : $label;
     }
 
     public function getFormattedTotalAttribute(): string
