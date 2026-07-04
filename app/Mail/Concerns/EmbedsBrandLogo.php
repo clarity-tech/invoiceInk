@@ -19,6 +19,18 @@ trait EmbedsBrandLogo
             return;
         }
 
+        $this->attachBrandLogo($message);
+    }
+
+    /**
+     * Attach the brand mark as an inline (CID) image unconditionally, regardless
+     * of the global logo_external setting. Used by mailables whose template
+     * always renders the embedded icon + HTML wordmark lockup (e.g. the invoice
+     * document email, which must stay legible in Gmail dark mode where a baked
+     * PNG wordmark would drop out).
+     */
+    protected function attachBrandLogo(Email $message): void
+    {
         $path = public_path((string) config('branding.logo_mark'));
 
         if (is_file($path)) {

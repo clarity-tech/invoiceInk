@@ -48,7 +48,7 @@ class DocumentMailer extends Mailable implements ShouldQueue
             to: $this->recipients->getEmails(),
             replyTo: $this->resolveReplyTo(),
             subject: $subject,
-            using: [fn (Email $message) => $this->embedBrandLogo($message)],
+            using: [fn (Email $message) => $this->attachBrandLogo($message)],
         );
 
         if (! empty($this->ccEmails)) {

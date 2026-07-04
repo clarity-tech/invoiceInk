@@ -212,15 +212,17 @@ test('document mailer omits the view-online button when disabled', function () {
     expect($mailer->renderHtml())->not->toContain('class="cta-button"');
 });
 
-test('document mailer renders the platform logo and tagline in the footer branding area', function () {
+test('document mailer renders the platform wordmark and tagline in the footer branding area', function () {
     $invoice = createInvoiceWithItems(['invoice_number' => 'INV-BRAND-001']);
 
     $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']]));
     $html = $mailer->renderHtml();
 
-    expect($html)->toContain(config('branding.logo'))             // hosted logo URL reference
-        ->and($html)->toContain(config('branding.tagline'))       // centralized footer tagline
-        ->and($html)->toContain('class="footer-brand"');          // footer lockup wrapper
+    // Footer lockup is the embedded ink-drop mark (CID image) + the "InvoiceInk"
+    // HTML wordmark, alongside the centralized tagline.
+    expect($html)->toContain('src="cid:'.config('branding.logo_cid').'"') // embedded mark
+        ->and($html)->toContain(config('branding.tagline'))               // centralized footer tagline
+        ->and($html)->toContain('class="footer-brand"');                  // footer lockup wrapper
 });
 
 test('document mailer footer renders the organization country name and second address line, mirroring the PDF', function () {
@@ -258,20 +260,21 @@ test('document mailer makes the header brand logo a clickable utm-tagged link', 
         ->and($headerUrl)->not->toContain('powered_by');
 });
 
-test('document mailer renders the brand logo lockup image in header and footer', function () {
+test('document mailer renders the embedded icon + wordmark lockup in header and footer', function () {
     $invoice = createInvoiceWithItems(['invoice_number' => 'INV-BRAND-WM']);
 
     $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']]));
     $html = $mailer->renderHtml();
 
-    // The combined InvoiceInk logo lockup (mark + wordmark) is rendered as a
-    // single image in both the header and the footer "powered by" lockup,
-    // referenced by hosted URL (not attached) so it never shows as an
-    // attachment in the recipient's mail client.
-    expect(substr_count($html, asset(config('branding.logo'))))->toBeGreaterThanOrEqual(2);
+    // The lockup is the CID ink-drop mark + a live-text "InvoiceInk" wordmark in
+    // both the header and the footer "powered by" lockup. The wordmark is HTML
+    // text (not a baked PNG), so the dark "Invoice" half stays legible in Gmail
+    // dark mode instead of dropping out as flat-image pixels would.
+    expect(substr_count($html, 'src="cid:'.config('branding.logo_cid').'"'))->toBeGreaterThanOrEqual(2)
+        ->and(substr_count($html, 'class="brand-ink"'))->toBeGreaterThanOrEqual(2);
 });
 
-test('document mailer references the brand logo by hosted url without attaching it', function () {
+test('document mailer embeds the brand mark inline and never references the hosted lockup', function () {
     config(['mail.default' => 'array', 'queue.default' => 'sync']);
 
     $invoice = createInvoiceWithItems(['invoice_number' => 'INV-CID-001']);
@@ -282,29 +285,31 @@ test('document mailer references the brand logo by hosted url without attaching 
 
     $attachmentTypes = collect($email->getAttachments())->map->getContentType()->all();
 
-    // Logo is referenced by absolute URL, not embedded — so the message carries
-    // no image attachment (which would otherwise surface in the client's
-    // attachment list).
-    expect($email->getHtmlBody())->toContain(asset(config('branding.logo')))
-        ->and($attachmentTypes)->not->toContain('image/png');
+    // The invoice email always inlines the ink-drop mark under the brand CID and
+    // renders the wordmark as HTML text; it never falls back to the hosted PNG
+    // lockup, which is not dark-mode safe.
+    expect($email->getHtmlBody())->toContain('cid:'.config('branding.logo_cid'))
+        ->and($email->getHtmlBody())->not->toContain(asset(config('branding.logo')))
+        ->and($attachmentTypes)->toContain('image/png');
 });
 
-test('document mailer falls back to the embedded icon + html wordmark when logo_external is off', function () {
-    config(['branding.logo_external' => false]);
+test('document mailer always renders the embedded lockup even when logo_external is on', function () {
+    // The invoice document email is intentionally decoupled from the global
+    // logo_external switch: it always uses the dark-mode-safe embedded lockup so
+    // it stays legible in Gmail dark mode, regardless of the platform default.
+    config(['branding.logo_external' => true]);
 
     $invoice = createInvoiceWithItems(['invoice_number' => 'INV-EMBED-001']);
 
     $html = (new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']])))->renderHtml();
 
-    // Embedded mode: CID icon mark + two-tone HTML wordmark in header and footer,
-    // and no external lockup URL.
     expect(substr_count($html, 'src="cid:'.config('branding.logo_cid').'"'))->toBeGreaterThanOrEqual(2)
-        ->and(substr_count($html, 'Invoice<span style="color: #7c3aed;">Ink</span>'))->toBeGreaterThanOrEqual(2)
+        ->and(substr_count($html, 'class="brand-ink"'))->toBeGreaterThanOrEqual(2)
         ->and($html)->not->toContain(asset(config('branding.logo')));
 });
 
-test('document mailer attaches the icon mark only in embedded mode', function () {
-    config(['branding.logo_external' => false, 'mail.default' => 'array', 'queue.default' => 'sync']);
+test('document mailer always attaches the icon mark as an inline image', function () {
+    config(['branding.logo_external' => true, 'mail.default' => 'array', 'queue.default' => 'sync']);
 
     $invoice = createInvoiceWithItems(['invoice_number' => 'INV-EMBED-002']);
 
@@ -313,8 +318,24 @@ test('document mailer attaches the icon mark only in embedded mode', function ()
     $email = Mail::mailer('array')->getSymfonyTransport()->messages()->first()->getOriginalMessage();
     $attachmentTypes = collect($email->getAttachments())->map->getContentType()->all();
 
-    // Embedded mode re-attaches the small mark under the brand CID.
+    // The mark rides along as an inline CID image even with logo_external on.
     expect($attachmentTypes)->toContain('image/png');
+});
+
+test('document mailer ships a dark-mode stylesheet without leaking dark styles into the light render', function () {
+    $invoice = createInvoiceWithItems(['invoice_number' => 'INV-DARK-001']);
+
+    $html = (new DocumentMailer($invoice, new ContactCollection([['name' => 'R', 'email' => 'r@test.com']])))->renderHtml();
+
+    // Dark support is declared: the color-scheme meta and the prefers-color-scheme
+    // media block survive CSS inlining as a <style> block.
+    expect($html)->toContain('name="color-scheme" content="light dark"')
+        ->and($html)->toContain('prefers-color-scheme: dark');
+
+    // The dark card color must live ONLY inside that media block. The inliner
+    // strips @media rules before inlining, so if it appeared more than once it
+    // would mean a dark style leaked onto an element and darkened light mode too.
+    expect(substr_count($html, '#1e1e1e'))->toBe(1);
 });
 
 test('document mailer surfaces the brand slogan in the preheader and header', function () {
