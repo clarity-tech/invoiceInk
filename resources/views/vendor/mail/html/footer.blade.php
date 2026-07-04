@@ -7,7 +7,7 @@
 @if (config('branding.logo_external'))
 <img src="{{ config('branding.logo_url') ?: asset(config('branding.logo')) }}" alt="{{ config('app.name') }}" width="123" height="28" style="display: inline-block; border: 0;">
 @else
-<img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="28" height="28" style="vertical-align: middle; border: 0;"><span style="vertical-align: middle; color: #1f2937; font-weight: 700; font-size: 15px; padding-left: 8px;">Invoice<span style="color: {{ config('branding.color') }};">Ink</span></span>
+<img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="28" height="28" style="vertical-align: middle; border: 0;"><span class="footer-brand-text" style="vertical-align: middle; font-weight: 700; font-size: 15px; padding-left: 8px;">Invoice<span class="brand-ink">Ink</span></span>
 @endif
 </a>
 <p style="margin: 0 0 14px 0; color: #6b7280; font-size: 13px;">{{ config('branding.tagline') }}</p>

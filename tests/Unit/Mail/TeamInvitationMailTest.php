@@ -10,14 +10,26 @@ beforeEach(function () {
     $this->invitation = TeamInvitationModel::factory()->create(['team_id' => $this->organization->id]);
 });
 
-test('team invitation email carries the shared platform branding', function () {
+test('team invitation email carries the shared embedded platform branding', function () {
     $html = (new TeamInvitation($this->invitation))->render();
 
-    // Same footer logo lockup + tagline as the transactional emails.
-    expect($html)->toContain(config('branding.tagline'))
-        ->and($html)->toContain(config('branding.logo'))
-        // Slogan rendered under the header wordmark.
-        ->and($html)->toContain((string) config('branding.slogan'));
+    // Shares the transactional emails' branding: the embedded ink-drop mark (CID)
+    // + "InvoiceInk" wordmark, the footer tagline, and the header slogan. It no
+    // longer references the hosted lockup PNG, which is not dark-mode safe.
+    expect($html)->toContain('cid:'.config('branding.logo_cid'))
+        ->and($html)->toContain(config('branding.tagline'))
+        ->and($html)->toContain((string) config('branding.slogan'))
+        ->and($html)->not->toContain(asset(config('branding.logo')));
+});
+
+test('team invitation ships dark-mode support in the shared markdown layout', function () {
+    $html = (new TeamInvitation($this->invitation))->render();
+
+    // The shared layout now declares dark support and carries a
+    // prefers-color-scheme dark theme (in the layout <style>, which survives the
+    // markdown CSS inliner — the theme file's @media rules would be stripped).
+    expect($html)->toContain('content="light dark"')
+        ->and($html)->toContain('prefers-color-scheme: dark');
 });
 
 test('team invitation uses the embedded icon + wordmark when logo_external is off', function () {

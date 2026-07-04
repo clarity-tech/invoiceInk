@@ -4,8 +4,11 @@ namespace App\Providers;
 
 use App\Contracts\Services\InvoiceNumberingServiceInterface;
 use App\Contracts\Services\PdfServiceInterface;
+use App\Listeners\EmbedBrandLogoInEmails;
 use App\Services\InvoiceNumberingService;
 use App\Services\PdfService;
+use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -28,5 +31,7 @@ class AppServiceProvider extends ServiceProvider
         if (config('app.env') === 'production') {
             URL::forceScheme('https');
         }
+
+        Event::listen(MessageSending::class, EmbedBrandLogoInEmails::class);
     }
 }

@@ -16,12 +16,18 @@ return [
     */
 
     // Email logo strategy. Two modes:
-    //  • external (default): reference the combined lockup as a hosted image
-    //    URL. No attachment, but some clients block external images by default.
-    //  • embedded: inline the ink-drop mark via CID + render the "InvoiceInk"
-    //    wordmark as HTML text. Always displays (survives image-blocking) at
-    //    the cost of the small mark riding along as a CID attachment.
-    'logo_external' => (bool) env('BRAND_LOGO_EXTERNAL', true),
+    //  • embedded (default): inline the ink-drop mark via CID + render the
+    //    "InvoiceInk" wordmark as HTML text. Always displays (survives
+    //    image-blocking) and — crucially — stays legible in Gmail dark mode:
+    //    Gmail auto-lightens the HTML wordmark, whereas a flat lockup PNG keeps
+    //    its dark "Invoice" pixels and vanishes on the darkened card. The small
+    //    mark rides along as a CID attachment (embedded app-wide by the
+    //    App\Listeners\EmbedBrandLogoInEmails listener, so even framework
+    //    notifications get it).
+    //  • external: reference the combined lockup as a hosted image URL. No
+    //    attachment, but not dark-mode safe and some clients block external
+    //    images by default.
+    'logo_external' => (bool) env('BRAND_LOGO_EXTERNAL', false),
 
     // External mode: combined logo lockup (mark + wordmark), referenced by URL.
     // Use PNG: Gmail strips inline SVG and Outlook never supported it.

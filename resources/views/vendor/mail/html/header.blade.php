@@ -13,7 +13,7 @@
 <img src="{{ 'cid:'.config('branding.logo_cid') }}" alt="{{ config('app.name') }}" width="36" height="36" style="display: block; border: 0;">
 </td>
 <td style="vertical-align: middle;">
-<span class="logo-text">Invoice<span style="color: #7c3aed;">Ink</span></span>
+<span class="logo-text">Invoice<span class="brand-ink">Ink</span></span>
 </td>
 </tr>
 </table>
