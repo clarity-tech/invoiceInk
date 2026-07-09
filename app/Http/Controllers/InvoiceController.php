@@ -250,8 +250,12 @@ class InvoiceController extends Controller
 
         $this->syncInvoiceAttachments($invoice, $request);
 
-        return redirect()->route('invoices.edit', $invoice->id)
-            ->with('success', "{$invoice->typeLabel()} created successfully.");
+        // "Save & Send" from the create form posts with ?send=1. Carry the flag
+        // onto the edit redirect so the form reopens the email composer there.
+        return redirect()->route('invoices.edit', array_merge(
+            ['invoice' => $invoice->id],
+            $request->boolean('send') ? ['send' => 1] : [],
+        ))->with('success', "{$invoice->typeLabel()} created successfully.");
     }
 
     public function edit(Request $request, Invoice $invoice): Response

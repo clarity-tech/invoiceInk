@@ -103,6 +103,40 @@ test('store creates estimate', function () {
     expect($invoice->type)->toBe('estimate');
 });
 
+test('store redirects to the edit page with the send flag when saving and sending', function () {
+    $this->post(route('invoices.store').'?send=1', [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 5000, 'tax_rate' => 0],
+        ],
+    ])->assertRedirect(route('invoices.edit', ['invoice' => Invoice::first()->id, 'send' => 1]));
+});
+
+test('store redirects to the edit page without the send flag on a plain save', function () {
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 5000, 'tax_rate' => 0],
+        ],
+    ])->assertRedirect(route('invoices.edit', Invoice::first()->id));
+});
+
 test('store persists uploaded attachments to the invoice', function () {
     Storage::fake('s3');
 

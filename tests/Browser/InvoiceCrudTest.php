@@ -69,7 +69,7 @@ it('edits an existing invoice', function () {
     $page->assertPathIs("/invoices/{$invoice->id}/edit")
         ->assertNoJavascriptErrors()
         ->assertSee('Edit Invoice')
-        ->assertSee('Update Invoice');
+        ->assertSee('Save & Send');
 });
 
 it('deletes an invoice from the list', function () {

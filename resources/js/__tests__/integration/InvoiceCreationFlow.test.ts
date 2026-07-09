@@ -172,7 +172,8 @@ describe('InvoiceCreationFlow', () => {
 
     it('renders the invoice form in create mode', () => {
         const wrapper = mountComponent();
-        expect(wrapper.text()).toContain('Create Invoice');
+        expect(wrapper.text()).toContain('Save & Send');
+        expect(wrapper.text()).not.toContain('View Public');
     });
 
     it('renders customer dropdown with options', () => {
@@ -239,7 +240,7 @@ describe('InvoiceCreationFlow', () => {
     it('shows edit-specific buttons in edit mode', () => {
         const invoice = makeInvoice({ id: 1, ulid: 'abc123' });
         const wrapper = mountComponent({ mode: 'edit', invoice });
-        expect(wrapper.text()).toContain('Send Email');
+        expect(wrapper.text()).toContain('Save & Send');
         expect(wrapper.text()).toContain('View Public');
         expect(wrapper.text()).toContain('Download PDF');
     });
@@ -253,9 +254,10 @@ describe('InvoiceCreationFlow', () => {
         expect(mockRouterGet).toHaveBeenCalledWith('/invoices');
     });
 
-    it('renders estimate mode title', () => {
+    it('renders the estimate form with its save actions', () => {
         const wrapper = mountComponent({ type: 'estimate' });
-        expect(wrapper.text()).toContain('Create Estimate');
+        expect(wrapper.text()).toContain('Files saved with this estimate');
+        expect(wrapper.text()).toContain('Save & Send');
     });
 
     it('shows numbering series selector in create invoice mode', () => {

@@ -188,7 +188,11 @@ function mountComponent(propsOverride = {}) {
                     ],
                     emits: ['update', 'remove'],
                 },
-                EmailModal: { template: '<div data-testid="email-modal" />' },
+                EmailModal: {
+                    template:
+                        '<div data-testid="email-modal" :data-show="String(show)" />',
+                    props: ['show'],
+                },
             },
         },
     });
@@ -204,7 +208,8 @@ describe('Invoice/InvoiceForm', () => {
     describe('create mode - invoice', () => {
         it('renders with mode=create and type=invoice', () => {
             const wrapper = mountComponent();
-            expect(wrapper.text()).toContain('Create Invoice');
+            expect(wrapper.text()).toContain('Save & Send');
+            expect(wrapper.text()).not.toContain('View Public');
         });
 
         it('shows cancel button', () => {
@@ -212,25 +217,51 @@ describe('Invoice/InvoiceForm', () => {
             expect(wrapper.text()).toContain('Cancel');
         });
 
-        it('does not show edit-only buttons (Send Email, View Public, Download PDF)', () => {
+        it('offers Save and Save & Send actions', () => {
             const wrapper = mountComponent();
-            expect(wrapper.text()).not.toContain('Send Email');
+            const labels = wrapper.findAll('button').map((b) => b.text());
+            expect(labels).toContain('Save');
+            expect(labels).toContain('Save & Send');
+        });
+
+        it('does not show edit-only buttons (View Public, Download PDF)', () => {
+            const wrapper = mountComponent();
             expect(wrapper.text()).not.toContain('View Public');
             expect(wrapper.text()).not.toContain('Download PDF');
+        });
+
+        it('posts with send=1 when Save & Send is clicked in create mode', async () => {
+            const wrapper = mountComponent();
+            const btn = wrapper
+                .findAll('button')
+                .find((b) => b.text() === 'Save & Send');
+            await btn!.trigger('click');
+            expect(mockPost).toHaveBeenCalledWith(
+                '/invoices?send=1',
+                expect.objectContaining({ preserveScroll: true }),
+            );
+        });
+
+        it('posts without the send flag on a plain Save', async () => {
+            const wrapper = mountComponent();
+            await wrapper.find('form').trigger('submit');
+            expect(mockPost).toHaveBeenCalledWith(
+                '/invoices',
+                expect.objectContaining({ preserveScroll: true }),
+            );
         });
     });
 
     describe('create mode - estimate', () => {
         it('renders with mode=create and type=estimate', () => {
             const wrapper = mountComponent({ type: 'estimate' });
-            expect(wrapper.text()).toContain('Create Estimate');
+            expect(wrapper.text()).toContain('Save & Send');
         });
 
-        it('submit button says "Create Estimate"', () => {
+        it('submit button says "Save"', () => {
             const wrapper = mountComponent({ type: 'estimate' });
             const submitBtn = wrapper.find('button[type="submit"]');
-            expect(submitBtn.text()).toContain('Create');
-            expect(submitBtn.text()).toContain('Estimate');
+            expect(submitBtn.text()).toBe('Save');
         });
     });
 
@@ -267,27 +298,28 @@ describe('Invoice/InvoiceForm', () => {
                 mode: 'edit',
                 invoice: editInvoice,
             });
-            expect(wrapper.text()).toContain('Update Invoice');
+            expect(wrapper.text()).toContain('View Public');
+            expect(wrapper.text()).toContain('Save');
         });
 
-        it('shows Send Email, View Public, Download PDF buttons', () => {
+        it('shows Save & Send, View Public, Download PDF buttons', () => {
             const wrapper = mountComponent({
                 mode: 'edit',
                 invoice: editInvoice,
             });
-            expect(wrapper.text()).toContain('Send Email');
+            expect(wrapper.text()).toContain('Save & Send');
             expect(wrapper.text()).toContain('View Public');
             expect(wrapper.text()).toContain('Download PDF');
+            expect(wrapper.text()).not.toContain('Send Email');
         });
 
-        it('submit button says "Update Invoice"', () => {
+        it('submit button says "Save"', () => {
             const wrapper = mountComponent({
                 mode: 'edit',
                 invoice: editInvoice,
             });
             const submitBtn = wrapper.find('button[type="submit"]');
-            expect(submitBtn.text()).toContain('Update');
-            expect(submitBtn.text()).toContain('Invoice');
+            expect(submitBtn.text()).toBe('Save');
         });
 
         it('calls form.put on submit in edit mode', async () => {
@@ -300,6 +332,64 @@ describe('Invoice/InvoiceForm', () => {
                 '/invoices/42',
                 expect.any(Object),
             );
+        });
+
+        it('opens the email composer after a successful Save & Send', async () => {
+            const wrapper = mountComponent({
+                mode: 'edit',
+                invoice: editInvoice,
+            });
+
+            // The composer starts closed.
+            expect(
+                wrapper
+                    .find('[data-testid="email-modal"]')
+                    .attributes('data-show'),
+            ).toBe('false');
+
+            const btn = wrapper
+                .findAll('button')
+                .find((b) => b.text() === 'Save & Send');
+            await btn!.trigger('click');
+
+            expect(mockPut).toHaveBeenCalledWith(
+                '/invoices/42',
+                expect.any(Object),
+            );
+
+            // Simulate the server confirming the save; the composer then opens.
+            const options = mockPut.mock.calls.at(-1)![1] as {
+                onSuccess: () => void;
+            };
+            options.onSuccess();
+            await wrapper.vm.$nextTick();
+
+            expect(
+                wrapper
+                    .find('[data-testid="email-modal"]')
+                    .attributes('data-show'),
+            ).toBe('true');
+        });
+
+        it('does not open the composer on a plain Save', async () => {
+            const wrapper = mountComponent({
+                mode: 'edit',
+                invoice: editInvoice,
+            });
+
+            await wrapper.find('form').trigger('submit');
+
+            const options = mockPut.mock.calls.at(-1)![1] as {
+                onSuccess: () => void;
+            };
+            options.onSuccess();
+            await wrapper.vm.$nextTick();
+
+            expect(
+                wrapper
+                    .find('[data-testid="email-modal"]')
+                    .attributes('data-show'),
+            ).toBe('false');
         });
 
         it('pre-fills item rows from invoice data', () => {

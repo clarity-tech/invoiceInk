@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm, router, usePage } from '@inertiajs/vue3';
-import { ref, computed, watch, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import AttachmentDropzone from './AttachmentDropzone.vue';
 import EmailModal from './EmailModal.vue';
 import ItemRow from './ItemRow.vue';
@@ -442,19 +442,59 @@ function updateItem(index: number, item: LineItem) {
     items.value[index] = item;
 }
 
-function submit() {
+// Save the document, optionally continuing to the email composer afterwards.
+// "Save & Send" (send=true) persists the current edits first — like Zoho — so
+// the email always reflects what's on screen, never a stale saved copy.
+function submit(send = false) {
     syncItems();
 
+    const options = {
+        preserveScroll: true,
+        // In edit mode a save stays on this page, so we can open the composer
+        // as soon as the server confirms. In create mode the store redirects to
+        // the edit page with ?send=1, which reopens it there (see onMounted).
+        onSuccess: () => {
+            if (send && props.mode === 'edit') {
+                showEmailModal.value = true;
+            }
+        },
+    };
+
     if (props.mode === 'create') {
-        form.post('/invoices', {
-            preserveScroll: true,
-        });
+        form.post(send ? '/invoices?send=1' : '/invoices', options);
     } else {
-        form.put(`/invoices/${props.invoice!.id}`, {
-            preserveScroll: true,
-        });
+        form.put(`/invoices/${props.invoice!.id}`, options);
     }
 }
+
+function save() {
+    submit(false);
+}
+
+function saveAndSend() {
+    submit(true);
+}
+
+// A create's "Save & Send" lands here after the store redirect appends ?send=1.
+// Open the composer, then strip the flag so a refresh doesn't reopen it.
+onMounted(() => {
+    if (props.mode !== 'edit' || typeof window === 'undefined') {
+        return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get('send') === '1') {
+        showEmailModal.value = true;
+        params.delete('send');
+        const query = params.toString();
+        window.history.replaceState(
+            window.history.state,
+            '',
+            window.location.pathname + (query ? `?${query}` : ''),
+        );
+    }
+});
 
 function cancel() {
     router.get('/invoices');
@@ -513,10 +553,11 @@ const orgContacts = computed<Contact[]>(
             <div class="flex space-x-2">
                 <button
                     type="button"
-                    class="rounded bg-purple-500 px-4 py-2 font-bold text-white hover:bg-purple-700"
-                    @click="showEmailModal = true"
+                    :disabled="form.processing"
+                    class="cursor-pointer rounded bg-purple-500 px-4 py-2 font-bold text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    @click="saveAndSend"
                 >
-                    Send Email
+                    Save &amp; Send
                 </button>
                 <a
                     :href="`/${invoice.type === 'invoice' ? 'invoices' : 'estimates'}/view/${invoice.ulid}`"
@@ -570,7 +611,7 @@ const orgContacts = computed<Contact[]>(
             {{ flash.error }}
         </div>
 
-        <form @submit.prevent="submit" class="space-y-6">
+        <form @submit.prevent="save" class="space-y-6">
             <!-- Organization Location Section -->
             <div class="rounded-lg bg-white p-6 shadow">
                 <h2 class="mb-4 text-lg font-semibold text-gray-800">
@@ -1340,7 +1381,7 @@ const orgContacts = computed<Contact[]>(
                 >
                 <textarea
                     v-model="form.notes"
-                    rows="4"
+                    rows="1"
                     placeholder="Enter notes for the customer..."
                     class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
                 />
@@ -1359,7 +1400,7 @@ const orgContacts = computed<Contact[]>(
                 >
                 <textarea
                     v-model="form.terms"
-                    rows="3"
+                    rows="2"
                     placeholder="e.g. Payment due within 7 days..."
                     class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
                 />
@@ -1467,20 +1508,23 @@ const orgContacts = computed<Contact[]>(
                 >
                     Cancel
                 </button>
-                <button
-                    type="submit"
-                    :disabled="form.processing"
-                    class="rounded-md bg-brand-600 px-6 py-2 font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    {{
-                        form.processing
-                            ? 'Saving...'
-                            : mode === 'edit'
-                              ? 'Update'
-                              : 'Create'
-                    }}
-                    {{ type === 'estimate' ? 'Estimate' : 'Invoice' }}
-                </button>
+                <div class="flex items-center gap-3">
+                    <button
+                        type="submit"
+                        :disabled="form.processing"
+                        class="cursor-pointer rounded-md border border-brand-600 px-6 py-2 font-medium text-brand-700 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {{ form.processing ? 'Saving...' : 'Save' }}
+                    </button>
+                    <button
+                        type="button"
+                        :disabled="form.processing"
+                        class="cursor-pointer rounded-md bg-brand-600 px-6 py-2 font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        @click="saveAndSend"
+                    >
+                        {{ form.processing ? 'Saving...' : 'Save & Send' }}
+                    </button>
+                </div>
             </div>
         </form>
 
