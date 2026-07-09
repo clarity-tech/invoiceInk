@@ -78,9 +78,14 @@ export interface Organization {
 export interface Contact {
     name: string;
     email: string;
-    // Whether this contact is auto-added to the recipient list when emailing a
-    // document. Absent is treated as true (server default).
-    receives_emails?: boolean;
+}
+
+// A remembered recipient stored on an invoice: an email plus whether it is
+// currently selected to receive the document. Covers both the customer's
+// contacts and ad-hoc extras added on the invoice or in the email editor.
+export interface EmailRecipient {
+    email: string;
+    checked: boolean;
 }
 
 export interface BankDetails {
@@ -158,7 +163,7 @@ export interface Invoice {
     tcs_rate: number | null;
     tcs_amount: number;
     tcs_section: string | null;
-    email_recipients: string[] | null;
+    email_recipients: EmailRecipient[] | null;
     notes: string | null;
     terms: string | null;
     organization?: Organization;

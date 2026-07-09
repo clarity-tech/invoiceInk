@@ -516,6 +516,80 @@ test('send email works', function () {
     ])->assertRedirect();
 });
 
+test('send email remembers the sent recipients as checked', function () {
+    Mail::fake();
+
+    $invoice = createInvoiceWithItems(
+        ['email_recipients' => []],
+        null,
+        $this->organization,
+        $this->customer,
+    );
+
+    $this->post(route('invoices.send-email', $invoice->id), [
+        'recipients' => ['billing@example.test', 'ops@example.test'],
+        'subject' => 'Test',
+        'body' => 'Body',
+    ])->assertRedirect();
+
+    Mail::assertQueued(
+        DocumentMailer::class,
+        fn (DocumentMailer $mail) => $mail->recipients->getEmails() === ['billing@example.test', 'ops@example.test'],
+    );
+
+    expect($invoice->fresh()->email_recipients)->toBe([
+        ['email' => 'billing@example.test', 'checked' => true],
+        ['email' => 'ops@example.test', 'checked' => true],
+    ]);
+});
+
+test('send email keeps unsent remembered recipients but unchecks them', function () {
+    Mail::fake();
+
+    $invoice = createInvoiceWithItems(
+        ['email_recipients' => [
+            ['email' => 'a@example.test', 'checked' => true],
+            ['email' => 'b@example.test', 'checked' => true],
+        ]],
+        null,
+        $this->organization,
+        $this->customer,
+    );
+
+    $this->post(route('invoices.send-email', $invoice->id), [
+        'recipients' => ['a@example.test'],
+        'subject' => 'Test',
+        'body' => 'Body',
+    ])->assertRedirect();
+
+    expect($invoice->fresh()->email_recipients)->toBe([
+        ['email' => 'a@example.test', 'checked' => true],
+        ['email' => 'b@example.test', 'checked' => false],
+    ]);
+});
+
+test('send email stores a newly added editor address as a checked recipient', function () {
+    Mail::fake();
+
+    $invoice = createInvoiceWithItems(
+        ['email_recipients' => [['email' => 'a@example.test', 'checked' => true]]],
+        null,
+        $this->organization,
+        $this->customer,
+    );
+
+    $this->post(route('invoices.send-email', $invoice->id), [
+        'recipients' => ['a@example.test', 'new@example.test'],
+        'subject' => 'Test',
+        'body' => 'Body',
+    ])->assertRedirect();
+
+    expect($invoice->fresh()->email_recipients)->toBe([
+        ['email' => 'a@example.test', 'checked' => true],
+        ['email' => 'new@example.test', 'checked' => true],
+    ]);
+});
+
 test('send email promotes draft invoice to sent', function () {
     Mail::fake();
 
@@ -740,6 +814,83 @@ test('send email rejects when combined attachment size exceeds the cap', functio
         'attach_pdf' => false,
         'attachments' => $files,
     ])->assertSessionHasErrors('attachments');
+});
+
+test('store persists the email recipients', function () {
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'email_recipients' => [
+            ['email' => 'billing@example.test', 'checked' => true],
+            ['email' => 'muted@example.test', 'checked' => false],
+        ],
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 0],
+        ],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    expect(Invoice::first()->email_recipients)->toBe([
+        ['email' => 'billing@example.test', 'checked' => true],
+        ['email' => 'muted@example.test', 'checked' => false],
+    ]);
+});
+
+test('store dedupes email recipients case-insensitively', function () {
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'email_recipients' => [
+            ['email' => 'Dup@example.test', 'checked' => true],
+            ['email' => 'dup@example.test', 'checked' => false],
+        ],
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 0],
+        ],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    // First occurrence wins; the lowercased duplicate is dropped.
+    expect(Invoice::first()->email_recipients)->toBe([
+        ['email' => 'Dup@example.test', 'checked' => true],
+    ]);
+});
+
+test('update persists the email recipients', function () {
+    $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
+
+    $this->put(route('invoices.update', $invoice->id), [
+        'type' => 'invoice',
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'sent',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'email_recipients' => [
+            ['email' => 'new@example.test', 'checked' => true],
+        ],
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 0],
+        ],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    expect($invoice->fresh()->email_recipients)->toBe([
+        ['email' => 'new@example.test', 'checked' => true],
+    ]);
 });
 
 test('store computes and persists the intra-state CGST/SGST breakdown', function () {

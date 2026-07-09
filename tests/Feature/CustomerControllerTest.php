@@ -93,42 +93,6 @@ test('stores email when contact name is empty', function () {
     expect($customer->emails->getNames())->toBe(['']);
 });
 
-test('persists the receives_emails flag per contact', function () {
-    $user = createUserWithTeam();
-    $this->actingAs($user);
-
-    $this->post('/customers', [
-        'name' => 'Flagged Contacts Corp',
-        'currency' => 'INR',
-        'contacts' => [
-            ['name' => 'Primary', 'email' => 'primary@customer.test', 'receives_emails' => true],
-            ['name' => 'Silent', 'email' => 'silent@customer.test', 'receives_emails' => false],
-        ],
-    ])->assertRedirect()->assertSessionHasNoErrors();
-
-    $customer = Customer::where('name', 'Flagged Contacts Corp')->firstOrFail();
-    $contacts = $customer->emails->toArray();
-
-    expect($contacts[0]['receives_emails'])->toBeTrue();
-    expect($contacts[1]['receives_emails'])->toBeFalse();
-});
-
-test('defaults receives_emails to true when the flag is omitted', function () {
-    $user = createUserWithTeam();
-    $this->actingAs($user);
-
-    $this->post('/customers', [
-        'name' => 'Legacy Contact Corp',
-        'currency' => 'INR',
-        'contacts' => [
-            ['name' => 'John', 'email' => 'john@customer.test'],
-        ],
-    ])->assertRedirect()->assertSessionHasNoErrors();
-
-    $customer = Customer::where('name', 'Legacy Contact Corp')->firstOrFail();
-    expect($customer->emails->first()['receives_emails'])->toBeTrue();
-});
-
 test('persists the place of supply', function () {
     $user = createUserWithTeam();
     $this->actingAs($user);

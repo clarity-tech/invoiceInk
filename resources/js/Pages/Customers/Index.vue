@@ -66,13 +66,13 @@ const form = useForm({
     currency: 'INR',
     place_of_supply: '',
     gst_treatment: 'domestic',
-    contacts: [{ name: '', email: '', receives_emails: true }] as Contact[],
+    contacts: [{ name: '', email: '' }] as Contact[],
 });
 
 function openCreate() {
     editingCustomer.value = null;
     form.reset();
-    form.contacts = [{ name: '', email: '', receives_emails: true }];
+    form.contacts = [{ name: '', email: '' }];
     form.clearErrors();
     showForm.value = true;
 }
@@ -86,8 +86,8 @@ function openEdit(customer: Customer) {
     form.place_of_supply = customer.place_of_supply ?? '';
     form.gst_treatment = customer.gst_treatment ?? 'domestic';
     form.contacts = customer.emails?.length
-        ? customer.emails.map((c) => ({ receives_emails: true, ...c }))
-        : [{ name: '', email: '', receives_emails: true }];
+        ? [...customer.emails]
+        : [{ name: '', email: '' }];
     form.clearErrors();
     showForm.value = true;
 }

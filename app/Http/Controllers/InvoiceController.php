@@ -239,6 +239,7 @@ class InvoiceController extends Controller
                 'subject' => $validated['subject'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'terms' => $validated['terms'] ?? null,
+                'email_recipients' => $this->normalizeEmailRecipients($validated['email_recipients'] ?? []),
             ]);
 
             $this->persistItems($invoice, $validated['items']);
@@ -402,6 +403,7 @@ class InvoiceController extends Controller
                 'order_number' => $validated['order_number'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'terms' => $validated['terms'] ?? null,
+                'email_recipients' => $this->normalizeEmailRecipients($validated['email_recipients'] ?? []),
             ]);
 
             // Sync items: delete all, recreate
@@ -464,9 +466,20 @@ class InvoiceController extends Controller
 
         Mail::send($mailable);
 
+        // Merge the sent addresses into the invoice's remembered recipients:
+        // everything sent becomes a checked entry (new addresses appended), and
+        // anything remembered but not sent this time is kept but unchecked — so
+        // the next send and the invoice form both pre-select who this went to.
+        $invoice->email_recipients = $this->mergeSentRecipients(
+            $invoice->email_recipients ?? [],
+            $validated['recipients'],
+        );
+
         if ($invoice->status === InvoiceStatus::DRAFT) {
-            $invoice->update(['status' => InvoiceStatus::SENT]);
+            $invoice->status = InvoiceStatus::SENT;
         }
+
+        $invoice->save();
 
         return back()->with('success', "{$invoice->typeLabel()} sent successfully.");
     }
@@ -772,6 +785,9 @@ class InvoiceController extends Controller
             'order_number' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'terms' => ['nullable', 'string', 'max:5000'],
+            'email_recipients' => ['nullable', 'array'],
+            'email_recipients.*.email' => ['required', 'email'],
+            'email_recipients.*.checked' => ['boolean'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.description' => ['required', 'string', 'max:500'],
             'items.*.sac_code' => ['nullable', 'string', 'max:20'],
@@ -783,6 +799,92 @@ class InvoiceController extends Controller
             'removed_attachment_ids' => ['nullable', 'array'],
             'removed_attachment_ids.*' => ['integer'],
         ];
+    }
+
+    /**
+     * Normalize a submitted recipient list into a deduped array of
+     * `['email' => ..., 'checked' => bool]`, unique by lowercased email. A
+     * missing `checked` defaults to true. Legacy plain-string email entries
+     * (older invoices/seed data) are treated as checked.
+     *
+     * @param  array<int, array{email?: string, checked?: mixed}|string>  $recipients
+     * @return array<int, array{email: string, checked: bool}>
+     */
+    private function normalizeEmailRecipients(array $recipients): array
+    {
+        $seen = [];
+        $normalized = [];
+
+        foreach ($recipients as $recipient) {
+            if (is_string($recipient)) {
+                $recipient = ['email' => $recipient, 'checked' => true];
+            }
+
+            if (! is_array($recipient)) {
+                continue;
+            }
+
+            $email = trim($recipient['email'] ?? '');
+
+            if ($email === '') {
+                continue;
+            }
+
+            $key = strtolower($email);
+
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
+            $normalized[] = [
+                'email' => $email,
+                'checked' => filter_var($recipient['checked'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            ];
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Merge the addresses a document was just sent to into its remembered
+     * recipient list. Sent addresses become checked (new ones appended); any
+     * previously remembered address that was not sent this time is kept but
+     * marked unchecked.
+     *
+     * @param  array<int, array{email?: string, checked?: mixed}|string>  $existing
+     * @param  array<int, string>  $sent
+     * @return array<int, array{email: string, checked: bool}>
+     */
+    private function mergeSentRecipients(array $existing, array $sent): array
+    {
+        $sentKeys = collect($sent)
+            ->map(fn (string $email): string => strtolower(trim($email)))
+            ->filter()
+            ->flip();
+
+        $result = [];
+        $seen = [];
+
+        foreach ($this->normalizeEmailRecipients($existing) as $entry) {
+            $key = strtolower($entry['email']);
+            $seen[$key] = true;
+            $result[] = ['email' => $entry['email'], 'checked' => $sentKeys->has($key)];
+        }
+
+        foreach ($sent as $email) {
+            $email = trim($email);
+            $key = strtolower($email);
+
+            if ($email === '' || isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
+            $result[] = ['email' => $email, 'checked' => true];
+        }
+
+        return $result;
     }
 
     /**

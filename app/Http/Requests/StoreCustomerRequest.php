@@ -30,7 +30,6 @@ class StoreCustomerRequest extends FormRequest
             'contacts' => ['required', 'array', 'min:1'],
             'contacts.*.name' => ['nullable', 'string', 'max:255'],
             'contacts.*.email' => ['required', 'email', 'max:255'],
-            'contacts.*.receives_emails' => ['sometimes', 'boolean'],
         ];
     }
 }

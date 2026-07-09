@@ -37,7 +37,7 @@ return new class extends Migration
             $table->json('tax_breakdown')->nullable(); // For complex tax structures
 
             // Email and communication
-            $table->json('email_recipients')->nullable(); // Simple email array
+            $table->json('email_recipients')->nullable(); // Remembered recipients: [{email, checked}]
 
             // Additional fields
             $table->text('notes')->nullable();

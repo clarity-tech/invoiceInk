@@ -5,6 +5,7 @@ import AttachmentDropzone from './AttachmentDropzone.vue';
 import EmailRecipientInput from './EmailRecipientInput.vue';
 import TipTapEditor from '@/Components/TipTapEditor.vue';
 import { formatBytes } from '@/composables/useFileAttachments';
+import { mergeRecipients } from '@/composables/useRecipients';
 import type { Invoice, Customer, Contact, InvoiceAttachment } from '@/types';
 
 const props = withDefaults(
@@ -46,13 +47,6 @@ const customerContacts = computed<Contact[]>(
 
 const orgContacts = computed<Contact[]>(
     () => auth.value?.currentTeam?.emails ?? [],
-);
-
-// Customer contacts flagged to auto-fill the recipient list.
-const autoRecipientEmails = computed(() =>
-    customerContacts.value
-        .filter((c) => c.receives_emails !== false)
-        .map((c) => c.email),
 );
 
 const orgEmails = computed(() => orgContacts.value.map((c) => c.email));
@@ -150,7 +144,16 @@ watch(
                 props.invoice.type === 'estimate' ? 'estimate' : 'invoice';
             selectedTemplateType.value = `${docType}_initial`;
 
-            form.recipients = [...autoRecipientEmails.value];
+            // Pre-fill "Send To" with the recipients the invoice remembers as
+            // selected (its checked entries), falling back to the customer's
+            // contacts. Unselected contacts stay in the suggestion dropdown so
+            // they can be added back.
+            form.recipients = mergeRecipients(
+                customerContacts.value,
+                props.invoice.email_recipients ?? [],
+            )
+                .filter((recipient) => recipient.checked)
+                .map((recipient) => recipient.email);
             form.cc = [...orgEmails.value];
             form.attach_pdf = emailDefaults.attach_pdf;
             form.include_view_online_button =
@@ -162,6 +165,8 @@ watch(
             loadTemplate(selectedTemplateType.value);
         }
     },
+    // Populate immediately in case the modal is mounted already open.
+    { immediate: true },
 );
 
 // Reload template when type changes
@@ -170,6 +175,9 @@ watch(selectedTemplateType, (newType) => {
         loadTemplate(newType);
     }
 });
+
+// At least one recipient is required to send.
+const hasRecipients = computed(() => form.recipients.length > 0);
 
 function send() {
     form.post(`/invoices/${props.invoice.id}/send-email`, {
@@ -459,7 +467,7 @@ function send() {
                 </button>
                 <button
                     type="button"
-                    :disabled="form.processing"
+                    :disabled="form.processing || !hasRecipients"
                     class="rounded-md bg-brand-600 px-6 py-2 font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
                     @click="send"
                 >

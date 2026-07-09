@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { isValidEmail } from '@/lib/utils';
 import type { Contact } from '@/types';
 
 const props = withDefaults(
@@ -19,6 +20,12 @@ const model = defineModel<string[]>({ required: true });
 
 const query = ref('');
 const open = ref(false);
+const error = ref('');
+
+// Clear the validation error as soon as the user edits the field again.
+watch(query, () => {
+    error.value = '';
+});
 
 // Suggestions not already selected, matching the typed query. Deduped by email
 // so a contact known to both the customer and the org appears once.
@@ -49,15 +56,49 @@ const availableSuggestions = computed(() => {
 function addEmail(email: string) {
     const trimmed = email.trim();
 
-    if (trimmed && !model.value.includes(trimmed)) {
+    if (!trimmed) {
+        query.value = '';
+        error.value = '';
+
+        return;
+    }
+
+    if (!isValidEmail(trimmed)) {
+        // Keep the text so the user can correct it, and surface the error.
+        error.value = 'Please enter a valid email address';
+
+        return;
+    }
+
+    if (!model.value.includes(trimmed)) {
         model.value = [...model.value, trimmed];
     }
 
     query.value = '';
+    error.value = '';
 }
 
 function addTyped() {
     addEmail(query.value);
+}
+
+// Tab commits the typed email (like Enter) when there is text, otherwise it
+// falls through to normal focus navigation.
+function onTab(event: KeyboardEvent) {
+    if (query.value.trim()) {
+        event.preventDefault();
+        addTyped();
+    }
+}
+
+// Leaving the field commits whatever was typed. Suggestion items use
+// mousedown.prevent, so picking one does not trigger this blur.
+function onBlur() {
+    open.value = false;
+
+    if (query.value.trim()) {
+        addTyped();
+    }
 }
 
 function selectSuggestion(contact: Contact) {
@@ -104,11 +145,14 @@ function removeEmail(email: string) {
                 :placeholder="placeholder"
                 class="min-w-[200px] flex-1 border-none p-1 text-sm outline-none focus:ring-0"
                 @focus="open = true"
-                @blur="open = false"
+                @blur="onBlur"
                 @keydown.enter.prevent="addTyped"
+                @keydown.tab="onTab"
                 @keydown.esc="open = false"
             />
         </div>
+
+        <p v-if="error" class="mt-1 text-xs text-red-600">{{ error }}</p>
 
         <!-- Suggestions from the contact list (click to add). -->
         <ul

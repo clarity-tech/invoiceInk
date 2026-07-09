@@ -212,35 +212,39 @@ describe('Invoice/EmailModal', () => {
         }
     });
 
-    it('auto-adds only customer contacts flagged to receive emails', async () => {
-        const flaggedCustomer = makeCustomer({
+    it("prefills Send To with the invoice's checked recipients, leaving unchecked ones as suggestions", async () => {
+        const rememberedCustomer = makeCustomer({
             id: 1,
             name: 'ACME Corp',
             emails: [
-                makeContact({
-                    email: 'primary@acme.test',
-                    receives_emails: true,
-                }),
-                makeContact({
-                    email: 'silent@acme.test',
-                    receives_emails: false,
-                }),
+                makeContact({ email: 'primary@acme.test' }),
+                makeContact({ email: 'silent@acme.test' }),
             ],
         });
 
-        // Auto-add runs in the watcher on `show`, so mount hidden then reveal.
+        // Init runs in the watcher on `show`, so mount hidden then reveal.
         const wrapper = mountComponent({
             show: false,
-            customers: [flaggedCustomer],
+            customers: [rememberedCustomer],
+            invoice: makeInvoice({
+                id: 5,
+                customer_id: 1,
+                email_recipients: [
+                    { email: 'primary@acme.test', checked: true },
+                    { email: 'silent@acme.test', checked: false },
+                    { email: 'extra@outside.test', checked: true },
+                ],
+            }),
         });
         await wrapper.setProps({ show: true });
 
         const toInput = wrapper.findAllComponents(EmailRecipientInput)[0];
         const recipients = toInput.props('modelValue') as string[];
-        expect(recipients).toContain('primary@acme.test');
-        expect(recipients).not.toContain('silent@acme.test');
 
-        // The un-flagged contact is still available as a suggestion.
+        // Only the checked entries pre-fill the field.
+        expect(recipients).toEqual(['primary@acme.test', 'extra@outside.test']);
+
+        // The unchecked contact stays available in the suggestion dropdown.
         const suggestions = (
             toInput.props('suggestions') as { email: string }[]
         ).map((c) => c.email);

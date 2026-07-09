@@ -19,10 +19,10 @@ class ContactCollection implements Arrayable, Jsonable, JsonSerializable
                 $contact = ['name' => '', 'email' => $contact];
             }
 
+            // A null/missing name (e.g. from Laravel's ConvertEmptyStringsToNull
+            // middleware) should be treated as an empty string, not dropped.
             if (is_array($contact)) {
                 $contact['name'] = $contact['name'] ?? '';
-                $contact['receives_emails'] = ! array_key_exists('receives_emails', $contact)
-                    || filter_var($contact['receives_emails'], FILTER_VALIDATE_BOOLEAN);
             }
 
             return $contact;
@@ -48,7 +48,7 @@ class ContactCollection implements Arrayable, Jsonable, JsonSerializable
         return new self($contacts);
     }
 
-    public function add(string $name, string $email, bool $receivesEmails = true): self
+    public function add(string $name, string $email): self
     {
         $name = trim($name);
         $email = trim($email);
@@ -59,7 +59,7 @@ class ContactCollection implements Arrayable, Jsonable, JsonSerializable
 
         if (! $this->hasEmail($email)) {
             $contacts = $this->contacts;
-            $contacts[] = ['name' => $name, 'email' => $email, 'receives_emails' => $receivesEmails];
+            $contacts[] = ['name' => $name, 'email' => $email];
 
             return new self($contacts);
         }

@@ -4,7 +4,9 @@ import { ref, computed, watch, onUnmounted } from 'vue';
 import AttachmentDropzone from './AttachmentDropzone.vue';
 import EmailModal from './EmailModal.vue';
 import ItemRow from './ItemRow.vue';
+import RecipientEditor from './RecipientEditor.vue';
 import { useFormatMoney } from '@/composables/useFormatMoney';
+import { mergeRecipients } from '@/composables/useRecipients';
 import { buildGstBreakdown } from '@/composables/useGstBreakdown';
 import { useInvoiceCalculator } from '@/composables/useInvoiceCalculator';
 import type { LineItem } from '@/composables/useInvoiceCalculator';
@@ -21,6 +23,8 @@ import { taxLabelFor } from '@/composables/useTaxLabel';
 import type {
     Invoice,
     Customer,
+    Contact,
+    EmailRecipient,
     Location,
     TaxTemplate,
     InvoiceNumberingSeries,
@@ -115,6 +119,12 @@ const customerLocations = computed(
     () => selectedCustomer.value?.locations ?? [],
 );
 
+// The selected customer's contacts, shown as check/uncheck rows in the
+// recipients editor.
+const customerContacts = computed<Contact[]>(
+    () => selectedCustomer.value?.emails ?? [],
+);
+
 const currentCurrency = computed<Currency>(
     () =>
         selectedCustomer.value?.currency ??
@@ -166,6 +176,13 @@ const form = useForm({
     order_number:
         props.mode === 'edit' ? (props.invoice?.order_number ?? '') : '',
     terms: props.mode === 'edit' ? (props.invoice?.terms ?? '') : '',
+    // Remembered recipient list for this document: the customer's contacts
+    // (checked/unchecked) plus any ad-hoc extras. Seeded from the invoice on
+    // edit, or from the selected customer's contacts on create.
+    email_recipients: mergeRecipients(
+        selectedCustomer.value?.emails ?? [],
+        props.mode === 'edit' ? (props.invoice?.email_recipients ?? []) : [],
+    ) as EmailRecipient[],
     place_of_supply:
         props.mode === 'edit' ? (props.invoice?.place_of_supply ?? '') : '',
     tds_rate:
@@ -295,6 +312,20 @@ watch(
     },
 );
 
+// Sending from the email modal remembers its recipients on the invoice; mirror
+// that back into the form so a later save doesn't clobber the last-sent list.
+watch(
+    () => props.invoice?.email_recipients,
+    (serverRecipients) => {
+        if (props.mode === 'edit') {
+            form.email_recipients = mergeRecipients(
+                customerContacts.value,
+                serverRecipients ?? [],
+            );
+        }
+    },
+);
+
 // Payment terms: a UI helper that keeps the issue date, term, and due date in
 // sync.
 const paymentTerm = ref<PaymentTerm>(
@@ -367,6 +398,7 @@ watch(selectedCustomerId, (newId) => {
     if (!newId) {
         form.customer_location_id = null;
         form.customer_shipping_location_id = null;
+        form.email_recipients = [];
 
         return;
     }
@@ -382,6 +414,9 @@ watch(selectedCustomerId, (newId) => {
         // Default the place of supply from the chosen customer. Editable here;
         // it never writes back to the customer.
         form.place_of_supply = customer.place_of_supply ?? '';
+        // Switching customers resets recipients to the new customer's contacts
+        // (all selected); any extras from the previous customer are dropped.
+        form.email_recipients = mergeRecipients(customer.emails ?? [], []);
     }
 });
 
@@ -461,6 +496,11 @@ watch(
 
 const page = usePage();
 const flash = computed(() => (page.props as any).flash ?? {});
+
+// Organization contacts, offered as suggestions in the recipients editor.
+const orgContacts = computed<Contact[]>(
+    () => (page.props as any).auth?.currentTeam?.emails ?? [],
+);
 </script>
 
 <template>
@@ -1325,6 +1365,33 @@ const flash = computed(() => (page.props as any).flash ?? {});
                 />
                 <p v-if="form.errors.terms" class="mt-1 text-sm text-red-600">
                     {{ form.errors.terms }}
+                </p>
+            </div>
+
+            <!-- Email Recipients Section -->
+            <div
+                v-if="selectedCustomerId"
+                class="rounded-lg bg-white p-6 shadow"
+            >
+                <label class="mb-2 block text-sm font-medium text-gray-700"
+                    >Email Recipients</label
+                >
+                <p class="mb-3 text-xs text-gray-500">
+                    Selected contacts are pre-filled when you email this
+                    {{ type === 'estimate' ? 'estimate' : 'invoice' }}. Uncheck
+                    to skip a contact, or add extra addresses just for this
+                    {{ type === 'estimate' ? 'estimate' : 'invoice' }}.
+                </p>
+                <RecipientEditor
+                    v-model="form.email_recipients"
+                    :contacts="customerContacts"
+                    :suggestions="orgContacts"
+                />
+                <p
+                    v-if="form.errors.email_recipients"
+                    class="mt-1 text-sm text-red-600"
+                >
+                    {{ form.errors.email_recipients }}
                 </p>
             </div>
 

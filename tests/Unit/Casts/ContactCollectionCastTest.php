@@ -235,11 +235,7 @@ class ContactCollectionCastTest extends TestCase
         $this->assertInstanceOf(ContactCollection::class, $retrieved);
         $contacts = $retrieved->toArray();
         $this->assertCount(2, $contacts);
-        // The collection normalizes each contact with the auto-recipient flag.
-        $this->assertEquals([
-            ['name' => 'John Doe', 'email' => 'john@example.test', 'receives_emails' => true],
-            ['name' => 'Jane Smith', 'email' => 'jane@example.test', 'receives_emails' => true],
-        ], $contacts);
+        $this->assertEquals($originalContacts, $contacts);
     }
 
     public function test_roundtrip_conversion_with_simple_emails(): void

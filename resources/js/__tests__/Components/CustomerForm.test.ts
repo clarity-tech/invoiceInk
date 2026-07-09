@@ -121,42 +121,6 @@ describe('CustomerForm', () => {
         expect(wrapper.find('#customer-place-of-supply').exists()).toBe(false);
     });
 
-    it('renders an "Auto-add to emails" checkbox per contact', () => {
-        const wrapper = mount(CustomerForm, { props: defaultProps });
-        expect(wrapper.find('input[type="checkbox"]').exists()).toBe(true);
-        expect(wrapper.text()).toContain('Auto-add to emails');
-    });
-
-    it('defaults a newly added contact to receives_emails true', async () => {
-        const form = makeFormData();
-        const wrapper = mount(CustomerForm, {
-            props: { ...defaultProps, form },
-        });
-        const addBtn = wrapper
-            .findAll('button')
-            .find((b) => b.text().includes('Add Contact'));
-        await addBtn!.trigger('click');
-        expect(form.contacts[1].receives_emails).toBe(true);
-    });
-
-    it('toggles receives_emails via the checkbox', async () => {
-        const form = makeFormData({
-            contacts: [
-                {
-                    name: 'John',
-                    email: 'john@test.test',
-                    receives_emails: true,
-                },
-            ],
-        });
-        const wrapper = mount(CustomerForm, {
-            props: { ...defaultProps, form },
-        });
-
-        await wrapper.find('input[type="checkbox"]').setValue(false);
-        expect(form.contacts[0].receives_emails).toBe(false);
-    });
-
     it('removes contact row on remove click', async () => {
         const form = makeFormData({
             contacts: [
