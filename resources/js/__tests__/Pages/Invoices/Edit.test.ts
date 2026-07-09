@@ -103,6 +103,18 @@ function mountComponent(propsOverride = {}) {
                     props: ['show', 'invoice'],
                     emits: ['close'],
                 },
+                ConfirmationModal: {
+                    template:
+                        '<div v-if="show" data-testid="confirm-modal"><button data-testid="confirm-btn" @click="$emit(\'confirm\')">Confirm</button><button data-testid="cancel-btn" @click="$emit(\'cancel\')">Cancel</button></div>',
+                    props: [
+                        'show',
+                        'title',
+                        'message',
+                        'confirmLabel',
+                        'destructive',
+                    ],
+                    emits: ['confirm', 'cancel'],
+                },
             },
         },
     });
@@ -188,8 +200,28 @@ describe('Invoices/Edit', () => {
         expect(wrapper.text()).toContain('No payments recorded yet');
     });
 
-    it('calls router.delete when deleting a payment', async () => {
-        window.confirm = vi.fn().mockReturnValue(true);
+    it('opens the delete confirmation modal when Delete is clicked', async () => {
+        const payment = makePayment({ id: 42 });
+        const wrapper = mountComponent({
+            invoice: makeInvoice({ id: 10, payments: [payment] }),
+        });
+
+        expect(wrapper.find('[data-testid="confirm-modal"]').exists()).toBe(
+            false,
+        );
+
+        const deleteBtn = wrapper
+            .findAll('button')
+            .find((b) => b.text() === 'Delete');
+        await deleteBtn!.trigger('click');
+
+        expect(wrapper.find('[data-testid="confirm-modal"]').exists()).toBe(
+            true,
+        );
+        expect(mockRouterDelete).not.toHaveBeenCalled();
+    });
+
+    it('calls router.delete when the deletion is confirmed', async () => {
         const payment = makePayment({ id: 42 });
         const invoice = makeInvoice({ id: 10, payments: [payment] });
         const wrapper = mountComponent({ invoice });
@@ -199,14 +231,15 @@ describe('Invoices/Edit', () => {
             .find((b) => b.text() === 'Delete');
         await deleteBtn!.trigger('click');
 
+        await wrapper.find('[data-testid="confirm-btn"]').trigger('click');
+
         expect(mockRouterDelete).toHaveBeenCalledWith(
             '/invoices/10/payments/42',
-            { preserveScroll: true },
+            expect.objectContaining({ preserveScroll: true }),
         );
     });
 
-    it('does not delete payment when confirm is cancelled', async () => {
-        window.confirm = vi.fn().mockReturnValue(false);
+    it('does not delete payment when the confirmation is cancelled', async () => {
         const payment = makePayment({ id: 42 });
         const wrapper = mountComponent({
             invoice: makeInvoice({ id: 10, payments: [payment] }),
@@ -217,7 +250,12 @@ describe('Invoices/Edit', () => {
             .find((b) => b.text() === 'Delete');
         await deleteBtn!.trigger('click');
 
+        await wrapper.find('[data-testid="cancel-btn"]').trigger('click');
+
         expect(mockRouterDelete).not.toHaveBeenCalled();
+        expect(wrapper.find('[data-testid="confirm-modal"]').exists()).toBe(
+            false,
+        );
     });
 
     it('shows payment summary with total, paid, and balance', () => {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import InvoiceForm from '@/Components/Invoice/InvoiceForm.vue';
 import PaymentModal from '@/Components/Invoice/PaymentModal.vue';
 import {
@@ -36,6 +37,9 @@ const props = defineProps<{
 
 const showPaymentModal = ref(false);
 
+const confirmingPaymentDelete = ref(false);
+const paymentToDelete = ref<number | null>(null);
+
 const balanceDue = computed(() =>
     Math.max(0, (props.invoice.total ?? 0) - (props.invoice.amount_paid ?? 0)),
 );
@@ -44,14 +48,27 @@ function fmt(amount: number): string {
     return formatMoney(amount, props.invoice.currency);
 }
 
-function deletePayment(paymentId: number) {
-    if (!confirm('Delete this payment?')) {
+function confirmDeletePayment(paymentId: number) {
+    paymentToDelete.value = paymentId;
+    confirmingPaymentDelete.value = true;
+}
+
+function deletePayment() {
+    if (paymentToDelete.value === null) {
         return;
     }
 
-    router.delete(`/invoices/${props.invoice.id}/payments/${paymentId}`, {
-        preserveScroll: true,
-    });
+    router.delete(
+        `/invoices/${props.invoice.id}/payments/${paymentToDelete.value}`,
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                paymentToDelete.value = null;
+            },
+        },
+    );
+
+    confirmingPaymentDelete.value = false;
 }
 </script>
 
@@ -205,8 +222,10 @@ function deletePayment(paymentId: number) {
                                 <td class="px-4 py-3 text-right">
                                     <button
                                         type="button"
-                                        class="text-xs text-red-600 hover:text-red-800"
-                                        @click="deletePayment(payment.id)"
+                                        class="cursor-pointer text-xs text-red-600 hover:text-red-800"
+                                        @click="
+                                            confirmDeletePayment(payment.id)
+                                        "
                                     >
                                         Delete
                                     </button>
@@ -227,6 +246,20 @@ function deletePayment(paymentId: number) {
             :show="showPaymentModal"
             :invoice="invoice"
             @close="showPaymentModal = false"
+        />
+
+        <!-- Delete Payment Confirmation -->
+        <ConfirmationModal
+            :show="confirmingPaymentDelete"
+            title="Delete Payment"
+            message="Are you sure you want to delete this payment? This action cannot be undone."
+            confirm-label="Delete"
+            :destructive="true"
+            @confirm="deletePayment"
+            @cancel="
+                confirmingPaymentDelete = false;
+                paymentToDelete = null;
+            "
         />
     </AppLayout>
 </template>

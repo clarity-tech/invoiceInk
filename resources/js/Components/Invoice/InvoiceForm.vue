@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useForm, router, usePage } from '@inertiajs/vue3';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import AttachmentDropzone from './AttachmentDropzone.vue';
 import EmailModal from './EmailModal.vue';
 import ItemRow from './ItemRow.vue';
@@ -429,6 +430,41 @@ function addItem() {
         tax_rate: 0,
     });
     itemKeys.value.push(nextItemKey++);
+}
+
+const confirmingItemRemove = ref(false);
+const itemRemoveIndex = ref<number | null>(null);
+
+// Ask before discarding a line item the user has actually filled in. Empty
+// rows carry no work, so remove those immediately to keep the form snappy.
+function requestRemoveItem(index: number) {
+    if (items.value.length <= 1) {
+        return;
+    }
+
+    const item = items.value[index];
+    const hasContent =
+        !!item.description?.trim() ||
+        !!item.sac_code?.trim() ||
+        item.unit_price > 0;
+
+    if (!hasContent) {
+        removeItem(index);
+
+        return;
+    }
+
+    itemRemoveIndex.value = index;
+    confirmingItemRemove.value = true;
+}
+
+function confirmRemoveItem() {
+    if (itemRemoveIndex.value !== null) {
+        removeItem(itemRemoveIndex.value);
+    }
+
+    confirmingItemRemove.value = false;
+    itemRemoveIndex.value = null;
 }
 
 function removeItem(index: number) {
@@ -1185,7 +1221,7 @@ const orgContacts = computed<Contact[]>(
                                 :can-remove="items.length > 1"
                                 :errors="form.errors"
                                 @update="updateItem(index, $event)"
-                                @remove="removeItem(index)"
+                                @remove="requestRemoveItem(index)"
                             />
                         </tbody>
                     </table>
@@ -1536,6 +1572,20 @@ const orgContacts = computed<Contact[]>(
             :customers="customers"
             :invoice-attachments="attachments ?? []"
             @close="showEmailModal = false"
+        />
+
+        <!-- Remove Line Item Confirmation -->
+        <ConfirmationModal
+            :show="confirmingItemRemove"
+            title="Remove Line Item"
+            message="Are you sure you want to remove this line item?"
+            confirm-label="Remove"
+            :destructive="true"
+            @confirm="confirmRemoveItem"
+            @cancel="
+                confirmingItemRemove = false;
+                itemRemoveIndex = null;
+            "
         />
     </div>
 </template>

@@ -177,7 +177,7 @@ function mountComponent(propsOverride = {}) {
             stubs: {
                 ItemRow: {
                     template:
-                        '<tr data-testid="item-row"><td>Item Row Stub</td></tr>',
+                        '<tr data-testid="item-row"><td>Item Row Stub</td><td><button data-testid="row-remove-btn" @click="$emit(\'remove\')">x</button></td></tr>',
                     props: [
                         'item',
                         'index',
@@ -192,6 +192,18 @@ function mountComponent(propsOverride = {}) {
                     template:
                         '<div data-testid="email-modal" :data-show="String(show)" />',
                     props: ['show'],
+                },
+                ConfirmationModal: {
+                    template:
+                        '<div v-if="show" data-testid="confirm-modal"><button data-testid="confirm-btn" @click="$emit(\'confirm\')">Confirm</button><button data-testid="cancel-btn" @click="$emit(\'cancel\')">Cancel</button></div>',
+                    props: [
+                        'show',
+                        'title',
+                        'message',
+                        'confirmLabel',
+                        'destructive',
+                    ],
+                    emits: ['confirm', 'cancel'],
                 },
             },
         },
@@ -707,6 +719,99 @@ describe('Invoice/InvoiceForm', () => {
             expect(wrapper.text()).toContain('Unit Price');
             expect(wrapper.text()).toContain('Tax Rate');
             expect(wrapper.text()).toContain('Amount');
+        });
+
+        function mountWithTwoFilledItems() {
+            return mountComponent({
+                mode: 'edit',
+                invoice: makeInvoice({
+                    items: [
+                        {
+                            id: 1,
+                            description: 'Design work',
+                            sac_code: null,
+                            quantity: 1,
+                            unit_price: 500000,
+                            tax_rate: 1800,
+                        },
+                        {
+                            id: 2,
+                            description: 'Consulting',
+                            sac_code: null,
+                            quantity: 2,
+                            unit_price: 300000,
+                            tax_rate: 1800,
+                        },
+                    ] as any,
+                }),
+            });
+        }
+
+        it('asks for confirmation before removing a filled line item', async () => {
+            const wrapper = mountWithTwoFilledItems();
+            expect(wrapper.findAll('[data-testid="item-row"]').length).toBe(2);
+
+            const removeBtns = wrapper.findAll(
+                '[data-testid="row-remove-btn"]',
+            );
+            await removeBtns[1].trigger('click');
+
+            expect(wrapper.find('[data-testid="confirm-modal"]').exists()).toBe(
+                true,
+            );
+            // Nothing is removed until the user confirms.
+            expect(wrapper.findAll('[data-testid="item-row"]').length).toBe(2);
+        });
+
+        it('removes the line item once removal is confirmed', async () => {
+            const wrapper = mountWithTwoFilledItems();
+
+            const removeBtns = wrapper.findAll(
+                '[data-testid="row-remove-btn"]',
+            );
+            await removeBtns[1].trigger('click');
+            await wrapper.find('[data-testid="confirm-btn"]').trigger('click');
+
+            expect(wrapper.findAll('[data-testid="item-row"]').length).toBe(1);
+            expect(wrapper.find('[data-testid="confirm-modal"]').exists()).toBe(
+                false,
+            );
+        });
+
+        it('keeps the line item when removal is cancelled', async () => {
+            const wrapper = mountWithTwoFilledItems();
+
+            const removeBtns = wrapper.findAll(
+                '[data-testid="row-remove-btn"]',
+            );
+            await removeBtns[1].trigger('click');
+            await wrapper.find('[data-testid="cancel-btn"]').trigger('click');
+
+            expect(wrapper.findAll('[data-testid="item-row"]').length).toBe(2);
+            expect(wrapper.find('[data-testid="confirm-modal"]').exists()).toBe(
+                false,
+            );
+        });
+
+        it('removes an empty line item immediately without confirmation', async () => {
+            const wrapper = mountComponent();
+
+            // Add a second, empty row so the first can be removed.
+            const addBtn = wrapper
+                .findAll('button')
+                .find((b) => b.text() === 'Add Item');
+            await addBtn!.trigger('click');
+            expect(wrapper.findAll('[data-testid="item-row"]').length).toBe(2);
+
+            const removeBtns = wrapper.findAll(
+                '[data-testid="row-remove-btn"]',
+            );
+            await removeBtns[1].trigger('click');
+
+            expect(wrapper.find('[data-testid="confirm-modal"]').exists()).toBe(
+                false,
+            );
+            expect(wrapper.findAll('[data-testid="item-row"]').length).toBe(1);
         });
     });
 
