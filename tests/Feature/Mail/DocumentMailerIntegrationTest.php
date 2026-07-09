@@ -74,6 +74,64 @@ test('renders custom body into the email html when provided', function () {
         ->and($html)->toContain('/invoices/view/');
 });
 
+test('inlines brand-violet color onto links in the custom body', function () {
+    $invoice = createInvoiceWithItems([
+        'invoice_number' => 'INV-LINK-001',
+        'status' => 'sent',
+    ]);
+
+    $recipients = new ContactCollection([['name' => 'Test', 'email' => 'test@example.test']]);
+
+    // Mirrors what the editor emits: an anchor carrying a Tailwind class that is
+    // meaningless in email. Without the .email-body a rule the link would fall
+    // back to browser-default blue (unreadable on dark clients), so the inliner
+    // must stamp the brand violet onto it.
+    $customBody = '<p>See <a href="https://example.test/pay" class="text-brand-600 underline">the payment page</a>.</p>';
+
+    $mailer = new DocumentMailer($invoice, $recipients, null, [], $customBody);
+    $html = $mailer->renderHtml();
+
+    preg_match('/<a\b[^>]*href="https:\/\/example\.test\/pay"[^>]*>/i', $html, $anchor);
+
+    expect($anchor)->not->toBeEmpty()
+        ->and($anchor[0])->toContain('#7c3aed');
+});
+
+test('tightens the footer gap when the view-online button is present', function () {
+    $invoice = createInvoiceWithItems([
+        'invoice_number' => 'INV-GAP-001',
+        'status' => 'sent',
+    ]);
+
+    $recipients = new ContactCollection([['name' => 'Test', 'email' => 'test@example.test']]);
+
+    // includeViewOnlineButton defaults to true.
+    $mailer = new DocumentMailer($invoice, $recipients, null, [], '<p>Body</p>');
+    $html = $mailer->renderHtml();
+
+    preg_match('/<div class="footer footer-tight"[^>]*>/i', $html, $footer);
+
+    expect($footer)->not->toBeEmpty()
+        ->and($footer[0])->toMatch('/margin-top:\s*14px/i');
+});
+
+test('keeps the full footer gap when the view-online button is absent', function () {
+    $invoice = createInvoiceWithItems([
+        'invoice_number' => 'INV-GAP-002',
+        'status' => 'sent',
+    ]);
+
+    $recipients = new ContactCollection([['name' => 'Test', 'email' => 'test@example.test']]);
+
+    $mailer = new DocumentMailer($invoice, $recipients, null, [], '<p>Body</p>', false, [], false);
+    $html = $mailer->renderHtml();
+
+    preg_match('/<div class="footer"[^>]*>/i', $html, $footer);
+
+    expect($footer)->not->toBeEmpty()
+        ->and($footer[0])->toMatch('/margin-top:\s*32px/i');
+});
+
 test('renders the default invoice body when no custom body', function () {
     $invoice = createInvoiceWithItems([
         'type' => 'invoice',

@@ -103,6 +103,11 @@
             width: 150px;
         }
 
+        .email-body a {
+            color: #7c3aed;
+            text-decoration: underline;
+        }
+
         /* Style company name */
         .email-body>div:first-child strong {
             font-size: 24px;
@@ -175,6 +180,10 @@
             color: #6b7280;
             font-size: 12px;
             text-align: center;
+        }
+
+        .footer-tight {
+            margin-top: 14px;
         }
 
         /* Platform branding lockup — sits on the gray background below the card */
@@ -259,6 +268,10 @@
                 color: #a78bfa !important;
             }
 
+            .email-body a {
+                color: #a78bfa !important;
+            }
+
             /* Invoice-number banner: softer violet so it doesn't read as a heavy
                muddy block on the dark card. */
             .email-body>div:nth-child(2) {
@@ -328,7 +341,7 @@
                             </div>
                             @endif
 
-                            <div class="footer">
+                            <div class="footer{{ $includeViewOnlineButton ? ' footer-tight' : '' }}">
                                 @if($invoice->organization)
                                 <p class="footer-org" style="margin: 0 0 10px 0; font-weight: 600;">
                                     {{ $invoice->organization->company_name ?? $invoice->organization->name }}

@@ -389,4 +389,37 @@ defineExpose({ insertText, editor });
     pointer-events: none;
     height: 0;
 }
+
+.tiptap.prose {
+    --tw-prose-body: #1f2937;
+    --tw-prose-headings: #1f2937;
+    --tw-prose-bold: #1f2937;
+    --tw-prose-bullets: #1f2937;
+    --tw-prose-counters: #1f2937;
+    --tw-prose-links: #7c3aed;
+}
+
+/* Lists: prose spaces items "loosely" — TipTap wraps each item's text in a <p>,
+   and prose gives those <p>s large vertical margins (the oversized gaps) while
+   indenting the list less than the email. Override to the email's tighter,
+   clearly-indented default-list look with solid dark markers. */
+.tiptap.prose :is(ul, ol) {
+    margin-top: 0.75em;
+    margin-bottom: 0.75em;
+    padding-inline-start: 2.25em;
+}
+
+.tiptap.prose li {
+    margin-top: 0.15em;
+    margin-bottom: 0.15em;
+}
+
+.tiptap.prose li > p {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.tiptap.prose li::marker {
+    color: #1f2937;
+}
 </style>
