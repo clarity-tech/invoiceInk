@@ -397,7 +397,7 @@ describe('OrganizationSetupFlow', () => {
             expect(emailInputs.length).toBe(2);
             // Remove button should exist (for index > 0)
             const removeBtn = wrapper.findAll('button').find((b) => {
-                return b.find('svg path[fill-rule="evenodd"]').exists();
+                return b.attributes('aria-label') === 'Remove email';
             });
             expect(removeBtn).toBeDefined();
         });
