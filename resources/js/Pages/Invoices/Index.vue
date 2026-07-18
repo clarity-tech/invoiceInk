@@ -209,37 +209,37 @@ const tabs = [
                     <thead class="bg-gray-50">
                         <tr>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Type
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Number
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Customer
                             </th>
                             <th
-                                class="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Total
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Status
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Date
                             </th>
                             <th
-                                class="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Actions
                             </th>
@@ -251,7 +251,7 @@ const tabs = [
                             :key="invoice.id"
                             class="hover:bg-gray-50"
                         >
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-4 py-4 whitespace-nowrap">
                                 <span
                                     class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
                                     :class="
@@ -263,17 +263,20 @@ const tabs = [
                                     {{ invoice.type.toUpperCase() }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-4 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">
                                     {{ invoice.invoice_number }}
                                 </div>
                             </td>
-                            <td
-                                class="px-6 py-4 text-sm whitespace-nowrap text-gray-500"
-                            >
-                                {{ invoice.customer?.name ?? 'N/A' }}
+                            <td class="px-4 py-4 text-sm text-gray-500">
+                                <div
+                                    class="max-w-[220px] truncate"
+                                    :title="invoice.customer?.name ?? 'N/A'"
+                                >
+                                    {{ invoice.customer?.name ?? 'N/A' }}
+                                </div>
                             </td>
-                            <td class="px-6 py-4 text-right whitespace-nowrap">
+                            <td class="px-4 py-4 text-right whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">
                                     <MoneyDisplay
                                         :amount="invoice.total"
@@ -291,16 +294,16 @@ const tabs = [
                                     />
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-4 py-4 whitespace-nowrap">
                                 <StatusBadge :status="invoice.status" />
                             </td>
                             <td
-                                class="px-6 py-4 text-sm whitespace-nowrap text-gray-500"
+                                class="px-4 py-4 text-sm whitespace-nowrap text-gray-500"
                             >
                                 {{ formatDate(invoice.issued_at) }}
                             </td>
                             <td
-                                class="px-6 py-4 text-right text-sm whitespace-nowrap"
+                                class="px-4 py-4 text-right text-sm whitespace-nowrap"
                             >
                                 <div
                                     class="flex items-center justify-end gap-2"
