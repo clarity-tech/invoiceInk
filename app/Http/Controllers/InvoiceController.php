@@ -793,7 +793,7 @@ class InvoiceController extends Controller
             'email_recipients.*.email' => ['required', 'email'],
             'email_recipients.*.checked' => ['boolean'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.description' => ['required', 'string', 'max:500'],
+            'items.*.description' => ['required', 'string', 'max:2000'],
             'items.*.sac_code' => ['nullable', 'string', 'max:20'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.unit_price' => ['required', 'integer', 'min:0'],

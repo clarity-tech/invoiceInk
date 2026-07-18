@@ -128,6 +128,7 @@ function errorFor(field: string): string | undefined {
                 :value="item.description"
                 type="text"
                 placeholder="Item description"
+                maxlength="2000"
                 class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
                 @input="
                     updateField(

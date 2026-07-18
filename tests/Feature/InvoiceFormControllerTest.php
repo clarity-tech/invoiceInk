@@ -316,6 +316,44 @@ test('store rejects an order number that is too long', function () {
     ])->assertSessionHasErrors('order_number');
 });
 
+test('store accepts a line item description at the 2000 character limit', function () {
+    $description = str_repeat('A', 2000);
+
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'items' => [
+            ['description' => $description, 'quantity' => 1, 'unit_price' => 5000, 'tax_rate' => 0],
+        ],
+    ])->assertSessionHasNoErrors()->assertRedirect();
+
+    expect(Invoice::first()->items->first()->description)->toBe($description);
+});
+
+test('store rejects a line item description longer than 2000 characters', function () {
+    $this->post(route('invoices.store'), [
+        'type' => 'invoice',
+        'organization_id' => $this->organization->id,
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'draft',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'items' => [
+            ['description' => str_repeat('A', 2001), 'quantity' => 1, 'unit_price' => 5000, 'tax_rate' => 0],
+        ],
+    ])->assertSessionHasErrors('items.0.description');
+});
+
 test('overriding place of supply on an invoice does not change the customer', function () {
     $this->customer->update(['place_of_supply' => '27']);
     $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
