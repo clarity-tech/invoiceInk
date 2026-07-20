@@ -3,7 +3,9 @@
 namespace Database\Seeders;
 
 use App\Currency;
+use App\Enums\Country;
 use App\Enums\GstTreatment;
+use App\Enums\IndianState;
 use App\Models\Customer;
 use App\Models\Location;
 use App\Models\Organization;
@@ -64,11 +66,44 @@ class CustomerSeeder extends ProductionSafeSeeder
             ->create();
         $customerCount += $domesticCount;
 
+        $this->alignOneCustomerWithSupplierState($organization);
+
         // Create foreign customers for Indian organizations
         $foreignCustomers = $this->createForeignCustomersForOrganization($organization);
         $customerCount += count($foreignCustomers);
 
         $this->info("✓ Created {$customerCount} customers for {$organization->name}");
+    }
+
+    /**
+     * Put one of an Indian organization's customers in the organization's own
+     * state, so intra-state supplies (CGST + SGST) occur alongside the
+     * inter-state ones (IGST) rather than being left to chance.
+     */
+    private function alignOneCustomerWithSupplierState(Organization $organization): void
+    {
+        $supplierGstin = $organization->primaryLocation?->tax_id;
+
+        if ($organization->country_code !== Country::IN || ! $supplierGstin) {
+            return;
+        }
+
+        $state = IndianState::tryFrom(substr($supplierGstin, 0, 2));
+
+        $customer = $organization->customers()
+            ->whereNotNull('place_of_supply')
+            ->first();
+
+        if (! $state || ! $customer) {
+            return;
+        }
+
+        $customer->update(['place_of_supply' => $state->value]);
+
+        $customer->primaryLocation?->update([
+            'state' => $state->label(),
+            'tax_id' => $state->value.substr((string) $customer->primaryLocation->tax_id, 2),
+        ]);
     }
 
     private function getDomesticCustomerCount(Organization $organization): int
@@ -98,7 +133,9 @@ class CustomerSeeder extends ProductionSafeSeeder
 
             str_contains($organization->name, 'Dubai Trading') => Customer::factory()->uaeTechEstablished(),
 
-            str_contains($organization->name, 'GlobalCorp Holdings') => Customer::factory()->highValueCustomer()->usCustomer(),
+            // An Indian organization — its domestic base is Indian; the US and
+            // European customers are added as foreign customers separately.
+            str_contains($organization->name, 'GlobalCorp Holdings') => Customer::factory()->highValueCustomer()->indianCustomer(),
 
             str_contains($organization->name, 'GlobalCorp Tech') => Customer::factory()->techCustomer()->indianCustomer()->establishedCustomer(),
 

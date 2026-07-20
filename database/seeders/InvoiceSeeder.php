@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Country;
 use App\Enums\IndianState;
 use App\Enums\InvoiceStatus;
 use App\Models\Customer;
@@ -242,13 +243,13 @@ class InvoiceSeeder extends ProductionSafeSeeder
     {
         // Create appropriate invoice items based on invoice type and organization
         $itemsData = $this->getInvoiceItemsForType($organization, $invoice);
-        $isIndianSupply = $invoice->currency->value === 'INR';
+        $isIndianSupplier = $organization->country_code === Country::IN;
 
         foreach ($itemsData as $itemData) {
             $invoice->items()->create([
                 'description' => $itemData['description'],
-                // SAC codes identify the service on Indian GST invoices.
-                'sac_code' => $isIndianSupply ? fake()->randomElement(['998313', '998314', '998319', '997331']) : null,
+                // SAC codes identify the service supplied on Indian invoices.
+                'sac_code' => $isIndianSupplier ? fake()->randomElement(['998313', '998314', '998319', '997331']) : null,
                 'quantity' => $itemData['quantity'],
                 'unit_price' => $itemData['unit_price'],
                 'tax_rate' => $itemData['tax_rate'],
@@ -267,6 +268,9 @@ class InvoiceSeeder extends ProductionSafeSeeder
     {
         $invoice->load(['items', 'customer', 'organizationLocation', 'customerLocation']);
 
+        $isIndianExport = $organization->country_code === Country::IN
+            && $this->isExportSupply($invoice, $organization);
+
         $invoice->place_of_supply = $this->resolvePlaceOfSupply($invoice);
         $invoice->exchange_rate = ExchangeRateSeeder::rateFor($invoice->currency->value, $organization->currency->value);
         $invoice->subject = fake()->boolean(40) ? fake()->randomElement([
@@ -277,9 +281,16 @@ class InvoiceSeeder extends ProductionSafeSeeder
         ]) : null;
         $invoice->order_number = fake()->boolean(30) ? 'PO-'.fake()->numerify('#####') : null;
 
+        // Indian exports are zero-rated supplies under a Letter of Undertaking,
+        // which the invoice has to state.
+        if ($isIndianExport) {
+            $invoice->notes = 'Supply meant for export under LUT without payment of IGST. Zero rated.';
+        }
+
         // TDS is withheld by Indian buyers on professional fees; TCS is
-        // collected on the sale of goods. Only one applies to a given supply.
-        if ($invoice->currency->value === 'INR' && fake()->boolean(25)) {
+        // collected on the sale of goods. Only one applies to a given supply,
+        // and neither applies to an export.
+        if ($organization->country_code === Country::IN && ! $isIndianExport && fake()->boolean(25)) {
             if (fake()->boolean()) {
                 $invoice->tds_rate = 1000; // 10%
                 $invoice->tds_section = '194J';
@@ -496,20 +507,46 @@ class InvoiceSeeder extends ProductionSafeSeeder
         ];
     }
 
-    private function getTaxRate(Organization $organization, ?Invoice $invoice = null): int
+    /**
+     * The tax rate for a line, in basis points (1800 = 18%).
+     *
+     * Drawn from the same catalogue the invoice form offers for the supplier's
+     * country, so every seeded rate is one a user could actually have picked.
+     */
+    private function getTaxRate(Organization $organization, Invoice $invoice): int
     {
-        // Whole-percent rates, converted to basis points where 1% = 100
-        // (e.g. 18% = 1800) to match InvoiceItem::$tax_rate. The rate follows
-        // the document's currency, which may differ from the organization's.
-        $percent = match (($invoice?->currency ?? $organization->currency)->value) {
-            'USD' => fake()->randomElement([0, 4, 6, 8]), // US state sales tax rates
-            'EUR' => fake()->randomElement([0, 7, 19]), // German VAT rates
-            'GBP' => fake()->randomElement([0, 5, 20]), // UK VAT rates
-            'INR' => fake()->randomElement([0, 5, 18, 40]), // GST 2.0 rates
-            'AED' => fake()->randomElement([0, 5]), // UAE VAT rates
-            default => 10,
-        };
+        // A cross-border supply is zero-rated: an Indian exporter supplying
+        // under LUT charges no GST, and no domestic rate applies elsewhere
+        // either. Charging tax here would put, say, a UAE VAT rate on an
+        // Indian invoice and have it reported as IGST.
+        if ($this->isExportSupply($invoice, $organization)) {
+            return 0;
+        }
 
-        return $percent * 100;
+        $country = $organization->country_code ?? Country::IN;
+
+        $rates = collect($country->taxOptions())
+            ->pluck('rate')
+            ->unique()
+            ->values()
+            ->all();
+
+        return (int) fake()->randomElement($rates);
+    }
+
+    /**
+     * Whether the document is billed to a customer outside the supplier's own
+     * country.
+     */
+    private function isExportSupply(Invoice $invoice, Organization $organization): bool
+    {
+        $customerCountry = $invoice->customerLocation?->country
+            ?? $invoice->customer?->primaryLocation?->country;
+
+        if ($customerCountry === null) {
+            return false;
+        }
+
+        return $customerCountry !== ($organization->country_code?->value ?? Country::IN->value);
     }
 }
