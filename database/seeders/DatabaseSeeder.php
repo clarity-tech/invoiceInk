@@ -42,14 +42,20 @@ class DatabaseSeeder extends Seeder
         $startTime = microtime(true);
 
         // Run seeders in the correct order to maintain referential integrity
-        $this->command->info('Step 1/3: Creating users and organizations...');
+        $this->command->info('Step 1/5: Creating users and organizations...');
         $this->call(UserSeeder::class);
 
-        $this->command->info('Step 2/3: Creating customers with locations...');
+        $this->command->info('Step 2/5: Creating customers with locations...');
         $this->call(CustomerSeeder::class);
 
-        $this->command->info('Step 3/3: Creating invoices and estimates...');
+        $this->command->info('Step 3/5: Creating exchange rates...');
+        $this->call(ExchangeRateSeeder::class);
+
+        $this->command->info('Step 4/5: Creating invoices and estimates...');
         $this->call(InvoiceSeeder::class);
+
+        $this->command->info('Step 5/5: Customizing email templates...');
+        $this->call(EmailTemplateSeeder::class);
 
         $endTime = microtime(true);
         $executionTime = round($endTime - $startTime, 2);
@@ -84,15 +90,17 @@ class DatabaseSeeder extends Seeder
 
         $this->command->info('📊 Demo Data Summary:');
         $this->command->info('   👥 Users & Teams: Multiple business organizations created');
-        $this->command->info('   🏢 Companies: 7 companies across different currencies (USD, EUR, GBP, INR)');
+        $this->command->info('   🏢 Companies: 10 organizations across 4 currencies (USD, EUR, INR, AED)');
         $this->command->info('   👨‍💼 Customers: 30+ customers with realistic business data');
-        $this->command->info('   📄 Invoices: 40+ invoices and estimates with various statuses');
+        $this->command->info('   📄 Invoices: 70+ invoices and estimates with various statuses');
+        $this->command->info('   💰 Payments: Recorded against paid and partially paid invoices');
         $this->command->info('');
 
         $this->command->info('🔑 Demo Login Credentials:');
         $this->command->info('   Admin: admin@invoicing.claritytech.test (password: password)');
         $this->command->info('   Demo User: demo@invoicing.claritytech.test (password: password)');
         $this->command->info('   Business Users: john@acmecorp.test, sarah@techstartup.test, maria@euroconsult.test');
+        $this->command->info('   Onboarding (setup incomplete): priya@freshstart.test');
         $this->command->info('   All passwords: password');
         $this->command->info('');
 
@@ -106,12 +114,15 @@ class DatabaseSeeder extends Seeder
 
         $this->command->info('✨ Features Demonstrated:');
         $this->command->info('   • Multitenant team isolation');
-        $this->command->info('   • Multiple currencies (USD, EUR, GBP, INR)');
-        $this->command->info('   • Various invoice statuses (draft, sent, paid, overdue)');
-        $this->command->info('   • Estimates and invoices');
+        $this->command->info('   • Multiple currencies (USD, EUR, INR, AED) with exchange rates');
+        $this->command->info('   • Every invoice status (draft, sent, accepted, partially paid, paid, void)');
+        $this->command->info('   • Estimates and invoices, including past-due invoices');
+        $this->command->info('   • Indian GST: CGST/SGST/IGST splits, place of supply, SAC codes, TDS/TCS');
+        $this->command->info('   • Payment history against settled invoices');
+        $this->command->info('   • Organization bank details on documents');
         $this->command->info('   • Team member management and invitations');
         $this->command->info('   • Custom domains and team URLs');
-        $this->command->info('   • Complex business relationships');
+        $this->command->info('   • Organizations mid-onboarding as well as fully set up');
         $this->command->info('');
 
         $this->command->info('🚀 Ready to demo! Visit your application and login with any of the demo accounts.');

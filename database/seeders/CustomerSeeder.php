@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Currency;
+use App\Enums\GstTreatment;
 use App\Models\Customer;
 use App\Models\Location;
 use App\Models\Organization;
@@ -20,7 +22,32 @@ class CustomerSeeder extends ProductionSafeSeeder
             $this->createCustomersForOrganization($organization);
         }
 
+        $this->archiveOneCustomer();
+
         $this->info('Created customers and locations successfully!');
+    }
+
+    /**
+     * Archive a customer so the archived-customer views have data. Given its
+     * own record rather than trashing an active one, to keep the invoice data
+     * for existing customers intact.
+     */
+    private function archiveOneCustomer(): void
+    {
+        $organization = Organization::where('name', 'LIKE', 'Demo Company%')->first();
+
+        if (! $organization) {
+            return;
+        }
+
+        $customer = Customer::factory()
+            ->indianCustomer()
+            ->for($organization)
+            ->create(['name' => 'Closed Account Traders']);
+
+        $customer->delete();
+
+        $this->info('✓ Archived customer Closed Account Traders');
     }
 
     private function createCustomersForOrganization(Organization $organization): void
@@ -54,7 +81,6 @@ class CustomerSeeder extends ProductionSafeSeeder
             str_contains($organization->name, 'Dubai Trading') => 2,
             str_contains($organization->name, 'GlobalCorp Holdings') => 2, // Reduced for foreign customers
             str_contains($organization->name, 'GlobalCorp Tech') => 2, // Reduced for foreign customers
-            str_contains($organization->name, 'GlobalCorp Business') => 3,
             default => 2,
         };
     }
@@ -76,8 +102,6 @@ class CustomerSeeder extends ProductionSafeSeeder
 
             str_contains($organization->name, 'GlobalCorp Tech') => Customer::factory()->techCustomer()->indianCustomer()->establishedCustomer(),
 
-            str_contains($organization->name, 'GlobalCorp Business') => Customer::factory()->consultingCustomer()->internationalCustomer(),
-
             default => Customer::factory()->withLocation(), // Default fallback
         };
     }
@@ -96,6 +120,8 @@ class CustomerSeeder extends ProductionSafeSeeder
                     'emails' => new ContactCollection([['name' => 'Billing', 'email' => 'billing@sandline.test'], ['name' => 'Finance', 'email' => 'finance@sandline.test']]),
                     'phone' => '+97141234567',
                     'phone_country' => 'AE',
+                    'currency' => Currency::AED,
+                    'gst_treatment' => GstTreatment::Overseas,
                 ]);
 
             // Create Dubai location for Sandline
@@ -122,6 +148,8 @@ class CustomerSeeder extends ProductionSafeSeeder
                     'emails' => new ContactCollection([['name' => 'Priya', 'email' => 'priya@cornichelabs.test'], ['name' => 'Consultant', 'email' => 'consult@cornichelabs.test']]),
                     'phone' => '+97147654321',
                     'phone_country' => 'AE',
+                    'currency' => Currency::AED,
+                    'gst_treatment' => GstTreatment::Overseas,
                 ]);
 
             $cornicheLocation = Location::create([

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Organization;
 use App\Models\TeamInvitation;
 use App\Models\User;
+use Throwable;
 
 class UserSeeder extends ProductionSafeSeeder
 {
@@ -28,8 +29,24 @@ class UserSeeder extends ProductionSafeSeeder
         // Create multi-organization owner
         $globalCorpOwner = User::factory()->robertGlobalCorp()->create();
 
+        // A brand new signup who hasn't finished onboarding, so the setup
+        // wizard has something to demo.
+        $newUser = User::factory()->create([
+            'name' => 'Priya Nair',
+            'email' => 'priya@freshstart.test',
+        ]);
+
+        $newUser->ownedTeams()->save(
+            Organization::factory()->incompleteSetup()->make([
+                'name' => 'Fresh Start Studio',
+                'currency' => 'INR',
+            ])
+        );
+
         // Add team members and invitations using existing relationships
         $this->createTeamMembersAndInvitations($johnUser, $sarahUser, $mariaUser, $uaeUser, $globalCorpOwner);
+
+        $this->attachOrganizationLogos();
 
         $this->info('Created users and organizations successfully!');
         $this->info('✓ System Admin: admin@invoicing.claritytech.test (password: password)');
@@ -37,6 +54,7 @@ class UserSeeder extends ProductionSafeSeeder
         $this->info('✓ Business Users: john@acmecorp.test, sarah@techstartup.test, maria@euroconsult.test');
         $this->info('✓ UAE User: ahmed@dubaitrading.test');
         $this->info('✓ Multi-org Owner: robert@globalcorp.test');
+        $this->info('✓ Onboarding (setup incomplete): priya@freshstart.test');
         $this->info('All passwords: password');
     }
 
@@ -99,6 +117,57 @@ class UserSeeder extends ProductionSafeSeeder
     /**
      * Fix current team assignments for users who should have a current team.
      */
+    /**
+     * Give each set-up organization a logo so documents, emails and the org
+     * pages have real branding rather than a placeholder.
+     */
+    private function attachOrganizationLogos(): void
+    {
+        $organizations = Organization::whereNotNull('setup_completed_at')->get();
+
+        foreach ($organizations as $organization) {
+            if ($organization->getFirstMedia('logo')) {
+                continue;
+            }
+
+            try {
+                $organization
+                    ->addMediaFromString($this->generateLogo($organization->name))
+                    ->usingFileName('logo.png')
+                    ->toMediaCollection('logo');
+            } catch (Throwable $exception) {
+                $this->warn('Skipped logos — object storage unavailable: '.$exception->getMessage());
+
+                return;
+            }
+        }
+
+        $this->info('✓ Added logos for '.$organizations->count().' organizations');
+    }
+
+    /**
+     * A square PNG carrying the organization's initials on a brand-coloured
+     * background. Generated rather than shipped so no binary lives in the repo.
+     */
+    private function generateLogo(string $name): string
+    {
+        $initials = collect(explode(' ', $name))
+            ->filter()
+            ->take(2)
+            ->map(fn (string $word) => strtoupper($word[0]))
+            ->implode('');
+
+        $image = imagecreatetruecolor(240, 240);
+        imagefilledrectangle($image, 0, 0, 240, 240, imagecolorallocate($image, 29, 78, 216));
+        imagestring($image, 5, 105, 112, $initials, imagecolorallocate($image, 255, 255, 255));
+
+        ob_start();
+        imagepng($image);
+        imagedestroy($image);
+
+        return (string) ob_get_clean();
+    }
+
     private function fixCurrentTeamAssignments(User ...$users): void
     {
         foreach ($users as $user) {

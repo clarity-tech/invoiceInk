@@ -81,7 +81,15 @@ class OrganizationFactory extends Factory
         ];
 
         if ($country === Country::IN->value) {
-            $state = $this->faker->randomElement(IndianState::cases());
+            // Drawn from the same pool the customer states use, so intra-state
+            // (CGST/SGST) supplies occur as well as inter-state (IGST) ones.
+            $state = $this->faker->randomElement([
+                IndianState::Maharashtra,
+                IndianState::Karnataka,
+                IndianState::TamilNadu,
+                IndianState::Delhi,
+                IndianState::Gujarat,
+            ]);
 
             $attributes['state'] = $state->label();
             $attributes['tax_id'] = $state->value.$this->faker->regexify('[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]');

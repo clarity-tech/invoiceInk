@@ -91,6 +91,7 @@ class UserFactory extends Factory
             Organization::factory()
                 ->businessOrganization()
                 ->completedSetup()
+                ->withBankDetails()
                 ->withHeadOffice()
                 ->state(fn (array $attributes, User $user) => [
                     'name' => $user->name.'\'s Organization',
@@ -171,6 +172,7 @@ class UserFactory extends Factory
                 ->businessOrganization()
                 ->indianCompany()
                 ->completedSetup()
+                ->withBankDetails()
                 ->withHeadOffice()
                 ->state([
                     'name' => 'Demo Company Ltd',
@@ -199,6 +201,7 @@ class UserFactory extends Factory
                 ->manufacturingCompany()
                 ->usCompany()
                 ->completedSetup()
+                ->withBankDetails()
                 ->withHeadOffice([
                     'address_line_1' => '123 Industrial Ave',
                     'city' => 'Detroit',
@@ -236,6 +239,7 @@ class UserFactory extends Factory
                 ->techStartup()
                 ->usCompany()
                 ->completedSetup()
+                ->withBankDetails()
                 ->withHeadOffice([
                     'address_line_1' => '456 Innovation Blvd',
                     'city' => 'San Francisco',
@@ -273,6 +277,7 @@ class UserFactory extends Factory
                 ->consultingFirm()
                 ->germanCompany()
                 ->completedSetup()
+                ->withBankDetails()
                 ->withHeadOffice([
                     'address_line_1' => 'Unter den Linden 1',
                     'city' => 'Berlin',
@@ -309,6 +314,7 @@ class UserFactory extends Factory
                 ->tradingCompany()
                 ->uaeCompany()
                 ->completedSetup()
+                ->withBankDetails()
                 ->withHeadOffice([
                     'address_line_1' => 'Office 1205, Business Bay Tower',
                     'city' => 'Dubai',
@@ -353,6 +359,7 @@ class UserFactory extends Factory
                 ->businessOrganization()
                 ->indianCompany()
                 ->completedSetup()
+                ->withBankDetails()
                 ->withHeadOffice()
                 ->state([
                     'name' => 'GlobalCorp Holdings',
@@ -367,6 +374,7 @@ class UserFactory extends Factory
                 ->businessOrganization()
                 ->indianCompany()
                 ->completedSetup()
+                ->withBankDetails()
                 ->withHeadOffice()
                 ->state([
                     'name' => 'GlobalCorp Tech Solutions',

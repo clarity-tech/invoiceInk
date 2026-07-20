@@ -291,15 +291,9 @@ class CustomerFactory extends Factory
      */
     public function indianCustomer(): static
     {
-        $state = fake()->randomElement([
-            IndianState::Maharashtra,
-            IndianState::Karnataka,
-            IndianState::TamilNadu,
-            IndianState::Delhi,
-            IndianState::Gujarat,
-        ]);
+        return $this->afterCreating(function (Customer $customer) {
+            $state = IndianState::from($customer->place_of_supply);
 
-        return $this->afterCreating(function (Customer $customer) use ($state) {
             $location = Location::factory()
                 ->forCustomer($customer->id)
                 ->create([
@@ -311,12 +305,19 @@ class CustomerFactory extends Factory
                 ]);
 
             $customer->update(['primary_location_id' => $location->id]);
-        })->state([
+        })->state(fn () => [
             'phone' => '+9198'.fake()->numerify('########'),
             'phone_country' => 'IN',
             'currency' => Currency::INR,
-            // Drives the CGST/SGST vs IGST split on GST invoices.
-            'place_of_supply' => $state->value,
+            // Resolved per customer, not per factory instance, so a seeded set
+            // spans several states. Drives the CGST/SGST vs IGST split.
+            'place_of_supply' => fake()->randomElement([
+                IndianState::Maharashtra,
+                IndianState::Karnataka,
+                IndianState::TamilNadu,
+                IndianState::Delhi,
+                IndianState::Gujarat,
+            ])->value,
             'gst_treatment' => GstTreatment::Domestic,
         ]);
     }
