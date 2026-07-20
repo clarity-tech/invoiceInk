@@ -11,7 +11,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import type {
     Customer,
     Location,
-    TaxTemplate,
+    TaxRateOption,
     InvoiceNumberingSeries,
     InvoiceAttachment,
 } from '@/types';
@@ -20,7 +20,7 @@ defineProps<{
     type: 'invoice' | 'estimate';
     customers: Customer[];
     organizationLocations: Location[];
-    taxTemplates: TaxTemplate[];
+    taxOptions: TaxRateOption[];
     numberingSeries: InvoiceNumberingSeries[];
     statusOptions: Record<string, string>;
     taxLabels: Record<string, string>;
@@ -62,7 +62,7 @@ defineProps<{
                 :type="type"
                 :customers="customers"
                 :organization-locations="organizationLocations"
-                :tax-templates="taxTemplates"
+                :tax-options="taxOptions"
                 :numbering-series="numberingSeries"
                 :status-options="statusOptions"
                 :tax-labels="taxLabels"

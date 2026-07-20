@@ -42,16 +42,13 @@ class DatabaseSeeder extends Seeder
         $startTime = microtime(true);
 
         // Run seeders in the correct order to maintain referential integrity
-        $this->command->info('Step 1/4: Creating users and organizations...');
+        $this->command->info('Step 1/3: Creating users and organizations...');
         $this->call(UserSeeder::class);
 
-        $this->command->info('Step 2/4: Creating tax templates...');
-        $this->call(TaxTemplateSeeder::class);
-
-        $this->command->info('Step 3/4: Creating customers with locations...');
+        $this->command->info('Step 2/3: Creating customers with locations...');
         $this->call(CustomerSeeder::class);
 
-        $this->command->info('Step 4/4: Creating invoices and estimates...');
+        $this->command->info('Step 3/3: Creating invoices and estimates...');
         $this->call(InvoiceSeeder::class);
 
         $endTime = microtime(true);

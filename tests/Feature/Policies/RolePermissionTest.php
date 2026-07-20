@@ -4,7 +4,6 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceNumberingSeries;
 use App\Models\Organization;
-use App\Models\TaxTemplate;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 
@@ -79,10 +78,9 @@ test('settings resources require the manage permission', function (
     $member = memberWithRole($this->org, $role);
     $gate = Gate::forUser($member);
 
-    // Numbering series + tax templates are settings → manage only, but readable by all.
+    // Numbering series are settings → manage only, but readable by all.
     expect($gate->allows('viewAny', InvoiceNumberingSeries::class))->toBeTrue();
     expect($gate->allows('create', InvoiceNumberingSeries::class))->toBe($canManage);
-    expect($gate->allows('create', TaxTemplate::class))->toBe($canManage);
 
     // Organization settings + member management → manage only.
     expect($gate->allows('update', $this->org))->toBe($canManage);
@@ -108,7 +106,6 @@ test('the owner bypasses every permission check', function () {
     expect($gate->allows('delete', $this->invoice))->toBeTrue();
     expect($gate->allows('create', Invoice::class))->toBeTrue();
     expect($gate->allows('update', $this->org))->toBeTrue();
-    expect($gate->allows('create', TaxTemplate::class))->toBeTrue();
 });
 
 /*

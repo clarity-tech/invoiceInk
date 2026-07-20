@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
     makeCustomer,
     makeLocation,
-    makeTaxTemplate,
+    makeTaxOption,
     makeNumberingSeries,
 } from '../../helpers';
 
@@ -70,7 +70,7 @@ function mountComponent(propsOverride = {}) {
             type: 'invoice' as const,
             customers: [makeCustomer()],
             organizationLocations: [makeLocation()],
-            taxTemplates: [makeTaxTemplate()],
+            taxOptions: [makeTaxOption()],
             numberingSeries: [makeNumberingSeries()],
             statusOptions: { draft: 'Draft', sent: 'Sent' },
             taxLabels: { IN: 'GSTIN', US: 'EIN' },
@@ -90,7 +90,7 @@ function mountComponent(propsOverride = {}) {
                         'type',
                         'customers',
                         'organizationLocations',
-                        'taxTemplates',
+                        'taxOptions',
                         'numberingSeries',
                         'statusOptions',
                         'defaults',
@@ -138,12 +138,12 @@ describe('Invoices/Create', () => {
         );
     });
 
-    it('renders with multiple tax templates', () => {
-        const templates = [
-            makeTaxTemplate(),
-            makeTaxTemplate({ id: 2, name: 'VAT 5%' }),
+    it('renders with multiple tax options', () => {
+        const options = [
+            makeTaxOption(),
+            makeTaxOption({ key: 'vat-5', name: 'VAT 5%', rate: 500 }),
         ];
-        const wrapper = mountComponent({ taxTemplates: templates });
+        const wrapper = mountComponent({ taxOptions: options });
         expect(wrapper.find('[data-testid="invoice-form"]').exists()).toBe(
             true,
         );

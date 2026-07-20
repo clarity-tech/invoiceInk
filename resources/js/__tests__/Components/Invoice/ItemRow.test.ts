@@ -12,7 +12,7 @@ const defaultProps = {
     },
     index: 0,
     currency: 'USD' as const,
-    taxTemplates: [],
+    taxOptions: [],
     canRemove: true,
     errors: {},
 };
@@ -87,14 +87,14 @@ describe('ItemRow', () => {
 });
 
 describe('ItemRow tax control', () => {
-    const taxTemplates = [
-        { id: 1, name: 'GST 18%', rate: 1800 },
-        { id: 2, name: 'GST 5%', rate: 500 },
+    const taxOptions = [
+        { key: 'gst-18', name: 'GST 18%', rate: 1800 },
+        { key: 'gst-5', name: 'GST 5%', rate: 500 },
     ] as any;
 
-    it('renders an option per tax template plus a custom option', () => {
+    it('renders an option per tax rate plus a custom option', () => {
         const wrapper = mount(ItemRow, {
-            props: { ...defaultProps, taxTemplates },
+            props: { ...defaultProps, taxOptions },
         });
         const options = wrapper.findAll('select option').map((o) => o.text());
         expect(options).toContain('GST 18%');
@@ -102,43 +102,43 @@ describe('ItemRow tax control', () => {
         expect(options.some((o) => o.includes('Custom'))).toBe(true);
     });
 
-    it('orders template options by rate ascending', () => {
+    it('orders tax options by rate ascending', () => {
         const wrapper = mount(ItemRow, {
-            props: { ...defaultProps, taxTemplates },
+            props: { ...defaultProps, taxOptions },
         });
-        const templateOptions = wrapper
+        const rateOptions = wrapper
             .findAll('select option')
             .map((o) => o.text())
             .filter((t) => t.startsWith('GST'));
-        expect(templateOptions).toEqual(['GST 5%', 'GST 18%']);
+        expect(rateOptions).toEqual(['GST 5%', 'GST 18%']);
     });
 
-    it('preselects the template matching the item tax rate', () => {
+    it('preselects the option matching the item tax rate', () => {
         const wrapper = mount(ItemRow, {
             props: {
                 ...defaultProps,
                 item: { ...defaultProps.item, tax_rate: 1800 },
-                taxTemplates,
+                taxOptions,
             },
         });
         expect(
             (wrapper.find('select').element as HTMLSelectElement).value,
-        ).toBe('1');
-        // No custom input while a template is selected.
+        ).toBe('gst-18');
+        // No custom input while a predefined option is selected.
         expect(
             wrapper.find('input[aria-label="Custom tax rate"]').exists(),
         ).toBe(false);
     });
 
-    it('emits update with the template rate when a template is selected', async () => {
+    it('emits update with the option rate when a tax option is selected', async () => {
         const wrapper = mount(ItemRow, {
             props: {
                 ...defaultProps,
                 item: { ...defaultProps.item, tax_rate: 0 },
-                taxTemplates,
+                taxOptions,
             },
         });
-        await wrapper.find('select').setValue('2'); // GST 5%
+        await wrapper.find('select').setValue('gst-5');
         const emitted = wrapper.emitted('update')!;
         expect((emitted[emitted.length - 1][0] as any).tax_rate).toBe(500);
     });
@@ -148,7 +148,7 @@ describe('ItemRow tax control', () => {
             props: {
                 ...defaultProps,
                 item: { ...defaultProps.item, tax_rate: 0 },
-                taxTemplates,
+                taxOptions,
             },
         });
         await wrapper.find('select').setValue('custom');
@@ -159,12 +159,12 @@ describe('ItemRow tax control', () => {
         expect((emitted[emitted.length - 1][0] as any).tax_rate).toBe(750);
     });
 
-    it('falls back to the custom input when the rate matches no template', () => {
+    it('falls back to the custom input when the rate matches no option', () => {
         const wrapper = mount(ItemRow, {
             props: {
                 ...defaultProps,
                 item: { ...defaultProps.item, tax_rate: 1234 },
-                taxTemplates,
+                taxOptions,
             },
         });
         expect(

@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\Country;
 use App\Models\Location;
 use App\Models\Organization;
 use App\Models\User;
@@ -221,53 +220,6 @@ test('can save step 3 configuration and complete setup when country was set in s
     ]);
 
     expect($organization->fresh()->setup_completed_at)->not->toBeNull();
-});
-
-test('step 3 seeds the country default tax templates', function () {
-    $organization = $this->user->currentTeam;
-    $organization->update(['country_code' => 'IN']);
-
-    $this->post("/organization/setup/{$organization->id}/step", [
-        'step' => 3,
-        'currency' => 'INR',
-        'financial_year_type' => 'april_march',
-        'financial_year_start_month' => 4,
-        'financial_year_start_day' => 1,
-    ]);
-
-    $templates = $organization->fresh()->taxTemplates;
-
-    expect($templates)->toHaveCount(count(Country::IN->getDefaultTaxTemplates()));
-    // GST 2.0 standard slab, stored at the correct scale (18% = 1800).
-    expect($templates->firstWhere('name', 'GST 18%')?->rate)->toBe(1800);
-    expect($templates->pluck('name'))->toContain('GST 40%');
-});
-
-test('step 3 skips seeding when the organization already has tax templates', function () {
-    $organization = $this->user->currentTeam;
-    $organization->update(['country_code' => 'IN']);
-
-    $organization->taxTemplates()->create([
-        'name' => 'Custom Rate 7%',
-        'type' => 'GST',
-        'rate' => 700,
-        'category' => 'custom',
-        'country_code' => 'IN',
-        'is_active' => true,
-    ]);
-
-    $this->post("/organization/setup/{$organization->id}/step", [
-        'step' => 3,
-        'currency' => 'INR',
-        'financial_year_type' => 'april_march',
-        'financial_year_start_month' => 4,
-        'financial_year_start_day' => 1,
-    ]);
-
-    $templates = $organization->fresh()->taxTemplates;
-
-    expect($templates)->toHaveCount(1);
-    expect($templates->first()->name)->toBe('Custom Rate 7%');
 });
 
 test('validates step 3 requires currency', function () {

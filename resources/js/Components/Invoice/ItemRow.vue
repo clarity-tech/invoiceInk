@@ -3,13 +3,13 @@ import { computed, ref } from 'vue';
 import { useFormatMoney } from '@/composables/useFormatMoney';
 import { calcLineTotalWithTax } from '@/composables/useInvoiceCalculator';
 import type { LineItem } from '@/composables/useInvoiceCalculator';
-import type { Currency, TaxTemplate } from '@/types';
+import type { Currency, TaxRateOption } from '@/types';
 
 const props = defineProps<{
     item: LineItem;
     index: number;
     currency: Currency;
-    taxTemplates: TaxTemplate[];
+    taxOptions: TaxRateOption[];
     canRemove: boolean;
     errors: Record<string, string>;
 }>();
@@ -59,29 +59,27 @@ function updateField(field: keyof LineItem, value: string | number | null) {
     emit('update', updated);
 }
 
-// Tax-rate control: a single dropdown of the org's tax templates plus a
-// "Custom rate…" option that reveals the manual percentage input.
+// Tax-rate control: a single dropdown of the country's predefined tax options
+// plus a "Custom rate…" option that reveals the manual percentage input.
 const CUSTOM_TAX = 'custom';
 const NO_TAX = '0';
 
-// Show a synthetic "No tax (0%)" entry only when no template already covers 0%.
-const hasZeroRateTemplate = computed(() =>
-    props.taxTemplates.some((t) => t.rate === 0),
+// Show a synthetic "No tax (0%)" entry only when no option already covers 0%.
+const hasZeroRateOption = computed(() =>
+    props.taxOptions.some((t) => t.rate === 0),
 );
 
 // Order the dropdown by rate ascending (e.g. 0% → 5% → 20%), keeping a stable
-// order for templates that share a rate.
-const sortedTaxTemplates = computed(() =>
-    [...props.taxTemplates].sort((a, b) => a.rate - b.rate),
+// order for options that share a rate.
+const sortedTaxOptions = computed(() =>
+    [...props.taxOptions].sort((a, b) => a.rate - b.rate),
 );
 
 function resolveInitialTaxMode(): string {
-    const match = props.taxTemplates.find(
-        (t) => t.rate === props.item.tax_rate,
-    );
+    const match = props.taxOptions.find((t) => t.rate === props.item.tax_rate);
 
     if (match) {
-        return String(match.id);
+        return match.key;
     }
 
     if (props.item.tax_rate === 0) {
@@ -109,10 +107,10 @@ function onTaxModeChange(value: string) {
         return;
     }
 
-    const template = props.taxTemplates.find((t) => String(t.id) === value);
+    const option = props.taxOptions.find((t) => t.key === value);
 
-    if (template) {
-        updateField('tax_rate', template.rate);
+    if (option) {
+        updateField('tax_rate', option.rate);
     }
 }
 
@@ -222,13 +220,11 @@ function errorFor(field: string): string | undefined {
                     onTaxModeChange(($event.target as HTMLSelectElement).value)
                 "
             >
-                <option v-if="!hasZeroRateTemplate" value="0">
-                    No tax (0%)
-                </option>
+                <option v-if="!hasZeroRateOption" value="0">No tax (0%)</option>
                 <option
-                    v-for="t in sortedTaxTemplates"
-                    :key="t.id"
-                    :value="String(t.id)"
+                    v-for="t in sortedTaxOptions"
+                    :key="t.key"
+                    :value="t.key"
                 >
                     {{ t.name }}
                 </option>

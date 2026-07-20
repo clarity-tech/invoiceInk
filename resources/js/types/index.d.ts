@@ -225,20 +225,10 @@ export interface TaxBreakdownItem {
     amount: number;
 }
 
-export interface TaxTemplate {
-    id: number;
-    organization_id: number;
+export interface TaxRateOption {
+    key: string;
     name: string;
-    type: string;
     rate: number;
-    category: string | null;
-    country_code: Country | null;
-    description: string | null;
-    is_active: boolean;
-    metadata: Record<string, unknown> | null;
-    formatted_rate?: string;
-    created_at: string;
-    updated_at: string;
 }
 
 export interface Payment {

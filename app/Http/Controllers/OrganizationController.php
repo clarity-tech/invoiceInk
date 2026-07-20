@@ -10,7 +10,6 @@ use App\Models\Location;
 use App\Models\Organization;
 use App\Rules\CurrencyCode;
 use App\Services\SvgSanitizer;
-use App\Services\TaxTemplateProvisioner;
 use App\Support\Jetstream;
 use App\Support\JetstreamFeatures;
 use App\Support\PhoneNumber;
@@ -28,8 +27,6 @@ use Propaganistas\LaravelPhone\Rules\Phone;
 
 class OrganizationController extends Controller
 {
-    public function __construct(private TaxTemplateProvisioner $taxTemplates) {}
-
     public function index(Request $request): Response
     {
         $user = $request->user();
@@ -161,16 +158,7 @@ class OrganizationController extends Controller
             $attributes['company_name'] = ($validated['company_name'] ?? '') ?: null;
         }
 
-        // Tax templates are country-specific defaults; when the organization's
-        // country changes, regenerate them so the invoice tax dropdown matches.
-        $newCountry = Country::from($validated['country_code']);
-        $countryChanged = $organization->country_code !== $newCountry;
-
         $organization->update($attributes);
-
-        if ($countryChanged) {
-            $this->taxTemplates->replaceWithCountryDefaults($organization, $newCountry);
-        }
 
         return back()->with('message', __('messages.notifications.organization_updated'));
     }

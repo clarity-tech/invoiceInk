@@ -5,7 +5,7 @@ import {
     makePayment,
     makeCustomer,
     makeLocation,
-    makeTaxTemplate,
+    makeTaxOption,
     makeNumberingSeries,
 } from '../helpers';
 
@@ -115,7 +115,7 @@ function mountEdit(invoiceOverrides = {}, propsOverride = {}) {
             invoice,
             customers: [makeCustomer()],
             organizationLocations: [orgLocation],
-            taxTemplates: [makeTaxTemplate()],
+            taxOptions: [makeTaxOption()],
             numberingSeries: [makeNumberingSeries()],
             statusOptions: { draft: 'Draft', sent: 'Sent', paid: 'Paid' },
             taxLabels: { IN: 'GSTIN', US: 'EIN' },
@@ -137,7 +137,7 @@ function mountEdit(invoiceOverrides = {}, propsOverride = {}) {
                         'invoice',
                         'customers',
                         'organizationLocations',
-                        'taxTemplates',
+                        'taxOptions',
                         'numberingSeries',
                         'statusOptions',
                     ],

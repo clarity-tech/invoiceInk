@@ -18,7 +18,7 @@ import type {
     Invoice,
     Customer,
     Location,
-    TaxTemplate,
+    TaxRateOption,
     InvoiceNumberingSeries,
     InvoiceAttachment,
 } from '@/types';
@@ -27,7 +27,7 @@ const props = defineProps<{
     invoice: Invoice;
     customers: Customer[];
     organizationLocations: Location[];
-    taxTemplates: TaxTemplate[];
+    taxOptions: TaxRateOption[];
     numberingSeries: InvoiceNumberingSeries[];
     statusOptions: Record<string, string>;
     taxLabels: Record<string, string>;
@@ -100,7 +100,7 @@ function deletePayment() {
                 :invoice="invoice"
                 :customers="customers"
                 :organization-locations="organizationLocations"
-                :tax-templates="taxTemplates"
+                :tax-options="taxOptions"
                 :numbering-series="numberingSeries"
                 :status-options="statusOptions"
                 :tax-labels="taxLabels"

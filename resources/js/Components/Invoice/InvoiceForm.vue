@@ -27,7 +27,7 @@ import type {
     Contact,
     EmailRecipient,
     Location,
-    TaxTemplate,
+    TaxRateOption,
     InvoiceNumberingSeries,
     InvoiceAttachment,
     Currency,
@@ -39,7 +39,7 @@ const props = defineProps<{
     invoice?: Invoice;
     customers: Customer[];
     organizationLocations: Location[];
-    taxTemplates: TaxTemplate[];
+    taxOptions: TaxRateOption[];
     numberingSeries: InvoiceNumberingSeries[];
     statusOptions: Record<string, string>;
     taxLabels: Record<string, string>;
@@ -1217,7 +1217,7 @@ const orgContacts = computed<Contact[]>(
                                 :item="item"
                                 :index="index"
                                 :currency="currentCurrency"
-                                :tax-templates="taxTemplates"
+                                :tax-options="taxOptions"
                                 :can-remove="items.length > 1"
                                 :errors="form.errors"
                                 @update="updateItem(index, $event)"

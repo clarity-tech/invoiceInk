@@ -6,7 +6,6 @@ use App\Models\EmailTemplate;
 use App\Models\Invoice;
 use App\Models\InvoiceNumberingSeries;
 use App\Models\Organization;
-use App\Models\TaxTemplate;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 
@@ -83,34 +82,6 @@ test('user B only sees their own customers via OrganizationScope', function () {
 
     expect($customers)->toHaveCount(1);
     expect($customers->first()->id)->toBe($this->customerB->id);
-});
-
-// ──────────────────────────────────────────────────────
-// OrganizationScope: TaxTemplate isolation
-// ──────────────────────────────────────────────────────
-
-test('user only sees tax templates for their organization', function () {
-    TaxTemplate::create([
-        'organization_id' => $this->orgA->id,
-        'name' => 'GST 18%',
-        'rate' => 1800,
-        'country_code' => 'IN',
-        'type' => 'GST',
-    ]);
-
-    TaxTemplate::create([
-        'organization_id' => $this->orgB->id,
-        'name' => 'VAT 5%',
-        'rate' => 500,
-        'country_code' => 'AE',
-        'type' => 'VAT',
-    ]);
-
-    $this->actingAs($this->userA);
-    $templates = TaxTemplate::all();
-
-    expect($templates)->toHaveCount(1);
-    expect($templates->first()->name)->toBe('GST 18%');
 });
 
 // ──────────────────────────────────────────────────────

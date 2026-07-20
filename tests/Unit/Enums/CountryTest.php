@@ -32,25 +32,29 @@ test('taxLabels returns country-specific names for non-Indian countries', functi
     expect($labels['DE'])->toBe('VAT Registration Number');
 });
 
-test('getDefaultTaxTemplates returns a non-empty, well-formed set for every country', function () {
+test('taxOptions returns a non-empty, well-formed set for every country', function () {
     foreach (Country::cases() as $country) {
-        $templates = $country->getDefaultTaxTemplates();
+        $options = $country->taxOptions();
 
-        expect($templates)->toBeArray()->not->toBeEmpty();
+        expect($options)->toBeArray()->not->toBeEmpty();
 
-        foreach ($templates as $template) {
-            expect($template)
-                ->toHaveKeys(['name', 'type', 'rate', 'category', 'description']);
-            expect($template['name'])->toBeString()->not->toBeEmpty();
-            expect($template['rate'])->toBeInt()->toBeGreaterThanOrEqual(0);
+        foreach ($options as $option) {
+            expect($option)->toHaveKeys(['key', 'name', 'rate']);
+            expect($option['key'])->toBeString()->not->toBeEmpty();
+            expect($option['name'])->toBeString()->not->toBeEmpty();
+            expect($option['rate'])->toBeInt()->toBeGreaterThanOrEqual(0);
         }
+
+        // Keys are the dropdown option values, so they must be unique per country.
+        $keys = array_column($options, 'key');
+        expect($keys)->toBe(array_values(array_unique($keys)));
     }
 });
 
-test('getDefaultTaxTemplates stores rates in basis points where 1% = 100', function () {
-    $india = collect(Country::IN->getDefaultTaxTemplates());
+test('taxOptions stores rates in basis points where 1% = 100', function () {
+    $india = collect(Country::IN->taxOptions());
 
-    // GST 2.0 slabs (0/5/18/40), at the same scale as TaxTemplate::$rate.
+    // GST 2.0 slabs (0/5/18/40), at the same scale as InvoiceItem::$tax_rate.
     expect($india->firstWhere('name', 'GST 0%')['rate'])->toBe(0);
     expect($india->firstWhere('name', 'GST 5%')['rate'])->toBe(500);
     expect($india->firstWhere('name', 'GST 18%')['rate'])->toBe(1800);
@@ -59,4 +63,11 @@ test('getDefaultTaxTemplates stores rates in basis points where 1% = 100', funct
     // The legacy 12% and 28% slabs are gone under GST 2.0.
     expect($india->pluck('name'))->not->toContain('GST 12%');
     expect($india->pluck('name'))->not->toContain('GST 28%');
+});
+
+test('taxOptions derives a stable slug key from the option name', function () {
+    $india = collect(Country::IN->taxOptions());
+
+    expect($india->firstWhere('name', 'GST 18%')['key'])->toBe('gst-18');
+    expect($india->firstWhere('name', 'GST 0%')['key'])->toBe('gst-0');
 });

@@ -5,7 +5,7 @@ import type {
     Invoice,
     Payment,
     Location,
-    TaxTemplate,
+    TaxRateOption,
     InvoiceNumberingSeries,
     Contact,
     Currency,
@@ -160,22 +160,13 @@ export function makePayment(overrides: Partial<Payment> = {}): Payment {
     };
 }
 
-export function makeTaxTemplate(
-    overrides: Partial<TaxTemplate> = {},
-): TaxTemplate {
+export function makeTaxOption(
+    overrides: Partial<TaxRateOption> = {},
+): TaxRateOption {
     return {
-        id: 1,
-        organization_id: 1,
+        key: 'gst-18',
         name: 'GST 18%',
-        type: 'gst',
         rate: 1800,
-        category: null,
-        country_code: 'IN',
-        description: null,
-        is_active: true,
-        metadata: null,
-        created_at: '2026-01-01T00:00:00.000000Z',
-        updated_at: '2026-01-01T00:00:00.000000Z',
         ...overrides,
     };
 }

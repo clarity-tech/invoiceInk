@@ -3,7 +3,6 @@
 use App\Models\Customer;
 use App\Models\InvoiceNumberingSeries;
 use App\Models\Organization;
-use App\Models\TaxTemplate;
 
 beforeEach(function () {
     $this->owner = createUserWithTeam();
@@ -142,45 +141,6 @@ describe('InvoiceNumberingSeriesPolicy', function () {
     });
 });
 
-// --- TaxTemplatePolicy ---
-
-describe('TaxTemplatePolicy', function () {
-    beforeEach(function () {
-        $this->taxTemplate = TaxTemplate::create([
-            'organization_id' => $this->organization->id,
-            'name' => 'Test GST',
-            'type' => 'GST',
-            'rate' => 1800,
-            'category' => 'goods',
-            'country_code' => 'IN',
-        ]);
-    });
-
-    it('allows owner to view their tax template', function () {
-        expect($this->owner->can('view', $this->taxTemplate))->toBeTrue();
-    });
-
-    it('denies other user from viewing tax template', function () {
-        expect($this->otherUser->can('view', $this->taxTemplate))->toBeFalse();
-    });
-
-    it('allows owner to update their tax template', function () {
-        expect($this->owner->can('update', $this->taxTemplate))->toBeTrue();
-    });
-
-    it('denies other user from updating tax template', function () {
-        expect($this->otherUser->can('update', $this->taxTemplate))->toBeFalse();
-    });
-
-    it('allows owner to delete their tax template', function () {
-        expect($this->owner->can('delete', $this->taxTemplate))->toBeTrue();
-    });
-
-    it('denies other user from deleting tax template', function () {
-        expect($this->otherUser->can('delete', $this->taxTemplate))->toBeFalse();
-    });
-});
-
 // --- viewAny and create checks ---
 
 describe('viewAny and create authorization', function () {
@@ -188,10 +148,8 @@ describe('viewAny and create authorization', function () {
         expect($this->owner->can('viewAny', Organization::class))->toBeTrue();
         expect($this->owner->can('viewAny', Customer::class))->toBeTrue();
         expect($this->owner->can('viewAny', InvoiceNumberingSeries::class))->toBeTrue();
-        expect($this->owner->can('viewAny', TaxTemplate::class))->toBeTrue();
 
         expect($this->owner->can('create', Customer::class))->toBeTrue();
         expect($this->owner->can('create', InvoiceNumberingSeries::class))->toBeTrue();
-        expect($this->owner->can('create', TaxTemplate::class))->toBeTrue();
     });
 });

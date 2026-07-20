@@ -8,7 +8,6 @@ use App\Enums\FinancialYearType;
 use App\Models\Location;
 use App\Models\Organization;
 use App\Rules\CurrencyCode;
-use App\Services\TaxTemplateProvisioner;
 use App\Support\PhoneNumber;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Http\RedirectResponse;
@@ -21,8 +20,6 @@ use Propaganistas\LaravelPhone\Rules\Phone;
 
 class OrganizationSetupController extends Controller
 {
-    public function __construct(private TaxTemplateProvisioner $taxTemplates) {}
-
     public function show(Request $request): Response|RedirectResponse
     {
         $organization = $request->user()->currentTeam;
@@ -255,7 +252,5 @@ class OrganizationSetupController extends Controller
             'financial_year_start_month' => $request->input('financial_year_start_month'),
             'financial_year_start_day' => $request->input('financial_year_start_day'),
         ]);
-
-        $this->taxTemplates->seedDefaultsIfMissing($organization, $country);
     }
 }

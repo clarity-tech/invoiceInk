@@ -6,7 +6,6 @@ use App\Enums\Country;
 use App\Models\Customer;
 use App\Models\Location;
 use App\Models\Organization;
-use App\Models\TaxTemplate;
 use App\Models\User;
 use App\Support\Jetstream;
 use App\ValueObjects\BankDetails;
@@ -155,30 +154,6 @@ test('organization can have multiple invoices', function () {
     $invoiceNumbers = $organization->invoices->pluck('invoice_number')->toArray();
     expect(collect($invoiceNumbers)->filter(fn ($num) => str_starts_with($num, 'INV-001')))->toHaveCount(1);
     expect(collect($invoiceNumbers)->filter(fn ($num) => str_starts_with($num, 'INV-002')))->toHaveCount(1);
-});
-
-test('organization can have multiple tax templates', function () {
-    $organization = createOrganizationWithLocation();
-
-    $taxTemplate1 = TaxTemplate::create([
-        'organization_id' => $organization->id,
-        'name' => 'GST 18%',
-        'type' => 'GST',
-        'rate' => 18.000,
-        'country_code' => 'IN',
-    ]);
-
-    $taxTemplate2 = TaxTemplate::create([
-        'organization_id' => $organization->id,
-        'name' => 'VAT 5%',
-        'type' => 'VAT',
-        'rate' => 5.000,
-        'country_code' => 'AE',
-    ]);
-
-    expect($organization->taxTemplates)->toHaveCount(2);
-    expect($organization->taxTemplates->pluck('name')->toArray())->toContain('GST 18%');
-    expect($organization->taxTemplates->pluck('name')->toArray())->toContain('VAT 5%');
 });
 
 test('organization getUrlAttribute with custom domain', function () {
@@ -474,10 +449,6 @@ test('organization relationships are correctly configured', function () {
     // Test invoices relationship
     $invoicesRelation = $organization->invoices();
     expect($invoicesRelation)->toBeInstanceOf(HasMany::class);
-
-    // Test taxTemplates relationship
-    $taxTemplatesRelation = $organization->taxTemplates();
-    expect($taxTemplatesRelation)->toBeInstanceOf(HasMany::class);
 });
 
 test('organization currency enum integration works correctly', function () {

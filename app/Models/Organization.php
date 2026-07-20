@@ -201,14 +201,6 @@ class Organization extends Model implements HasMedia
     }
 
     /**
-     * Get all tax templates for this organization.
-     */
-    public function taxTemplates(): HasMany
-    {
-        return $this->hasMany(TaxTemplate::class);
-    }
-
-    /**
      * Get all invoice numbering series for this organization.
      */
     public function numberingSeries(): HasMany

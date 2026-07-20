@@ -92,9 +92,7 @@ class InvoiceController extends Controller
             ? Location::where('locatable_type', Organization::class)->where('locatable_id', $organization->id)->get()
             : collect();
 
-        $taxTemplates = $organization
-            ? $organization->taxTemplates()->where('is_active', true)->get()
-            : collect();
+        $taxOptions = $organization?->country_code?->taxOptions() ?? [];
 
         $numberingSeries = collect();
         if ($organization && $type === 'invoice') {
@@ -109,7 +107,7 @@ class InvoiceController extends Controller
             'attachments' => [],
             'customers' => $customers,
             'organizationLocations' => $organizationLocations,
-            'taxTemplates' => $taxTemplates,
+            'taxOptions' => $taxOptions,
             'numberingSeries' => $numberingSeries,
             'statusOptions' => InvoiceStatus::options(),
             'taxLabels' => Country::taxLabels(),
@@ -311,7 +309,7 @@ class InvoiceController extends Controller
             ->where('locatable_id', $organization->id)
             ->get();
 
-        $taxTemplates = $organization->taxTemplates()->where('is_active', true)->get();
+        $taxOptions = $organization->country_code?->taxOptions() ?? [];
 
         $numberingSeries = collect();
         if ($invoice->type === 'invoice') {
@@ -323,7 +321,7 @@ class InvoiceController extends Controller
             'attachments' => $invoice->attachmentsForDisplay(),
             'customers' => $customers,
             'organizationLocations' => $organizationLocations,
-            'taxTemplates' => $taxTemplates,
+            'taxOptions' => $taxOptions,
             'numberingSeries' => $numberingSeries,
             'statusOptions' => InvoiceStatus::options(),
             'taxLabels' => Country::taxLabels(),

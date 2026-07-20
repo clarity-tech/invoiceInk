@@ -3,7 +3,6 @@
 use App\Enums\ResetFrequency;
 use App\Models\InvoiceNumberingSeries;
 use App\Models\Organization;
-use App\Models\TaxTemplate;
 use App\Models\User;
 
 /**
@@ -83,45 +82,7 @@ function seedDemoData(): array
         'postal_code' => '48201',
     ], $org);
 
-    // 3. Tax templates
-    TaxTemplate::create([
-        'organization_id' => $org->id,
-        'name' => 'CGST 9%',
-        'type' => 'CGST',
-        'rate' => 900,
-        'category' => 'standard',
-        'country_code' => 'IN',
-        'is_active' => true,
-    ]);
-    TaxTemplate::create([
-        'organization_id' => $org->id,
-        'name' => 'SGST 9%',
-        'type' => 'SGST',
-        'rate' => 900,
-        'category' => 'standard',
-        'country_code' => 'IN',
-        'is_active' => true,
-    ]);
-    TaxTemplate::create([
-        'organization_id' => $org->id,
-        'name' => 'IGST 18%',
-        'type' => 'IGST',
-        'rate' => 1800,
-        'category' => 'standard',
-        'country_code' => 'IN',
-        'is_active' => true,
-    ]);
-    TaxTemplate::create([
-        'organization_id' => $org->id,
-        'name' => 'VAT 5%',
-        'type' => 'VAT',
-        'rate' => 500,
-        'category' => 'standard',
-        'country_code' => 'AE',
-        'is_active' => true,
-    ]);
-
-    // 4. Numbering series
+    // 3. Numbering series
     InvoiceNumberingSeries::create([
         'organization_id' => $org->id,
         'name' => 'Default Invoice Series',
@@ -133,7 +94,7 @@ function seedDemoData(): array
         'is_default' => true,
     ]);
 
-    // 5. Invoices (various statuses)
+    // 4. Invoices (various statuses)
     $invoices = [];
 
     // Paid invoice — Indian customer, GST
@@ -210,7 +171,7 @@ function seedDemoData(): array
         ['description' => 'DevOps Setup & CI/CD Pipeline', 'quantity' => 24, 'unit_price' => 100000, 'tax_rate' => 18.00],
     ], $org, $customers['generic']);
 
-    // 6. Estimates
+    // 5. Estimates
     $estimates = [];
 
     $estimates['sent'] = createInvoiceWithItems([

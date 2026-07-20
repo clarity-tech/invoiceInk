@@ -22,7 +22,7 @@ test('create page renders with correct props', function () {
             ->component('Invoices/Create')
             ->has('customers')
             ->has('organizationLocations')
-            ->has('taxTemplates')
+            ->has('taxOptions')
             ->has('numberingSeries')
             ->has('statusOptions')
             ->has('defaults')

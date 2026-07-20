@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
     makeCustomer,
     makeLocation,
-    makeTaxTemplate,
+    makeTaxOption,
     makeNumberingSeries,
     makeInvoice,
 } from '../../helpers';
@@ -151,7 +151,7 @@ const defaultProps = () => ({
     type: 'invoice' as const,
     customers: [customer, customer2],
     organizationLocations: [orgLocation],
-    taxTemplates: [makeTaxTemplate()],
+    taxOptions: [makeTaxOption()],
     numberingSeries: [makeNumberingSeries()],
     statusOptions: {
         draft: 'Draft',
@@ -182,7 +182,7 @@ function mountComponent(propsOverride = {}) {
                         'item',
                         'index',
                         'currency',
-                        'taxTemplates',
+                        'taxOptions',
                         'canRemove',
                         'errors',
                     ],
