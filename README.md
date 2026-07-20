@@ -115,7 +115,7 @@ See `CLAUDE.md` for the full command reference (testing, formatting, database, f
 | **Styling**    | Tailwind CSS v4, lucide-vue-next icons                        |
 | **Routing**    | Laravel Wayfinder (type-safe frontend route generation)       |
 | **Database**   | MySQL 8.4                                                     |
-| **Testing**    | Pest 4, Pest Browser (Playwright), 957+ tests, 83% coverage  |
+| **Testing**    | Pest 4, Pest Browser (Playwright), 1,163+ tests              |
 | **PDF**        | Gotenberg (HTML-to-PDF via Docker sidecar)                    |
 | **Storage**    | RustFS (local S3-compatible), S3/Spaces (production)          |
 | **Cache/Queue**| Valkey (Redis-compatible)                                     |
