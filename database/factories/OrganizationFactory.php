@@ -3,9 +3,11 @@
 namespace Database\Factories;
 
 use App\Enums\Country;
+use App\Enums\IndianState;
 use App\Models\Location;
 use App\Models\Organization;
 use App\Models\User;
+use App\ValueObjects\BankDetails;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -29,9 +31,63 @@ class OrganizationFactory extends Factory
             'emails' => [$this->faker->companyEmail()],
             ...$this->e164Phone(),
             'website' => 'https://www.'.$this->faker->domainName(1).'.test',
-            'currency' => 'INR',
+            'currency' => Country::IN->getDefaultCurrency(),
+            // The country drives the tax rates offered on invoices
+            // (Country::taxOptions()) and the financial year, so every
+            // organization needs one — not just the country-specific states.
+            'country_code' => Country::IN,
+            'financial_year_type' => Country::IN->getDefaultFinancialYearType(),
+            'financial_year_start_month' => Country::IN->getDefaultFinancialYearType()->getStartMonth(),
+            'financial_year_start_day' => Country::IN->getDefaultFinancialYearType()->getStartDay(),
             'notes' => $this->faker->optional()->sentence(),
         ];
+    }
+
+    /**
+     * Bank details, as shown on invoice PDFs.
+     */
+    public function withBankDetails(): static
+    {
+        return $this->state([
+            'bank_details' => new BankDetails(
+                accountName: $this->faker->company(),
+                accountNumber: $this->faker->numerify('##################'),
+                bankName: $this->faker->randomElement(['HDFC Bank', 'ICICI Bank', 'State Bank of India', 'Axis Bank']),
+                ifsc: $this->faker->regexify('[A-Z]{4}0[A-Z0-9]{6}'),
+                branch: $this->faker->city(),
+                swift: $this->faker->regexify('[A-Z]{4}IN[A-Z0-9]{2}'),
+                pan: $this->faker->regexify('[A-Z]{5}[0-9]{4}[A-Z]'),
+            ),
+        ]);
+    }
+
+    /**
+     * Default attributes for an organization's own location. Indian locations
+     * carry a GSTIN whose leading two digits are the state code, because the
+     * CGST/SGST/IGST split is derived from it.
+     *
+     * @return array<string, mixed>
+     */
+    protected function locationDefaults(Organization $organization): array
+    {
+        $country = $organization->country_code?->value ?? Country::IN->value;
+
+        $attributes = [
+            'address_line_1' => $this->faker->streetAddress,
+            'city' => $this->faker->city,
+            'state' => $this->faker->state,
+            'country' => $country,
+            'postal_code' => $this->faker->postcode,
+        ];
+
+        if ($country === Country::IN->value) {
+            $state = $this->faker->randomElement(IndianState::cases());
+
+            $attributes['state'] = $state->label();
+            $attributes['tax_id'] = $state->value.$this->faker->regexify('[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]');
+        }
+
+        return $attributes;
     }
 
     /**
@@ -78,11 +134,7 @@ class OrganizationFactory extends Factory
         return $this->afterCreating(function ($organization) use ($locationAttributes) {
             $defaultLocationAttributes = [
                 'name' => 'Head Office',
-                'address_line_1' => $this->faker->streetAddress,
-                'city' => $this->faker->city,
-                'state' => $this->faker->state,
-                'country' => 'IN',
-                'postal_code' => $this->faker->postcode,
+                ...$this->locationDefaults($organization),
                 'locatable_type' => get_class($organization),
                 'locatable_id' => $organization->id,
             ];
@@ -335,11 +387,7 @@ class OrganizationFactory extends Factory
         return $this->afterCreating(function ($organization) use ($locationOverrides) {
             $defaultAttributes = [
                 'name' => 'Head Office',
-                'address_line_1' => $this->faker->streetAddress,
-                'city' => $this->faker->city,
-                'state' => $this->faker->state,
-                'country' => $organization->country_code?->value ?? 'IN',
-                'postal_code' => $this->faker->postcode,
+                ...$this->locationDefaults($organization),
             ];
 
             $location = Location::create([
@@ -364,11 +412,7 @@ class OrganizationFactory extends Factory
             for ($i = 0; $i < $count; $i++) {
                 $location = Location::create([
                     'name' => $i === 0 ? 'Head Office' : "Branch Office {$i}",
-                    'address_line_1' => $this->faker->streetAddress,
-                    'city' => $this->faker->city,
-                    'state' => $this->faker->state,
-                    'country' => $organization->country_code?->value ?? 'IN',
-                    'postal_code' => $this->faker->postcode,
+                    ...$this->locationDefaults($organization),
                     'locatable_type' => get_class($organization),
                     'locatable_id' => $organization->id,
                 ]);

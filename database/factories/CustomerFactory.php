@@ -2,6 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Currency;
+use App\Enums\GstTreatment;
+use App\Enums\IndianState;
 use App\Models\Customer;
 use App\Models\Location;
 use App\Models\Organization;
@@ -30,8 +33,9 @@ class CustomerFactory extends Factory
             ...(fake()->boolean(80) ? $this->e164Phone() : ['phone' => null, 'phone_country' => null]),
             'emails' => new ContactCollection(array_filter([
                 ['name' => fake()->name(), 'email' => fake()->unique()->userName().'@'.fake()->domainName(1).'.test'],
-                fake()->randomFloat() < 0.4 ? ['name' => fake()->name(), 'email' => fake()->unique()->userName().'@'.fake()->domainName(1).'.test'] : null,
+                fake()->boolean(40) ? ['name' => fake()->name(), 'email' => fake()->unique()->userName().'@'.fake()->domainName(1).'.test'] : null,
             ])),
+            'currency' => Currency::INR,
             'organization_id' => Organization::factory(),
             'primary_location_id' => null, // Will be set after location creation
         ];
@@ -276,6 +280,9 @@ class CustomerFactory extends Factory
         })->state([
             'phone' => '+1415'.fake()->numerify('#######'),
             'phone_country' => 'US',
+            'currency' => Currency::USD,
+            // Located outside India, so a supply to them is an export.
+            'gst_treatment' => GstTreatment::Overseas,
         ]);
     }
 
@@ -284,20 +291,33 @@ class CustomerFactory extends Factory
      */
     public function indianCustomer(): static
     {
-        return $this->afterCreating(function (Customer $customer) {
+        $state = fake()->randomElement([
+            IndianState::Maharashtra,
+            IndianState::Karnataka,
+            IndianState::TamilNadu,
+            IndianState::Delhi,
+            IndianState::Gujarat,
+        ]);
+
+        return $this->afterCreating(function (Customer $customer) use ($state) {
             $location = Location::factory()
                 ->forCustomer($customer->id)
                 ->create([
                     'country' => 'IN',
-                    'state' => fake()->randomElement(['Maharashtra', 'Karnataka', 'Tamil Nadu', 'Delhi', 'Gujarat']),
+                    'state' => $state->label(),
                     'city' => fake()->randomElement(['Mumbai', 'Bangalore', 'Chennai', 'Delhi', 'Pune']),
                     'postal_code' => fake()->numerify('######'),
+                    'tax_id' => $state->value.fake()->regexify('[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]'),
                 ]);
 
             $customer->update(['primary_location_id' => $location->id]);
         })->state([
             'phone' => '+9198'.fake()->numerify('########'),
             'phone_country' => 'IN',
+            'currency' => Currency::INR,
+            // Drives the CGST/SGST vs IGST split on GST invoices.
+            'place_of_supply' => $state->value,
+            'gst_treatment' => GstTreatment::Domestic,
         ]);
     }
 
@@ -320,6 +340,8 @@ class CustomerFactory extends Factory
         })->state([
             'phone' => '+4930'.fake()->numerify('########'),
             'phone_country' => 'DE',
+            'currency' => Currency::EUR,
+            'gst_treatment' => GstTreatment::Overseas,
         ]);
     }
 
@@ -344,6 +366,8 @@ class CustomerFactory extends Factory
             ])),
             'phone' => '+9714'.fake()->numerify('#######'),
             'phone_country' => 'AE',
+            'currency' => Currency::AED,
+            'gst_treatment' => GstTreatment::Overseas,
         ])->afterCreating(function (Customer $customer) {
             $location = Location::factory()
                 ->forCustomer($customer->id)

@@ -16,7 +16,8 @@ class PaymentFactory extends Factory
         return [
             'invoice_id' => Invoice::factory(),
             'amount' => $this->faker->numberBetween(1000, 100000),
-            'currency' => 'INR',
+            // Payments are always denominated in their invoice's currency.
+            'currency' => fn (array $attributes) => Invoice::find($attributes['invoice_id'])?->currency ?? 'INR',
             'payment_date' => $this->faker->date(),
             'payment_method' => $this->faker->randomElement(['bank_transfer', 'cash', 'cheque', 'card']),
             'reference' => $this->faker->optional()->bothify('TXN-####-????'),
@@ -37,6 +38,18 @@ class PaymentFactory extends Factory
         return $this->state(fn () => [
             'invoice_id' => $invoice->id,
             'amount' => $invoice->total,
+            'currency' => $invoice->currency,
+        ]);
+    }
+
+    /**
+     * A part payment against the invoice — roughly a third of its total.
+     */
+    public function partialPayment(Invoice $invoice): static
+    {
+        return $this->state(fn () => [
+            'invoice_id' => $invoice->id,
+            'amount' => max(1, intdiv($invoice->total, 3)),
             'currency' => $invoice->currency,
         ]);
     }

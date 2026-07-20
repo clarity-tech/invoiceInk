@@ -21,9 +21,7 @@ class InvoiceFactory extends Factory
      */
     public function definition(): array
     {
-        $type = fake()->randomElement(['invoice', 'estimate']);
-        $prefix = $type === 'invoice' ? 'INV' : 'EST';
-        $number = $prefix.'-'.fake()->unique()->numberBetween(1000, 9999);
+        $number = 'INV-'.fake()->unique()->numberBetween(1000, 9999);
 
         $subtotal = fake()->numberBetween(50000, 500000); // $500 to $5,000 in cents
         $taxRate = fake()->randomElement([0, 5, 12, 18, 28]); // Common GST rates
@@ -31,7 +29,10 @@ class InvoiceFactory extends Factory
         $total = $subtotal + $tax;
 
         return [
-            'type' => $type,
+            // Documents default to invoices; use the estimate() state for the
+            // other type. Industry and currency states deliberately leave the
+            // type alone so they can be chained onto either.
+            'type' => 'invoice',
             'organization_id' => Organization::factory()->withLocation(),
             'customer_id' => Customer::factory()->withLocation(),
             'organization_location_id' => function (array $attributes) {
@@ -132,7 +133,42 @@ class InvoiceFactory extends Factory
             'status' => 'paid',
             'issued_at' => fake()->dateTimeBetween('-6 months', '-1 month'),
             'due_at' => fake()->dateTimeBetween('-1 month', 'now'),
+        ])->settled();
+    }
+
+    /**
+     * Create a partially paid invoice, with roughly a third of the total
+     * settled.
+     */
+    public function partiallyPaid(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'type' => 'invoice',
+            'status' => 'partially_paid',
+            'issued_at' => fake()->dateTimeBetween('-3 months', '-1 month'),
+            'due_at' => fake()->dateTimeBetween('-1 month', '+1 month'),
+        ])->afterMaking(fn (Invoice $invoice) => $invoice->amount_paid = intdiv($invoice->total, 3));
+    }
+
+    /**
+     * Create an accepted estimate.
+     */
+    public function accepted(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'type' => 'estimate',
+            'status' => 'accepted',
+            'issued_at' => fake()->dateTimeBetween('-1 month', '-1 week'),
         ]);
+    }
+
+    /**
+     * Mark the document's balance as fully settled. Applied after making so the
+     * amount tracks whatever total the preceding states settled on.
+     */
+    private function settled(): static
+    {
+        return $this->afterMaking(fn (Invoice $invoice) => $invoice->amount_paid = $invoice->total);
     }
 
     /**
@@ -225,7 +261,6 @@ class InvoiceFactory extends Factory
             $tax = intval($subtotal * 18 / 100);
 
             return [
-                'type' => 'invoice',
                 'subtotal' => $subtotal,
                 'tax' => $tax,
                 'total' => $subtotal + $tax,
@@ -246,7 +281,6 @@ class InvoiceFactory extends Factory
             $tax = intval($subtotal * 8.25 / 100); // US state sales tax
 
             return [
-                'type' => 'invoice',
                 'subtotal' => $subtotal,
                 'tax' => $tax,
                 'total' => $subtotal + $tax,
@@ -267,7 +301,6 @@ class InvoiceFactory extends Factory
             $tax = intval($subtotal * 0 / 100); // Many tech services are tax-exempt
 
             return [
-                'type' => 'invoice',
                 'subtotal' => $subtotal,
                 'tax' => $tax,
                 'total' => $subtotal + $tax,
@@ -288,7 +321,6 @@ class InvoiceFactory extends Factory
             $tax = intval($subtotal * 19 / 100); // German VAT
 
             return [
-                'type' => 'invoice',
                 'subtotal' => $subtotal,
                 'tax' => $tax,
                 'total' => $subtotal + $tax,
@@ -309,7 +341,6 @@ class InvoiceFactory extends Factory
             $tax = intval($subtotal * 18 / 100); // GST
 
             return [
-                'type' => 'invoice',
                 'subtotal' => $subtotal,
                 'tax' => $tax,
                 'total' => $subtotal + $tax,
@@ -441,7 +472,7 @@ class InvoiceFactory extends Factory
             'status' => 'paid',
             'issued_at' => fake()->dateTimeBetween('-2 months', '-1 month'),
             'due_at' => fake()->dateTimeBetween('-1 month', '-2 weeks'),
-        ]);
+        ])->settled();
     }
 
     /**
@@ -451,7 +482,7 @@ class InvoiceFactory extends Factory
     {
         return $this->state([
             'type' => 'estimate',
-            'status' => 'sent', // Would need new status 'approved' in enum
+            'status' => 'accepted',
             'issued_at' => fake()->dateTimeBetween('-1 month', '-1 week'),
             'due_at' => fake()->dateTimeBetween('now', '+2 weeks'),
             'notes' => 'Estimate approved by client. Ready for project initiation.',
