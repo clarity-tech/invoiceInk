@@ -281,51 +281,44 @@ jobs:
       # assigns once the service exists. On the very first deploy the worker is
       # created with a placeholder so its URL can be read back; afterwards the
       # existing URL is reused and both services render with the real value.
+      # Renders and deploys via deploy/cloudrun/render.sh rather than repeating
+      # its substitution here. That script is the single source of truth: it
+      # drops optional entries whose value is intentionally blank (Laravel
+      # distinguishes unset from empty, so AWS_URL="" would be used verbatim),
+      # stamps each render so an unchanged spec still produces a new revision,
+      # and refuses to emit a manifest containing an unsubstituted token.
       - name: Deploy services
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT }}
+          REGION: ${{ vars.GCP_REGION }}
+          TAG: ${{ github.sha }}
+          DB_HOST: ${{ vars.GCP_DB_HOST }}
+          DB_PORT: ${{ vars.GCP_DB_PORT }}
+          DB_NAME: ${{ vars.GCP_DB_NAME }}
+          DB_USER: ${{ vars.GCP_DB_USER }}
+          DB_SSL_CA: ${{ vars.GCP_DB_SSL_CA }}
+          AWS_KEY_ID: ${{ vars.GCP_AWS_KEY_ID }}
+          AWS_REGION: ${{ vars.GCP_AWS_REGION }}
+          AWS_BUCKET: ${{ vars.GCP_AWS_BUCKET }}
+          AWS_URL: ${{ vars.GCP_AWS_URL }}
+          MAIL_HOST: ${{ vars.GCP_MAIL_HOST }}
+          MAIL_PORT: ${{ vars.GCP_MAIL_PORT }}
+          MAIL_USER: ${{ vars.GCP_MAIL_USER }}
+          MAIL_FROM: ${{ vars.GCP_MAIL_FROM }}
+          # No deploy.env in CI; render.sh falls back to the environment.
+          DEPLOY_ENV_FILE: /dev/null
         run: |
           set -euo pipefail
 
-          # Tokens are __WRAPPED__ so they cannot match environment variable
-          # NAMES — a bare "PROJECT" would also rewrite CLOUD_TASKS_PROJECT.
-          # Keep this token set in sync with deploy/cloudrun/render.sh, which does
-          # the same substitution from a local env file for manual deploys.
-          render() {
-            sed -e "s|__PROJECT__|$PROJECT|g" \
-                -e "s|__REGION__|$REGION|g" \
-                -e "s|__TAG__|${{ github.sha }}|g" \
-                -e "s|__WORKER_URL__|$1|g" \
-                -e "s|__DB_HOST__|${{ vars.GCP_DB_HOST }}|g" \
-                -e "s|__DB_NAME__|${{ vars.GCP_DB_NAME }}|g" \
-                -e "s|__DB_USER__|${{ vars.GCP_DB_USER }}|g" \
-                -e "s|__DB_PORT__|${{ vars.GCP_DB_PORT }}|g" \
-                -e "s|__DB_SSL_CA__|${{ vars.GCP_DB_SSL_CA }}|g" \
-                -e "s|__AWS_KEY_ID__|${{ vars.GCP_AWS_KEY_ID }}|g" \
-                -e "s|__AWS_REGION__|${{ vars.GCP_AWS_REGION }}|g" \
-                -e "s|__AWS_BUCKET__|${{ vars.GCP_AWS_BUCKET }}|g" \
-                -e "s|__AWS_URL__|${{ vars.GCP_AWS_URL }}|g" \
-                -e "s|__MAIL_HOST__|${{ vars.GCP_MAIL_HOST }}|g" \
-                -e "s|__MAIL_PORT__|${{ vars.GCP_MAIL_PORT }}|g" \
-                -e "s|__MAIL_USER__|${{ vars.GCP_MAIL_USER }}|g" \
-                -e "s|__MAIL_FROM__|${{ vars.GCP_MAIL_FROM }}|g" \
-                "deploy/cloudrun/$2.yaml"
-          }
-
-          # Fail loudly rather than deploying a manifest with literal tokens.
-          assert_rendered() {
-            if grep -q '__[A-Z_]*__' "$1"; then
-              echo "Unsubstituted placeholders remain in $1:" >&2
-              grep -o '__[A-Z_]*__' "$1" | sort -u >&2
-              exit 1
-            fi
-          }
-
+          # CLOUD_TASKS_HANDLER needs the worker's URL, which Cloud Run only
+          # assigns once the service exists. Bootstrap it on a first deploy.
           WORKER_URL="$(gcloud run services describe invoicing-worker \
             --region="$REGION" --format='value(status.url)' 2>/dev/null || true)"
 
           if [ -z "$WORKER_URL" ]; then
             echo "Worker not found — bootstrapping to obtain its URL."
-            render "https://placeholder.invalid" worker > /tmp/worker-bootstrap.yaml
-            assert_rendered /tmp/worker-bootstrap.yaml
+            WORKER_URL=https://placeholder.invalid \
+              ./deploy/cloudrun/render.sh worker > /tmp/worker-bootstrap.yaml
             gcloud run services replace /tmp/worker-bootstrap.yaml --region="$REGION"
             WORKER_URL="$(gcloud run services describe invoicing-worker \
               --region="$REGION" --format='value(status.url)')"
@@ -333,11 +326,41 @@ jobs:
 
           echo "Worker URL: $WORKER_URL"
 
+          # Worker first: the handler must exist before the public service can
+          # enqueue to it.
           for SVC in worker web; do
-            render "$WORKER_URL" "$SVC" > "/tmp/$SVC.yaml"
-            assert_rendered "/tmp/$SVC.yaml"
+            WORKER_URL="$WORKER_URL" ./deploy/cloudrun/render.sh "$SVC" > "/tmp/$SVC.yaml"
             gcloud run services replace "/tmp/$SVC.yaml" --region="$REGION"
           done
+
+      # Jobs run the same application and need the same configuration. Derived
+      # from the rendered worker manifest so the two cannot drift.
+      - name: Sync job configuration
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT }}
+          REGION: ${{ vars.GCP_REGION }}
+          TAG: ${{ github.sha }}
+          DB_HOST: ${{ vars.GCP_DB_HOST }}
+          DB_PORT: ${{ vars.GCP_DB_PORT }}
+          DB_NAME: ${{ vars.GCP_DB_NAME }}
+          DB_USER: ${{ vars.GCP_DB_USER }}
+          DB_SSL_CA: ${{ vars.GCP_DB_SSL_CA }}
+          AWS_KEY_ID: ${{ vars.GCP_AWS_KEY_ID }}
+          AWS_REGION: ${{ vars.GCP_AWS_REGION }}
+          AWS_BUCKET: ${{ vars.GCP_AWS_BUCKET }}
+          AWS_URL: ${{ vars.GCP_AWS_URL }}
+          MAIL_HOST: ${{ vars.GCP_MAIL_HOST }}
+          MAIL_PORT: ${{ vars.GCP_MAIL_PORT }}
+          MAIL_USER: ${{ vars.GCP_MAIL_USER }}
+          MAIL_FROM: ${{ vars.GCP_MAIL_FROM }}
+          DEPLOY_ENV_FILE: /dev/null
+        run: |
+          set -euo pipefail
+          for J in invoicing-prune invoicing-exchange-rates; do
+            gcloud run jobs update "$J" --region="$REGION" \
+              --image=$REGION-docker.pkg.dev/$PROJECT/docker/invoicing:${{ github.sha }} --quiet
+          done
+          ./deploy/cloudrun/update-jobs.sh
 
   notify:
     needs: [build-and-push]
