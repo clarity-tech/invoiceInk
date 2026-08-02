@@ -57,7 +57,7 @@ RUN mkdir -p storage/framework/views
 
 # Skip the Wayfinder Vite plugin (no PHP here; files were pre-generated above)
 ENV WAYFINDER_SKIP_GENERATE=1
-ARG VITE_APP_NAME="Clarity InvoiceInk"
+ARG VITE_APP_NAME="InvoiceInk"
 RUN bun run build
 
 # ========================================
@@ -82,28 +82,60 @@ COPY --chown=www-data:www-data docker/production/php.ini /usr/local/etc/php/conf
 # Copy application code, vendor deps, and built assets
 COPY --from=frontend --chown=www-data:www-data /build /var/www/html
 
-# Rebuild autoload classmap with full app code, then clean up in a single layer
+# Rebuild autoload classmap with full app code, bake the env-independent caches,
+# then clean up in a single layer.
+#
+# view:cache compiles Blade templates and event:cache scans listener classes —
+# neither depends on the environment, so baking them removes that work from
+# every cold start.
+#
+# route:cache is deliberately NOT baked. Route registration can be conditional
+# on runtime config: the Cloud Tasks package only registers POST /handle-task
+# when cloud-tasks.disable_task_handler is false. Baking the cache would freeze
+# in the build-time answer, and Laravel loads the compiled routes instead of
+# re-evaluating that condition — putting the task handler on the public service
+# regardless of its environment. It runs at container start instead.
+#
+# config:cache is likewise left to runtime; it would freeze build-time env.
+ARG BUILD_APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
 RUN composer dump-autoload --optimize --classmap-authoritative --no-dev \
+    && APP_ENV=production APP_DEBUG=false APP_KEY=${BUILD_APP_KEY} \
+       php artisan view:cache \
+    && APP_ENV=production APP_DEBUG=false APP_KEY=${BUILD_APP_KEY} \
+       php artisan event:cache \
     && rm -rf docker resources/css resources/js \
         vite.config.ts tsconfig.json eslint.config.js .prettierrc \
         package.json bun.lock
 
-# ServerSideUp Laravel automations (runs on container start):
-# - Waits for DB connection
-# - Runs migrations
-# - Caches config, routes, views, events
-# - Creates storage:link
+# ServerSideUp Laravel automations (runs on container start).
 # See: https://serversideup.net/open-source/docker-php/docs/framework-guides/laravel/automations
+#
+# Migrations are disabled by default because on Cloud Run every scale-from-zero
+# would re-run them, and a traffic burst starts several instances at once. They
+# run instead as a dedicated Cloud Run Job before any new revision serves traffic.
+# Single-container deployments (the VPS) can safely set
+# AUTORUN_LARAVEL_MIGRATION=true back in their own env file.
+#
+# view/event caches are baked into the image above and switched off here.
+# config:cache and route:cache must run at container start: both depend on the
+# runtime environment, and route registration in particular is conditional on it
+# (see the note above the build-time caches).
 ENV AUTORUN_ENABLED=true \
-    AUTORUN_LARAVEL_MIGRATION=true \
+    AUTORUN_LARAVEL_MIGRATION=false \
     AUTORUN_LARAVEL_MIGRATION_ISOLATION=true \
-    AUTORUN_LARAVEL_OPTIMIZE=true \
-    AUTORUN_LARAVEL_STORAGE_LINK=true \
+    AUTORUN_LARAVEL_OPTIMIZE=false \
+    AUTORUN_LARAVEL_CONFIG_CACHE=true \
+    AUTORUN_LARAVEL_ROUTE_CACHE=true \
+    AUTORUN_LARAVEL_VIEW_CACHE=false \
+    AUTORUN_LARAVEL_EVENT_CACHE=false \
+    AUTORUN_LARAVEL_STORAGE_LINK=false \
     PHP_OPCACHE_ENABLE=1 \
     SSL_MODE=off \
     APP_ENV=production \
     APP_DEBUG=false \
-    LOG_CHANNEL=stderr
+    LOG_CHANNEL=stderr \
+    OCTANE_WORKERS=4 \
+    OCTANE_MAX_REQUESTS=500
 
 EXPOSE 8080
 
@@ -111,5 +143,7 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD ["healthcheck-octane"]
 
-# Start Octane with FrankenPHP worker mode (port 8080 for non-root)
-CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=8080", "--workers=auto", "--max-requests=500"]
+# Shell form so the platform-injected $PORT is honoured (Cloud Run's container
+# contract). Workers are explicit rather than "auto" so the count does not drift
+# with the CPU limit of whatever host this runs on.
+CMD ["sh", "-c", "php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=${PORT:-8080} --workers=${OCTANE_WORKERS:-4} --max-requests=${OCTANE_MAX_REQUESTS:-500}"]
