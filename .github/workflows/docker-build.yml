@@ -25,6 +25,11 @@ jobs:
       packages: write
       security-events: write
 
+    outputs:
+      # Consumed by deploy-production so it promotes the exact image built here
+      # rather than re-resolving a mutable tag.
+      digest: ${{ steps.build.outputs.digest }}
+
     strategy:
       matrix:
         target: [frankenphp]
@@ -93,7 +98,7 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             BUILDKIT_INLINE_CACHE=1
-            VITE_APP_NAME=Clarity InvoiceInk
+            VITE_APP_NAME=InvoiceInk
 
       - name: Run Trivy vulnerability scanner
         continue-on-error: true
@@ -208,18 +213,131 @@ jobs:
           # Add your staging deployment logic here
           # Example: kubectl, docker-compose, or other deployment tools
 
+  # Deploys to Cloud Run. Requires these GitHub repository variables:
+  #   GCP_PROJECT       e.g. invoiceink-prod
+  #   GCP_REGION        e.g. asia-south1
+  #   GCP_WIF_PROVIDER  projects/<number>/locations/global/workloadIdentityPools/github/providers/github
+  #   GCP_DEPLOY_SA     github-deployer@<project>.iam.gserviceaccount.com
+  #   GCP_DB_HOST       external MySQL hostname
+  #   GCP_DB_NAME       database name
+  #   GCP_DB_USER       database username
+  #   GCP_DB_PORT       database port (DigitalOcean managed MySQL uses 25060)
+  #   GCP_DB_SSL_CA     optional CA bundle path; leave unset to skip cert verification
+  #   GCP_AWS_KEY_ID    S3 access key id
+  #   GCP_AWS_REGION    S3 region
+  #   GCP_AWS_BUCKET    S3 bucket
+  #   GCP_AWS_URL       public base URL for the bucket
+  #   GCP_MAIL_HOST     SMTP host
+  #   GCP_MAIL_PORT     SMTP port
+  #   GCP_MAIL_USER     SMTP username
+  #   GCP_MAIL_FROM     From address
+  # (APP_KEY, DB_PASSWORD, MAIL_PASSWORD and AWS_SECRET_ACCESS_KEY come from
+  #  Secret Manager, referenced directly by the service YAML.)
+  # See docs/cloud_run_deployment_plan.md §14
   deploy-production:
     needs: [build-and-push]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     environment: production
+    permissions:
+      contents: read
+      id-token: write # required for Workload Identity Federation
+
+    env:
+      PROJECT: ${{ vars.GCP_PROJECT }}
+      REGION: ${{ vars.GCP_REGION }}
 
     steps:
-      - name: Deploy to production
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Cloud Run can pull public GHCR images, but same-region Artifact Registry
+      # pulls are faster on cold start and remove an external dependency.
+      - name: Mirror image into Artifact Registry
         run: |
-          echo "Deploying to production environment..."
-          # Add your production deployment logic here
-          # Example: kubectl, docker-compose, or other deployment tools
+          gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
+          SRC=ghcr.io/${{ github.repository }}@${{ needs.build-and-push.outputs.digest }}
+          DST=$REGION-docker.pkg.dev/$PROJECT/docker/invoicing:${{ github.sha }}
+          docker buildx imagetools create --tag "$DST" "$SRC"
+
+      # Runs once to completion before any new revision serves traffic. This is
+      # why AUTORUN_LARAVEL_MIGRATION is off in the image.
+      - name: Run migrations
+        run: |
+          gcloud run jobs update invoicing-migrate --region=$REGION \
+            --image=$REGION-docker.pkg.dev/$PROJECT/docker/invoicing:${{ github.sha }}
+          gcloud run jobs execute invoicing-migrate --region=$REGION --wait
+
+      # CLOUD_TASKS_HANDLER must be the worker's URL, which Cloud Run only
+      # assigns once the service exists. On the very first deploy the worker is
+      # created with a placeholder so its URL can be read back; afterwards the
+      # existing URL is reused and both services render with the real value.
+      - name: Deploy services
+        run: |
+          set -euo pipefail
+
+          # Tokens are __WRAPPED__ so they cannot match environment variable
+          # NAMES — a bare "PROJECT" would also rewrite CLOUD_TASKS_PROJECT.
+          # Keep this token set in sync with deploy/cloudrun/render.sh, which does
+          # the same substitution from a local env file for manual deploys.
+          render() {
+            sed -e "s|__PROJECT__|$PROJECT|g" \
+                -e "s|__REGION__|$REGION|g" \
+                -e "s|__TAG__|${{ github.sha }}|g" \
+                -e "s|__WORKER_URL__|$1|g" \
+                -e "s|__DB_HOST__|${{ vars.GCP_DB_HOST }}|g" \
+                -e "s|__DB_NAME__|${{ vars.GCP_DB_NAME }}|g" \
+                -e "s|__DB_USER__|${{ vars.GCP_DB_USER }}|g" \
+                -e "s|__DB_PORT__|${{ vars.GCP_DB_PORT }}|g" \
+                -e "s|__DB_SSL_CA__|${{ vars.GCP_DB_SSL_CA }}|g" \
+                -e "s|__AWS_KEY_ID__|${{ vars.GCP_AWS_KEY_ID }}|g" \
+                -e "s|__AWS_REGION__|${{ vars.GCP_AWS_REGION }}|g" \
+                -e "s|__AWS_BUCKET__|${{ vars.GCP_AWS_BUCKET }}|g" \
+                -e "s|__AWS_URL__|${{ vars.GCP_AWS_URL }}|g" \
+                -e "s|__MAIL_HOST__|${{ vars.GCP_MAIL_HOST }}|g" \
+                -e "s|__MAIL_PORT__|${{ vars.GCP_MAIL_PORT }}|g" \
+                -e "s|__MAIL_USER__|${{ vars.GCP_MAIL_USER }}|g" \
+                -e "s|__MAIL_FROM__|${{ vars.GCP_MAIL_FROM }}|g" \
+                "deploy/cloudrun/$2.yaml"
+          }
+
+          # Fail loudly rather than deploying a manifest with literal tokens.
+          assert_rendered() {
+            if grep -q '__[A-Z_]*__' "$1"; then
+              echo "Unsubstituted placeholders remain in $1:" >&2
+              grep -o '__[A-Z_]*__' "$1" | sort -u >&2
+              exit 1
+            fi
+          }
+
+          WORKER_URL="$(gcloud run services describe invoicing-worker \
+            --region="$REGION" --format='value(status.url)' 2>/dev/null || true)"
+
+          if [ -z "$WORKER_URL" ]; then
+            echo "Worker not found — bootstrapping to obtain its URL."
+            render "https://placeholder.invalid" worker > /tmp/worker-bootstrap.yaml
+            assert_rendered /tmp/worker-bootstrap.yaml
+            gcloud run services replace /tmp/worker-bootstrap.yaml --region="$REGION"
+            WORKER_URL="$(gcloud run services describe invoicing-worker \
+              --region="$REGION" --format='value(status.url)')"
+          fi
+
+          echo "Worker URL: $WORKER_URL"
+
+          for SVC in worker web; do
+            render "$WORKER_URL" "$SVC" > "/tmp/$SVC.yaml"
+            assert_rendered "/tmp/$SVC.yaml"
+            gcloud run services replace "/tmp/$SVC.yaml" --region="$REGION"
+          done
 
   notify:
     needs: [build-and-push]
