@@ -39,3 +39,10 @@ frankenphp-worker.php
 presentation/
 /storage/media-library
 /.claude/skills
+
+# Cloud Run deploy values (hostnames, key ids, SMTP user) — never commit
+deploy/cloudrun/deploy.env
+deploy/cloudrun/app.env
+
+# wrangler local build cache
+deploy/cloudflare/.wrangler/
