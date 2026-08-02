@@ -73,6 +73,34 @@ return [
             'after_commit' => false,
         ],
 
+        /*
+         * Google Cloud Tasks push queue.
+         *
+         * There is no worker process: Cloud Tasks POSTs each job to the handler
+         * URL, so the queue runs on request-billed compute that scales to zero.
+         *
+         * The handler MUST point at the private worker service, not the public
+         * app URL — the package falls back to the app URL when 'handler' is
+         * empty, and the task route is disabled on the public service.
+         *
+         * The package does not verify the OIDC token it receives (that was
+         * removed in v4); Cloud Run IAM is the authentication boundary.
+         *
+         * See docs/cloud_run_deployment_plan.md §5.
+         */
+        'cloudtasks' => [
+            'driver' => 'cloudtasks',
+            'project' => env('CLOUD_TASKS_PROJECT', ''),
+            'location' => env('CLOUD_TASKS_LOCATION', ''),
+            'queue' => env('CLOUD_TASKS_QUEUE', 'default'),
+            'handler' => env('CLOUD_TASKS_HANDLER', ''),
+            'service_account_email' => env('CLOUD_TASKS_SERVICE_EMAIL', ''),
+            // Must exceed the worst-case job: two Gotenberg renders plus SMTP.
+            'dispatch_deadline' => (int) env('CLOUD_TASKS_DISPATCH_DEADLINE', 600),
+            'backoff' => 0,
+            'after_commit' => false,
+        ],
+
         'deferred' => [
             'driver' => 'deferred',
         ],
