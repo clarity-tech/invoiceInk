@@ -125,6 +125,6 @@ test('default series creation uses financial year pattern when organization has 
     $service = new InvoiceNumberingService;
     $series = $service->createDefaultSeries($organization);
 
-    expect($series->format_pattern)->toBe('{PREFIX}-{FY}-{SEQUENCE:4}');
+    expect($series->format_pattern)->toBe('{PREFIX}-{FY:2}{SEQUENCE:3}');
     expect($series->reset_frequency)->toBe(ResetFrequency::FINANCIAL_YEAR);
 });

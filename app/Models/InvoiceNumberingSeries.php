@@ -28,7 +28,7 @@ class InvoiceNumberingSeries extends Model
 
     protected $attributes = [
         'prefix' => 'INV',
-        'format_pattern' => '{PREFIX}-{YEAR}-{MONTH}-{SEQUENCE:4}',
+        'format_pattern' => '{PREFIX}-{YEAR:2}{SEQUENCE:3}',
         'current_number' => 0,
         'reset_frequency' => ResetFrequency::YEARLY->value,
         'is_active' => true,

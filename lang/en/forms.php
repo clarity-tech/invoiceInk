@@ -219,7 +219,7 @@ return [
         'phone_example' => '+1 (555) 123-4567',
         'series_name_hint' => 'e.g., Default Invoice Series',
         'prefix_hint' => 'e.g., INV, BILL, DXB',
-        'format_pattern_default' => '{PREFIX}{YEAR}{MONTH}{SEQUENCE:4}',
+        'format_pattern_default' => '{PREFIX}-{YEAR:2}{SEQUENCE:3}',
     ],
 
     'validation' => [
@@ -279,7 +279,7 @@ return [
         'no_location_set' => 'No location set',
         'invoice_numbering_recommendation' => 'Invoice Numbering Recommendation',
         'common_rates' => 'Common rates: :rates',
-        'available_tokens' => 'Available tokens: {PREFIX}, {YEAR}, {YEAR:2}, {MONTH}, {MONTH:3}, {DAY}, {SEQUENCE}, {SEQUENCE:4}, {FY}',
+        'available_tokens' => 'Available tokens: {PREFIX}, {YEAR}, {YEAR:2}, {MONTH}, {MONTH:3}, {DAY}, {SEQUENCE}, {SEQUENCE:4}, {FY}, {FY:2}, {FY_START}, {FY_END}',
         'next_invoice_preview' => 'Next Invoice Number Preview:',
         'setup_subtitle' => "Let's get your organization ready for invoicing",
         'company_info_subtitle' => 'Tell us about your business',

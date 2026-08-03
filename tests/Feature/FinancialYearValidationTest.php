@@ -6,6 +6,7 @@ use App\Enums\ResetFrequency;
 use App\Models\InvoiceNumberingSeries;
 use App\Models\Organization;
 use App\Services\InvoiceNumberingService;
+use Carbon\Carbon;
 
 test('throws exception when FY reset frequency used without financial year setup', function () {
     $organization = Organization::factory()->create([
@@ -131,13 +132,74 @@ test('default series creation uses FY format only when organization has complete
     $service = new InvoiceNumberingService;
     $seriesPartial = $service->createDefaultSeries($orgPartial);
 
-    expect($seriesPartial->format_pattern)->toBe('{PREFIX}-{YEAR}-{MONTH}-{SEQUENCE:4}');
+    expect($seriesPartial->format_pattern)->toBe('{PREFIX}-{YEAR:2}{SEQUENCE:3}');
     expect($seriesPartial->reset_frequency)->toBe(ResetFrequency::YEARLY);
 
     // Organization with complete setup
     $orgComplete = Organization::factory()->withFinancialYear(Country::IN)->create();
     $seriesComplete = $service->createDefaultSeries($orgComplete);
 
-    expect($seriesComplete->format_pattern)->toBe('{PREFIX}-{FY}-{SEQUENCE:4}');
+    expect($seriesComplete->format_pattern)->toBe('{PREFIX}-{FY:2}{SEQUENCE:3}');
     expect($seriesComplete->reset_frequency)->toBe(ResetFrequency::FINANCIAL_YEAR);
+});
+
+test('default series for an Indian organization numbers invoices as INV-26001', function () {
+    $organization = Organization::factory()->withFinancialYear(Country::IN)->create();
+
+    $service = new InvoiceNumberingService;
+    $series = $service->createDefaultSeries($organization);
+
+    // April-March financial year: everything from 1 April 2026 belongs to FY 2026-27
+    // and renders as "26", while January 2027 is still "26" rather than "27".
+    $expectedFyStart = now()->month >= 4 ? now()->year : now()->year - 1;
+    $expectedShortFy = substr((string) $expectedFyStart, -2);
+
+    expect($service->previewNextNumber($series))
+        ->toBe("INV-{$expectedShortFy}001");
+});
+
+test('{FY:2} renders the financial year start, not the calendar year', function () {
+    // 15 February 2027 falls in FY 2026-27 under April-March, so the token must
+    // render "26" even though the calendar year is 2027.
+    $this->travelTo(Carbon::create(2027, 2, 15));
+
+    $organization = Organization::factory()->withFinancialYear(Country::IN)->create();
+
+    $series = InvoiceNumberingSeries::create([
+        'organization_id' => $organization->id,
+        'name' => 'Short FY Series',
+        'prefix' => 'INV',
+        'format_pattern' => '{PREFIX}-{FY:2}{SEQUENCE:3}',
+        'current_number' => 0,
+        'reset_frequency' => ResetFrequency::FINANCIAL_YEAR,
+        'is_active' => true,
+        'is_default' => true,
+    ]);
+
+    $service = new InvoiceNumberingService;
+
+    expect($service->previewNextNumber($series))->toBe('INV-26001');
+});
+
+test('{FY:2} is rejected when the organization has no financial year setup', function () {
+    $organization = Organization::factory()->create([
+        'financial_year_type' => null,
+        'country_code' => null,
+    ]);
+
+    InvoiceNumberingSeries::create([
+        'organization_id' => $organization->id,
+        'name' => 'Short FY Series',
+        'prefix' => 'INV',
+        'format_pattern' => '{PREFIX}-{FY:2}{SEQUENCE:3}',
+        'current_number' => 0,
+        'reset_frequency' => ResetFrequency::YEARLY,
+        'is_active' => true,
+        'is_default' => true,
+    ]);
+
+    $service = new InvoiceNumberingService;
+
+    expect(fn () => $service->generateInvoiceNumber($organization))
+        ->toThrow(InvalidArgumentException::class, 'Organization must have financial year configuration to use FY tokens');
 });

@@ -301,7 +301,7 @@ test('createDefaultSeries uses FY pattern when org has financial year config', f
 
     $series = $this->service->createDefaultSeries($organization);
 
-    expect($series->format_pattern)->toBe('{PREFIX}-{FY}-{SEQUENCE:4}');
+    expect($series->format_pattern)->toBe('{PREFIX}-{FY:2}{SEQUENCE:3}');
     expect($series->reset_frequency)->toBe(ResetFrequency::FINANCIAL_YEAR);
 });
 
@@ -313,7 +313,7 @@ test('createDefaultSeries uses standard pattern when org has no FY config', func
 
     $series = $this->service->createDefaultSeries($organization);
 
-    expect($series->format_pattern)->toBe('{PREFIX}-{YEAR}-{MONTH}-{SEQUENCE:4}');
+    expect($series->format_pattern)->toBe('{PREFIX}-{YEAR:2}{SEQUENCE:3}');
     expect($series->reset_frequency)->toBe(ResetFrequency::YEARLY);
 });
 

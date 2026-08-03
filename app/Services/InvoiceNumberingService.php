@@ -84,12 +84,22 @@ class InvoiceNumberingService implements InvoiceNumberingServiceInterface
             return $existingDefault;
         }
 
-        // Choose format pattern and reset frequency based on organization's financial year setup
-        $formatPattern = '{PREFIX}-{YEAR}-{MONTH}-{SEQUENCE:4}';
+        // Choose format pattern and reset frequency based on organization's financial year setup.
+        //
+        // Both branches produce the same short shape (INV-26001): a two-digit year
+        // followed by a three-digit sequence. They differ only in which year that
+        // is. An organization without financial year setup cannot use {FY:2} --
+        // generateInvoiceNumber() rejects any FY token in that case -- so it falls
+        // back to the calendar year, which rolls in January rather than April.
+        //
+        // Note the sequence pads to three digits, so the 1000th document in a
+        // period renders as INV-261000 rather than overflowing or wrapping.
+        // Numbers stay unique; only the visual width changes.
+        $formatPattern = '{PREFIX}-{YEAR:2}{SEQUENCE:3}';
         $resetFrequency = ResetFrequency::YEARLY;
 
         if ($organization->financial_year_type && $organization->country_code) {
-            $formatPattern = '{PREFIX}-{FY}-{SEQUENCE:4}';
+            $formatPattern = '{PREFIX}-{FY:2}{SEQUENCE:3}';
             $resetFrequency = ResetFrequency::FINANCIAL_YEAR;
         }
 
@@ -250,6 +260,9 @@ class InvoiceNumberingService implements InvoiceNumberingServiceInterface
 
             $financialYearReplacements = [
                 '{FY}' => $currentFY,                             // e.g., "2024-25" - Full FY format
+                // Two-digit financial year, matching the {YEAR:2} convention. Takes
+                // the year the FY *starts* in, so FY 2026-27 renders as "26".
+                '{FY:2}' => $fyStartDate->format('y'),          // e.g., "24"
                 '{FY_START}' => $fyStartDate->format('Y'),      // e.g., "2024"
                 '{FY_END}' => $fyEndDate->format('Y'),          // e.g., "2025"
                 '{FY_FULL}' => $currentFY,                      // e.g., "2024-25" - Full FY format

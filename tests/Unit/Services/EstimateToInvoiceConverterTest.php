@@ -255,8 +255,8 @@ test('converter generates sequential invoice numbers for same month', function (
     $invoice1 = $converter->convert($estimate1);
     $invoice2 = $converter->convert($estimate2);
 
-    expect($invoice1->invoice_number)->toMatch('/INV-\d{4}-\d{2}-\d{4}/');
-    expect($invoice2->invoice_number)->toMatch('/INV-\d{4}-\d{2}-\d{4}/');
+    expect($invoice1->invoice_number)->toMatch('/^INV-\d{2}\d{3,}$/');
+    expect($invoice2->invoice_number)->toMatch('/^INV-\d{2}\d{3,}$/');
     expect($invoice1->invoice_number)->not->toBe($invoice2->invoice_number);
 
     $parts1 = explode('-', $invoice1->invoice_number);
@@ -284,9 +284,9 @@ test('converter generates first invoice number when none exist', function () {
 
     $invoice = $converter->convert($estimate);
 
-    $currentYear = now()->year;
-    $currentMonth = now()->format('m');
-    $expectedPattern = "INV-{$currentYear}-{$currentMonth}-0001";
+    // No financial year configuration, so the default series falls back to the
+    // calendar year rather than {FY:2}.
+    $expectedPattern = 'INV-'.now()->format('y').'001';
 
     expect($invoice->invoice_number)->toBe($expectedPattern);
 });
