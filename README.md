@@ -115,13 +115,15 @@ See `CLAUDE.md` for the full command reference (testing, formatting, database, f
 | **Styling**    | Tailwind CSS v4, lucide-vue-next icons                        |
 | **Routing**    | Laravel Wayfinder (type-safe frontend route generation)       |
 | **Database**   | MySQL 8.4                                                     |
-| **Testing**    | Pest 4, Pest Browser (Playwright), 1,163+ tests              |
-| **PDF**        | Gotenberg (HTML-to-PDF via Docker sidecar)                    |
-| **Storage**    | RustFS (local S3-compatible), S3/Spaces (production)          |
-| **Cache/Queue**| Valkey (Redis-compatible)                                     |
+| **Testing**    | Pest 4, Pest Browser (Playwright), 1,280+ tests               |
+| **PDF**        | Gotenberg (sidecar container in both prod services)           |
+| **Storage**    | RustFS (local S3-compatible), AWS S3 (production)             |
+| **Cache**      | Valkey (local), `database` driver (production)                |
+| **Queue**      | Valkey (local), Google Cloud Tasks push queue (production)    |
 | **Auth**       | Laravel Fortify (login, register, 2FA, email verification)    |
-| **Email**      | Mailpit (development)                                         |
+| **Email**      | Mailpit (development), SMTP (production)                      |
 | **Container**  | Laravel Sail (dev), ServerSideUp FrankenPHP + Octane (prod)   |
+| **Hosting**    | Google Cloud Run + Cloudflare Worker (production)             |
 
 ## Project Structure
 
@@ -152,12 +154,52 @@ docker/
 
 ## Production Deployment
 
+Production runs on **Google Cloud Run** (project `invoiceink`, region
+`asia-south1`), fronted by a Cloudflare Worker at
+<https://invoiceink.claritytech.io>. Nothing runs while the app is idle.
+
+Two services are deployed from the same image:
+
+| Service | Ingress | Purpose |
+|---|---|---|
+| `invoicing-web` | public | the application |
+| `invoicing-worker` | IAM only | queue handler, invoked by Cloud Tasks |
+
+Both carry a Gotenberg sidecar, because PDFs are rendered on both paths — the
+public `/invoices/{ulid}/pdf` route and, via the queue, `DocumentMailer`.
+
+Deployment is automatic: pushing to `main` builds the image, promotes it to
+Artifact Registry, runs migrations as a Cloud Run Job, then deploys both
+services. See `.github/workflows/docker-build.yml`.
+
+### Deploying by hand
+
 ```bash
-# FrankenPHP + Laravel Octane (Recommended)
-docker-compose -f docker/production/docker-compose.prod.yml up -d
+cp deploy/cloudrun/deploy.env.example deploy/cloudrun/deploy.env  # gitignored; fill it in
+./deploy/cloudrun/render.sh worker > /tmp/worker.yaml
+gcloud run services replace /tmp/worker.yaml --region=asia-south1
+./deploy/cloudrun/update-jobs.sh          # keep the jobs' env in step with the services
 ```
 
-See [docker/production/README.md](docker/production/README.md) for the complete deployment guide.
+### Running artisan against production
+
+There is no shell to attach to. Commands run as a Cloud Run Job execution:
+
+```bash
+./deploy/cloudrun/artisan.sh migrate:status
+./deploy/cloudrun/artisan.sh --logs db:seed --class=ProductionUserSeeder --force
+```
+
+Two traps worth knowing: jobs have **no Gotenberg sidecar**, so nothing that
+renders a PDF will work there; and runs are non-interactive, so any `confirm()`
+takes its default — which is why `ProductionSeeder` reports success while
+seeding nothing. Call the sub-seeders directly instead.
+
+Full architecture, decisions and rejected alternatives:
+[docs/cloud_run_deployment_plan.md](docs/cloud_run_deployment_plan.md).
+
+The single-VPS Docker Compose setup it replaced is still described in
+[docker/production/README.md](docker/production/README.md).
 
 ## License
 
