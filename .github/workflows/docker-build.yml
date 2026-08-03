@@ -82,6 +82,11 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=raw,value=latest,enable={{is_default_branch}}
+            # Immutable, per-commit tag. `main` and `latest` both move, so this
+            # is what release.yml retags from when cutting a version -- it
+            # guarantees the released image is byte-identical to the one that
+            # was built and tested for that commit, rather than a rebuild.
+            type=sha,format=long
 
       - name: Build and push Docker image
         id: build

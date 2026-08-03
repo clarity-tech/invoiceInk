@@ -1,0 +1,154 @@
+# Semantic versioning driven by conventional commits.
+#
+# release-please watches main and maintains a standing "release PR" that bumps
+# version.txt and writes CHANGELOG.md from the commits since the last release.
+# Merging that PR creates the git tag and the GitHub release. Nothing is
+# versioned until you choose to merge it, so main stays continuously deployable
+# while releases remain a deliberate act.
+#
+# Deployment is unchanged: docker-build.yml still deploys every push to main.
+# A release does not deploy -- it labels an image that is already live. The
+# retag step exists so rollbacks can name a version rather than a 40-character
+# SHA:
+#
+#   gcloud run services update invoicing-web --image .../invoicing:v1.2.0
+#
+# Images are retagged, never rebuilt, so a released version is byte-identical to
+# the artifact that was built and tested for that commit.
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+  # Lets release-please be re-run after fixing something outside the repository
+  # -- the first run failed on the "Allow GitHub Actions to create and approve
+  # pull requests" setting -- without needing an empty commit to retrigger it.
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create tags and releases
+      pull-requests: write # maintain the release PR
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+      major: ${{ steps.release.outputs.major }}
+      minor: ${{ steps.release.outputs.minor }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # Adds version tags to the image already published for this commit. Runs only
+  # when a release was actually cut.
+  tag-images:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # push tags to GHCR
+      id-token: write # Workload Identity Federation for Artifact Registry
+
+    env:
+      VERSION: ${{ needs.release-please.outputs.version }}
+      MAJOR: ${{ needs.release-please.outputs.major }}
+      MINOR: ${{ needs.release-please.outputs.minor }}
+      PROJECT: ${{ vars.GCP_PROJECT }}
+      REGION: ${{ vars.GCP_REGION }}
+
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      # release-please tags the same commit that docker-build.yml is building
+      # from, and the two workflows run concurrently. Wait for the image rather
+      # than racing it.
+      - name: Wait for this commit's image
+        run: |
+          set -euo pipefail
+          SRC=ghcr.io/${{ github.repository }}:sha-${{ github.sha }}
+          for i in $(seq 1 40); do
+            if docker buildx imagetools inspect "$SRC" >/dev/null 2>&1; then
+              echo "Found $SRC after $((i*30))s"
+              exit 0
+            fi
+            echo "Waiting for $SRC ... ($i/40)"
+            sleep 30
+          done
+          echo "::error::Image $SRC never appeared; not tagging a release that has no artifact." >&2
+          exit 1
+
+      - name: Tag GHCR image with the version
+        run: |
+          set -euo pipefail
+          SRC=ghcr.io/${{ github.repository }}:sha-${{ github.sha }}
+          docker buildx imagetools create \
+            --tag "ghcr.io/${{ github.repository }}:v${VERSION}" \
+            --tag "ghcr.io/${{ github.repository }}:${MAJOR}.${MINOR}" \
+            --tag "ghcr.io/${{ github.repository }}:${MAJOR}" \
+            "$SRC"
+
+      # Artifact Registry is tagged by commit SHA at deploy time. Add the
+      # version alongside it, pointing at the identical digest.
+      - name: Tag Artifact Registry image with the version
+        run: |
+          set -euo pipefail
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          AR="$REGION-docker.pkg.dev/$PROJECT/docker/invoicing"
+          for i in $(seq 1 40); do
+            if docker buildx imagetools inspect "$AR:${{ github.sha }}" >/dev/null 2>&1; then
+              docker buildx imagetools create \
+                --tag "$AR:v${VERSION}" \
+                --tag "$AR:${MAJOR}.${MINOR}" \
+                "$AR:${{ github.sha }}"
+              echo "Tagged $AR:v${VERSION}"
+              exit 0
+            fi
+            echo "Waiting for $AR:${{ github.sha }} (deploy job still running) ... ($i/40)"
+            sleep 30
+          done
+          echo "::error::Artifact Registry image for this commit never appeared." >&2
+          exit 1
+
+      - name: Summary
+        run: |
+          {
+            echo "### Released \`${{ needs.release-please.outputs.tag_name }}\`"
+            echo
+            echo "Image tagged in both registries, pointing at the digest already deployed:"
+            echo '```'
+            echo "ghcr.io/${{ github.repository }}:v${VERSION}"
+            echo "$REGION-docker.pkg.dev/$PROJECT/docker/invoicing:v${VERSION}"
+            echo '```'
+            echo "Roll back with:"
+            echo '```bash'
+            echo "gcloud run services update invoicing-web --region=$REGION \\"
+            echo "  --image=$REGION-docker.pkg.dev/$PROJECT/docker/invoicing:v${VERSION}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

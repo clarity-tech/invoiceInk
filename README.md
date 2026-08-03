@@ -190,6 +190,9 @@ There is no shell to attach to. Commands run as a Cloud Run Job execution:
 ./deploy/cloudrun/artisan.sh --logs db:seed --class=ProductionUserSeeder --force
 ```
 
+Or from the Actions tab without any local tooling: **Artisan (production)** →
+Run workflow. Destructive commands require ticking an acknowledgement box.
+
 Two traps worth knowing: jobs have **no Gotenberg sidecar**, so nothing that
 renders a PDF will work there; and runs are non-interactive, so any `confirm()`
 takes its default — which is why `ProductionSeeder` reports success while
@@ -200,6 +203,27 @@ Full architecture, decisions and rejected alternatives:
 
 The single-VPS Docker Compose setup it replaced is still described in
 [docker/production/README.md](docker/production/README.md).
+
+## Releases
+
+Versioning is driven by conventional commits. `release-please` watches `main` and
+keeps a standing release PR that bumps `version.txt` and writes `CHANGELOG.md`
+from the commits since the last release. Merging that PR creates the git tag and
+the GitHub release.
+
+Commit prefixes that matter: `feat:` bumps the minor version, `fix:` the patch,
+and `feat!:` or a `BREAKING CHANGE:` footer bumps the major.
+
+**Releasing does not deploy.** Every push to `main` already deploys; a release
+labels an image that is already live. Images are retagged, never rebuilt, so
+`v1.2.0` is byte-identical to the artifact built and tested for that commit.
+
+Both registries get the version, which makes rollbacks readable:
+
+```bash
+gcloud run services update invoicing-web --region=asia-south1 \
+  --image=asia-south1-docker.pkg.dev/invoiceink/docker/invoicing:v1.2.0
+```
 
 ## License
 
