@@ -1,0 +1,81 @@
+# Validates that the local development (Sail) image still builds.
+#
+# This workflow deliberately does NOT publish. It previously pushed to
+# ghcr.io/<repo> tagged `latest` and `php8.5` -- the same repository and the same
+# `latest` tag that docker-build.yml uses for the *production application*
+# image. Both ran on every push to main, so whichever finished last owned
+# `latest`, making that tag non-deterministic: sometimes the Laravel app,
+# sometimes a PHP dev image containing no application code at all. Anything
+# deploying `:latest` (the VPS compose file does) could pull either.
+#
+# Nothing consumed the published artifact in any case -- docker-compose.yml uses
+# ghcr.io/clarity-tech/laravel-strict:php8.5, a different image entirely. So the
+# workflow's only real value is telling us when a change breaks the build, which
+# is what it now does.
+#
+# Cloud Run was never affected: docker-build.yml promotes by digest, not by tag.
+
+name: Validate Sail Image
+
+on:
+  push:
+    paths:
+      - "docker/8.5/**"
+      - ".github/workflows/validate-sail-image.yaml"
+  pull_request:
+    paths:
+      - "docker/8.5/**"
+      - ".github/workflows/validate-sail-image.yaml"
+  # The image pulls a base image and installs packages at build time, so it can
+  # break without anything in this repository changing. The weekly run catches
+  # that. Note `paths` filters do not apply to `schedule`, which is what we want
+  # here -- and scheduled runs only ever use the default branch.
+  schedule:
+    - cron: "30 1 * * 2" # Tuesdays, 01:30 UTC (07:00 IST)
+  # Lets you re-check on demand after an upstream fix, without an empty commit.
+  workflow_dispatch:
+
+concurrency:
+  group: sail-image-${{ github.ref }}
+  cancel-in-progress: true
+
+# Read-only: nothing is published, so no packages: write.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (${{ matrix.platform }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # arm64 is emulated on GitHub's amd64 runners. Slow, but this workflow now
+      # only runs when docker/8.5 actually changes, which is rare.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Build only. No registry login and no tags, so there is nothing that
+      # could overwrite a published tag.
+      - name: Build
+        uses: docker/build-push-action@v7
+        with:
+          context: ./docker/8.5
+          build-args: |
+            WWWGROUP=1000
+          platforms: ${{ matrix.platform }}
+          push: false
+          cache-from: type=gha,scope=sail-${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=sail-${{ matrix.platform }}
