@@ -2,6 +2,22 @@
 
 use App\Enums\Country;
 
+test('names returns the plain country name, without the flag options() prefixes', function () {
+    $names = Country::names();
+
+    expect($names)
+        ->toBeArray()
+        ->toHaveCount(count(Country::cases()));
+
+    expect($names['AE'])->toBe('United Arab Emirates');
+    expect($names['IN'])->toBe('India');
+
+    foreach (Country::cases() as $country) {
+        expect($names[$country->value])->toBe($country->name());
+        expect(Country::options()[$country->value])->toContain($country->name());
+    }
+});
+
 test('taxLabels returns label keyed by ISO country code for every enum case', function () {
     $labels = Country::taxLabels();
 

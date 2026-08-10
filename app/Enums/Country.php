@@ -293,6 +293,22 @@ enum Country: string
     }
 
     /**
+     * Map of country code => plain country name, without the flag emoji that
+     * {@see self::options()} prefixes for select inputs. Use this when the name
+     * is rendered as part of a sentence or an address line.
+     *
+     * @return array<string, string>
+     */
+    public static function names(): array
+    {
+        return collect(self::cases())
+            ->mapWithKeys(fn ($country) => [
+                $country->value => $country->name(),
+            ])
+            ->toArray();
+    }
+
+    /**
      * Map of country code => tax-id label (e.g. "GSTIN", "VAT Registration Number", "TRN").
      *
      * Used in customer/organization location forms and on invoice PDFs to render the

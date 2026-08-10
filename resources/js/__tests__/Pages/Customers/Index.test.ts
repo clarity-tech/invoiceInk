@@ -120,7 +120,8 @@ function makePaginatedCustomers(
 const defaultProps = () => ({
     customers: makePaginatedCustomers(),
     currencies: { INR: 'Indian Rupee', USD: 'US Dollar', EUR: 'Euro' },
-    countries: { IN: 'India', US: 'United States' },
+    countries: { IN: '🇮🇳 India', US: '🇺🇸 United States' },
+    countryNames: { IN: 'India', US: 'United States' },
     taxLabels: { IN: 'GSTIN', US: 'EIN' },
     indianStates: {},
     gstTreatments: {},
@@ -364,5 +365,39 @@ describe('Customers/Index', () => {
 
         expect(wrapper.text()).toContain('EIN: 12-3456789');
         expect(wrapper.text()).not.toContain('GSTIN: 12-3456789');
+    });
+
+    it('renders a location address without repeating a state that echoes the city', async () => {
+        const dubaiOffice = makeLocation({
+            id: 1,
+            name: 'SANDLINE Pharmacy LLC',
+            address_line_1: 'Unit 4, Palm Court, Al Barsha',
+            city: 'DUBAI',
+            state: 'Dubai',
+            country: 'AE',
+        });
+        const c = {
+            ...makeCustomerWithCount({
+                id: 8,
+                primary_location: dubaiOffice,
+                locations: [dubaiOffice],
+            }),
+            locations_count: 1,
+        };
+        const wrapper = mountComponent({
+            customers: makePaginatedCustomers([c]),
+            countryNames: { AE: 'United Arab Emirates' },
+        });
+
+        // Summary column falls back to the country when the state adds nothing.
+        expect(wrapper.text()).toContain('DUBAI, United Arab Emirates');
+        expect(wrapper.text()).not.toContain('DUBAI, Dubai');
+
+        // Expand the row to reveal the locations list (chevron is the first button).
+        await wrapper.find('tbody button').trigger('click');
+
+        expect(wrapper.text()).toContain(
+            'Unit 4, Palm Court, Al Barsha, DUBAI, United Arab Emirates',
+        );
     });
 });

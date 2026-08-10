@@ -39,6 +39,7 @@ class CustomerController extends Controller
             'customers' => $customers,
             'currencies' => Currency::options(),
             'countries' => Country::options(),
+            'countryNames' => Country::names(),
             'taxLabels' => Country::taxLabels(),
             'defaultPhoneCountry' => $organization?->country_code?->value,
             // Only Indian (GST) organizations deal with place of supply.

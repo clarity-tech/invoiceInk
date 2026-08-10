@@ -4,6 +4,10 @@ import { computed, onMounted, ref } from 'vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import CustomerForm from '@/Components/CustomerForm.vue';
 import LocationModal from '@/Components/LocationModal.vue';
+import {
+    formatLocationLine,
+    formatLocationSummary,
+} from '@/composables/useLocationFormat';
 import { usePermissions } from '@/composables/usePermissions';
 import { taxLabelFor } from '@/composables/useTaxLabel';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -24,6 +28,7 @@ const props = defineProps<{
     customers: PaginatedCustomers;
     currencies: Record<string, string>;
     countries: Record<string, string>;
+    countryNames: Record<string, string>;
     taxLabels: Record<string, string>;
     defaultPhoneCountry?: string | null;
     indianStates: Record<string, string>;
@@ -278,7 +283,7 @@ function locationSummary(customer: Customer): string {
         return '-';
     }
 
-    return [loc.city, loc.state].filter(Boolean).join(', ');
+    return formatLocationSummary(loc, props.countryNames) || '-';
 }
 </script>
 
@@ -548,10 +553,14 @@ function locationSummary(customer: Customer): string {
                                                     class="ml-1 inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800"
                                                     >Primary</span
                                                 >
-                                                <span class="ml-2 text-gray-500"
-                                                    >{{ loc.address_line_1 }},
-                                                    {{ loc.city }},
-                                                    {{ loc.state }}</span
+                                                <span
+                                                    class="ml-2 text-gray-500"
+                                                    >{{
+                                                        formatLocationLine(
+                                                            loc,
+                                                            countryNames,
+                                                        )
+                                                    }}</span
                                                 >
                                                 <span
                                                     v-if="loc.tax_id"
@@ -634,11 +643,12 @@ function locationSummary(customer: Customer): string {
                                                 <span class="font-medium">{{
                                                     loc.name
                                                 }}</span>
-                                                <span class="ml-2"
-                                                    >{{ loc.address_line_1 }},
-                                                    {{ loc.city }},
-                                                    {{ loc.state }}</span
-                                                >
+                                                <span class="ml-2">{{
+                                                    formatLocationLine(
+                                                        loc,
+                                                        countryNames,
+                                                    )
+                                                }}</span>
                                                 <span
                                                     v-if="loc.tax_id"
                                                     class="ml-2"
