@@ -300,7 +300,7 @@
         }
         .items-table thead th {
             padding: 6px 10px;
-            font-size: 10px;
+            font-size: 14px;
             font-weight: 500;
             color: #fff;
             border-top: none;
