@@ -23,7 +23,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      security-events: write
 
     outputs:
       # Consumed by deploy-production so it promotes the exact image built here
@@ -105,23 +104,38 @@ jobs:
             BUILDKIT_INLINE_CACHE=1
             VITE_APP_NAME=InvoiceInk
 
+      # Findings go to the run summary rather than the Security tab: uploading
+      # SARIF needs Advanced Security, which this private repo does not have,
+      # so that upload 403'd and failed the whole workflow on every build --
+      # taking the image smoke test in `test-images` down with it, since that
+      # job needs this one.
+      #
+      # `exit-code: 0` keeps the scan advisory. The image currently carries
+      # fixable HIGH/CRITICAL findings from the Debian base, the bundled Node
+      # packages and the FrankenPHP binary, so gating on them would fail every
+      # build from the moment this lands. Turn the gate on once that backlog is
+      # cleared -- the summary below is what makes the backlog visible.
       - name: Run Trivy vulnerability scanner
         continue-on-error: true
         uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}@${{ steps.build.outputs.digest }}
-          format: 'sarif'
-          output: 'trivy-results-${{ matrix.target }}.sarif'
+          format: 'table'
+          output: 'trivy-results-${{ matrix.target }}.txt'
+          severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
+          exit-code: '0'
 
-      - name: Debug Trivy output
-        run: ls -al
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        if: ${{ always() && hashFiles(format('trivy-results-{0}.sarif', matrix.target)) != '' }}
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: 'trivy-results-${{ matrix.target }}.sarif'
+      - name: Publish Trivy findings to the run summary
+        if: always()
+        run: |
+          {
+            echo "## Trivy — ${{ matrix.target }} (fixable HIGH/CRITICAL)"
+            echo ''
+            echo '```'
+            cat 'trivy-results-${{ matrix.target }}.txt' 2>/dev/null || echo 'Scan produced no output.'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   test-images:
     needs: build-and-push
