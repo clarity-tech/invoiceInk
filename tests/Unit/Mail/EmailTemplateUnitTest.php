@@ -71,12 +71,19 @@ test('all default subjects contain at least one variable', function () {
     }
 });
 
-test('all default bodies contain view_url variable', function () {
+test('no default body links to the document', function () {
+    // The public link belongs to the CTA button that emails.custom-document
+    // renders beneath the body. A link here too would render the same CTA
+    // twice, and the second copy would ignore the view-online toggle.
     foreach (EmailTemplateType::cases() as $type) {
         $default = DefaultEmailTemplates::get($type);
 
-        expect($default['body'])->toContain('{{view_url}}');
+        expect($default['body'])->not->toContain('{{view_url}}');
     }
+});
+
+test('view_url stays available to customized templates', function () {
+    expect(DefaultEmailTemplates::availableVariables())->toHaveKey('{{view_url}}');
 });
 
 test('invoice defaults contain invoice-specific language', function () {

@@ -10,6 +10,13 @@ use App\Enums\EmailTemplateType;
  * These are the "latest version" defaults. Organizations that haven't
  * customized a template always get these. Updating this file instantly
  * updates all non-customized orgs — no migration needed.
+ *
+ * None of these bodies link to the document. The public link is owned by the
+ * "View {type} Online" CTA button that emails.custom-document renders directly
+ * beneath the body, gated on `app.invoice_email.include_view_online_button` and
+ * on the per-send toggle. A link here would render a second, identical CTA that
+ * the toggle cannot switch off. `{{view_url}}` stays available for orgs that
+ * want the link inline in a customized template.
  */
 class DefaultEmailTemplates
 {
@@ -29,8 +36,6 @@ class DefaultEmailTemplates
                     .'<li>Due Date: {{due_date}}</li>'
                     .'<li>Amount Due: {{amount_due}}</li>'
                     .'</ul>'
-                    .'<p>You can view, print, and download your invoice using the link below:</p>'
-                    .'<p><a href="{{view_url}}">View Invoice Online</a></p>'
                     .'<p>Thank you for your business!</p>',
             ],
 
@@ -40,7 +45,6 @@ class DefaultEmailTemplates
                     .'<p>This is a friendly reminder that invoice <strong>#{{invoice_number}}</strong> '
                     .'for <strong>{{amount_due}}</strong> is due on <strong>{{due_date}}</strong>.</p>'
                     .'<p>If you have already made the payment, please disregard this message.</p>'
-                    .'<p><a href="{{view_url}}">View Invoice Online</a></p>'
                     .'<p>Thank you!</p>',
             ],
 
@@ -50,7 +54,6 @@ class DefaultEmailTemplates
                     .'<p>Invoice <strong>#{{invoice_number}}</strong> for <strong>{{amount_due}}</strong> '
                     .'was due on <strong>{{due_date}}</strong> and is now <strong>{{days_overdue}} days overdue</strong>.</p>'
                     .'<p>Please arrange payment at your earliest convenience.</p>'
-                    .'<p><a href="{{view_url}}">View Invoice Online</a></p>'
                     .'<p>If you have any questions, please don\'t hesitate to reach out.</p>',
             ],
 
@@ -59,8 +62,6 @@ class DefaultEmailTemplates
                 'body' => '<p>Dear {{customer_name}},</p>'
                     .'<p>We have received your payment for invoice <strong>#{{invoice_number}}</strong>.</p>'
                     .'<p><strong>Amount Paid: {{amount_due}}</strong></p>'
-                    .'<p>You can view your invoice receipt here:</p>'
-                    .'<p><a href="{{view_url}}">View Invoice Online</a></p>'
                     .'<p>Thank you for your business. We appreciate your prompt payment!</p>',
             ],
 
@@ -74,8 +75,6 @@ class DefaultEmailTemplates
                     .'<li>Valid Until: {{due_date}}</li>'
                     .'<li>Total: {{amount_due}}</li>'
                     .'</ul>'
-                    .'<p>You can view the full estimate using the link below:</p>'
-                    .'<p><a href="{{view_url}}">View Estimate Online</a></p>'
                     .'<p>Please let us know if you have any questions.</p>',
             ],
 
@@ -84,8 +83,7 @@ class DefaultEmailTemplates
                 'body' => '<p>Dear {{customer_name}},</p>'
                     .'<p>This is a reminder that estimate <strong>#{{invoice_number}}</strong> '
                     .'for <strong>{{amount_due}}</strong> is valid until <strong>{{due_date}}</strong>.</p>'
-                    .'<p>Please let us know if you would like to proceed.</p>'
-                    .'<p><a href="{{view_url}}">View Estimate Online</a></p>',
+                    .'<p>Please let us know if you would like to proceed.</p>',
             ],
 
             EmailTemplateType::EstimateExpired => [
@@ -93,8 +91,7 @@ class DefaultEmailTemplates
                 'body' => '<p>Dear {{customer_name}},</p>'
                     .'<p>Estimate <strong>#{{invoice_number}}</strong> for <strong>{{amount_due}}</strong> '
                     .'expired on <strong>{{due_date}}</strong>.</p>'
-                    .'<p>If you are still interested, we would be happy to prepare an updated estimate for you.</p>'
-                    .'<p><a href="{{view_url}}">View Original Estimate</a></p>',
+                    .'<p>If you are still interested, we would be happy to prepare an updated estimate for you.</p>',
             ],
 
             EmailTemplateType::EstimateThankYou => [
@@ -102,7 +99,6 @@ class DefaultEmailTemplates
                 'body' => '<p>Dear {{customer_name}},</p>'
                     .'<p>Thank you for accepting estimate <strong>#{{invoice_number}}</strong>.</p>'
                     .'<p>We will follow up shortly with the next steps.</p>'
-                    .'<p><a href="{{view_url}}">View Estimate Online</a></p>'
                     .'<p>We look forward to working with you!</p>',
             ],
         };
