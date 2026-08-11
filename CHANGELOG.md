@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.2](https://github.com/clarity-tech/invoicing/compare/v1.1.1...v1.1.2) (2026-08-11)
+
+
+### Bug Fixes
+
+* **emails:** remove duplicate "View Online" CTA from document emails ([e663826](https://github.com/clarity-tech/invoicing/commit/e663826ef2d6187fce61b754df9d687bfaf18183))
+* **urls:** root emailed links at the public domain, not the request host ([2fed58b](https://github.com/clarity-tech/invoicing/commit/2fed58bf1863e5145e536becd6c30800dc9dc6af))
+
 ## [1.1.1](https://github.com/clarity-tech/invoicing/compare/v1.1.0...v1.1.1) (2026-08-11)
 
 
