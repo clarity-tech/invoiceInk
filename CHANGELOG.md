@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.1](https://github.com/clarity-tech/invoicing/compare/v1.1.0...v1.1.1) (2026-08-11)
+
+
+### Bug Fixes
+
+* stop repeating the state when it echoes the city in customer locations ([882a013](https://github.com/clarity-tech/invoicing/commit/882a0133f5918c272e56572e5e32f91571074ca8))
+
+
+### Build & CI
+
+* report Trivy findings in the run summary instead of the Security tab ([f4e3068](https://github.com/clarity-tech/invoicing/commit/f4e3068d97ee69aa35cd467ac8fc4754380f87ee))
+* report Trivy findings in the run summary instead of the Security tab ([7237ad0](https://github.com/clarity-tech/invoicing/commit/7237ad0ce69496f3e6c4a52304fcd4847fe97729))
+
 ## [1.1.0](https://github.com/clarity-tech/invoicing/compare/v1.0.0...v1.1.0) (2026-08-04)
 
 
