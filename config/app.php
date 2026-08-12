@@ -56,6 +56,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cloud Run Service Name
+    |--------------------------------------------------------------------------
+    |
+    | Cloud Run injects K_SERVICE into every service container (see the
+    | container contract). It is absent everywhere else, so it is how the
+    | application tells a real deployment — where APP_URL is the authoritative
+    | public origin — from a local or CI run that legitimately serves itself on
+    | some other origin. Read it here rather than via env() in application
+    | code, because production caches its config at container start.
+    |
+    | Cloud Run *Jobs* set CLOUD_RUN_JOB instead and are not covered: they run
+    | as console commands, which already root their URLs at APP_URL.
+    |
+    */
+
+    'cloud_run_service' => env('K_SERVICE'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
