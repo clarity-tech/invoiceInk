@@ -30,6 +30,7 @@ import type {
     TaxRateOption,
     InvoiceNumberingSeries,
     InvoiceAttachment,
+    InvoiceFormDefaults,
     Currency,
 } from '@/types';
 
@@ -45,14 +46,7 @@ const props = defineProps<{
     taxLabels: Record<string, string>;
     attachments?: InvoiceAttachment[];
     indianStates?: Record<string, string>;
-    defaults?: {
-        organization_id: number | null;
-        organization_location_id: number | null;
-        invoice_numbering_series_id: number | null;
-        issued_at: string;
-        due_at: string;
-        currency: string;
-    };
+    defaults?: InvoiceFormDefaults;
 }>();
 
 const { formatMoney } = useFormatMoney();
@@ -75,10 +69,14 @@ onUnmounted(() => {
     }
 });
 
-// Build initial items
+// Build initial items — from the invoice being edited, or from the defaults
+// when the create form was seeded by "Duplicate".
 function buildInitialItems(): LineItem[] {
-    if (props.mode === 'edit' && props.invoice?.items?.length) {
-        return props.invoice.items.map((item) => ({
+    const source =
+        props.mode === 'edit' ? props.invoice?.items : props.defaults?.items;
+
+    if (source?.length) {
+        return source.map((item) => ({
             description: item.description,
             sac_code: item.sac_code,
             quantity: item.quantity,
@@ -108,7 +106,9 @@ const itemKeys = ref<number[]>(items.value.map((_, index) => index));
 
 // Determine currency from selected customer
 const selectedCustomerId = ref<number | null>(
-    props.mode === 'edit' ? (props.invoice?.customer_id ?? null) : null,
+    props.mode === 'edit'
+        ? (props.invoice?.customer_id ?? null)
+        : (props.defaults?.customer_id ?? null),
 );
 
 const selectedCustomer = computed(
@@ -156,11 +156,11 @@ const form = useForm({
     customer_location_id:
         props.mode === 'edit'
             ? (props.invoice!.customer_location?.id ?? null)
-            : (null as number | null),
+            : (props.defaults?.customer_location_id ?? null),
     customer_shipping_location_id:
         props.mode === 'edit'
             ? (props.invoice!.customer_shipping_location?.id ?? null)
-            : (null as number | null),
+            : (props.defaults?.customer_shipping_location_id ?? null),
     status: props.mode === 'edit' ? props.invoice!.status : 'draft',
     issued_at:
         props.mode === 'edit'
@@ -172,32 +172,51 @@ const form = useForm({
             : (props.defaults?.due_at ?? ''),
     invoice_numbering_series_id:
         props.defaults?.invoice_numbering_series_id ?? (null as number | null),
-    notes: props.mode === 'edit' ? (props.invoice!.notes ?? '') : '',
-    subject: props.mode === 'edit' ? (props.invoice?.subject ?? '') : '',
+    notes:
+        props.mode === 'edit'
+            ? (props.invoice!.notes ?? '')
+            : (props.defaults?.notes ?? ''),
+    subject:
+        props.mode === 'edit'
+            ? (props.invoice?.subject ?? '')
+            : (props.defaults?.subject ?? ''),
     order_number:
-        props.mode === 'edit' ? (props.invoice?.order_number ?? '') : '',
-    terms: props.mode === 'edit' ? (props.invoice?.terms ?? '') : '',
+        props.mode === 'edit'
+            ? (props.invoice?.order_number ?? '')
+            : (props.defaults?.order_number ?? ''),
+    terms:
+        props.mode === 'edit'
+            ? (props.invoice?.terms ?? '')
+            : (props.defaults?.terms ?? ''),
     // Remembered recipient list for this document: the customer's contacts
     // (checked/unchecked) plus any ad-hoc extras. Seeded from the invoice on
     // edit, or from the selected customer's contacts on create.
     email_recipients: mergeRecipients(
         selectedCustomer.value?.emails ?? [],
-        props.mode === 'edit' ? (props.invoice?.email_recipients ?? []) : [],
+        props.mode === 'edit'
+            ? (props.invoice?.email_recipients ?? [])
+            : (props.defaults?.email_recipients ?? []),
     ) as EmailRecipient[],
     place_of_supply:
-        props.mode === 'edit' ? (props.invoice?.place_of_supply ?? '') : '',
+        props.mode === 'edit'
+            ? (props.invoice?.place_of_supply ?? '')
+            : (props.defaults?.place_of_supply ?? ''),
     tds_rate:
         props.mode === 'edit'
             ? (props.invoice?.tds_rate ?? null)
-            : (null as number | null),
+            : (props.defaults?.tds_rate ?? null),
     tds_section:
-        props.mode === 'edit' ? (props.invoice?.tds_section ?? '') : '',
+        props.mode === 'edit'
+            ? (props.invoice?.tds_section ?? '')
+            : (props.defaults?.tds_section ?? ''),
     tcs_rate:
         props.mode === 'edit'
             ? (props.invoice?.tcs_rate ?? null)
-            : (null as number | null),
+            : (props.defaults?.tcs_rate ?? null),
     tcs_section:
-        props.mode === 'edit' ? (props.invoice?.tcs_section ?? '') : '',
+        props.mode === 'edit'
+            ? (props.invoice?.tcs_section ?? '')
+            : (props.defaults?.tcs_section ?? ''),
     items: [] as LineItem[],
     // Newly picked files (uploaded to the invoice on save) and ids of existing
     // attachments the user removed (deleted on save).

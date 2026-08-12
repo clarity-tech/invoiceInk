@@ -106,7 +106,8 @@ Route::middleware([
         Route::post('/invoices/{invoice}/restore', [InvoiceController::class, 'restore'])->name('invoices.restore')->withTrashed();
         Route::delete('/invoices/{invoice}/force', [InvoiceController::class, 'forceDestroy'])->name('invoices.force-destroy')->withTrashed();
         Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
-        Route::post('/invoices/{invoice}/duplicate', [InvoiceController::class, 'duplicate'])->name('invoices.duplicate');
+        // A GET: duplicating only opens a pre-filled create form, it saves nothing.
+        Route::get('/invoices/{invoice}/duplicate', [InvoiceController::class, 'duplicate'])->name('invoices.duplicate');
         Route::post('/invoices/{invoice}/convert', [InvoiceController::class, 'convertEstimate'])->name('invoices.convert');
         Route::get('/invoices/{invoice}/download', [InvoiceController::class, 'downloadPdf'])->name('invoices.download');
         Route::get('/invoices/{invoice}/attachments/{media}', [InvoiceController::class, 'showAttachment'])->name('invoices.attachments.show');

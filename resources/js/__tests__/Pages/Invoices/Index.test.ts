@@ -268,20 +268,18 @@ describe('Invoices/Index', () => {
         );
     });
 
-    it('calls router.post for duplicate', async () => {
+    it('links to the duplicate form instead of posting', async () => {
         const inv = makeInvoice({ id: 3 });
         const wrapper = mountComponent({
             invoices: makePaginatedInvoices([inv]),
         });
-        const dupBtn = wrapper
-            .findAll('button')
-            .find((b) => b.text() === 'Duplicate');
-        await dupBtn!.trigger('click');
-        expect(mockRouterPost).toHaveBeenCalledWith(
-            '/invoices/3/duplicate',
-            {},
-            expect.any(Object),
-        );
+        const dupLink = wrapper
+            .findAll('a')
+            .find((a) => a.text() === 'Duplicate');
+
+        expect(dupLink?.attributes('href')).toBe('/invoices/3/duplicate');
+        // Duplicating must not mutate anything — it only opens a form.
+        expect(mockRouterPost).not.toHaveBeenCalled();
     });
 
     it('shows pagination when multiple pages', () => {

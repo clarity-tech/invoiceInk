@@ -92,13 +92,15 @@ test('the setup wizard refuses to mutate an already-completed org', function () 
 
 test('a viewer cannot duplicate an invoice', function () {
     $member = rbacMember($this->org, 'viewer');
-    $before = Invoice::withoutGlobalScopes()->count();
 
     $this->actingAs($member)
-        ->post("/invoices/{$this->invoice->id}/duplicate")
+        ->get("/invoices/{$this->invoice->id}/duplicate")
         ->assertForbidden();
 
-    expect(Invoice::withoutGlobalScopes()->count())->toBe($before);
+    // A viewer must not reach the seeded create form either.
+    $this->actingAs($member)
+        ->get("/invoices/create?from={$this->invoice->id}")
+        ->assertForbidden();
 });
 
 test('an editor can duplicate an invoice', function () {
@@ -106,10 +108,11 @@ test('an editor can duplicate an invoice', function () {
     $before = Invoice::withoutGlobalScopes()->count();
 
     $this->actingAs($member)
-        ->post("/invoices/{$this->invoice->id}/duplicate")
-        ->assertRedirect();
+        ->get("/invoices/{$this->invoice->id}/duplicate")
+        ->assertRedirect(route('invoices.create', ['from' => $this->invoice->id]));
 
-    expect(Invoice::withoutGlobalScopes()->count())->toBe($before + 1);
+    // Duplicating opens a form; it saves nothing until the editor submits it.
+    expect(Invoice::withoutGlobalScopes()->count())->toBe($before);
 });
 
 /*

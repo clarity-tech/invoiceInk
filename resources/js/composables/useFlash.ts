@@ -9,6 +9,7 @@ export function useFlash() {
             (page.props.flash ?? {}) as {
                 success: string | null;
                 error: string | null;
+                info: string | null;
                 message: string | null;
             },
     );
@@ -18,6 +19,7 @@ export function useFlash() {
             !!(
                 flash.value?.success ||
                 flash.value?.error ||
+                flash.value?.info ||
                 flash.value?.message
             ),
     );

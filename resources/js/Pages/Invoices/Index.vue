@@ -61,7 +61,6 @@ function confirmDelete(invoice: Invoice) {
     confirmingDelete.value = true;
 }
 
-const duplicating = ref<number | null>(null);
 const converting = ref<number | null>(null);
 
 function deleteInvoice() {
@@ -86,20 +85,6 @@ function deleteInvoice() {
         .delete(`/invoices/${id}`, {
             preserveScroll: true,
         });
-}
-
-function duplicateInvoice(invoice: Invoice) {
-    duplicating.value = invoice.id;
-    router.post(
-        `/invoices/${invoice.id}/duplicate`,
-        {},
-        {
-            preserveScroll: true,
-            onFinish: () => {
-                duplicating.value = null;
-            },
-        },
-    );
 }
 
 function convertEstimate(invoice: Invoice) {
@@ -325,19 +310,14 @@ const tabs = [
                                         class="text-red-600 hover:text-red-900"
                                         >PDF</a
                                     >
-                                    <button
+                                    <!-- Opens a pre-filled create form; nothing
+                                         is saved until the user submits it. -->
+                                    <a
                                         v-if="can('create')"
-                                        type="button"
-                                        class="cursor-pointer text-gray-600 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
-                                        :disabled="duplicating === invoice.id"
-                                        @click="duplicateInvoice(invoice)"
+                                        :href="`/invoices/${invoice.id}/duplicate`"
+                                        class="text-gray-600 hover:text-gray-900"
+                                        >Duplicate</a
                                     >
-                                        {{
-                                            duplicating === invoice.id
-                                                ? 'Duplicating...'
-                                                : 'Duplicate'
-                                        }}
-                                    </button>
                                     <button
                                         v-if="
                                             invoice.type === 'estimate' &&

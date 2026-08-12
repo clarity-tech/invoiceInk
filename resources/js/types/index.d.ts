@@ -268,6 +268,47 @@ export interface TeamSummary {
     company_name: string | null;
 }
 
+/**
+ * Server-supplied seed values for a create-mode invoice form.
+ *
+ * The first block is always present. The rest is only sent when the form was
+ * opened as a duplicate (`/invoices/{id}/duplicate`), in which case it carries
+ * the source document's content. Everything the server recomputes on save —
+ * the number, the totals, the currency and the exchange rate — is absent by
+ * design.
+ */
+export interface InvoiceFormDefaults {
+    organization_id: number | null;
+    organization_location_id: number | null;
+    invoice_numbering_series_id: number | null;
+    issued_at: string;
+    due_at: string;
+    currency: string;
+    customer_id?: number | null;
+    customer_location_id?: number | null;
+    customer_shipping_location_id?: number | null;
+    subject?: string;
+    order_number?: string;
+    place_of_supply?: string;
+    tds_rate?: number | null;
+    tds_section?: string;
+    tcs_rate?: number | null;
+    tcs_section?: string;
+    notes?: string;
+    terms?: string;
+    email_recipients?: EmailRecipient[];
+    items?: InvoiceItemInput[];
+}
+
+/** A line item as the form holds it, before the server assigns it an id. */
+export interface InvoiceItemInput {
+    description: string;
+    sac_code: string | null;
+    quantity: number;
+    unit_price: number;
+    tax_rate: number;
+}
+
 /** Shared page props from HandleInertiaRequests */
 export interface SharedProps {
     auth: {
@@ -289,6 +330,7 @@ export interface SharedProps {
     flash: {
         success: string | null;
         error: string | null;
+        info: string | null;
         message: string | null;
     };
 }

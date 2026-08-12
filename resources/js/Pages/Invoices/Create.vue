@@ -14,6 +14,7 @@ import type {
     TaxRateOption,
     InvoiceNumberingSeries,
     InvoiceAttachment,
+    InvoiceFormDefaults,
 } from '@/types';
 
 defineProps<{
@@ -26,14 +27,7 @@ defineProps<{
     taxLabels: Record<string, string>;
     attachments: InvoiceAttachment[];
     indianStates: Record<string, string>;
-    defaults: {
-        organization_id: number | null;
-        organization_location_id: number | null;
-        invoice_numbering_series_id: number | null;
-        issued_at: string;
-        due_at: string;
-        currency: string;
-    };
+    defaults: InvoiceFormDefaults;
 }>();
 </script>
 

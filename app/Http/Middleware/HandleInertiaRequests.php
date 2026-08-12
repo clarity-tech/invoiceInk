@@ -49,6 +49,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => fn () => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
+                'info' => $request->session()->get('info'),
                 'message' => $request->session()->get('message'),
             ],
             'emailDefaults' => fn () => config('app.invoice_email'),

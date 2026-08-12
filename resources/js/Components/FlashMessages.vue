@@ -29,6 +29,9 @@ watch(
         <div v-if="flash.error" class="rounded-md bg-red-50 p-4">
             <p class="text-sm font-medium text-red-800">{{ flash.error }}</p>
         </div>
+        <div v-if="flash.info" class="rounded-md bg-blue-50 p-4">
+            <p class="text-sm font-medium text-blue-800">{{ flash.info }}</p>
+        </div>
         <div v-if="flash.message" class="rounded-md bg-blue-50 p-4">
             <p class="text-sm font-medium text-blue-800">{{ flash.message }}</p>
         </div>

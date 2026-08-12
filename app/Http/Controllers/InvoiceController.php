@@ -26,6 +26,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -84,6 +85,14 @@ class InvoiceController extends Controller
         $organization = $user->currentTeam;
         $type = $request->routeIs('estimates.create') ? 'estimate' : 'invoice';
 
+        // "Duplicate" lands here with ?from={invoice}. The source is only a
+        // template for the form — nothing is persisted until the user saves,
+        // so the number is minted by store() from the numbering series like
+        // any other new document. The global scope keeps this org-scoped.
+        $source = $request->filled('from')
+            ? Invoice::with('items')->findOrFail($request->integer('from'))
+            : null;
+
         $customers = $organization
             ? Customer::where('organization_id', $organization->id)->with('primaryLocation', 'locations')->get()
             : collect();
@@ -102,6 +111,24 @@ class InvoiceController extends Controller
         $defaultSeriesId = $numberingSeries->where('is_default', true)->first()?->id
             ?? $numberingSeries->first()?->id;
 
+        $defaults = [
+            'organization_id' => $organization?->id,
+            'organization_location_id' => $organization?->primary_location_id,
+            'invoice_numbering_series_id' => $defaultSeriesId,
+            'issued_at' => now()->format('Y-m-d'),
+            'due_at' => now()->addDays(30)->format('Y-m-d'),
+            'currency' => $organization?->currency?->value ?? 'INR',
+        ];
+
+        if ($source) {
+            $defaults = array_merge($defaults, $this->buildDuplicateDefaults(
+                $source,
+                $customers,
+                $organizationLocations,
+                $numberingSeries,
+            ));
+        }
+
         return Inertia::render('Invoices/Create', [
             'type' => $type,
             'attachments' => [],
@@ -114,15 +141,73 @@ class InvoiceController extends Controller
             'indianStates' => $organization?->country_code === Country::IN
                 ? IndianState::options()
                 : [],
-            'defaults' => [
-                'organization_id' => $organization?->id,
-                'organization_location_id' => $organization?->primary_location_id,
-                'invoice_numbering_series_id' => $defaultSeriesId,
-                'issued_at' => now()->format('Y-m-d'),
-                'due_at' => now()->addDays(30)->format('Y-m-d'),
-                'currency' => $organization?->currency?->value ?? 'INR',
-            ],
+            'defaults' => $defaults,
         ]);
+    }
+
+    /**
+     * Pre-fill values for a create form seeded from an existing document.
+     *
+     * Only the parts of the document a user would retype are carried over.
+     * Deliberately excluded: the invoice number and its series sequence (minted
+     * on save), the status (a copy starts as a draft), the issue and due dates
+     * (a copy is a new document issued today), and the totals, currency and
+     * exchange rate (all recomputed by store() from the items, the customer and
+     * the save date).
+     *
+     * References to archived customers and locations are dropped rather than
+     * pre-filled, because the form's selects only offer live records.
+     *
+     * @param  Collection<int, Customer>  $customers
+     * @param  Collection<int, Location>  $organizationLocations
+     * @param  Collection<int, InvoiceNumberingSeries>  $numberingSeries
+     * @return array<string, mixed>
+     */
+    private function buildDuplicateDefaults(
+        Invoice $source,
+        Collection $customers,
+        Collection $organizationLocations,
+        Collection $numberingSeries,
+    ): array {
+        $customer = $customers->firstWhere('id', $source->customer_id);
+        $customerLocationIds = $customer?->locations->pluck('id') ?? collect();
+
+        $keepLocation = fn (?int $id) => $id !== null && $customerLocationIds->contains($id)
+            ? $id
+            : null;
+
+        $defaults = [
+            'customer_id' => $customer?->id,
+            'customer_location_id' => $keepLocation($source->customer_location_id),
+            'customer_shipping_location_id' => $keepLocation($source->customer_shipping_location_id),
+            'subject' => $source->subject ?? '',
+            'order_number' => $source->order_number ?? '',
+            'place_of_supply' => $source->place_of_supply ?? '',
+            'tds_rate' => $source->tds_rate,
+            'tds_section' => $source->tds_section ?? '',
+            'tcs_rate' => $source->tcs_rate,
+            'tcs_section' => $source->tcs_section ?? '',
+            'notes' => $source->notes ?? '',
+            'terms' => $source->terms ?? '',
+            'email_recipients' => $this->normalizeEmailRecipients($source->email_recipients ?? []),
+            'items' => $source->items->map(fn (InvoiceItem $item) => [
+                'description' => $item->description,
+                'sac_code' => $item->sac_code,
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price,
+                'tax_rate' => $item->tax_rate,
+            ])->all(),
+        ];
+
+        if ($organizationLocations->contains('id', $source->organization_location_id)) {
+            $defaults['organization_location_id'] = $source->organization_location_id;
+        }
+
+        if ($numberingSeries->contains('id', $source->invoice_numbering_series_id)) {
+            $defaults['invoice_numbering_series_id'] = $source->invoice_numbering_series_id;
+        }
+
+        return $defaults;
     }
 
     public function store(Request $request): RedirectResponse
@@ -598,53 +683,26 @@ class InvoiceController extends Controller
         return back()->with('success', "{$label} permanently deleted.");
     }
 
+    /**
+     * Open a create form seeded from an existing document.
+     *
+     * Duplicating deliberately persists nothing: it hands the user an unsaved
+     * copy to review. The number is therefore minted by store() from the
+     * numbering series when they save, so abandoning the form neither leaves a
+     * stray draft behind nor burns a sequence number.
+     */
     public function duplicate(Invoice $invoice): RedirectResponse
     {
-        // Duplicating mints a brand-new invoice, so it is a create — not a read.
+        // Duplicating leads to a new document, so it is a create — not a read.
         // The source is already org-scoped via the global scope.
         $this->authorize('create', Invoice::class);
 
-        $invoice->load('items');
+        $route = $invoice->isEstimate() ? 'estimates.create' : 'invoices.create';
 
-        // The duplicate is a fresh document issued today, so recompute the rate
-        // from its currency to the org currency — copying without this would let
-        // the column fall back to its 1.0 default and distort cross-currency totals.
-        $invoiceCurrency = $invoice->currency?->value;
-        $orgCurrency = Organization::find($invoice->organization_id)?->currency?->value;
-        $exchangeRate = $this->resolveExchangeRate($invoiceCurrency, $orgCurrency, now());
-
-        $newInvoice = Invoice::create([
-            'type' => $invoice->type,
-            'organization_id' => $invoice->organization_id,
-            'customer_id' => $invoice->customer_id,
-            'organization_location_id' => $invoice->organization_location_id,
-            'customer_location_id' => $invoice->customer_location_id,
-            'customer_shipping_location_id' => $invoice->customer_shipping_location_id,
-            'invoice_number' => 'DRAFT-'.now()->format('YmdHis'),
-            'status' => 'draft',
-            'issued_at' => now(),
-            'due_at' => now()->addDays(30),
-            'subtotal' => $invoice->subtotal,
-            'tax' => $invoice->tax,
-            'total' => $invoice->total,
-            'currency' => $invoice->currency,
-            'exchange_rate' => $exchangeRate,
-            'notes' => $invoice->notes,
-        ]);
-
-        foreach ($invoice->items as $item) {
-            InvoiceItem::create([
-                'invoice_id' => $newInvoice->id,
-                'description' => $item->description,
-                'sac_code' => $item->sac_code,
-                'quantity' => $item->quantity,
-                'unit_price' => $item->unit_price,
-                'tax_rate' => $item->tax_rate,
-            ]);
-        }
-
-        return redirect()->route('invoices.edit', $newInvoice->id)
-            ->with('success', "{$invoice->typeLabel()} duplicated successfully.");
+        // The create form looks identical whether it is blank or seeded, so say
+        // which document is being copied and that it is not saved yet.
+        return redirect()->route($route, ['from' => $invoice->id])
+            ->with('info', "Reviewing a copy of {$invoice->invoice_number}. Save to create it.");
     }
 
     public function convertEstimate(Invoice $invoice, EstimateToInvoiceConverter $converter): RedirectResponse
