@@ -1,17 +1,12 @@
 <script setup lang="ts">
-import { useForm, router } from '@inertiajs/vue3';
+import { Link, useForm, router } from '@inertiajs/vue3';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import CustomerForm from '@/Components/CustomerForm.vue';
-import LocationModal from '@/Components/LocationModal.vue';
-import {
-    formatLocationLine,
-    formatLocationSummary,
-} from '@/composables/useLocationFormat';
+import { formatLocationSummary } from '@/composables/useLocationFormat';
 import { usePermissions } from '@/composables/usePermissions';
-import { taxLabelFor } from '@/composables/useTaxLabel';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import type { Customer, Location, Contact } from '@/types';
+import type { Customer, Contact } from '@/types';
 
 const { can } = usePermissions();
 
@@ -162,120 +157,6 @@ function deleteCustomer() {
                 deleting.value = false;
             },
         });
-}
-
-// Location modal state
-const showLocationModal = ref(false);
-const locationCustomerId = ref<number>(0);
-const editingLocation = ref<Location | null>(null);
-
-// Expanded rows for showing locations
-const expandedRows = ref<Set<number>>(new Set());
-
-function toggleExpand(customerId: number) {
-    if (expandedRows.value.has(customerId)) {
-        expandedRows.value.delete(customerId);
-    } else {
-        // No reload needed: index() already eager-loads locations and
-        // archivedLocations, so the data is on the page.
-        expandedRows.value.add(customerId);
-    }
-}
-
-function openAddLocation(customerId: number) {
-    locationCustomerId.value = customerId;
-    editingLocation.value = null;
-    showLocationModal.value = true;
-}
-
-function openEditLocation(customerId: number, location: Location) {
-    locationCustomerId.value = customerId;
-    editingLocation.value = location;
-    showLocationModal.value = true;
-}
-
-function closeLocationModal() {
-    showLocationModal.value = false;
-    editingLocation.value = null;
-}
-
-const confirmingLocationDelete = ref(false);
-const locationToDelete = ref<{ customerId: number; locationId: number } | null>(
-    null,
-);
-
-function confirmDeleteLocation(customerId: number, locationId: number) {
-    locationToDelete.value = { customerId, locationId };
-    confirmingLocationDelete.value = true;
-}
-
-function deleteLocation() {
-    if (!locationToDelete.value) {
-        return;
-    }
-
-    router.delete(
-        `/customers/${locationToDelete.value.customerId}/locations/${locationToDelete.value.locationId}`,
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                confirmingLocationDelete.value = false;
-                locationToDelete.value = null;
-            },
-        },
-    );
-}
-
-function setPrimary(customerId: number, locationId: number) {
-    router.post(
-        `/customers/${customerId}/primary-location/${locationId}`,
-        {},
-        {
-            preserveScroll: true,
-        },
-    );
-}
-
-const restoringLocation = ref<number | null>(null);
-
-function restoreLocation(customerId: number, locationId: number) {
-    restoringLocation.value = locationId;
-    router.post(
-        `/customers/${customerId}/locations/${locationId}/restore`,
-        {},
-        {
-            preserveScroll: true,
-            onFinish: () => {
-                restoringLocation.value = null;
-            },
-        },
-    );
-}
-
-const confirmingLocationForceDelete = ref(false);
-const locationToForceDelete = ref<{
-    customerId: number;
-    locationId: number;
-} | null>(null);
-
-function confirmForceDeleteLocation(customerId: number, locationId: number) {
-    locationToForceDelete.value = { customerId, locationId };
-    confirmingLocationForceDelete.value = true;
-}
-
-function forceDeleteLocation() {
-    if (!locationToForceDelete.value) {
-        return;
-    }
-
-    const { customerId, locationId } = locationToForceDelete.value;
-
-    confirmingLocationForceDelete.value = false;
-    locationToForceDelete.value = null;
-
-    router.delete(`/customers/${customerId}/locations/${locationId}/force`, {
-        preserveScroll: true,
-    });
 }
 
 function primaryEmail(customer: Customer): string {
@@ -445,12 +326,13 @@ function locationSummary(customer: Customer): string {
                                 <td
                                     class="px-4 py-4 text-sm font-medium text-gray-900"
                                 >
-                                    <div
-                                        class="max-w-[260px] truncate"
+                                    <Link
+                                        :href="`/customers/${customer.id}`"
+                                        class="block max-w-[260px] truncate text-brand-600 hover:text-brand-900"
                                         :title="customer.name"
                                     >
                                         {{ customer.name }}
-                                    </div>
+                                    </Link>
                                 </td>
                                 <td class="px-4 py-4 text-sm text-gray-500">
                                     <div
@@ -477,41 +359,14 @@ function locationSummary(customer: Customer): string {
                                     >
                                         {{ locationSummary(customer) }}
                                     </div>
-                                    <!--
-                                        Always rendered, including at zero: this is the only
-                                        entry point to the location manager, so a customer
-                                        with no locations must still be able to add one.
-                                    -->
-                                    <button
-                                        type="button"
-                                        class="mt-1 inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-900"
-                                        :aria-expanded="
-                                            expandedRows.has(customer.id)
-                                        "
-                                        @click="toggleExpand(customer.id)"
-                                    >
-                                        <svg
-                                            class="h-3 w-3 transition-transform"
-                                            :class="{
-                                                'rotate-90': expandedRows.has(
-                                                    customer.id,
-                                                ),
-                                            }"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M9 5l7 7-7 7"
-                                            />
-                                        </svg>
-                                        Locations ({{
-                                            customer.locations_count
-                                        }})
-                                    </button>
+                                    <div class="mt-1 text-xs text-gray-400">
+                                        {{ customer.locations_count }}
+                                        {{
+                                            customer.locations_count === 1
+                                                ? 'location'
+                                                : 'locations'
+                                        }}
+                                    </div>
                                 </td>
                                 <td
                                     class="px-4 py-4 text-right text-sm whitespace-nowrap"
@@ -531,196 +386,6 @@ function locationSummary(customer: Customer): string {
                                         @click="confirmDelete(customer)"
                                     >
                                         Delete
-                                    </button>
-                                </td>
-                            </tr>
-                            <!-- Expanded locations -->
-                            <tr v-if="expandedRows.has(customer.id)">
-                                <td colspan="6" class="bg-gray-50 px-4 py-3">
-                                    <template v-if="customer.locations?.length">
-                                        <div
-                                            class="mb-2 text-xs font-medium text-gray-500 uppercase"
-                                        >
-                                            Locations ({{
-                                                customer.locations.length
-                                            }})
-                                        </div>
-                                        <div
-                                            v-for="loc in customer.locations"
-                                            :key="loc.id"
-                                            class="flex items-center justify-between border-b border-gray-100 py-2 last:border-0"
-                                        >
-                                            <div class="text-sm">
-                                                <span
-                                                    class="font-medium text-gray-900"
-                                                    >{{ loc.name }}</span
-                                                >
-                                                <span
-                                                    v-if="
-                                                        customer.primary_location_id ===
-                                                        loc.id
-                                                    "
-                                                    class="ml-1 inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800"
-                                                    >Primary</span
-                                                >
-                                                <span
-                                                    class="ml-2 text-gray-500"
-                                                    >{{
-                                                        formatLocationLine(
-                                                            loc,
-                                                            countryNames,
-                                                        )
-                                                    }}</span
-                                                >
-                                                <span
-                                                    v-if="loc.tax_id"
-                                                    class="ml-2 text-gray-400"
-                                                    >{{
-                                                        taxLabelFor(
-                                                            loc.country,
-                                                            taxLabels,
-                                                        )
-                                                    }}: {{ loc.tax_id }}</span
-                                                >
-                                            </div>
-                                            <div class="flex gap-2">
-                                                <button
-                                                    v-if="
-                                                        can('update') &&
-                                                        customer.primary_location_id !==
-                                                            loc.id
-                                                    "
-                                                    type="button"
-                                                    class="cursor-pointer text-xs text-brand-600 hover:text-brand-900"
-                                                    @click="
-                                                        setPrimary(
-                                                            customer.id,
-                                                            loc.id,
-                                                        )
-                                                    "
-                                                >
-                                                    Set Primary
-                                                </button>
-                                                <button
-                                                    v-if="can('update')"
-                                                    type="button"
-                                                    class="cursor-pointer text-xs text-brand-600 hover:text-brand-900"
-                                                    @click="
-                                                        openEditLocation(
-                                                            customer.id,
-                                                            loc,
-                                                        )
-                                                    "
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    v-if="can('delete')"
-                                                    type="button"
-                                                    class="cursor-pointer text-xs text-red-600 hover:text-red-900"
-                                                    @click="
-                                                        confirmDeleteLocation(
-                                                            customer.id,
-                                                            loc.id,
-                                                        )
-                                                    "
-                                                >
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </template>
-                                    <p v-else class="text-sm text-gray-500">
-                                        No locations yet. An invoice needs a
-                                        billing address, so add one here.
-                                    </p>
-
-                                    <template
-                                        v-if="
-                                            customer.archived_locations?.length
-                                        "
-                                    >
-                                        <div
-                                            class="mt-4 mb-2 text-xs font-medium text-gray-400 uppercase"
-                                        >
-                                            Archived ({{
-                                                customer.archived_locations
-                                                    .length
-                                            }})
-                                        </div>
-                                        <div
-                                            v-for="loc in customer.archived_locations"
-                                            :key="loc.id"
-                                            class="flex items-center justify-between border-b border-gray-100 py-2 text-gray-400 last:border-0"
-                                        >
-                                            <div class="text-sm">
-                                                <span class="font-medium">{{
-                                                    loc.name
-                                                }}</span>
-                                                <span class="ml-2">{{
-                                                    formatLocationLine(
-                                                        loc,
-                                                        countryNames,
-                                                    )
-                                                }}</span>
-                                                <span
-                                                    v-if="loc.tax_id"
-                                                    class="ml-2"
-                                                    >{{
-                                                        taxLabelFor(
-                                                            loc.country,
-                                                            taxLabels,
-                                                        )
-                                                    }}: {{ loc.tax_id }}</span
-                                                >
-                                            </div>
-                                            <div class="flex gap-2">
-                                                <button
-                                                    v-if="can('update')"
-                                                    type="button"
-                                                    class="cursor-pointer text-xs text-brand-600 hover:text-brand-900 disabled:cursor-not-allowed disabled:opacity-50"
-                                                    :disabled="
-                                                        restoringLocation ===
-                                                        loc.id
-                                                    "
-                                                    @click="
-                                                        restoreLocation(
-                                                            customer.id,
-                                                            loc.id,
-                                                        )
-                                                    "
-                                                >
-                                                    {{
-                                                        restoringLocation ===
-                                                        loc.id
-                                                            ? 'Restoring...'
-                                                            : 'Restore'
-                                                    }}
-                                                </button>
-                                                <button
-                                                    v-if="can('delete')"
-                                                    type="button"
-                                                    class="cursor-pointer text-xs text-red-600 hover:text-red-900"
-                                                    @click="
-                                                        confirmForceDeleteLocation(
-                                                            customer.id,
-                                                            loc.id,
-                                                        )
-                                                    "
-                                                >
-                                                    Delete Forever
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </template>
-
-                                    <button
-                                        v-if="can('update')"
-                                        type="button"
-                                        class="mt-3 cursor-pointer text-sm font-medium text-brand-600 hover:text-brand-900"
-                                        @click="openAddLocation(customer.id)"
-                                    >
-                                        + Add location
                                     </button>
                                 </td>
                             </tr>
@@ -837,16 +502,6 @@ function locationSummary(customer: Customer): string {
             </div>
         </div>
 
-        <!-- Location Modal -->
-        <LocationModal
-            :show="showLocationModal"
-            :customer-id="locationCustomerId"
-            :location="editingLocation"
-            :countries="countries"
-            :tax-labels="taxLabels"
-            @close="closeLocationModal"
-        />
-
         <!-- Delete Confirmation -->
         <ConfirmationModal
             :show="confirmingDelete"
@@ -856,28 +511,6 @@ function locationSummary(customer: Customer): string {
             :destructive="true"
             @confirm="deleteCustomer"
             @cancel="confirmingDelete = false"
-        />
-
-        <!-- Location Delete Confirmation -->
-        <ConfirmationModal
-            :show="confirmingLocationDelete"
-            title="Delete Location"
-            message="Delete this location? It will be archived and can be restored later. Invoices that already use it will still display the address."
-            confirm-label="Delete"
-            :destructive="true"
-            @confirm="deleteLocation"
-            @cancel="confirmingLocationDelete = false"
-        />
-
-        <!-- Location Force Delete Confirmation -->
-        <ConfirmationModal
-            :show="confirmingLocationForceDelete"
-            title="Delete Location Forever"
-            message="Permanently delete this archived location? This cannot be undone. If any invoice references it, the deletion will be blocked."
-            confirm-label="Delete Forever"
-            :destructive="true"
-            @confirm="forceDeleteLocation"
-            @cancel="confirmingLocationForceDelete = false"
         />
     </AppLayout>
 </template>

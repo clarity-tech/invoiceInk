@@ -92,7 +92,9 @@ Route::middleware([
         Route::get('customers/trash', [CustomerController::class, 'trash'])->name('customers.trash');
         Route::post('customers/{customer}/restore', [CustomerController::class, 'restore'])->name('customers.restore')->withTrashed();
         Route::delete('customers/{customer}/force', [CustomerController::class, 'forceDestroy'])->name('customers.force-destroy')->withTrashed();
-        Route::resource('customers', CustomerController::class)->except(['show', 'create', 'edit']);
+        // `customers/trash` is registered above so it still wins over the
+        // `customers/{customer}` pattern that `show` introduces.
+        Route::resource('customers', CustomerController::class)->except(['create', 'edit']);
         Route::post('customers/{customer}/locations', [CustomerController::class, 'storeLocation'])->name('customers.locations.store');
         Route::put('customers/{customer}/locations/{location}', [CustomerController::class, 'updateLocation'])->name('customers.locations.update');
         Route::delete('customers/{customer}/locations/{location}', [CustomerController::class, 'destroyLocation'])->name('customers.locations.destroy');

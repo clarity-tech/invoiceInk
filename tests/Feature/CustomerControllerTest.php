@@ -139,6 +139,129 @@ test('index search does not leak customers from another organization', function 
         ->assertInertia(fn ($page) => $page->has('customers.data', 1));
 });
 
+test('can render the customer detail page', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation(['name' => 'Detail Page Corp'], [], $organization);
+
+    $this->actingAs($organization->owner);
+
+    $this->get("/customers/{$customer->id}")
+        ->assertStatus(200)
+        ->assertInertia(fn ($page) => $page
+            ->component('Customers/Show')
+            ->where('customer.name', 'Detail Page Corp')
+            ->has('customer.locations', 1)
+        );
+});
+
+test('customer detail page separates active from archived locations', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation(['name' => 'Archive Corp'], [], $organization);
+
+    $archived = Location::create([
+        'name' => 'Old Warehouse',
+        'address_line_1' => '9 Disused Road',
+        'city' => 'Pune',
+        'state' => 'Maharashtra',
+        'country' => 'IN',
+        'postal_code' => '411001',
+        'locatable_type' => Customer::class,
+        'locatable_id' => $customer->id,
+    ]);
+    $archived->delete();
+
+    $this->actingAs($organization->owner);
+
+    $this->get("/customers/{$customer->id}")
+        ->assertInertia(fn ($page) => $page
+            ->has('customer.locations', 1)
+            ->has('customer.archived_locations', 1)
+            ->where('customer.archived_locations.0.name', 'Old Warehouse')
+        );
+});
+
+test('customer detail page 404s for a soft-deleted customer', function () {
+    // `show` deliberately has no ->withTrashed(); a deleted customer is reached
+    // through the trash page, not by guessing its detail URL.
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+    $customer->delete();
+
+    $this->actingAs($organization->owner);
+
+    $this->get("/customers/{$customer->id}")->assertNotFound();
+});
+
+test('customers trash route still wins over the customer detail route', function () {
+    // `customers/trash` is registered before the resource, so the literal path
+    // must not be swallowed by the `customers/{customer}` pattern that show adds.
+    $organization = createOrganizationWithLocation();
+
+    $this->actingAs($organization->owner);
+
+    $this->get('/customers/trash')
+        ->assertStatus(200)
+        ->assertInertia(fn ($page) => $page->component('Customers/Trash'));
+});
+
+test('customer detail page cannot be viewed across organizations', function () {
+    $organization = createOrganizationWithLocation();
+    $other = createOrganizationWithLocation();
+
+    $foreign = createCustomerWithLocation(['name' => 'Not Yours Ltd'], [], $other);
+
+    $this->actingAs($organization->owner);
+
+    // OrganizationScope hides the record entirely, so this is a 404 rather than a 403.
+    $this->get("/customers/{$foreign->id}")->assertNotFound();
+});
+
+test('adding a location from the detail page returns to the detail page', function () {
+    // Location endpoints all end in back(); this pins that they land on the detail
+    // page when that is where the request came from, not on the listing.
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+
+    $this->actingAs($organization->owner);
+
+    $this->from("/customers/{$customer->id}")
+        ->post("/customers/{$customer->id}/locations", [
+            'name' => 'Second Office',
+            'address_line_1' => '12 New Street',
+            'city' => 'Chennai',
+            'state' => 'Tamil Nadu',
+            'country' => 'IN',
+            'postal_code' => '600001',
+        ])
+        ->assertRedirect("/customers/{$customer->id}");
+
+    expect($customer->fresh()->locations()->count())->toBe(2);
+});
+
+test('setting a primary location from the detail page returns to the detail page', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+
+    $second = Location::create([
+        'name' => 'Second Office',
+        'address_line_1' => '12 New Street',
+        'city' => 'Chennai',
+        'state' => 'Tamil Nadu',
+        'country' => 'IN',
+        'postal_code' => '600001',
+        'locatable_type' => Customer::class,
+        'locatable_id' => $customer->id,
+    ]);
+
+    $this->actingAs($organization->owner);
+
+    $this->from("/customers/{$customer->id}")
+        ->post("/customers/{$customer->id}/primary-location/{$second->id}")
+        ->assertRedirect("/customers/{$customer->id}");
+
+    expect($customer->fresh()->primary_location_id)->toBe($second->id);
+});
+
 test('can create customer', function () {
     $user = createUserWithTeam();
     $this->actingAs($user);

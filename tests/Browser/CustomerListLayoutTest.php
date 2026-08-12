@@ -78,8 +78,10 @@ it('renders the customer list actions without clipping at desktop width', functi
         ->assertSee('Edit')
         ->assertSee('Delete')
         ->assertSee('Riverbend Institute of Medical Sciences Limited')
-        // The zero-location customer still offers a way into the location manager.
-        ->assertSee('Locations (0)')
+        // The zero-location customer is still listed; managing its locations
+        // happens on the detail page the name links to.
+        ->assertSee('Locationless Trading Company Limited')
+        ->assertSee('0 locations')
         // The real regression guard: the table's scroll container must not overflow
         // horizontally at desktop width (1px tolerance for sub-pixel rounding).
         ->assertScript(
@@ -88,7 +90,9 @@ it('renders the customer list actions without clipping at desktop width', functi
         ->screenshot(fullPage: true, filename: 'layout/customer-list-desktop');
 });
 
-it('opens the location manager for a customer that has no locations', function () {
+it('reaches the location manager from the listing for a customer with no locations', function () {
+    // The case that was previously unreachable: with no locations there was no
+    // expander at all, so there was no way to add the first one.
     $user = User::factory()->withPersonalTeam()->create([
         'email' => 'customer-list-empty-locations@example.test',
     ]);
@@ -106,8 +110,8 @@ it('opens the location manager for a customer that has no locations', function (
     $this->actingAs($user);
 
     visit('/customers')
-        ->assertSee('Locations (0)')
-        ->click('button:has-text("Locations (0)")')
+        ->assertSee('0 locations')
+        ->click('a:has-text("Locationless Trading Company Limited")')
         ->waitForText('No locations yet')
         ->assertSee('+ Add location');
 });

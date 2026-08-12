@@ -29,6 +29,12 @@ if (! function_exists('rbacBrowserMember')) {
     }
 }
 
+/** The detail page of the organization's only customer, where locations live. */
+function customerDetailPath(Organization $org): string
+{
+    return '/customers/'.$org->customers()->firstOrFail()->id;
+}
+
 /** Create a customer that owns a non-primary "Branch Office" location too. */
 function customerWithTwoLocations(Organization $org): void
 {
@@ -55,8 +61,7 @@ it('hides location delete buttons from an editor', function () {
 
     $this->actingAs(rbacBrowserMember($org, 'editor'));
 
-    $this->visit('/customers')
-        ->click('tr:has-text("Test Customer") button:has-text("Locations")')
+    $this->visit(customerDetailPath($org))
         ->waitForText('Branch Office')
         ->assertSee('Set Primary') // editor keeps update-level controls
         ->assertSee('Edit')
@@ -69,8 +74,7 @@ it('hides every location action from a viewer', function () {
 
     $this->actingAs(rbacBrowserMember($org, 'viewer'));
 
-    $this->visit('/customers')
-        ->click('tr:has-text("Test Customer") button:has-text("Locations")')
+    $this->visit(customerDetailPath($org))
         ->waitForText('Branch Office')
         ->assertDontSee('Set Primary')
         ->assertDontSee('Edit')
@@ -84,8 +88,7 @@ it('shows location delete buttons to an admin', function () {
 
     $this->actingAs(rbacBrowserMember($org, 'admin'));
 
-    $this->visit('/customers')
-        ->click('tr:has-text("Test Customer") button:has-text("Locations")')
+    $this->visit(customerDetailPath($org))
         ->waitForText('Branch Office')
         ->assertSee('Set Primary')
         ->assertSee('Delete');

@@ -144,10 +144,12 @@ function submit() {
                             <div class="space-y-4">
                                 <div>
                                     <label
+                                        for="location-name"
                                         class="block text-sm font-medium text-gray-700"
                                         >Location Name *</label
                                     >
                                     <input
+                                        id="location-name"
                                         v-model="form.name"
                                         type="text"
                                         class="mt-1 block w-full rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
@@ -179,10 +181,12 @@ function submit() {
                                 </div>
                                 <div>
                                     <label
+                                        for="location-country"
                                         class="block text-sm font-medium text-gray-700"
                                         >Country *</label
                                     >
                                     <select
+                                        id="location-country"
                                         v-model="form.country"
                                         class="mt-1 block w-full rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
                                         :class="
@@ -221,10 +225,12 @@ function submit() {
                                 </div>
                                 <div>
                                     <label
+                                        for="location-tax-id"
                                         class="block text-sm font-medium text-gray-700"
                                         >{{ taxLabel }}</label
                                     >
                                     <input
+                                        id="location-tax-id"
                                         v-model="form.tax_id"
                                         type="text"
                                         class="mt-1 block w-full rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
@@ -272,10 +278,12 @@ function submit() {
                                 </div>
                                 <div>
                                     <label
+                                        for="location-address-line-1"
                                         class="block text-sm font-medium text-gray-700"
                                         >Address Line 1 *</label
                                     >
                                     <input
+                                        id="location-address-line-1"
                                         v-model="form.address_line_1"
                                         type="text"
                                         class="mt-1 block w-full rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
@@ -306,10 +314,12 @@ function submit() {
                                 </div>
                                 <div>
                                     <label
+                                        for="location-address-line-2"
                                         class="block text-sm font-medium text-gray-700"
                                         >Address Line 2</label
                                     >
                                     <input
+                                        id="location-address-line-2"
                                         v-model="form.address_line_2"
                                         type="text"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
@@ -318,10 +328,12 @@ function submit() {
                                 <div class="grid grid-cols-3 gap-4">
                                     <div>
                                         <label
+                                            for="location-city"
                                             class="block text-sm font-medium text-gray-700"
                                             >City *</label
                                         >
                                         <input
+                                            id="location-city"
                                             v-model="form.city"
                                             type="text"
                                             class="mt-1 block w-full rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
@@ -349,10 +361,12 @@ function submit() {
                                     </div>
                                     <div>
                                         <label
+                                            for="location-state"
                                             class="block text-sm font-medium text-gray-700"
                                             >State *</label
                                         >
                                         <input
+                                            id="location-state"
                                             v-model="form.state"
                                             type="text"
                                             class="mt-1 block w-full rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
@@ -383,10 +397,12 @@ function submit() {
                                     </div>
                                     <div>
                                         <label
+                                            for="location-postal-code"
                                             class="block text-sm font-medium text-gray-700"
                                             >Postal Code</label
                                         >
                                         <input
+                                            id="location-postal-code"
                                             v-model="form.postal_code"
                                             type="text"
                                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"

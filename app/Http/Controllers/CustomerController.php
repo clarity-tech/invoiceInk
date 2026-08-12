@@ -64,6 +64,31 @@ class CustomerController extends Controller
         ]);
     }
 
+    public function show(Request $request, Customer $customer): Response
+    {
+        $this->authorize('view', $customer);
+
+        $customer->load(['primaryLocation', 'locations', 'archivedLocations']);
+
+        $organization = $request->user()?->currentTeam;
+
+        return Inertia::render('Customers/Show', [
+            'customer' => $customer,
+            'currencies' => Currency::options(),
+            'countries' => Country::options(),
+            'countryNames' => Country::names(),
+            'taxLabels' => Country::taxLabels(),
+            'defaultPhoneCountry' => $organization?->country_code?->value,
+            // Only Indian (GST) organizations deal with place of supply.
+            'indianStates' => $organization?->country_code === Country::IN
+                ? IndianState::options()
+                : [],
+            'gstTreatments' => $organization?->country_code === Country::IN
+                ? GstTreatment::options()
+                : [],
+        ]);
+    }
+
     public function store(StoreCustomerRequest $request): RedirectResponse
     {
         $organization = $request->user()->currentTeam;

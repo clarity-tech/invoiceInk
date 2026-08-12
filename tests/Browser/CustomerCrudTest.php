@@ -120,7 +120,7 @@ it('opens add location modal for a customer', function () {
     ]);
 
     $organization = createOrganizationWithLocation([], [], $user);
-    createCustomerWithLocation(
+    $customer = createCustomerWithLocation(
         ['name' => 'Customer For Location'],
         [],
         $organization
@@ -128,13 +128,13 @@ it('opens add location modal for a customer', function () {
 
     $this->actingAs($user);
 
-    $page = $this->visit('/customers');
-
-    // Adding a location is a two-step flow: expand the row's "Locations (n)"
-    // disclosure, then add from inside the panel that lists them.
-    $page->assertSee('Customer For Location')
-        ->click('tr:has-text("Customer For Location") button:has-text("Locations")')
-        ->waitForText('+ Add location')
+    // Location management lives on the customer detail page, reached from the
+    // listing by clicking the customer name.
+    $this->visit('/customers')
+        ->assertSee('Customer For Location')
+        ->click('a:has-text("Customer For Location")')
+        ->waitForText('Locations (1)')
+        ->assertPathIs("/customers/{$customer->id}")
         ->click('button:has-text("+ Add location")')
         ->waitForText('Add Location')
         ->assertSee('Location Name')

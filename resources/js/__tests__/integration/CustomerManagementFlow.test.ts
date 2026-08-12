@@ -259,31 +259,6 @@ describe('CustomerManagementFlow', () => {
         expect(wrapper.text()).toContain('Bangalore, Karnataka');
     });
 
-    it('opens location modal for a customer', async () => {
-        const c = makeCustomerWithCount({ id: 10 });
-        const wrapper = mountComponent({
-            customers: makePaginatedCustomers([c]),
-        });
-
-        // Reaching the location manager is a two-step flow now: expand the row's
-        // "Locations (n)" disclosure, then add from inside the panel.
-        const disclosure = wrapper
-            .findAll('button')
-            .find((b) => b.text().startsWith('Locations ('));
-        expect(disclosure).toBeDefined();
-        await disclosure!.trigger('click');
-
-        const addBtn = wrapper
-            .findAll('button')
-            .find((b) => b.text() === '+ Add location');
-        expect(addBtn).toBeDefined();
-        await addBtn!.trigger('click');
-
-        expect(wrapper.find('[data-testid="location-modal"]').exists()).toBe(
-            true,
-        );
-    });
-
     it('searches customers on the server rather than filtering the page', async () => {
         vi.useFakeTimers();
 
