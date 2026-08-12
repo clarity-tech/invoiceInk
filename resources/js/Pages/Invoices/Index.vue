@@ -123,11 +123,11 @@ const tabs = [
 <template>
     <AppLayout title="Invoices & Estimates">
         <template #header>
-            <div class="flex items-center justify-between">
+            <div class="flex flex-wrap items-center justify-between gap-3">
                 <h2 class="text-xl leading-tight font-semibold text-gray-800">
                     Invoices & Estimates
                 </h2>
-                <div class="flex gap-2">
+                <div class="flex flex-wrap gap-2">
                     <a
                         href="/invoices/trash"
                         class="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50"
@@ -154,8 +154,8 @@ const tabs = [
 
         <div class="py-4">
             <!-- Filter Tabs and Status -->
-            <div class="mb-4 flex items-center justify-between">
-                <div class="flex gap-1 rounded-lg bg-gray-100 p-1">
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1">
                     <button
                         v-for="tab in tabs"
                         :key="tab.key"
@@ -174,7 +174,7 @@ const tabs = [
 
                 <select
                     v-model="statusFilter"
-                    class="rounded-md border-gray-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                    class="w-full max-w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:w-auto"
                     @change="onStatusChange"
                 >
                     <option value="">All Statuses</option>
