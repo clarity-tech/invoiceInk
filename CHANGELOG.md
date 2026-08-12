@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.3](https://github.com/clarity-tech/invoicing/compare/v1.1.2...v1.1.3) (2026-08-12)
+
+
+### Bug Fixes
+
+* **invoices:** duplicate opens an unsaved copy instead of creating one ([0a32e53](https://github.com/clarity-tech/invoicing/commit/0a32e5343588ee50da8b7d70e781d5622638ce99))
+* **urls:** pin the URL origin only when running on Cloud Run ([a3a0e48](https://github.com/clarity-tech/invoicing/commit/a3a0e483956391c5b21e7764abfc37b7a89b0cb2))
+
 ## [1.1.2](https://github.com/clarity-tech/invoicing/compare/v1.1.1...v1.1.2) (2026-08-11)
 
 
