@@ -46,6 +46,13 @@ const searchQuery = ref(props.filters.search ?? '');
 let searchTimeout: ReturnType<typeof setTimeout> | undefined;
 
 watch(searchQuery, (value) => {
+    // Skip when the box already agrees with the server, which is the case for
+    // the props-driven sync below. Without this, restoring the input would fire
+    // a redundant request for results the page is already showing.
+    if (value.trim() === (props.filters.search ?? '')) {
+        return;
+    }
+
     clearTimeout(searchTimeout);
 
     searchTimeout = setTimeout(() => {
@@ -57,6 +64,16 @@ watch(searchQuery, (value) => {
         });
     }, 300);
 });
+
+// Inertia reuses this component for same-page visits, so setup does not re-run.
+// Navigating back to an unfiltered /customers would otherwise leave the previous
+// term sitting in the box above a full, unfiltered list.
+watch(
+    () => props.filters.search,
+    (value) => {
+        searchQuery.value = value ?? '';
+    },
+);
 
 onUnmounted(() => {
     clearTimeout(searchTimeout);

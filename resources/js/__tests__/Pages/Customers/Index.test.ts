@@ -284,6 +284,45 @@ describe('Customers/Index', () => {
         expect(wrapper.text()).toContain('No results found');
     });
 
+    // Inertia reuses the component for same-page visits, so setup does not re-run.
+    // Navigating back to an unfiltered /customers must clear the box rather than
+    // leaving a stale term above a full, unfiltered list.
+    it('clears the search box when the server reports no active search', async () => {
+        const wrapper = mountComponent({
+            customers: makePaginatedCustomers([]),
+            filters: { search: 'Alpha' },
+        });
+
+        const input = wrapper.find('input[type="text"]');
+        expect((input.element as HTMLInputElement).value).toBe('Alpha');
+
+        await wrapper.setProps({
+            customers: makePaginatedCustomers([
+                makeCustomerWithCount({ id: 1, name: 'Beta Corp' }),
+            ]),
+            filters: { search: '' },
+        });
+
+        expect((input.element as HTMLInputElement).value).toBe('');
+        expect(wrapper.text()).toContain('Beta Corp');
+    });
+
+    it('does not re-request when the box is synced from server props', async () => {
+        vi.useFakeTimers();
+
+        try {
+            const wrapper = mountComponent({ filters: { search: 'Alpha' } });
+
+            await wrapper.setProps({ filters: { search: '' } });
+            vi.advanceTimersByTime(300);
+
+            // The sync is not a user edit, so it must not bounce a request back.
+            expect(mockRouterGet).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('opens create form on Add Customer click', async () => {
         const wrapper = mountComponent();
         const addBtn = wrapper
