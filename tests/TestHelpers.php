@@ -256,3 +256,58 @@ if (! function_exists('createNumberingSeries')) {
         return InvoiceNumberingSeries::create(array_merge($defaultAttributes, $attributes));
     }
 }
+
+if (! function_exists('seedInvoiceListFixture')) {
+    /**
+     * Seeds a fully set-up organization with `$documents` documents for the
+     * invoice list browser tests. The first is always an estimate, which
+     * carries the full six-action row — the worst case for both layout and for
+     * telling row actions apart by name.
+     *
+     * @return array{0: User, 1: Organization, 2: Customer}
+     */
+    function seedInvoiceListFixture(int $documents = 1): array
+    {
+        $user = User::factory()->withPersonalTeam()->create([
+            'name' => 'Maya Sharma',
+            'email' => 'invoice-list-a11y@example.test',
+        ]);
+
+        $organization = createOrganizationWithLocation([
+            'name' => 'Clarity Technologies',
+            'currency' => 'INR',
+            'country_code' => 'IN',
+            'setup_completed_at' => now(),
+        ], [], $user);
+
+        $customer = createCustomerWithLocation([
+            'name' => 'Riverbend Institute of Medical Sciences Limited',
+        ], [], $organization);
+
+        createInvoiceWithItems([
+            'invoice_number' => 'CT-EST-001',
+            'type' => 'estimate',
+            'status' => 'draft',
+            'currency' => 'INR',
+            'issued_at' => now(),
+            'subtotal' => 20000000,
+            'tax' => 3600000,
+            'total' => 23600000,
+        ], null, $organization, $customer);
+
+        for ($i = 1; $i < $documents; $i++) {
+            createInvoiceWithItems([
+                'invoice_number' => sprintf('CT-INV-%03d', $i),
+                'type' => 'invoice',
+                'status' => 'draft',
+                'currency' => 'INR',
+                'issued_at' => now()->subDays($i),
+                'subtotal' => 1000000,
+                'tax' => 180000,
+                'total' => 1180000,
+            ], null, $organization, $customer);
+        }
+
+        return [$user, $organization, $customer];
+    }
+}

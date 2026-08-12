@@ -89,51 +89,8 @@ function () {
 }
 JS;
 
-function seedListFixture(int $documents = 1): array
-{
-    $user = User::factory()->withPersonalTeam()->create([
-        'name' => 'Maya Sharma',
-        'email' => 'invoice-list-a11y@example.test',
-    ]);
-
-    $org = createOrganizationWithLocation([
-        'name' => 'Clarity Technologies',
-        'currency' => 'INR',
-        'country_code' => 'IN',
-        'setup_completed_at' => now(),
-    ], [], $user);
-
-    $customer = createCustomerWithLocation([
-        'name' => 'Riverbend Institute of Medical Sciences Limited',
-    ], [], $org);
-
-    // An estimate carries the full six-action row, the worst case for both
-    // layout and for distinguishing actions by name.
-    createInvoiceWithItems([
-        'invoice_number' => 'CT-EST-001',
-        'type' => 'estimate',
-        'status' => 'draft',
-        'currency' => 'INR',
-        'issued_at' => now(),
-        'subtotal' => 20000000, 'tax' => 3600000, 'total' => 23600000,
-    ], null, $org, $customer);
-
-    for ($i = 1; $i < $documents; $i++) {
-        createInvoiceWithItems([
-            'invoice_number' => sprintf('CT-INV-%03d', $i),
-            'type' => 'invoice',
-            'status' => 'draft',
-            'currency' => 'INR',
-            'issued_at' => now()->subDays($i),
-            'subtotal' => 1000000, 'tax' => 180000, 'total' => 1180000,
-        ], null, $org, $customer);
-    }
-
-    return [$user, $org, $customer];
-}
-
 it('meets AA contrast on the listing controls', function () {
-    [$user] = seedListFixture();
+    [$user] = seedInvoiceListFixture();
     $this->actingAs($user);
 
     $ratios = visit('/invoices')->resize(1440, 900)->script(CONTRAST_JS);
@@ -149,7 +106,7 @@ it('meets AA contrast on the listing controls', function () {
 });
 
 it('does not scroll the document sideways at desktop or mobile widths', function () {
-    [$user] = seedListFixture();
+    [$user] = seedInvoiceListFixture();
     $this->actingAs($user);
 
     $page = visit('/invoices');
@@ -172,7 +129,7 @@ it('does not scroll the document sideways at desktop or mobile widths', function
 });
 
 it('names every row action with the document it acts on', function () {
-    [$user] = seedListFixture();
+    [$user] = seedInvoiceListFixture();
     $this->actingAs($user);
 
     $labels = visit('/invoices')->resize(1440, 900)->script(<<<'JS'
@@ -195,13 +152,13 @@ it('names every row action with the document it acts on', function () {
         ['text' => 'Edit', 'label' => 'Edit estimate CT-EST-001'],
         ['text' => 'PDF', 'label' => 'Download PDF of estimate CT-EST-001'],
         ['text' => 'Duplicate', 'label' => 'Duplicate estimate CT-EST-001'],
-        ['text' => 'Convert', 'label' => 'Convert to invoice estimate CT-EST-001'],
+        ['text' => 'Convert', 'label' => 'Convert estimate CT-EST-001 to an invoice'],
         ['text' => 'Delete', 'label' => 'Delete estimate CT-EST-001'],
     ]);
 });
 
 it('exposes filter state and labels the status control', function () {
-    [$user] = seedListFixture();
+    [$user] = seedInvoiceListFixture();
     $this->actingAs($user);
 
     $page = visit('/invoices')->resize(1440, 900);
@@ -230,7 +187,7 @@ it('exposes filter state and labels the status control', function () {
 });
 
 it('gives the table column scopes and a caption', function () {
-    [$user] = seedListFixture();
+    [$user] = seedInvoiceListFixture();
     $this->actingAs($user);
 
     $semantics = visit('/invoices')->resize(1440, 900)->script(<<<'JS'
@@ -255,7 +212,7 @@ it('gives the table column scopes and a caption', function () {
 
 it('marks the current page in a navigable pagination list', function () {
     // 10 per page, so 12 documents forces a second page.
-    [$user] = seedListFixture(12);
+    [$user] = seedInvoiceListFixture(12);
     $this->actingAs($user);
 
     $pagination = visit('/invoices')->resize(1440, 900)->script(<<<'JS'
@@ -283,6 +240,42 @@ it('marks the current page in a navigable pagination list', function () {
     expect($pagination['anchorCount'])->toBeGreaterThan(0);
     expect($pagination['current'])->toBe(['1']);
     expect($pagination['labels'])->toContain('Go to page 2');
+});
+
+it('keeps focus in the document after an optimistic delete', function () {
+    [$user] = seedInvoiceListFixture(3);
+    $this->actingAs($user);
+
+    $page = visit('/invoices')->resize(1440, 900);
+
+    $page->click('button[aria-label="Delete invoice CT-INV-001"]')
+        ->waitForText('Delete Document')
+        ->click('[role="dialog"] button:has-text("Delete")')
+        ->wait(2);
+
+    $state = $page->script(<<<'JS'
+    function () {
+        const active = document.activeElement;
+
+        return {
+            rows: Array.from(document.querySelectorAll('tbody tr'))
+                .map(r => (r.textContent.match(/CT-(INV|EST)-\d+/) || [])[0])
+                .filter(Boolean),
+            focusLabel: active ? active.getAttribute('aria-label') : null,
+            focusIsBody: active === document.body,
+            announcement: (document.querySelector('[role="status"]') || {}).textContent || '',
+        };
+    }
+    JS);
+
+    // The row really is gone, so the dialog's focus restore has nothing to
+    // return to. Without an explicit hand-off, focus falls to <body> and a
+    // keyboard or screen reader user is dumped at the top of the document —
+    // which is what this asserts against.
+    expect($state['rows'])->not->toContain('CT-INV-001');
+    expect($state['focusIsBody'])->toBeFalse();
+    expect($state['focusLabel'])->toBe('Invoices and estimates list');
+    expect(trim($state['announcement']))->toBe('Invoice deleted successfully.');
 });
 
 it('hides the decorative empty-state icon from assistive technology', function () {

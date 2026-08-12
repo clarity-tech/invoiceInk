@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import MoneyDisplay from '@/Components/MoneyDisplay.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
@@ -63,7 +63,10 @@ function confirmDelete(invoice: Invoice) {
 
 const converting = ref<number | null>(null);
 
-function deleteInvoice() {
+/** Focus lands here after a delete removes the row that was focused. */
+const listRegion = ref<HTMLElement | null>(null);
+
+async function deleteInvoice() {
     if (!invoiceToDelete.value) {
         return;
     }
@@ -85,6 +88,15 @@ function deleteInvoice() {
         .delete(`/invoices/${id}`, {
             preserveScroll: true,
         });
+
+    // The dialog hands focus back to the row action that opened it, but the
+    // optimistic update has just removed that row — so the restore lands on a
+    // detached node and focus falls to <body>, dumping keyboard and screen
+    // reader users at the top of the document. Move focus to the list itself
+    // once the re-render has happened; nextTick runs after the dialog's
+    // pre-flush restore, so this wins.
+    await nextTick();
+    listRegion.value?.focus();
 }
 
 function convertEstimate(invoice: Invoice) {
@@ -221,7 +233,12 @@ const tabs = [
             </div>
 
             <!-- Table -->
-            <div class="overflow-x-auto bg-white shadow-sm sm:rounded-lg">
+            <div
+                ref="listRegion"
+                tabindex="-1"
+                aria-label="Invoices and estimates list"
+                class="overflow-x-auto bg-white shadow-sm focus:ring-2 focus:ring-brand-500 focus:outline-none sm:rounded-lg"
+            >
                 <table class="min-w-full divide-y divide-gray-200">
                     <caption class="sr-only">
                         Invoices and estimates
@@ -376,12 +393,7 @@ const tabs = [
                                         type="button"
                                         class="cursor-pointer text-purple-600 hover:text-purple-900 disabled:cursor-not-allowed disabled:opacity-50"
                                         :disabled="converting === invoice.id"
-                                        :aria-label="
-                                            actionLabel(
-                                                'Convert to invoice',
-                                                invoice,
-                                            )
-                                        "
+                                        :aria-label="`Convert ${invoice.type} ${invoice.invoice_number} to an invoice`"
                                         :aria-busy="converting === invoice.id"
                                         @click="convertEstimate(invoice)"
                                     >
