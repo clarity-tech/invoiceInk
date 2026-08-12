@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm, router } from '@inertiajs/vue3';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import CustomerForm from '@/Components/CustomerForm.vue';
 import LocationModal from '@/Components/LocationModal.vue';
@@ -33,6 +33,7 @@ const props = defineProps<{
     defaultPhoneCountry?: string | null;
     indianStates: Record<string, string>;
     gstTreatments: Record<string, string>;
+    filters: { search: string };
 }>();
 
 const isMounted = ref(false);
@@ -40,25 +41,30 @@ onMounted(() => {
     isMounted.value = true;
 });
 
-// Customer form state
-const searchQuery = ref('');
+/**
+ * Search runs on the server so it spans every page, not just the ten rows the
+ * current page happens to hold. Debounced so typing does not fire a request per
+ * keystroke; `preserveState` keeps the input focused across the round trip.
+ */
+const searchQuery = ref(props.filters.search ?? '');
 
-const filteredCustomers = computed(() => {
-    if (!searchQuery.value.trim()) {
-        return props.customers.data;
-    }
+let searchTimeout: ReturnType<typeof setTimeout> | undefined;
 
-    const q = searchQuery.value.toLowerCase();
+watch(searchQuery, (value) => {
+    clearTimeout(searchTimeout);
 
-    return props.customers.data.filter((c) => {
-        const email = primaryEmail(c);
+    searchTimeout = setTimeout(() => {
+        router.get('/customers', value.trim() ? { search: value.trim() } : {}, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            only: ['customers', 'filters'],
+        });
+    }, 300);
+});
 
-        return (
-            c.name.toLowerCase().includes(q) ||
-            (email && email.toLowerCase().includes(q)) ||
-            (c.phone && c.phone.includes(q))
-        );
-    });
+onUnmounted(() => {
+    clearTimeout(searchTimeout);
 });
 
 const showForm = ref(false);
@@ -170,9 +176,9 @@ function toggleExpand(customerId: number) {
     if (expandedRows.value.has(customerId)) {
         expandedRows.value.delete(customerId);
     } else {
+        // No reload needed: index() already eager-loads locations and
+        // archivedLocations, so the data is on the page.
         expandedRows.value.add(customerId);
-        // Reload the page to get fresh location data
-        router.reload({ only: ['customers'] });
     }
 }
 
@@ -333,7 +339,7 @@ function locationSummary(customer: Customer): string {
                     <input
                         v-model="searchQuery"
                         type="text"
-                        placeholder="Filter this page by name, email, or phone..."
+                        placeholder="Search by name, email, or phone..."
                         class="block w-full rounded-md border-gray-300 pl-10 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500"
                     />
                 </div>
@@ -398,34 +404,33 @@ function locationSummary(customer: Customer): string {
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="w-8 px-3 py-3"></th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Name
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Email
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Phone
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Currency
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Location
                             </th>
                             <th
-                                class="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Actions
                             </th>
@@ -433,19 +438,60 @@ function locationSummary(customer: Customer): string {
                     </thead>
                     <tbody class="divide-y divide-gray-200 bg-white">
                         <template
-                            v-for="customer in filteredCustomers"
+                            v-for="customer in customers.data"
                             :key="customer.id"
                         >
                             <tr class="hover:bg-gray-50">
-                                <td class="px-3 py-4">
+                                <td
+                                    class="px-4 py-4 text-sm font-medium text-gray-900"
+                                >
+                                    <div
+                                        class="max-w-[260px] truncate"
+                                        :title="customer.name"
+                                    >
+                                        {{ customer.name }}
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 text-sm text-gray-500">
+                                    <div
+                                        class="max-w-[260px] truncate"
+                                        :title="primaryEmail(customer)"
+                                    >
+                                        {{ primaryEmail(customer) }}
+                                    </div>
+                                </td>
+                                <td
+                                    class="px-4 py-4 text-sm whitespace-nowrap text-gray-500"
+                                >
+                                    {{ customer.formatted_phone ?? '-' }}
+                                </td>
+                                <td
+                                    class="px-4 py-4 text-sm whitespace-nowrap text-gray-500"
+                                >
+                                    {{ customer.currency ?? '-' }}
+                                </td>
+                                <td class="px-4 py-4 text-sm text-gray-500">
+                                    <div
+                                        class="max-w-[200px] truncate"
+                                        :title="locationSummary(customer)"
+                                    >
+                                        {{ locationSummary(customer) }}
+                                    </div>
+                                    <!--
+                                        Always rendered, including at zero: this is the only
+                                        entry point to the location manager, so a customer
+                                        with no locations must still be able to add one.
+                                    -->
                                     <button
-                                        v-if="customer.locations_count > 0"
                                         type="button"
-                                        class="text-gray-400 hover:text-gray-600"
+                                        class="mt-1 inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-900"
+                                        :aria-expanded="
+                                            expandedRows.has(customer.id)
+                                        "
                                         @click="toggleExpand(customer.id)"
                                     >
                                         <svg
-                                            class="h-4 w-4 transition-transform"
+                                            class="h-3 w-3 transition-transform"
                                             :class="{
                                                 'rotate-90': expandedRows.has(
                                                     customer.id,
@@ -462,48 +508,18 @@ function locationSummary(customer: Customer): string {
                                                 d="M9 5l7 7-7 7"
                                             />
                                         </svg>
+                                        Locations ({{
+                                            customer.locations_count
+                                        }})
                                     </button>
                                 </td>
                                 <td
-                                    class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900"
-                                >
-                                    {{ customer.name }}
-                                </td>
-                                <td
-                                    class="px-6 py-4 text-sm whitespace-nowrap text-gray-500"
-                                >
-                                    {{ primaryEmail(customer) }}
-                                </td>
-                                <td
-                                    class="px-6 py-4 text-sm whitespace-nowrap text-gray-500"
-                                >
-                                    {{ customer.formatted_phone ?? '-' }}
-                                </td>
-                                <td
-                                    class="px-6 py-4 text-sm whitespace-nowrap text-gray-500"
-                                >
-                                    {{ customer.currency ?? '-' }}
-                                </td>
-                                <td
-                                    class="px-6 py-4 text-sm whitespace-nowrap text-gray-500"
-                                >
-                                    {{ locationSummary(customer) }}
-                                </td>
-                                <td
-                                    class="px-6 py-4 text-right text-sm whitespace-nowrap"
+                                    class="px-4 py-4 text-right text-sm whitespace-nowrap"
                                 >
                                     <button
                                         v-if="can('update')"
                                         type="button"
-                                        class="mr-3 text-brand-600 hover:text-brand-900"
-                                        @click="openAddLocation(customer.id)"
-                                    >
-                                        + Location
-                                    </button>
-                                    <button
-                                        v-if="can('update')"
-                                        type="button"
-                                        class="mr-3 text-brand-600 hover:text-brand-900"
+                                        class="mr-3 cursor-pointer text-brand-600 hover:text-brand-900"
                                         @click="openEdit(customer)"
                                     >
                                         Edit
@@ -511,7 +527,7 @@ function locationSummary(customer: Customer): string {
                                     <button
                                         v-if="can('delete')"
                                         type="button"
-                                        class="text-red-600 hover:text-red-900"
+                                        class="cursor-pointer text-red-600 hover:text-red-900"
                                         @click="confirmDelete(customer)"
                                     >
                                         Delete
@@ -519,14 +535,8 @@ function locationSummary(customer: Customer): string {
                                 </td>
                             </tr>
                             <!-- Expanded locations -->
-                            <tr
-                                v-if="
-                                    expandedRows.has(customer.id) &&
-                                    (customer.locations?.length ||
-                                        customer.archived_locations?.length)
-                                "
-                            >
-                                <td colspan="7" class="bg-gray-50 px-6 py-3">
+                            <tr v-if="expandedRows.has(customer.id)">
+                                <td colspan="6" class="bg-gray-50 px-4 py-3">
                                     <template v-if="customer.locations?.length">
                                         <div
                                             class="mb-2 text-xs font-medium text-gray-500 uppercase"
@@ -620,6 +630,10 @@ function locationSummary(customer: Customer): string {
                                             </div>
                                         </div>
                                     </template>
+                                    <p v-else class="text-sm text-gray-500">
+                                        No locations yet. An invoice needs a
+                                        billing address, so add one here.
+                                    </p>
 
                                     <template
                                         v-if="
@@ -699,11 +713,20 @@ function locationSummary(customer: Customer): string {
                                             </div>
                                         </div>
                                     </template>
+
+                                    <button
+                                        v-if="can('update')"
+                                        type="button"
+                                        class="mt-3 cursor-pointer text-sm font-medium text-brand-600 hover:text-brand-900"
+                                        @click="openAddLocation(customer.id)"
+                                    >
+                                        + Add location
+                                    </button>
                                 </td>
                             </tr>
                         </template>
-                        <tr v-if="filteredCustomers.length === 0">
-                            <td colspan="7" class="px-6 py-12 text-center">
+                        <tr v-if="customers.data.length === 0">
+                            <td colspan="6" class="px-4 py-12 text-center">
                                 <template v-if="searchQuery">
                                     <svg
                                         class="mx-auto h-12 w-12 text-gray-300"

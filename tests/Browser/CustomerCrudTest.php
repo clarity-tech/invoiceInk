@@ -130,8 +130,12 @@ it('opens add location modal for a customer', function () {
 
     $page = $this->visit('/customers');
 
+    // Adding a location is a two-step flow: expand the row's "Locations (n)"
+    // disclosure, then add from inside the panel that lists them.
     $page->assertSee('Customer For Location')
-        ->click('button:has-text("+ Location")')
+        ->click('tr:has-text("Customer For Location") button:has-text("Locations")')
+        ->waitForText('+ Add location')
+        ->click('button:has-text("+ Add location")')
         ->waitForText('Add Location')
         ->assertSee('Location Name')
         ->assertSee('Address Line 1');

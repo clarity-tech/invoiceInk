@@ -9,6 +9,7 @@ const {
     mockOptimistic,
     mockReset,
     mockClearErrors,
+    mockRouterGet,
 } = vi.hoisted(() => {
     const mockOptimisticDelete = vi.fn();
     return {
@@ -20,6 +21,7 @@ const {
             .mockReturnValue({ delete: mockOptimisticDelete }),
         mockReset: vi.fn(),
         mockClearErrors: vi.fn(),
+        mockRouterGet: vi.fn(),
     };
 });
 
@@ -47,7 +49,7 @@ vi.mock('@inertiajs/vue3', () => ({
     Head: { template: '<div />' },
     Link: { template: '<a><slot /></a>' },
     router: {
-        get: vi.fn(),
+        get: mockRouterGet,
         post: vi.fn(),
         delete: vi.fn(),
         reload: vi.fn(),
@@ -115,6 +117,9 @@ const defaultProps = () => ({
     countries: { IN: '🇮🇳 India', US: '🇺🇸 United States' },
     countryNames: { IN: 'India', US: 'United States' },
     taxLabels: { IN: 'GSTIN', US: 'EIN' },
+    indianStates: {},
+    gstTreatments: {},
+    filters: { search: '' },
 });
 
 function mountComponent(propsOverride = {}) {
@@ -260,28 +265,49 @@ describe('CustomerManagementFlow', () => {
             customers: makePaginatedCustomers([c]),
         });
 
-        const locBtn = wrapper
+        // Reaching the location manager is a two-step flow now: expand the row's
+        // "Locations (n)" disclosure, then add from inside the panel.
+        const disclosure = wrapper
             .findAll('button')
-            .find((b) => b.text() === '+ Location');
-        await locBtn!.trigger('click');
+            .find((b) => b.text().startsWith('Locations ('));
+        expect(disclosure).toBeDefined();
+        await disclosure!.trigger('click');
+
+        const addBtn = wrapper
+            .findAll('button')
+            .find((b) => b.text() === '+ Add location');
+        expect(addBtn).toBeDefined();
+        await addBtn!.trigger('click');
 
         expect(wrapper.find('[data-testid="location-modal"]').exists()).toBe(
             true,
         );
     });
 
-    it('filters customers via search', async () => {
-        const c1 = makeCustomerWithCount({ id: 1, name: 'Alpha Inc' });
-        const c2 = makeCustomerWithCount({ id: 2, name: 'Beta Corp' });
-        const wrapper = mountComponent({
-            customers: makePaginatedCustomers([c1, c2]),
-        });
+    it('searches customers on the server rather than filtering the page', async () => {
+        vi.useFakeTimers();
 
-        const input = wrapper.find('input[type="text"]');
-        await input.setValue('Alpha');
+        try {
+            const c1 = makeCustomerWithCount({ id: 1, name: 'Alpha Inc' });
+            const c2 = makeCustomerWithCount({ id: 2, name: 'Beta Corp' });
+            const wrapper = mountComponent({
+                customers: makePaginatedCustomers([c1, c2]),
+            });
 
-        expect(wrapper.text()).toContain('Alpha Inc');
-        expect(wrapper.text()).not.toContain('Beta Corp');
+            await wrapper.find('input[type="text"]').setValue('Alpha');
+            vi.advanceTimersByTime(300);
+
+            // Rows are whatever the server sent; the component does not filter
+            // them locally, which is what made search miss customers on other pages.
+            expect(mockRouterGet).toHaveBeenCalledWith(
+                '/customers',
+                { search: 'Alpha' },
+                expect.objectContaining({ preserveState: true }),
+            );
+            expect(wrapper.text()).toContain('Beta Corp');
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it('shows empty state with no customers', () => {

@@ -35,6 +35,110 @@ test('index shows paginated customers', function () {
         );
 });
 
+test('index searches customers by name', function () {
+    $organization = createOrganizationWithLocation();
+
+    createCustomerWithLocation(['name' => 'Alpha Trading'], [], $organization);
+    createCustomerWithLocation(['name' => 'Beta Industries'], [], $organization);
+
+    $this->actingAs($organization->owner);
+
+    $this->get('/customers?search=Alpha')
+        ->assertInertia(fn ($page) => $page
+            ->has('customers.data', 1)
+            ->where('customers.data.0.name', 'Alpha Trading')
+            ->where('filters.search', 'Alpha')
+        );
+});
+
+test('index searches customers by email', function () {
+    $organization = createOrganizationWithLocation();
+
+    createCustomerWithLocation([
+        'name' => 'Alpha Trading',
+        'emails' => new ContactCollection([['name' => 'AP', 'email' => 'payables@alpha-trading.test']]),
+    ], [], $organization);
+    createCustomerWithLocation([
+        'name' => 'Beta Industries',
+        'emails' => new ContactCollection([['name' => 'AP', 'email' => 'payables@beta-industries.test']]),
+    ], [], $organization);
+
+    $this->actingAs($organization->owner);
+
+    $this->get('/customers?search=beta-industries')
+        ->assertInertia(fn ($page) => $page
+            ->has('customers.data', 1)
+            ->where('customers.data.0.name', 'Beta Industries')
+        );
+});
+
+test('index searches customers by phone', function () {
+    $organization = createOrganizationWithLocation();
+
+    createCustomerWithLocation(['name' => 'Alpha Trading', 'phone' => '+914012345678'], [], $organization);
+    createCustomerWithLocation(['name' => 'Beta Industries', 'phone' => '+914066778899'], [], $organization);
+
+    $this->actingAs($organization->owner);
+
+    $this->get('/customers?search=4066778899')
+        ->assertInertia(fn ($page) => $page
+            ->has('customers.data', 1)
+            ->where('customers.data.0.name', 'Beta Industries')
+        );
+});
+
+test('index search spans every page, not just the first', function () {
+    // The regression this replaces: search used to filter only the ten rows the
+    // current page happened to hold, so a match on page 3 was silently invisible.
+    $organization = createOrganizationWithLocation();
+
+    for ($i = 1; $i <= 25; $i++) {
+        createCustomerWithLocation(['name' => "Filler Customer {$i}"], [], $organization);
+    }
+
+    createCustomerWithLocation(['name' => 'Zzz Last Customer'], [], $organization);
+
+    $this->actingAs($organization->owner);
+
+    $this->get('/customers?search=Zzz Last')
+        ->assertInertia(fn ($page) => $page
+            ->has('customers.data', 1)
+            ->where('customers.data.0.name', 'Zzz Last Customer')
+        );
+});
+
+test('index search keeps the query across pagination links', function () {
+    $organization = createOrganizationWithLocation();
+
+    for ($i = 1; $i <= 15; $i++) {
+        createCustomerWithLocation(['name' => "Match Customer {$i}"], [], $organization);
+    }
+
+    $this->actingAs($organization->owner);
+
+    $this->get('/customers?search=Match')
+        ->assertInertia(fn ($page) => $page
+            ->has('customers.data', 10)
+            ->where('customers.total', 15)
+            // withQueryString(): without it, page 2 would drop the search and
+            // silently show unfiltered results.
+            ->where('customers.next_page_url', fn ($url) => str_contains((string) $url, 'search=Match'))
+        );
+});
+
+test('index search does not leak customers from another organization', function () {
+    $organization = createOrganizationWithLocation();
+    $other = createOrganizationWithLocation();
+
+    createCustomerWithLocation(['name' => 'Shared Name Corp'], [], $organization);
+    createCustomerWithLocation(['name' => 'Shared Name Corp'], [], $other);
+
+    $this->actingAs($organization->owner);
+
+    $this->get('/customers?search=Shared Name')
+        ->assertInertia(fn ($page) => $page->has('customers.data', 1));
+});
+
 test('can create customer', function () {
     $user = createUserWithTeam();
     $this->actingAs($user);

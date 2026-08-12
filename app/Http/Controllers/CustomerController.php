@@ -23,20 +23,32 @@ use Inertia\Response;
 
 class CustomerController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $this->authorize('viewAny', Customer::class);
 
+        $search = trim((string) $request->input('search', ''));
+
         $customers = Customer::with(['primaryLocation', 'locations', 'archivedLocations'])
             ->withCount('locations')
+            ->when($search !== '', fn ($query) => $query->where(
+                // `emails` is a JSON column matched as text: portable across MySQL
+                // (local/production) and the SQLite in-memory test connection, unlike
+                // JSON_SEARCH. It matches contact names as well as addresses.
+                fn ($query) => $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('emails', 'like', "%{$search}%")
+            ))
             ->latest()
             ->orderBy('id')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
-        $organization = request()->user()?->currentTeam;
+        $organization = $request->user()?->currentTeam;
 
         return Inertia::render('Customers/Index', [
             'customers' => $customers,
+            'filters' => ['search' => $search],
             'currencies' => Currency::options(),
             'countries' => Country::options(),
             'countryNames' => Country::names(),

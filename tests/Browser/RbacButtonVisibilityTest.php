@@ -56,7 +56,7 @@ it('hides location delete buttons from an editor', function () {
     $this->actingAs(rbacBrowserMember($org, 'editor'));
 
     $this->visit('/customers')
-        ->click('tr:has-text("Test Customer") button >> nth=0')
+        ->click('tr:has-text("Test Customer") button:has-text("Locations")')
         ->waitForText('Branch Office')
         ->assertSee('Set Primary') // editor keeps update-level controls
         ->assertSee('Edit')
@@ -70,7 +70,7 @@ it('hides every location action from a viewer', function () {
     $this->actingAs(rbacBrowserMember($org, 'viewer'));
 
     $this->visit('/customers')
-        ->click('tr:has-text("Test Customer") button >> nth=0')
+        ->click('tr:has-text("Test Customer") button:has-text("Locations")')
         ->waitForText('Branch Office')
         ->assertDontSee('Set Primary')
         ->assertDontSee('Edit')
@@ -85,7 +85,7 @@ it('shows location delete buttons to an admin', function () {
     $this->actingAs(rbacBrowserMember($org, 'admin'));
 
     $this->visit('/customers')
-        ->click('tr:has-text("Test Customer") button >> nth=0')
+        ->click('tr:has-text("Test Customer") button:has-text("Locations")')
         ->waitForText('Branch Office')
         ->assertSee('Set Primary')
         ->assertSee('Delete');

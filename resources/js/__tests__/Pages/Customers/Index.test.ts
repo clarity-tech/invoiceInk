@@ -125,6 +125,7 @@ const defaultProps = () => ({
     taxLabels: { IN: 'GSTIN', US: 'EIN' },
     indianStates: {},
     gstTreatments: {},
+    filters: { search: '' },
 });
 
 function mountComponent(propsOverride = {}) {
@@ -216,28 +217,69 @@ describe('Customers/Index', () => {
         expect(wrapper.text()).toContain('Add your first customer');
     });
 
-    it('filters customers by search query', async () => {
-        const c1 = makeCustomerWithCount({ id: 1, name: 'Alpha Inc' });
-        const c2 = makeCustomerWithCount({ id: 2, name: 'Beta Corp' });
-        const wrapper = mountComponent({
-            customers: makePaginatedCustomers([c1, c2]),
-        });
+    // Search runs on the server so it spans every page, not just the ten rows
+    // the current page holds. The component's job is to issue one debounced
+    // request, not to filter rows itself.
+    it('issues a debounced server-side search request', async () => {
+        vi.useFakeTimers();
 
-        const input = wrapper.find('input[type="text"]');
-        await input.setValue('Alpha');
+        try {
+            const c1 = makeCustomerWithCount({ id: 1, name: 'Alpha Inc' });
+            const wrapper = mountComponent({
+                customers: makePaginatedCustomers([c1]),
+            });
 
-        expect(wrapper.text()).toContain('Alpha Inc');
-        expect(wrapper.text()).not.toContain('Beta Corp');
+            await wrapper.find('input[type="text"]').setValue('Alpha');
+
+            // Still inside the debounce window: nothing sent yet.
+            expect(mockRouterGet).not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(300);
+
+            expect(mockRouterGet).toHaveBeenCalledWith(
+                '/customers',
+                { search: 'Alpha' },
+                expect.objectContaining({
+                    preserveState: true,
+                    replace: true,
+                }),
+            );
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
-    it('shows no results message when search matches nothing', async () => {
-        const c = makeCustomerWithCount({ name: 'Alpha Inc' });
-        const wrapper = mountComponent({
-            customers: makePaginatedCustomers([c]),
-        });
+    it('collapses a burst of keystrokes into a single request', async () => {
+        vi.useFakeTimers();
 
-        const input = wrapper.find('input[type="text"]');
-        await input.setValue('zzzznotfound');
+        try {
+            const wrapper = mountComponent();
+            const input = wrapper.find('input[type="text"]');
+
+            await input.setValue('A');
+            await input.setValue('Al');
+            await input.setValue('Alp');
+
+            vi.advanceTimersByTime(300);
+
+            expect(mockRouterGet).toHaveBeenCalledTimes(1);
+            expect(mockRouterGet).toHaveBeenCalledWith(
+                '/customers',
+                { search: 'Alp' },
+                expect.anything(),
+            );
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('shows no results message when a search returns nothing', () => {
+        // The server has already filtered and come back empty; the component
+        // distinguishes "no matches" from "no customers yet" via filters.search.
+        const wrapper = mountComponent({
+            customers: makePaginatedCustomers([]),
+            filters: { search: 'zzzznotfound' },
+        });
 
         expect(wrapper.text()).toContain('No results found');
     });
@@ -326,19 +368,29 @@ describe('Customers/Index', () => {
         expect(wrapper.text()).toContain('USD');
     });
 
-    it('opens Add Location modal', async () => {
+    it('opens Add Location modal from the expanded locations panel', async () => {
         const c = makeCustomerWithCount({ id: 10 });
         const wrapper = mountComponent({
             customers: makePaginatedCustomers([c]),
         });
 
-        const locBtn = wrapper
+        // The disclosure is the only entry point to the location manager, and it
+        // renders even at zero locations.
+        const disclosure = wrapper
             .findAll('button')
-            .find((b) => b.text() === '+ Location');
-        await locBtn!.trigger('click');
+            .find((b) => b.text().startsWith('Locations ('));
+        expect(disclosure).toBeDefined();
+        await disclosure!.trigger('click');
 
-        const modal = wrapper.find('[data-testid="location-modal"]');
-        expect(modal.exists()).toBe(true);
+        const addBtn = wrapper
+            .findAll('button')
+            .find((b) => b.text() === '+ Add location');
+        expect(addBtn).toBeDefined();
+        await addBtn!.trigger('click');
+
+        expect(wrapper.find('[data-testid="location-modal"]').exists()).toBe(
+            true,
+        );
     });
 
     it('labels each location tax number by its country', async () => {
