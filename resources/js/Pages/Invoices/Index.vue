@@ -146,7 +146,7 @@ const tabs = [
                     <a
                         v-if="can('create')"
                         href="/estimates/create"
-                        class="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700"
+                        class="rounded-md bg-green-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-800"
                     >
                         Create Estimate
                     </a>
@@ -178,7 +178,7 @@ const tabs = [
                         :class="
                             activeTab === tab.key
                                 ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700'
+                                : 'text-gray-600 hover:text-gray-900'
                         "
                         @click="setTab(tab.key)"
                     >
@@ -325,7 +325,7 @@ const tabs = [
                                         :href="publicUrl(invoice)"
                                         target="_blank"
                                         :aria-label="`${actionLabel('View', invoice)} (opens in a new tab)`"
-                                        class="text-green-600 hover:text-green-900"
+                                        class="text-green-700 hover:text-green-900"
                                         >View</a
                                     >
                                     <a
@@ -427,7 +427,7 @@ const tabs = [
                                     >
                                     <a
                                         href="/estimates/create"
-                                        class="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700"
+                                        class="rounded-md bg-green-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-800"
                                         >Create Estimate</a
                                     >
                                 </div>
