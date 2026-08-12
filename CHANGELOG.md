@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2.0](https://github.com/clarity-tech/invoicing/compare/v1.1.3...v1.2.0) (2026-08-12)
+
+
+### Features
+
+* **a11y:** announce flash outcomes and trap focus in ConfirmationModal ([e9bd8b5](https://github.com/clarity-tech/invoicing/commit/e9bd8b54bd002ba62c01c2b0be6bc51f5f3fdee5)), closes [#33](https://github.com/clarity-tech/invoicing/issues/33)
+* **invoices:** give the listing accessible names and table semantics ([90b2616](https://github.com/clarity-tech/invoicing/commit/90b26160c84bb753924597c5e5fdb0134e01810c)), closes [#33](https://github.com/clarity-tech/invoicing/issues/33)
+
+
+### Bug Fixes
+
+* **invoices:** hand focus to the list when a delete removes the focused row ([806464e](https://github.com/clarity-tech/invoicing/commit/806464e2d9b3ec2d7c3bf42d37ba7d49516f8f67)), closes [#33](https://github.com/clarity-tech/invoicing/issues/33)
+* **invoices:** make pagination real links with a current-page marker ([8016272](https://github.com/clarity-tech/invoicing/commit/801627240ba8b3eea722a717cfc0860337952d24)), closes [#33](https://github.com/clarity-tech/invoicing/issues/33)
+* **invoices:** raise listing text contrast to meet WCAG AA ([4e6dba4](https://github.com/clarity-tech/invoicing/commit/4e6dba4acffb2eea54f18ef1cea451b1373e9e0e)), closes [#33](https://github.com/clarity-tech/invoicing/issues/33)
+* **invoices:** stop the listing header and filters overflowing on mobile ([19eee4b](https://github.com/clarity-tech/invoicing/commit/19eee4b710187619dea885e2d962f19376b1280e)), closes [#33](https://github.com/clarity-tech/invoicing/issues/33)
+
 ## [1.1.3](https://github.com/clarity-tech/invoicing/compare/v1.1.2...v1.1.3) (2026-08-12)
 
 
