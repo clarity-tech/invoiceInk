@@ -101,6 +101,15 @@ function convertEstimate(invoice: Invoice) {
     );
 }
 
+/**
+ * Row actions are otherwise a page full of identical "View" / "Edit" / "PDF"
+ * links. Naming each one with its document makes them distinguishable in a
+ * screen reader's element list, where they are read out of context.
+ */
+function actionLabel(action: string, invoice: Invoice): string {
+    return `${action} ${invoice.type} ${invoice.invoice_number}`;
+}
+
 function publicUrl(invoice: Invoice): string {
     return invoice.type === 'invoice'
         ? `/invoices/view/${invoice.ulid}`
@@ -155,11 +164,16 @@ const tabs = [
         <div class="py-4">
             <!-- Filter Tabs and Status -->
             <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div class="flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1">
+                <div
+                    role="group"
+                    aria-label="Filter by document type"
+                    class="flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1"
+                >
                     <button
                         v-for="tab in tabs"
                         :key="tab.key"
                         type="button"
+                        :aria-pressed="activeTab === tab.key"
                         class="cursor-pointer rounded-md px-4 py-2 text-sm font-medium transition-colors"
                         :class="
                             activeTab === tab.key
@@ -172,7 +186,11 @@ const tabs = [
                     </button>
                 </div>
 
+                <label for="status-filter" class="sr-only">
+                    Filter by status
+                </label>
                 <select
+                    id="status-filter"
                     v-model="statusFilter"
                     class="w-full max-w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:w-auto"
                     @change="onStatusChange"
@@ -191,39 +209,49 @@ const tabs = [
             <!-- Table -->
             <div class="overflow-x-auto bg-white shadow-sm sm:rounded-lg">
                 <table class="min-w-full divide-y divide-gray-200">
+                    <caption class="sr-only">
+                        Invoices and estimates
+                    </caption>
                     <thead class="bg-gray-50">
                         <tr>
                             <th
+                                scope="col"
                                 class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Type
                             </th>
                             <th
+                                scope="col"
                                 class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Number
                             </th>
                             <th
+                                scope="col"
                                 class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Customer
                             </th>
                             <th
+                                scope="col"
                                 class="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Total
                             </th>
                             <th
+                                scope="col"
                                 class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Status
                             </th>
                             <th
+                                scope="col"
                                 class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Date
                             </th>
                             <th
+                                scope="col"
                                 class="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
                             >
                                 Actions
@@ -296,17 +324,22 @@ const tabs = [
                                     <a
                                         :href="publicUrl(invoice)"
                                         target="_blank"
+                                        :aria-label="`${actionLabel('View', invoice)} (opens in a new tab)`"
                                         class="text-green-600 hover:text-green-900"
                                         >View</a
                                     >
                                     <a
                                         v-if="can('update')"
                                         :href="`/invoices/${invoice.id}/edit`"
+                                        :aria-label="
+                                            actionLabel('Edit', invoice)
+                                        "
                                         class="text-brand-600 hover:text-brand-900"
                                         >Edit</a
                                     >
                                     <a
                                         :href="pdfUrl(invoice)"
+                                        :aria-label="`Download PDF of ${invoice.type} ${invoice.invoice_number}`"
                                         class="text-red-600 hover:text-red-900"
                                         >PDF</a
                                     >
@@ -315,6 +348,9 @@ const tabs = [
                                     <a
                                         v-if="can('create')"
                                         :href="`/invoices/${invoice.id}/duplicate`"
+                                        :aria-label="
+                                            actionLabel('Duplicate', invoice)
+                                        "
                                         class="text-gray-600 hover:text-gray-900"
                                         >Duplicate</a
                                     >
@@ -326,6 +362,13 @@ const tabs = [
                                         type="button"
                                         class="cursor-pointer text-purple-600 hover:text-purple-900 disabled:cursor-not-allowed disabled:opacity-50"
                                         :disabled="converting === invoice.id"
+                                        :aria-label="
+                                            actionLabel(
+                                                'Convert to invoice',
+                                                invoice,
+                                            )
+                                        "
+                                        :aria-busy="converting === invoice.id"
                                         @click="convertEstimate(invoice)"
                                     >
                                         {{
@@ -337,6 +380,9 @@ const tabs = [
                                     <button
                                         v-if="can('delete')"
                                         type="button"
+                                        :aria-label="
+                                            actionLabel('Delete', invoice)
+                                        "
                                         class="cursor-pointer text-red-600 hover:text-red-900"
                                         @click="confirmDelete(invoice)"
                                     >
@@ -349,6 +395,7 @@ const tabs = [
                             <td colspan="7" class="px-6 py-12 text-center">
                                 <svg
                                     class="mx-auto h-12 w-12 text-gray-300"
+                                    aria-hidden="true"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                     stroke-width="1"
