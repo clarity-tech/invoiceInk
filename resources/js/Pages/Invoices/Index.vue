@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import MoneyDisplay from '@/Components/MoneyDisplay.vue';
@@ -108,6 +108,20 @@ function convertEstimate(invoice: Invoice) {
  */
 function actionLabel(action: string, invoice: Invoice): string {
     return `${action} ${invoice.type} ${invoice.invoice_number}`;
+}
+
+/**
+ * Paginator labels arrive as markup ("&laquo; Previous", "1"). They are still
+ * rendered as-is so the chevrons show, but a link announced as just "1" says
+ * nothing about where it goes, so numeric pages get a spoken label.
+ */
+function pageLinkLabel(label: string): string {
+    const text = label
+        .replace(/&laquo;|&raquo;|«|»/g, '')
+        .replace(/<[^>]*>/g, '')
+        .trim();
+
+    return /^\d+$/.test(text) ? `Go to page ${text}` : text;
 }
 
 function publicUrl(invoice: Invoice): string {
@@ -439,6 +453,7 @@ const tabs = [
                 <!-- Pagination -->
                 <nav
                     v-if="invoices.last_page > 1"
+                    aria-label="Pagination"
                     class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6"
                 >
                     <div class="hidden sm:block">
@@ -461,16 +476,17 @@ const tabs = [
                             v-for="link in invoices.links"
                             :key="link.label"
                         >
-                            <button
+                            <Link
                                 v-if="link.url"
-                                type="button"
-                                class="relative inline-flex cursor-pointer items-center rounded-md border px-4 py-2 text-sm font-medium"
+                                :href="link.url"
+                                :aria-current="link.active ? 'page' : undefined"
+                                :aria-label="pageLinkLabel(link.label)"
+                                class="relative inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium"
                                 :class="
                                     link.active
                                         ? 'border-brand-500 bg-brand-50 text-brand-600'
                                         : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                                 "
-                                @click="router.get(link.url!)"
                                 v-html="link.label"
                             />
                             <span
