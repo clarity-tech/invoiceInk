@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.0](https://github.com/clarity-tech/invoicing/compare/v1.2.0...v1.3.0) (2026-08-13)
+
+
+### Features
+
+* **customers:** add a customer detail page that owns location management ([b1c3b56](https://github.com/clarity-tech/invoicing/commit/b1c3b564e19dbf778065967a71bd3a0de4de868e))
+
+
+### Bug Fixes
+
+* **customers:** make edit and location management reachable in the listing ([c229618](https://github.com/clarity-tech/invoicing/commit/c229618ad9896b7c3a57421255a5a04245ffdc76))
+
 ## [1.2.0](https://github.com/clarity-tech/invoicing/compare/v1.1.3...v1.2.0) (2026-08-12)
 
 
