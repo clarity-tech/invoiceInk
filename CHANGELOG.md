@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/clarity-tech/invoicing/compare/v1.3.0...v1.3.1) (2026-08-13)
+
+
+### Bug Fixes
+
+* **customers:** clear the search box when the server reports no active search ([2c4a32f](https://github.com/clarity-tech/invoicing/commit/2c4a32fa2b698d841915ca99c006807cca5d3bf3))
+
 ## [1.3.0](https://github.com/clarity-tech/invoicing/compare/v1.2.0...v1.3.0) (2026-08-13)
 
 
