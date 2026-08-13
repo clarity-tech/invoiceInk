@@ -604,7 +604,7 @@ test('send email remembers the sent recipients as checked', function () {
         'body' => 'Body',
     ])->assertRedirect();
 
-    Mail::assertQueued(
+    Mail::assertSent(
         DocumentMailer::class,
         fn (DocumentMailer $mail) => $mail->recipients->getEmails() === ['billing@example.test', 'ops@example.test'],
     );
@@ -746,7 +746,7 @@ test('send email persists uploaded attachments to the invoice and forwards them 
         'attachments' => [$contract, $photo],
     ])->assertRedirect();
 
-    Mail::assertQueued(DocumentMailer::class, function (DocumentMailer $mail) {
+    Mail::assertSent(DocumentMailer::class, function (DocumentMailer $mail) {
         return count($mail->extraAttachments) === 2
             && $mail->extraAttachments[0]['name'] === 'contract.pdf'
             && $mail->extraAttachments[1]['name'] === 'photo.png';
@@ -774,7 +774,7 @@ test('send email includes selected invoice attachments and excludes removed ones
         'attachment_ids' => [$keepId],
     ])->assertRedirect();
 
-    Mail::assertQueued(DocumentMailer::class, function (DocumentMailer $mail) {
+    Mail::assertSent(DocumentMailer::class, function (DocumentMailer $mail) {
         return count($mail->extraAttachments) === 1
             && $mail->extraAttachments[0]['name'] === 'keep.pdf';
     });
@@ -832,7 +832,7 @@ test('send email defaults include_view_online_button to true when omitted', func
         'body' => 'Body',
     ])->assertRedirect();
 
-    Mail::assertQueued(DocumentMailer::class, fn (DocumentMailer $m) => $m->includeViewOnlineButton === true);
+    Mail::assertSent(DocumentMailer::class, fn (DocumentMailer $m) => $m->includeViewOnlineButton === true);
 });
 
 test('send email omitted toggles fall back to the configured email defaults', function () {
@@ -849,7 +849,7 @@ test('send email omitted toggles fall back to the configured email defaults', fu
         'body' => 'Body',
     ])->assertRedirect();
 
-    Mail::assertQueued(
+    Mail::assertSent(
         DocumentMailer::class,
         fn (DocumentMailer $m) => $m->includeViewOnlineButton === false && $m->attachPdf === false,
     );
@@ -866,7 +866,7 @@ test('send email forwards include_view_online_button=false to the mailer', funct
         'include_view_online_button' => false,
     ])->assertRedirect();
 
-    Mail::assertQueued(DocumentMailer::class, fn (DocumentMailer $m) => $m->includeViewOnlineButton === false);
+    Mail::assertSent(DocumentMailer::class, fn (DocumentMailer $m) => $m->includeViewOnlineButton === false);
 });
 
 test('send email rejects when combined attachment size exceeds the cap', function () {

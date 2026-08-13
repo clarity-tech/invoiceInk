@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -108,6 +109,20 @@ class Invoice extends Model implements HasMedia
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function emailDeliveries(): HasMany
+    {
+        return $this->hasMany(EmailDelivery::class);
+    }
+
+    /**
+     * The most recent send attempt, which is what the listing and the invoice
+     * page report. Eager load as `latestEmailDelivery` to avoid an N+1.
+     */
+    public function latestEmailDelivery(): HasOne
+    {
+        return $this->hasOne(EmailDelivery::class)->latestOfMany();
     }
 
     public function isInvoice(): bool

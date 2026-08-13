@@ -10,7 +10,6 @@ use App\Mail\Templates\EmailTemplateService;
 use App\Models\Invoice;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Attachment;
@@ -20,7 +19,12 @@ use Illuminate\Queue\SerializesModels;
 use Symfony\Component\Mime\Email;
 use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
 
-class DocumentMailer extends Mailable implements ShouldQueue
+/**
+ * Queueing is owned by SendDocumentEmail rather than this Mailable, so a single
+ * place records whether the send succeeded. Sending this directly with
+ * `Mail::send()` is synchronous and bypasses that record.
+ */
+class DocumentMailer extends Mailable
 {
     use AppendsBrandSubjectTag, EmbedsBrandLogo, Queueable, SerializesModels;
 

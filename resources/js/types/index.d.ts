@@ -180,9 +180,24 @@ export interface Invoice {
     formatted_remaining_balance?: string;
     payment_percentage?: number;
     payments?: Payment[];
+    latest_email_delivery?: EmailDelivery | null;
     created_at: string;
     updated_at: string;
     deleted_at?: string | null;
+}
+
+export type EmailDeliveryStatus = 'queued' | 'sending' | 'sent' | 'failed';
+
+export interface EmailDelivery {
+    id: number;
+    status: EmailDeliveryStatus;
+    mode: string;
+    recipients: string[];
+    error?: string | null;
+    attempts: number;
+    queued_at?: string | null;
+    sent_at?: string | null;
+    failed_at?: string | null;
 }
 
 export interface InvoiceAttachment {

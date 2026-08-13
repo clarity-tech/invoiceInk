@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Contracts\Services\InvoiceNumberingServiceInterface;
 use App\Contracts\Services\PdfServiceInterface;
 use App\Enums\Country;
+use App\Enums\EmailDeliveryStatus;
 use App\Enums\IndianState;
 use App\Enums\InvoiceStatus;
+use App\Jobs\SendDocumentEmail;
 use App\Mail\DocumentMailer;
 use App\Models\Customer;
+use App\Models\EmailDelivery;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoiceNumberingSeries;
@@ -28,7 +31,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -55,6 +57,7 @@ class InvoiceController extends Controller
             'customer',
             'organizationLocation.locatable',
             'customerLocation.locatable',
+            'latestEmailDelivery',
         ]);
 
         if ($request->filled('type') && in_array($request->type, ['invoice', 'estimate'])) {
@@ -551,7 +554,20 @@ class InvoiceController extends Controller
             (bool) ($validated['include_view_online_button'] ?? config('app.invoice_email.include_view_online_button')),
         );
 
-        Mail::send($mailable);
+        // The send is queued, so nothing has actually gone out yet. Record the
+        // attempt now and let SendDocumentEmail write the outcome; the invoice
+        // is promoted to SENT there, on success only.
+        $delivery = EmailDelivery::create([
+            'organization_id' => $invoice->organization_id,
+            'invoice_id' => $invoice->id,
+            'mailable_type' => DocumentMailer::class,
+            'mode' => 'platform',
+            'status' => EmailDeliveryStatus::QUEUED,
+            'recipients' => $contactCollection->getEmails(),
+            'queued_at' => now(),
+        ]);
+
+        SendDocumentEmail::dispatch($delivery, $mailable);
 
         // Merge the sent addresses into the invoice's remembered recipients:
         // everything sent becomes a checked entry (new addresses appended), and
@@ -562,13 +578,9 @@ class InvoiceController extends Controller
             $validated['recipients'],
         );
 
-        if ($invoice->status === InvoiceStatus::DRAFT) {
-            $invoice->status = InvoiceStatus::SENT;
-        }
-
         $invoice->save();
 
-        return back()->with('success', "{$invoice->typeLabel()} sent successfully.");
+        return back()->with('success', "{$invoice->typeLabel()} queued for sending.");
     }
 
     /**

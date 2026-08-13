@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\SendDocumentEmail;
 use App\Mail\DocumentMailer;
 use App\Support\Branding;
 use App\ValueObjects\ContactCollection;
@@ -92,7 +93,7 @@ test('document mailer subject tag honours custom attribution text', function () 
     expect($envelope->subject)->toBe('Invoice #INV-CUSTOMTAG - via Acme Billing');
 });
 
-test('document mailer implements ShouldQueue', function () {
+test('document mailer is not queued itself, so the job owns the outcome', function () {
     $invoice = createInvoiceWithItems([
         'invoice_number' => 'INV-004',
         'status' => 'draft',
@@ -103,7 +104,11 @@ test('document mailer implements ShouldQueue', function () {
 
     $mailer = new DocumentMailer($invoice, new ContactCollection([['name' => 'Test', 'email' => 'test@example.com']]));
 
-    expect($mailer)->toBeInstanceOf(ShouldQueue::class);
+    // Queueing moved to SendDocumentEmail so a single place records whether the
+    // send succeeded. If the Mailable were queued again, Mail::send() inside the
+    // job would re-queue instead of sending, and no outcome would ever be written.
+    expect($mailer)->not->toBeInstanceOf(ShouldQueue::class)
+        ->and(SendDocumentEmail::class)->toImplement(ShouldQueue::class);
 });
 
 test('document mailer content is pre-rendered html, not a view reference', function () {

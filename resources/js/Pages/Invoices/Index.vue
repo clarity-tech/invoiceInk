@@ -26,6 +26,29 @@ const props = defineProps<{
     statusOptions: Record<string, string>;
 }>();
 
+/**
+ * The email send is queued, so its outcome lands after the page did. A pending
+ * or failed send is worth reporting; a successful one is already implied by the
+ * document status, so it stays quiet rather than adding noise to every row.
+ */
+function sendState(invoice: Invoice): { label: string; class: string } | null {
+    const delivery = invoice.latest_email_delivery;
+
+    if (!delivery) {
+        return null;
+    }
+
+    if (delivery.status === 'queued' || delivery.status === 'sending') {
+        return { label: 'Sending…', class: 'text-gray-400' };
+    }
+
+    if (delivery.status === 'failed') {
+        return { label: 'Send failed', class: 'text-red-600' };
+    }
+
+    return null;
+}
+
 const activeTab = ref<string>(props.filters.type ?? 'all');
 const statusFilter = ref<string>(props.filters.status ?? '');
 
@@ -340,6 +363,19 @@ const tabs = [
                             </td>
                             <td class="px-4 py-4 whitespace-nowrap">
                                 <StatusBadge :status="invoice.status" />
+                                <!--
+                                    Shown under the document status rather than in a
+                                    column of its own: the Actions column here was
+                                    clipped once already (f6550132) and a seventh
+                                    column would put it back at the edge.
+                                -->
+                                <div
+                                    v-if="sendState(invoice)"
+                                    class="mt-1 text-xs"
+                                    :class="sendState(invoice)!.class"
+                                >
+                                    {{ sendState(invoice)!.label }}
+                                </div>
                             </td>
                             <td
                                 class="px-4 py-4 text-sm whitespace-nowrap text-gray-500"
