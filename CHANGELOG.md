@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.4](https://github.com/clarity-tech/invoicing/compare/v1.3.3...v1.3.4) (2026-08-19)
+
+
+### Bug Fixes
+
+* **dashboard:** disclose currency conversion and label the all-time figures ([84577f1](https://github.com/clarity-tech/invoicing/commit/84577f1bb3f1286e68a1c56d69e313c66244268a))
+
 ## [1.3.3](https://github.com/clarity-tech/invoicing/compare/v1.3.2...v1.3.3) (2026-08-19)
 
 
