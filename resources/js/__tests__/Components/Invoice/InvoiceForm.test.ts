@@ -31,6 +31,9 @@ vi.mock('@inertiajs/vue3', () => {
                     if (prop === 'put') return mockPut;
                     if (prop === 'delete') return vi.fn();
                     if (prop === 'errors') return formErrors;
+                    if (prop === 'hasErrors') {
+                        return Object.keys(formErrors).length > 0;
+                    }
                     if (prop === 'processing') return formProcessing;
                     if (prop === 'reset') return vi.fn();
                     if (prop === 'clearErrors') return vi.fn();
@@ -215,6 +218,59 @@ describe('Invoice/InvoiceForm', () => {
         vi.clearAllMocks();
         formProcessing = false;
         formErrors = {};
+    });
+
+    const selectCustomer = async (
+        wrapper: ReturnType<typeof mountComponent>,
+        name: string,
+    ) => {
+        const select = wrapper
+            .findAll('select')
+            .find((s) => s.findAll('option').some((o) => o.text() === name))!;
+        const option = select.findAll('option').find((o) => o.text() === name)!;
+
+        await select.setValue(option.element.value);
+    };
+
+    describe('customer without a location', () => {
+        // Regression: the billing and shipping blocks -- and with them the
+        // `customer_location_id` error -- are hidden when the customer has no
+        // location, so saving failed silently with nothing on screen.
+        it('warns when the selected customer has no billing address', async () => {
+            const wrapper = mountComponent();
+
+            await selectCustomer(wrapper, 'Globex Inc');
+
+            expect(wrapper.text()).toContain('no billing address yet');
+            expect(wrapper.html()).toContain('href="/customers/2"');
+        });
+
+        it('does not warn when the customer has a location', async () => {
+            const wrapper = mountComponent();
+
+            await selectCustomer(wrapper, 'ACME Corp');
+
+            expect(wrapper.text()).not.toContain('no billing address yet');
+        });
+
+        it('summarises validation errors that have no visible field', () => {
+            formErrors = {
+                customer_location_id:
+                    'The customer location id field is required.',
+            };
+
+            const wrapper = mountComponent();
+
+            expect(wrapper.text()).toContain('could not be');
+            expect(wrapper.text()).toContain(
+                'The customer location id field is required.',
+            );
+        });
+
+        it('shows no error summary when the form is clean', () => {
+            const wrapper = mountComponent();
+            expect(wrapper.text()).not.toContain('could not be');
+        });
     });
 
     describe('create mode - invoice', () => {

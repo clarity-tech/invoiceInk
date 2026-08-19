@@ -1,6 +1,36 @@
 <?php
 
+use App\Models\Customer;
 use App\Models\User;
+
+it('explains why an invoice cannot be saved for a customer with no location', function () {
+    // Regression: the billing and shipping blocks are hidden when the customer
+    // has no location, taking the `customer_location_id` error with them --
+    // clicking Save did nothing at all, with the failure visible only in the
+    // network tab.
+    $user = User::factory()->withPersonalTeam()->create([
+        'email' => 'inv-no-location@example.test',
+    ]);
+
+    $organization = createOrganizationWithLocation([], [], $user);
+    $customer = Customer::factory()->create([
+        'name' => 'Addressless Customer',
+        'organization_id' => $organization->id,
+    ]);
+
+    $this->actingAs($user);
+
+    $page = $this->visit('/invoices/create');
+
+    $page->select('select:has(option:text("Select customer"))', (string) $customer->id)
+        ->assertSee('no billing address yet')
+        ->fill('input[placeholder="Item description"]', 'Consulting')
+        ->fill('input[type="number"][min="1"]', '1')
+        ->fill('input[type="number"][min="0"][placeholder="0.00"] >> nth=0', '1000')
+        ->click('button[type="submit"]')
+        ->waitForText('could not be saved')
+        ->assertSee('could not be saved');
+});
 
 it('creates an invoice with a single item', function () {
     $user = User::factory()->withPersonalTeam()->create([

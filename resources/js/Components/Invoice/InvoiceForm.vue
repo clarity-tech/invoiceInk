@@ -666,6 +666,27 @@ const orgContacts = computed<Contact[]>(
             {{ flash.error }}
         </div>
 
+        <!-- A validation error whose field is conditionally hidden (a customer
+             with no location hides the whole billing block, for one) would
+             otherwise leave the save button doing nothing at all. -->
+        <div
+            v-if="form.hasErrors"
+            class="mb-4 rounded border border-red-300 bg-red-50 p-4"
+            role="alert"
+        >
+            <p class="text-sm font-medium text-red-800">
+                This {{ type === 'estimate' ? 'estimate' : 'invoice' }} could
+                not be saved.
+            </p>
+            <ul
+                class="mt-2 list-inside list-disc space-y-1 text-sm text-red-700"
+            >
+                <li v-for="(message, field) in form.errors" :key="field">
+                    {{ message }}
+                </li>
+            </ul>
+        </div>
+
         <form @submit.prevent="save" class="space-y-6">
             <!-- Organization Location Section -->
             <div class="rounded-lg bg-white p-6 shadow">
@@ -854,6 +875,26 @@ const orgContacts = computed<Contact[]>(
                                     {{ selectedBillingLocation.tax_id }}
                                 </p>
                             </div>
+                        </div>
+
+                        <!-- Billing/shipping selects are hidden when the customer
+                             has no location, and with them the `customer_location_id`
+                             error. Without this warning, submitting just failed
+                             silently. -->
+                        <div
+                            v-else-if="selectedCustomerId"
+                            class="rounded-md border border-yellow-200 bg-yellow-50 p-3"
+                        >
+                            <p class="text-sm text-yellow-700">
+                                This customer has no billing address yet, so the
+                                invoice cannot be saved.
+                                <a
+                                    :href="`/customers/${selectedCustomerId}`"
+                                    class="font-medium underline"
+                                    target="_blank"
+                                    >Add a location</a
+                                >, then reload this page.
+                            </p>
                         </div>
                     </div>
 
