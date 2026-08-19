@@ -74,6 +74,9 @@ class CustomerController extends Controller
 
         return Inertia::render('Customers/Show', [
             'customer' => $customer,
+            // Set by store() so the detail page can open the location modal on
+            // arrival. Flashed, not a query param, so a reload does not reopen it.
+            'promptLocation' => (bool) $request->session()->get('prompt_location', false),
             'currencies' => Currency::options(),
             'countries' => Country::options(),
             'countryNames' => Country::names(),
@@ -118,7 +121,14 @@ class CustomerController extends Controller
             'organization_id' => $organization->id,
         ]);
 
-        return back()->with('success', __('messages.notifications.customer_created_add_location'));
+        // A new customer has no location yet, and locations are managed on the
+        // detail page (not the listing). Redirecting there is what makes the
+        // "now add a location" prompt actionable -- `back()` returned the user
+        // to the listing, which has no way to add one.
+        return redirect()
+            ->route('customers.show', $customer)
+            ->with('success', __('messages.notifications.customer_created_add_location'))
+            ->with('prompt_location', true);
     }
 
     public function update(UpdateCustomerRequest $request, Customer $customer): RedirectResponse

@@ -284,6 +284,78 @@ test('can create customer', function () {
     ]);
 });
 
+test('creating a customer lands on the detail page, where locations are added', function () {
+    // Regression: store() flashed "now add at least one location" but sent the
+    // user back to the listing, which has no way to add one -- so the new
+    // customer just sat there reading "0 locations".
+    $user = createUserWithTeam();
+    $this->actingAs($user);
+
+    $response = $this->from('/customers')->post('/customers', [
+        'name' => 'Needs A Location Ltd',
+        'currency' => 'INR',
+        'contacts' => [['name' => 'Ops', 'email' => 'ops@customer.test']],
+    ]);
+
+    $customer = Customer::where('name', 'Needs A Location Ltd')->firstOrFail();
+
+    $response->assertSessionHasNoErrors()
+        ->assertSessionHas('success')
+        ->assertRedirect(route('customers.show', $customer));
+
+    // The destination really offers the location step the flash promises, and
+    // opens it rather than leaving the user to find it.
+    $this->get(route('customers.show', $customer))
+        ->assertStatus(200)
+        ->assertInertia(fn ($page) => $page
+            ->component('Customers/Show')
+            ->where('customer.id', $customer->id)
+            ->where('customer.locations', [])
+            ->where('promptLocation', true)
+        );
+});
+
+test('the location prompt is flashed, so revisiting the customer does not reopen it', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+
+    $this->actingAs($organization->owner);
+
+    // Arriving at a customer any other way must not pop the modal.
+    $this->get(route('customers.show', $customer))
+        ->assertInertia(fn ($page) => $page->where('promptLocation', false));
+});
+
+test('a location added after creation is reflected in the listing count', function () {
+    $user = createUserWithTeam();
+    $this->actingAs($user);
+
+    $this->post('/customers', [
+        'name' => 'Counts Locations Ltd',
+        'currency' => 'INR',
+        'contacts' => [['name' => 'Ops', 'email' => 'ops@counts.test']],
+    ])->assertSessionHasNoErrors();
+
+    $customer = Customer::where('name', 'Counts Locations Ltd')->firstOrFail();
+
+    $this->post("/customers/{$customer->id}/locations", [
+        'name' => 'Head Office',
+        'address_line_1' => '1 Main Street',
+        'city' => 'Bengaluru',
+        'state' => 'Karnataka',
+        'country' => 'IN',
+    ])->assertSessionHasNoErrors();
+
+    // The first location becomes primary, and the listing stops saying "0 locations".
+    expect($customer->fresh()->primary_location_id)->not->toBeNull();
+
+    $this->get('/customers')
+        ->assertInertia(fn ($page) => $page->where(
+            'customers.data.0.locations_count',
+            1
+        ));
+});
+
 test('rejects an invalid phone number when creating customer', function () {
     $user = createUserWithTeam();
     $this->actingAs($user);

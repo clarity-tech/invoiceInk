@@ -27,11 +27,19 @@ const props = defineProps<{
     defaultPhoneCountry?: string | null;
     indianStates: Record<string, string>;
     gstTreatments: Record<string, string>;
+    /** Set when arriving straight from creating the customer. */
+    promptLocation?: boolean;
 }>();
 
 const isMounted = ref(false);
 onMounted(() => {
     isMounted.value = true;
+
+    // Arriving from customer creation: open the location modal rather than
+    // leaving "add at least one location" as something to go and find.
+    if (props.promptLocation) {
+        openAddLocation();
+    }
 });
 
 // Edit form

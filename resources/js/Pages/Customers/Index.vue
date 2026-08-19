@@ -125,7 +125,10 @@ function submitCustomer() {
         });
     } else {
         form.post('/customers', {
-            preserveScroll: true,
+            // Creating redirects to the new customer's detail page so the
+            // "now add a location" prompt is actionable. Scroll is only worth
+            // preserving when validation sends us back to this same listing.
+            preserveScroll: 'errors',
             onSuccess: () => {
                 showForm.value = false;
             },

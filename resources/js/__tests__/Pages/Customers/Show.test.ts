@@ -97,6 +97,26 @@ function mountComponent(propsOverride: Record<string, unknown> = {}) {
 }
 
 describe('Customers/Show', () => {
+    // Arriving straight from customer creation, the "add at least one location"
+    // prompt should be the modal itself, not something to go and find.
+    it('opens the location modal on arrival from customer creation', async () => {
+        const wrapper = mountComponent({ promptLocation: true });
+        // The modal is opened in onMounted, so the DOM needs a tick to catch up.
+        await wrapper.vm.$nextTick();
+
+        expect(wrapper.find('[data-testid="location-modal"]').exists()).toBe(
+            true,
+        );
+    });
+
+    it('leaves the location modal closed on an ordinary visit', () => {
+        const wrapper = mountComponent();
+
+        expect(wrapper.find('[data-testid="location-modal"]').exists()).toBe(
+            false,
+        );
+    });
+
     it('labels each location tax number by its country', () => {
         const wrapper = mountComponent({
             customer: {

@@ -141,11 +141,6 @@ function mountComponent(propsOverride = {}) {
                     props: ['form', 'currencies', 'countries', 'isEditing'],
                     emits: ['submit', 'cancel'],
                 },
-                LocationModal: {
-                    template: '<div data-testid="location-modal" />',
-                    props: ['show', 'customerId', 'location', 'countries'],
-                    emits: ['close'],
-                },
                 ConfirmationModal: {
                     template:
                         '<div v-if="show" data-testid="confirm-modal"><button data-testid="confirm-btn" @click="$emit(\'confirm\')">Confirm</button></div>',
@@ -331,6 +326,25 @@ describe('Customers/Index', () => {
         await addBtn!.trigger('click');
         expect(wrapper.find('[data-testid="customer-form"]').exists()).toBe(
             true,
+        );
+    });
+
+    it('keeps scroll only on validation errors when creating', async () => {
+        // Creating redirects to the customer detail page, so preserving scroll
+        // unconditionally would carry the listing's offset onto a new page.
+        const wrapper = mountComponent();
+        const addBtn = wrapper
+            .findAll('button')
+            .find((b) => b.text() === 'Add Customer');
+        await addBtn!.trigger('click');
+
+        await wrapper
+            .findComponent('[data-testid="customer-form"]')
+            .vm.$emit('submit');
+
+        expect(mockPost).toHaveBeenCalledWith(
+            '/customers',
+            expect.objectContaining({ preserveScroll: 'errors' }),
         );
     });
 
