@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.3](https://github.com/clarity-tech/invoicing/compare/v1.3.2...v1.3.3) (2026-08-19)
+
+
+### Bug Fixes
+
+* **customers:** open the location step the create flow promises ([2ca4b6b](https://github.com/clarity-tech/invoicing/commit/2ca4b6b2101afd1ac63a43662c253d61cc27acb5))
+* **invoices:** surface validation errors when the customer has no location ([f457b7a](https://github.com/clarity-tech/invoicing/commit/f457b7ac1339637cfde653a00d709863faeda972))
+
 ## [1.3.2](https://github.com/clarity-tech/invoicing/compare/v1.3.1...v1.3.2) (2026-08-19)
 
 
