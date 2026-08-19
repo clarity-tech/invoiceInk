@@ -104,9 +104,34 @@ const props = defineProps<{
 
 const currency = computed(() => props.stats.currency ?? 'INR');
 
+/**
+ * The KPI tiles are converted into the organization's own currency, so the
+ * original amounts need disclosing whenever any invoice was raised in another
+ * one. Testing `currencyBreakdown.length > 1` missed the case this exists for:
+ * an organization invoicing entirely in one foreign currency sees converted
+ * figures and, with a single group, no explanation of where they came from.
+ */
+const hasConvertedAmounts = computed(() =>
+    props.currencyBreakdown.some((row) => row.currency !== currency.value),
+);
+
+/**
+ * Format a base-currency aggregate. Every caller is a figure the server has
+ * already converted, so mark it approximate when any of it was raised in
+ * another currency -- an FX estimate should not read like an exact amount.
+ * Zero is exact whatever the rate, so it keeps the plain form.
+ */
 function fmt(amount: number): string {
-    return formatMoney(amount, currency.value);
+    const formatted = formatMoney(amount, currency.value);
+
+    return hasConvertedAmounts.value && amount !== 0
+        ? `≈ ${formatted}`
+        : formatted;
 }
+
+// `Customer::count()` and the `overdue()` scope are not date-filtered, so these
+// two figures ignore the period selector every other stat obeys.
+const isAllTime = computed(() => props.period === 'all_time');
 
 const periods = [
     { value: 'this_week', label: 'This Week' },
@@ -303,7 +328,12 @@ const totalStatusCount = computed(() =>
                                 : 'text-gray-500'
                         "
                     >
-                        {{ stats.overdue_count }} overdue
+                        {{ stats.overdue_count }} overdue<span
+                            v-if="!isAllTime"
+                            class="font-normal text-gray-400"
+                        >
+                            · all time</span
+                        >
                     </div>
                 </div>
 
@@ -311,7 +341,12 @@ const totalStatusCount = computed(() =>
                 <div class="rounded-lg bg-white p-5 shadow">
                     <div class="flex items-center justify-between">
                         <div class="text-sm font-medium text-gray-500">
-                            Customers
+                            Customers<span
+                                v-if="!isAllTime"
+                                class="text-gray-400"
+                            >
+                                (all time)</span
+                            >
                         </div>
                         <svg
                             class="size-5 text-purple-500"
@@ -341,14 +376,19 @@ const totalStatusCount = computed(() =>
                 </div>
             </div>
 
-            <!-- Per-Currency Breakdown (shown when invoices span >1 currency) -->
+            <!-- Per-currency amounts, shown whenever the KPIs above involved
+                 a conversion -- including a single, wholly foreign currency. -->
             <div
-                v-if="currencyBreakdown.length > 1"
+                v-if="hasConvertedAmounts"
                 class="mb-8 rounded-lg bg-white p-5 shadow"
             >
                 <div class="mb-3 flex items-baseline justify-between gap-2">
                     <h3 class="text-sm font-semibold text-gray-900">
-                        Original Currencies
+                        {{
+                            currencyBreakdown.length === 1
+                                ? 'Original Currency'
+                                : 'Original Currencies'
+                        }}
                     </h3>
                     <span class="text-xs text-gray-500">
                         KPI totals above are converted to

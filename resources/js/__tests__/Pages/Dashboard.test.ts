@@ -156,6 +156,89 @@ describe('Dashboard', () => {
         vi.clearAllMocks();
     });
 
+    describe('converted-currency disclosure', () => {
+        // Regression: the panel keyed off `currencyBreakdown.length > 1`, so an
+        // organization invoicing entirely in one foreign currency saw converted
+        // KPI totals with nothing on screen saying they had been converted.
+        const foreignOnly = {
+            currencyBreakdown: [
+                {
+                    currency: 'AED' as const,
+                    invoice_count: 4,
+                    total: 5200000,
+                    collected: 0,
+                },
+            ],
+        };
+
+        it('discloses the conversion for a single foreign currency', () => {
+            const wrapper = mountComponent(foreignOnly);
+
+            expect(wrapper.text()).toContain('Original Currency');
+            expect(wrapper.text()).toContain('converted to INR');
+            expect(wrapper.text()).toContain('AED');
+        });
+
+        it('marks converted totals as approximate', () => {
+            const wrapper = mountComponent(foreignOnly);
+
+            expect(wrapper.text()).toContain('≈');
+        });
+
+        it('stays silent when every invoice is already in the base currency', () => {
+            const wrapper = mountComponent({
+                currencyBreakdown: [
+                    {
+                        currency: 'INR' as const,
+                        invoice_count: 4,
+                        total: 5200000,
+                        collected: 0,
+                    },
+                ],
+            });
+
+            expect(wrapper.text()).not.toContain('Original Curren');
+            expect(wrapper.text()).not.toContain('≈');
+        });
+
+        it('still discloses when several currencies are in play', () => {
+            const wrapper = mountComponent({
+                currencyBreakdown: [
+                    {
+                        currency: 'INR' as const,
+                        invoice_count: 2,
+                        total: 100000,
+                        collected: 0,
+                    },
+                    {
+                        currency: 'AED' as const,
+                        invoice_count: 2,
+                        total: 5200000,
+                        collected: 0,
+                    },
+                ],
+            });
+
+            expect(wrapper.text()).toContain('Original Currencies');
+        });
+    });
+
+    describe('figures that ignore the period selector', () => {
+        // `Customer::count()` and the `overdue()` scope are not date-filtered.
+        it('marks the overdue count and customer total as all-time', () => {
+            const wrapper = mountComponent({ period: 'this_month' });
+
+            expect(wrapper.text()).toContain('all time');
+            expect(wrapper.text()).toContain('(all time)');
+        });
+
+        it('drops the qualifier when the period is already all-time', () => {
+            const wrapper = mountComponent({ period: 'all_time' });
+
+            expect(wrapper.text()).not.toContain('all time');
+        });
+    });
+
     it('renders organization name', () => {
         const wrapper = mountComponent();
         expect(wrapper.text()).toContain('Clarity Technologies');
