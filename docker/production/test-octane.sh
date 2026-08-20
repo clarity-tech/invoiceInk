@@ -25,17 +25,33 @@ cleanup() {
 trap cleanup EXIT
 
 # --- Step 1: Build production image ---
-echo "==> Building production Docker image..."
-docker build \
-    -f docker/production/Dockerfile.frankenphp \
-    --target production \
-    -t "$IMAGE_NAME" .
+# An uncached build of this target takes ~4 minutes, and docker-build.yml already
+# builds the very same Dockerfile/target with a GitHub Actions layer cache. CI
+# therefore builds the image itself -- via docker/build-push-action, which knows
+# how to reach that cache -- and sets SKIP_IMAGE_BUILD so this script reuses it.
+#
+# The opt-in is explicit rather than "reuse whatever is lying around": locally a
+# stale invoicing-test:octane from a previous run would otherwise be tested in
+# place of the current code, silently.
+if [ -n "$SKIP_IMAGE_BUILD" ]; then
+    if ! docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
+        echo "ERROR: SKIP_IMAGE_BUILD is set but $IMAGE_NAME is not present." >&2
+        exit 1
+    fi
+    echo "==> Using pre-built image $IMAGE_NAME"
+else
+    echo "==> Building production Docker image..."
+    docker build \
+        -f docker/production/Dockerfile.frankenphp \
+        --target production \
+        -t "$IMAGE_NAME" .
+fi
 
 # --- Step 2: Start production container ---
 echo "==> Starting production container on port $HOST_PORT..."
 docker run -d --name "$CONTAINER_NAME" \
     -p "$HOST_PORT:$CONTAINER_PORT" \
-    -e APP_KEY=base64:$(openssl rand -base64 32) \
+    -e "APP_KEY=base64:$(openssl rand -base64 32)" \
     -e APP_ENV=testing \
     -e APP_URL=http://127.0.0.1:$HOST_PORT \
     -e DB_CONNECTION=sqlite \
