@@ -5,6 +5,7 @@
 
 ### Build & CI
 
+* build the octane test image from the shared layer cache ([0e2541a](https://github.com/clarity-tech/invoicing/commit/0e2541a3edac195db9871a35c8346811690797b3))
 * stop building the same image twice per pull request ([b8fee43](https://github.com/clarity-tech/invoicing/commit/b8fee4351158de08c855d760c527f34207df23e3))
 
 ## [1.3.4](https://github.com/clarity-tech/invoicing/compare/v1.3.3...v1.3.4) (2026-08-19)
