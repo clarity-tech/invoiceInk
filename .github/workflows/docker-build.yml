@@ -7,10 +7,28 @@ on:
       - develop
     tags:
       - 'v*'
+    # No paths-ignore on push: release-please's merge commit touches only the
+    # changelog, version.txt and the manifest, and release.yml's tag-images job
+    # polls for the image this workflow publishes for that exact commit --
+    # failing the release outright if it never appears. Skipping the build here
+    # would break every release.
   pull_request:
     branches:
       - main
       - develop
+    # Safe on pull requests: nothing consumes a PR image now that the smoke
+    # test runs inside the build job.
+    paths-ignore:
+      - '**.md'
+      - 'version.txt'
+      - '.release-please-manifest.json'
+
+# A superseded image build has nothing to offer once a newer commit is pushed.
+# `release` is deliberately excluded from this pattern -- it must not be
+# cancelled mid-retag.
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
@@ -38,6 +56,7 @@ jobs:
             dockerfile: docker/production/Dockerfile.frankenphp
             image-suffix: ''
             build-target: production
+            port: 8080
           # - target: nginx-fpm
           # dockerfile: docker/production/Dockerfile.nginx-fpm
           # image-suffix: '-nginx'
@@ -95,7 +114,12 @@ jobs:
           file: ${{ matrix.dockerfile }}
           target: ${{ matrix.build-target }}
           platforms: linux/amd64
-          push: true
+          # A pull request has no consumer for its image: nothing deploys it and
+          # release.yml only ever retags a `main` commit. Load it into the local
+          # daemon so the smoke test below can run, and publish only from
+          # branches and tags.
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -104,11 +128,67 @@ jobs:
             BUILDKIT_INLINE_CACHE=1
             VITE_APP_NAME=InvoiceInk
 
+      # Runs here rather than in a separate job because a pull request's image
+      # is only in this runner's local daemon -- there is nothing in the
+      # registry for another job to pull.
+      - name: Smoke test the image
+        if: github.event_name == 'pull_request'
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}:pr-${{ github.event.pull_request.number }}"
+          echo "Testing image: $IMAGE"
+
+          docker run -d \
+            --name test-container \
+            -p ${{ matrix.port }}:${{ matrix.port }} \
+            -e "APP_KEY=base64:$(openssl rand -base64 32)" \
+            -e APP_ENV=testing \
+            -e APP_URL=http://localhost:${{ matrix.port }} \
+            -e DB_CONNECTION=sqlite \
+            -e "DB_DATABASE=/var/www/html/storage/database.sqlite" \
+            -e CACHE_STORE=array \
+            -e SESSION_DRIVER=array \
+            -e QUEUE_CONNECTION=sync \
+            -e AUTORUN_ENABLED=true \
+            -e AUTORUN_LARAVEL_MIGRATION=true \
+            -e AUTORUN_LARAVEL_MIGRATION_SKIP_DB_CHECK=true \
+            -e AUTORUN_LARAVEL_OPTIMIZE=false \
+            "$IMAGE"
+
+          for i in {1..20}; do
+            if curl -sf http://localhost:${{ matrix.port }}/up; then
+              echo "Health check passed"
+              break
+            fi
+            if [ "$i" -eq 20 ]; then
+              echo "Container failed to start"
+              docker logs test-container
+              exit 1
+            fi
+            echo "Attempt $i, retrying..."
+            sleep 3
+          done
+
+          curl -I http://localhost:${{ matrix.port }}/ | grep -E "(200|302)"
+
+          docker stop test-container
+          docker rm test-container
+
+      # A pull request's image is loaded locally rather than pushed, so there is
+      # no registry digest to scan -- point Trivy at the local tag instead. The
+      # scan is `continue-on-error`, so an unresolvable ref would have failed
+      # silently and quietly stopped scanning pull requests altogether.
+      - name: Resolve the image reference to scan
+        run: |
+          BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "SCAN_REF=${BASE}:pr-${{ github.event.pull_request.number }}" >> "$GITHUB_ENV"
+          else
+            echo "SCAN_REF=${BASE}@${{ steps.build.outputs.digest }}" >> "$GITHUB_ENV"
+          fi
+
       # Findings go to the run summary rather than the Security tab: uploading
       # SARIF needs Advanced Security, which this private repo does not have,
-      # so that upload 403'd and failed the whole workflow on every build --
-      # taking the image smoke test in `test-images` down with it, since that
-      # job needs this one.
+      # so that upload 403'd and failed the whole workflow on every build.
       #
       # `exit-code: 0` keeps the scan advisory. The image currently carries
       # fixable HIGH/CRITICAL findings from the Debian base, the bundled Node
@@ -119,7 +199,7 @@ jobs:
         continue-on-error: true
         uses: aquasecurity/trivy-action@0.35.0
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}@${{ steps.build.outputs.digest }}
+          image-ref: ${{ env.SCAN_REF }}
           format: 'table'
           output: 'trivy-results-${{ matrix.target }}.txt'
           severity: 'HIGH,CRITICAL'
@@ -136,88 +216,6 @@ jobs:
             cat 'trivy-results-${{ matrix.target }}.txt' 2>/dev/null || echo 'Scan produced no output.'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-
-  test-images:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-
-    strategy:
-      matrix:
-        target: [frankenphp]
-        # target: [frankenphp, nginx-fpm, standalone, standalone-alpine]
-        include:
-          - target: frankenphp
-            image-suffix: ''
-            port: 8080
-          # - target: nginx-fpm
-          #   image-suffix: '-nginx'
-          #   port: 80
-          # - target: standalone
-          #   image-suffix: '-standalone'
-          #   port: 8000
-          # - target: standalone-alpine
-          #   image-suffix: '-standalone-alpine'
-          #   port: 8000
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Test Docker image
-        run: |
-          # Pull the image by digest (guaranteed to exist after build-and-push)
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}:pr-${{ github.event.pull_request.number }}"
-          echo "Testing image: $IMAGE"
-
-          # Start the container with ServerSideUp env vars
-          docker run -d \
-            --name test-container \
-            -p ${{ matrix.port }}:${{ matrix.port }} \
-            -e APP_KEY=base64:$(openssl rand -base64 32) \
-            -e APP_ENV=testing \
-            -e APP_URL=http://localhost:${{ matrix.port }} \
-            -e DB_CONNECTION=sqlite \
-            -e "DB_DATABASE=/var/www/html/storage/database.sqlite" \
-            -e CACHE_STORE=array \
-            -e SESSION_DRIVER=array \
-            -e QUEUE_CONNECTION=sync \
-            -e AUTORUN_ENABLED=true \
-            -e AUTORUN_LARAVEL_MIGRATION=true \
-            -e AUTORUN_LARAVEL_MIGRATION_SKIP_DB_CHECK=true \
-            -e AUTORUN_LARAVEL_OPTIMIZE=false \
-            "$IMAGE"
-
-          # Wait for container to be healthy
-          for i in {1..20}; do
-            if curl -sf http://localhost:${{ matrix.port }}/up; then
-              echo "Health check passed"
-              break
-            fi
-            if [ "$i" -eq 20 ]; then
-              echo "Container failed to start"
-              docker logs test-container
-              exit 1
-            fi
-            echo "Attempt $i, retrying..."
-            sleep 3
-          done
-
-          # Test main page (should redirect to login)
-          curl -I http://localhost:${{ matrix.port }}/ | grep -E "(200|302)"
-
-          # Cleanup
-          docker stop test-container
-          docker rm test-container
 
   deploy-staging:
     needs: build-and-push

@@ -3,8 +3,16 @@ name: CI
 on:
   push:
     branches: [main]
+    # release-please PRs only touch the changelog, version.txt and the manifest.
+    # There is no code in them to test, and the image they would release is
+    # retagged from a `main` commit CI has already run against.
+    paths-ignore: &metadata-only
+      - '**.md'
+      - 'version.txt'
+      - '.release-please-manifest.json'
   pull_request:
     branches: [main, with-jetstream]
+    paths-ignore: *metadata-only
 
 concurrency:
   group: ci-${{ github.ref }}
