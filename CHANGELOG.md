@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.5](https://github.com/clarity-tech/invoicing/compare/v1.3.4...v1.3.5) (2026-08-20)
+
+
+### Build & CI
+
+* stop building the same image twice per pull request ([b8fee43](https://github.com/clarity-tech/invoicing/commit/b8fee4351158de08c855d760c527f34207df23e3))
+
 ## [1.3.4](https://github.com/clarity-tech/invoicing/compare/v1.3.3...v1.3.4) (2026-08-19)
 
 
