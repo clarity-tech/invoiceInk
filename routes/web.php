@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AiConnectionController;
 use App\Http\Controllers\CurrentTeamController;
 use App\Http\Controllers\CurrentUserController;
 use App\Http\Controllers\CustomerController;
@@ -132,6 +133,12 @@ Route::middleware([
 
         // Settings Hub
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+
+        // Connect AI tools — the discovery surface for the MCP server, and the
+        // only way for a user to mint the scoped token it requires.
+        Route::get('/settings/ai-connection', [AiConnectionController::class, 'index'])->name('ai-connection.index');
+        Route::post('/settings/ai-connection', [AiConnectionController::class, 'store'])->name('ai-connection.store');
+        Route::delete('/settings/ai-connection/{token}', [AiConnectionController::class, 'destroy'])->name('ai-connection.destroy');
 
         // Email Templates
         Route::get('/email-templates', [EmailTemplateController::class, 'index'])->name('email-templates.index');

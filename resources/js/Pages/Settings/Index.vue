@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Link } from '@inertiajs/vue3';
-import { Mail } from 'lucide-vue-next';
+import { Mail, Sparkles } from 'lucide-vue-next';
 </script>
 
 <template>
@@ -29,6 +29,26 @@ import { Mail } from 'lucide-vue-next';
                         </h3>
                         <p class="mt-1 text-sm text-gray-500">
                             Customize emails sent with invoices and estimates
+                        </p>
+                    </div>
+                </Link>
+
+                <Link
+                    href="/settings/ai-connection"
+                    class="flex items-start gap-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition hover:border-brand-300 hover:shadow-md"
+                >
+                    <div
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50"
+                    >
+                        <Sparkles class="h-5 w-5 text-brand-600" />
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900">
+                            Connect AI tools
+                        </h3>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Ask Claude about your invoices, customers and
+                            outstanding payments
                         </p>
                     </div>
                 </Link>

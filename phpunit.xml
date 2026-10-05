@@ -28,6 +28,9 @@
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="MAIL_MAILER" value="array"/>
+        <!-- The HTTP MCP transport ships disabled; enable it here so the suite
+             exercises the real route rather than a permanently absent one. -->
+        <env name="MCP_WEB_ENABLED" value="true"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
