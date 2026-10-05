@@ -250,8 +250,7 @@ const claudeCodeCommand = computed(
                     </p>
                     <pre
                         class="mt-2 overflow-x-auto rounded border border-gray-200 bg-gray-50 p-3 font-mono text-xs"
-                        >{{ claudeDesktopConfig }}</pre
-                    >
+                        >{{ claudeDesktopConfig }}</pre>
                     <button
                         type="button"
                         class="mt-2 rounded-md border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"
@@ -265,8 +264,7 @@ const claudeCodeCommand = computed(
                     <p class="text-sm font-medium text-gray-700">Claude Code</p>
                     <pre
                         class="mt-2 overflow-x-auto rounded border border-gray-200 bg-gray-50 p-3 font-mono text-xs"
-                        >{{ claudeCodeCommand }}</pre
-                    >
+                        >{{ claudeCodeCommand }}</pre>
                     <button
                         type="button"
                         class="mt-2 rounded-md border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"

@@ -1,38 +1,14 @@
 export type Currency =
-    | 'INR'
-    | 'USD'
-    | 'EUR'
-    | 'GBP'
-    | 'AUD'
-    | 'CAD'
-    | 'SGD'
-    | 'JPY'
-    | 'AED';
+    'INR' | 'USD' | 'EUR' | 'GBP' | 'AUD' | 'CAD' | 'SGD' | 'JPY' | 'AED';
 
 export type InvoiceStatus =
-    | 'draft'
-    | 'sent'
-    | 'accepted'
-    | 'partially_paid'
-    | 'paid'
-    | 'void';
+    'draft' | 'sent' | 'accepted' | 'partially_paid' | 'paid' | 'void';
 
 export type Country =
-    | 'IN'
-    | 'GB'
-    | 'US'
-    | 'AE'
-    | 'AU'
-    | 'CA'
-    | 'SG'
-    | 'JP'
-    | 'DE';
+    'IN' | 'GB' | 'US' | 'AE' | 'AU' | 'CA' | 'SG' | 'JP' | 'DE';
 
 export type FinancialYearType =
-    | 'april_march'
-    | 'january_december'
-    | 'july_june'
-    | 'october_september';
+    'april_march' | 'january_december' | 'july_june' | 'october_september';
 
 export type ResetFrequency = 'never' | 'yearly' | 'monthly' | 'financial_year';
 
