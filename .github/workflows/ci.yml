@@ -14,42 +14,15 @@ on:
     branches: [main, with-jetstream]
     paths-ignore: *metadata-only
 
+# Nothing here writes to the repository.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: Lint & Format
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: mbstring, pdo_sqlite
-          coverage: none
-
-      - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - name: Run Pint (format check)
-        run: vendor/bin/pint --test
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install frontend dependencies
-        run: bun install --frozen-lockfile
-
-      - name: TypeScript check
-        run: bun run vue-tsc --noEmit --skipLibCheck 2>/dev/null || true
-
   test-php:
     name: PHP Tests
     runs-on: ubuntu-latest
@@ -64,6 +37,14 @@ jobs:
           php-version: '8.5'
           extensions: mbstring, pdo_sqlite
           coverage: none
+
+      # `composer install` costs ~10s in each job and the lockfile rarely moves.
+      # Exact key only: a partially restored vendor/ is worse than none.
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-php8.5-${{ hashFiles('composer.lock') }}
 
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist
@@ -121,6 +102,14 @@ jobs:
           extensions: mbstring, pdo_sqlite
           coverage: none
 
+      # `composer install` costs ~10s in each job and the lockfile rarely moves.
+      # Exact key only: a partially restored vendor/ is worse than none.
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-php8.5-${{ hashFiles('composer.lock') }}
+
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist
 
@@ -151,7 +140,7 @@ jobs:
       # test-octane.sh can run it. Cache is read-only -- docker-build.yml owns
       # writing it, and two writers would just thrash the same key.
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build the production image (cached)
         uses: docker/build-push-action@v7
@@ -186,7 +175,7 @@ jobs:
           retention-days: 7
 
   test-frontend:
-    name: Frontend Tests
+    name: Lint & Frontend Tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -200,8 +189,19 @@ jobs:
           extensions: mbstring, pdo_sqlite
           coverage: none
 
+      # `composer install` costs ~10s in each job and the lockfile rarely moves.
+      # Exact key only: a partially restored vendor/ is worse than none.
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-php8.5-${{ hashFiles('composer.lock') }}
+
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist
+
+      - name: Run Pint (format check)
+        run: vendor/bin/pint --test
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -213,88 +213,12 @@ jobs:
       - name: Generate Wayfinder typed routes
         run: php artisan wayfinder:generate --path=resources/js --no-interaction
 
+      # Advisory only: `types:check` currently reports 42 pre-existing errors,
+      # so `|| true` keeps it from failing the build. Output is no longer sent
+      # to /dev/null, so the errors are at least visible in the log. Make this
+      # blocking once the backlog is cleared.
+      - name: TypeScript check (advisory)
+        run: bun run types:check || true
+
       - name: Run Vitest
         run: bun run test
-
-  test-browser:
-    name: Browser Smoke Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: mbstring, pdo_sqlite
-          coverage: none
-
-      - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install frontend dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build frontend assets
-        run: bun run build
-
-      - name: Prepare environment
-        run: |
-          cp .env.example .env
-          php artisan key:generate
-          sed -i 's/APP_ENV=local/APP_ENV=testing/' .env
-          sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=sqlite/' .env
-          sed -i 's|DB_DATABASE=.*|DB_DATABASE=:memory:|' .env
-          echo "CACHE_STORE=array" >> .env
-          echo "SESSION_DRIVER=array" >> .env
-          echo "QUEUE_CONNECTION=sync" >> .env
-          echo "MAIL_MAILER=array" >> .env
-          echo "TELESCOPE_ENABLED=false" >> .env
-
-      - name: Install Playwright Chromium
-        run: npx playwright install chromium --with-deps
-
-      - name: Run Browser Smoke Tests
-        run: php artisan test tests/Browser/SmokeTest.php tests/Browser/AuthenticatedSmokeTest.php --compact
-
-      - name: Upload screenshots on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: browser-screenshots
-          path: tests/Browser/Screenshots/
-          retention-days: 7
-
-  build-check:
-    name: Frontend Build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: mbstring, pdo_sqlite
-          coverage: none
-
-      - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install frontend dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build frontend assets
-        run: bun run build

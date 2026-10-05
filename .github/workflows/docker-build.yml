@@ -30,6 +30,11 @@ concurrency:
   group: docker-${{ github.ref }}
   cancel-in-progress: true
 
+# Default for jobs that declare none; the publishing and deploying jobs widen
+# this for themselves.
+permissions:
+  contents: read
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -220,6 +225,7 @@ jobs:
   deploy-staging:
     needs: build-and-push
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     if: github.ref == 'refs/heads/develop'
     environment: staging
 
@@ -254,6 +260,8 @@ jobs:
   deploy-production:
     needs: [build-and-push]
     runs-on: ubuntu-latest
+    # Observed 173-201s; this is headroom, not a target.
+    timeout-minutes: 20
     if: github.ref == 'refs/heads/main'
     environment: production
     permissions:
@@ -382,6 +390,7 @@ jobs:
   notify:
     needs: [build-and-push]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: always()
 
     steps:

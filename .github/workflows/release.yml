@@ -36,6 +36,7 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write # create tags and releases
       pull-requests: write # maintain the release PR
@@ -58,6 +59,8 @@ jobs:
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
+    # Polls for the image docker-build.yml publishes, so it needs headroom.
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write # push tags to GHCR

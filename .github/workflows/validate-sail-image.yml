@@ -21,11 +21,11 @@ on:
   push:
     paths:
       - "docker/8.5/**"
-      - ".github/workflows/validate-sail-image.yaml"
+      - ".github/workflows/validate-sail-image.yml"
   pull_request:
     paths:
       - "docker/8.5/**"
-      - ".github/workflows/validate-sail-image.yaml"
+      - ".github/workflows/validate-sail-image.yml"
   # The image pulls a base image and installs packages at build time, so it can
   # break without anything in this repository changing. The weekly run catches
   # that. Note `paths` filters do not apply to `schedule`, which is what we want
