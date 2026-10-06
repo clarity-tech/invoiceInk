@@ -8,6 +8,7 @@ use App\Enums\Country;
 use App\Enums\EmailDeliveryStatus;
 use App\Enums\IndianState;
 use App\Enums\InvoiceStatus;
+use App\Exceptions\ExchangeRateUnavailable;
 use App\Jobs\SendDocumentEmail;
 use App\Mail\DocumentMailer;
 use App\Models\Customer;
@@ -459,7 +460,17 @@ class InvoiceController extends Controller
             $currency = $customer?->currency?->value;
             $issuedAt = ! empty($validated['issued_at']) ? now()->parse($validated['issued_at']) : now();
             $orgCurrency = $invoice->organization?->currency?->value;
-            $exchangeRate = $this->resolveExchangeRate($currency, $orgCurrency, $issuedAt);
+            // Only re-resolve when something that determines the rate actually
+            // moved. Re-resolving on every edit would make changing a
+            // description fail for an old invoice whose date has no stored
+            // rate, and would overwrite a rate someone had corrected by hand.
+            $rateInputsChanged = $currency !== $invoice->currency?->value
+                || $invoice->issued_at === null
+                || ! $issuedAt->isSameDay($invoice->issued_at);
+
+            $exchangeRate = $rateInputsChanged
+                ? $this->resolveExchangeRate($currency, $orgCurrency, $issuedAt)
+                : $invoice->exchange_rate;
 
             $sourceTaxes = $this->tdsTcsCalculator->compute(
                 $totals->subtotal,
@@ -818,11 +829,34 @@ class InvoiceController extends Controller
         ]);
     }
 
+    /**
+     * The rate is persisted at issue time and never re-read, so a wrong one is
+     * permanent. When none can be resolved we surface it on the form rather
+     * than letting a 500 escape or -- worse -- storing 1.0 and understating the
+     * invoice by the whole rate.
+     */
     private function resolveExchangeRate(?string $from, ?string $to, Carbon $date): float
     {
-        return $from && $to
-            ? $this->exchangeRateService->getRate($from, $to, $date)
-            : 1.0;
+        if (! $from || ! $to) {
+            return 1.0;
+        }
+
+        try {
+            return $this->exchangeRateService->getRate($from, $to, $date);
+        } catch (ExchangeRateUnavailable $e) {
+            // Catching it means Laravel's handler never sees it, so report()
+            // would never fire and the failure would reach nobody but the one
+            // person looking at the form. Report explicitly, then convert.
+            report($e);
+
+            throw ValidationException::withMessages([
+                'issued_at' => __('forms.validation.exchange_rate_unavailable', [
+                    'from' => $e->from,
+                    'to' => $e->to,
+                    'date' => $e->date,
+                ]),
+            ]);
+        }
     }
 
     /** @param array<int, array{description: string, sac_code?: string|null, quantity: int|string, unit_price: int|string, tax_rate?: int|string|null}> $items */

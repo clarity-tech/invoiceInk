@@ -228,6 +228,7 @@ return [
         'invalid_number' => 'Please enter a valid number',
         'invalid_date' => 'Please enter a valid date',
         'invalid_svg' => 'The uploaded SVG could not be processed safely. Please try a different file.',
+        'exchange_rate_unavailable' => 'No :from to :to exchange rate is available for :date, so this document cannot be converted to your organization\'s currency. Try again shortly, or pick a different issue date.',
         'min_value' => 'Value must be at least :min',
         'max_value' => 'Value must not exceed :max',
         'positive_number' => 'Value must be a positive number',

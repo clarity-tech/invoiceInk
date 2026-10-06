@@ -4,6 +4,7 @@ use App\Models\ExchangeRate;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 test('can render invoice list page', function () {
     $organization = createOrganizationWithLocation();
@@ -432,4 +433,93 @@ test('invoices include customer relationship', function () {
     $response->assertInertia(fn ($page) => $page
         ->has('invoices.data.0.customer')
     );
+});
+
+describe('exchange rate resolution on the invoice form', function () {
+    beforeEach(function () {
+        // No rates stored and the upstream unreachable: the worst case.
+        Http::fake(['api.frankfurter.dev/*' => Http::response([], 500)]);
+        ExchangeRate::query()->delete();
+    });
+
+    it('reports a missing rate on the form instead of a 500', function () {
+        $organization = createOrganizationWithLocation(['currency' => 'INR']);
+        $customer = createCustomerWithLocation(['currency' => 'AED'], [], $organization);
+        $this->actingAs($organization->owner);
+
+        $this->post('/invoices', [
+            'organization_id' => $organization->id,
+            'organization_location_id' => $organization->primary_location_id,
+            'customer_id' => $customer->id,
+            'customer_location_id' => $customer->primary_location_id,
+            'customer_shipping_location_id' => $customer->primary_location_id,
+            'type' => 'invoice',
+            'status' => 'draft',
+            'issued_at' => '2026-05-28',
+            'due_at' => '2026-06-28',
+            'subject' => 'Rate unavailable probe',
+            'items' => [['description' => 'Consulting', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 0]],
+        ])->assertSessionHasErrors('issued_at');
+
+        expect(Invoice::where('subject', 'Rate unavailable probe')->exists())->toBeFalse();
+    });
+
+    it('reports the failure, so it reaches the logs and the alert channel', function () {
+        // The controller catches ExchangeRateUnavailable to put a message on the
+        // form, which means Laravel's handler never sees it and the exception's
+        // own report() would never fire. Without an explicit report() the only
+        // trace of a production FX outage would be one user's form error.
+        //
+        // Asserted through the real HTTP path on purpose: calling $e->report()
+        // directly passes whether or not the controller ever reports.
+        Log::spy();
+
+        $organization = createOrganizationWithLocation(['currency' => 'INR']);
+        $customer = createCustomerWithLocation(['currency' => 'AED'], [], $organization);
+        $this->actingAs($organization->owner);
+
+        $this->post('/invoices', [
+            'organization_id' => $organization->id,
+            'organization_location_id' => $organization->primary_location_id,
+            'customer_id' => $customer->id,
+            'customer_location_id' => $customer->primary_location_id,
+            'customer_shipping_location_id' => $customer->primary_location_id,
+            'type' => 'invoice',
+            'status' => 'draft',
+            'issued_at' => '2026-05-28',
+            'due_at' => '2026-06-28',
+            'subject' => 'Rate reporting probe',
+            'items' => [['description' => 'Consulting', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 0]],
+        ]);
+
+        Log::shouldHaveReceived('error')->once()->withArgs(
+            fn ($message, $context) => $message === 'No exchange rate available'
+                && $context['from'] === 'AED'
+                && $context['to'] === 'INR'
+                && $context['lookback_days'] === 14
+        );
+    });
+
+    it('still creates a same-currency invoice when no rates exist at all', function () {
+        // Same currency never needs a rate, so an FX outage must not block it.
+        $organization = createOrganizationWithLocation(['currency' => 'INR']);
+        $customer = createCustomerWithLocation(['currency' => 'INR'], [], $organization);
+        $this->actingAs($organization->owner);
+
+        $this->post('/invoices', [
+            'organization_id' => $organization->id,
+            'organization_location_id' => $organization->primary_location_id,
+            'customer_id' => $customer->id,
+            'customer_location_id' => $customer->primary_location_id,
+            'customer_shipping_location_id' => $customer->primary_location_id,
+            'type' => 'invoice',
+            'status' => 'draft',
+            'issued_at' => '2026-05-28',
+            'due_at' => '2026-06-28',
+            'subject' => 'Same currency probe',
+            'items' => [['description' => 'Consulting', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 0]],
+        ])->assertSessionHasNoErrors();
+
+        expect(Invoice::where('subject', 'Same currency probe')->exists())->toBeTrue();
+    });
 });

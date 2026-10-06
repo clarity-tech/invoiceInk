@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\ExchangeRateUnavailable;
 use App\Models\ExchangeRate;
 use App\Services\ExchangeRateService;
 use Illuminate\Http\Client\ConnectionException;
@@ -77,6 +78,58 @@ it('returns 0 instead of throwing when the API is unreachable', function () {
     expect($count)->toBe(0);
 });
 
+describe('rate resolution policy', function () {
+    // Returning 1.0 for a failed conversion is what let a broken upstream
+    // understate every AED invoice by ~26x for seven weeks, and the stored
+    // result was afterwards indistinguishable from a genuine same-currency
+    // invoice. So: exact rate, else the nearest recent one, else fail loudly.
+
+    beforeEach(function () {
+        Http::fake(['api.frankfurter.dev/*' => Http::response([], 500)]);
+    });
+
+    it('uses the exact rate when one is stored for the date', function () {
+        ExchangeRate::insert([
+            ['date' => '2026-05-28', 'base' => 'USD', 'quote' => 'INR', 'rate' => 96.0, 'created_at' => now(), 'updated_at' => now()],
+            ['date' => '2026-05-28', 'base' => 'USD', 'quote' => 'AED', 'rate' => 3.6725, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        expect((new ExchangeRateService)->getRate('AED', 'INR', Carbon::parse('2026-05-28')))
+            ->toBe(96.0 / 3.6725);
+    });
+
+    it('reaches back to the nearest prior rate when the date has none', function () {
+        // Three days earlier: wrong by a fraction of a percent, against the
+        // factor of ~26 that 1.0 would have been.
+        ExchangeRate::insert([
+            ['date' => '2026-05-25', 'base' => 'USD', 'quote' => 'INR', 'rate' => 96.0, 'created_at' => now(), 'updated_at' => now()],
+            ['date' => '2026-05-25', 'base' => 'USD', 'quote' => 'AED', 'rate' => 3.6725, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        expect((new ExchangeRateService)->getRate('AED', 'INR', Carbon::parse('2026-05-28')))
+            ->toBe(96.0 / 3.6725);
+    });
+
+    it('throws rather than guessing when nothing is in the window', function () {
+        expect(fn () => (new ExchangeRateService)->getRate('AED', 'INR', Carbon::parse('2026-05-28')))
+            ->toThrow(ExchangeRateUnavailable::class);
+    });
+
+    it('ignores rates older than the lookback window', function () {
+        ExchangeRate::insert([
+            ['date' => '2026-04-01', 'base' => 'USD', 'quote' => 'INR', 'rate' => 96.0, 'created_at' => now(), 'updated_at' => now()],
+            ['date' => '2026-04-01', 'base' => 'USD', 'quote' => 'AED', 'rate' => 3.6725, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        expect(fn () => (new ExchangeRateService)->getRate('AED', 'INR', Carbon::parse('2026-05-28')))
+            ->toThrow(ExchangeRateUnavailable::class);
+    });
+
+    it('never falls back for a same-currency conversion, even with no rates at all', function () {
+        expect((new ExchangeRateService)->getRate('INR', 'INR', Carbon::parse('2026-05-28')))->toBe(1.0);
+    });
+});
+
 it('returns 1.0 when from == to', function () {
     $rate = (new ExchangeRateService)->getRate('USD', 'USD', Carbon::parse('2026-05-28'));
 
@@ -116,15 +169,16 @@ it('fetches rates on demand when missing for the requested date', function () {
     expect(ExchangeRate::where('quote', 'INR')->count())->toBe(1);
 });
 
-it('falls back to 1.0 and logs when API fails', function () {
+it('throws when the API fails and nothing is stored to fall back to', function () {
+    // Previously returned 1.0 here. That is the behaviour that understated
+    // every foreign-currency invoice for seven weeks while looking healthy.
     Http::fake(['*' => Http::response([], 500)]);
 
-    $rate = (new ExchangeRateService)->getRate('USD', 'INR', Carbon::parse('2026-05-28'));
-
-    expect($rate)->toBe(1.0);
+    expect(fn () => (new ExchangeRateService)->getRate('USD', 'INR', Carbon::parse('2026-05-28')))
+        ->toThrow(ExchangeRateUnavailable::class);
 });
 
-it('falls back to 1.0 when a currency pair is missing from stored rates', function () {
+it('throws when a currency pair is missing from stored rates', function () {
     Http::fake(['*' => Http::response([], 500)]);
 
     ExchangeRate::insert([
@@ -132,10 +186,10 @@ it('falls back to 1.0 when a currency pair is missing from stored rates', functi
         ['date' => '2026-05-28', 'base' => 'USD', 'quote' => 'INR', 'rate' => 95.0, 'created_at' => now(), 'updated_at' => now()],
     ]);
 
-    // Pretend an exotic currency was requested
-    $rate = (new ExchangeRateService)->getRate('XYZ', 'INR', Carbon::parse('2026-05-28'));
-
-    expect($rate)->toBe(1.0);
+    // An unknown currency has no rate on any date, so the lookback finds
+    // nothing either and this fails rather than silently converting at par.
+    expect(fn () => (new ExchangeRateService)->getRate('XYZ', 'INR', Carbon::parse('2026-05-28')))
+        ->toThrow(ExchangeRateUnavailable::class);
 });
 
 it('upserts rates on repeated fetch (no duplicate rows)', function () {
@@ -150,4 +204,14 @@ it('upserts rates on repeated fetch (no duplicate rows)', function () {
     $service->fetchAndStore(Carbon::parse('2026-05-28'));
 
     expect(ExchangeRate::where('quote', 'INR')->count())->toBe(1);
+});
+
+it('carries the context needed to diagnose it without a stack trace', function () {
+    $e = new ExchangeRateUnavailable('AED', 'INR', '2026-05-28', 14);
+
+    expect($e->from)->toBe('AED')
+        ->and($e->to)->toBe('INR')
+        ->and($e->date)->toBe('2026-05-28')
+        ->and($e->lookbackDays)->toBe(14)
+        ->and($e->getMessage())->toContain('AED to INR on 2026-05-28');
 });
