@@ -157,6 +157,55 @@ describe('Invoices/Index', () => {
         expect(wrapper.text()).toContain('ACME Corp');
     });
 
+    it('shows the subject beneath the customer name', () => {
+        const customer = makeCustomer({ id: 1, name: 'ACME Corp' });
+        const inv = makeInvoice({
+            id: 1,
+            customer,
+            subject: 'Website redesign, phase 2',
+        });
+        const wrapper = mountComponent({
+            invoices: makePaginatedInvoices([inv]),
+        });
+
+        expect(wrapper.text()).toContain('Website redesign, phase 2');
+        // Carried on `title` too, so the full text survives truncation for
+        // hover and assistive tech.
+        expect(wrapper.html()).toContain('title="Website redesign, phase 2"');
+    });
+
+    it('omits the subject line when there is no subject', () => {
+        const customer = makeCustomer({ id: 1, name: 'ACME Corp' });
+        const inv = makeInvoice({ id: 1, customer, subject: null });
+        const wrapper = mountComponent({
+            invoices: makePaginatedInvoices([inv]),
+        });
+
+        expect(wrapper.text()).toContain('ACME Corp');
+        // No stray empty element where the subject would sit.
+        expect(wrapper.html()).not.toContain('text-xs text-gray-400');
+    });
+
+    it('constrains the subject to the same width as the customer name', () => {
+        // This is the real guard. Verified by removing the classes and watching
+        // it fail; InvoiceListLayoutTest does NOT catch it, because an
+        // unconstrained subject wraps onto more lines rather than overflowing.
+        const inv = makeInvoice({
+            id: 1,
+            subject: 'A'.repeat(300),
+        });
+        const wrapper = mountComponent({
+            invoices: makePaginatedInvoices([inv]),
+        });
+
+        const subjectEl = wrapper
+            .findAll('div')
+            .find((d) => d.text().startsWith('AAAA'))!;
+
+        expect(subjectEl.classes()).toContain('truncate');
+        expect(subjectEl.classes()).toContain('max-w-[220px]');
+    });
+
     it('shows empty state when no invoices', () => {
         const wrapper = mountComponent();
         expect(wrapper.text()).toContain('No documents yet');

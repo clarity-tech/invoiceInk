@@ -51,6 +51,10 @@ it('renders the invoice list actions without clipping at desktop width', functio
         'type' => 'estimate',
         'status' => 'draft',
         'currency' => 'INR',
+        // The customer column now carries the subject on a second line. A
+        // fixture without one never renders that line, so the layout screenshot
+        // would not show the real shape of the row.
+        'subject' => 'Comprehensive diagnostic equipment supply, installation and annual maintenance contract for the cardiology wing',
         'issued_at' => now(),
         'subtotal' => 20000000,
         'tax' => 3600000,

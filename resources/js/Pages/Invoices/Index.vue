@@ -342,6 +342,19 @@ const tabs = [
                                 >
                                     {{ invoice.customer?.name ?? 'N/A' }}
                                 </div>
+                                <!-- Truncated to one line at the same width as
+                                     the name above. Unconstrained it would wrap
+                                     rather than overflow, so this is about
+                                     keeping rows a predictable height, not about
+                                     horizontal overflow. Full text stays on
+                                     `title` for hover and assistive tech. -->
+                                <div
+                                    v-if="invoice.subject"
+                                    class="mt-0.5 max-w-[220px] truncate text-xs text-gray-400"
+                                    :title="invoice.subject"
+                                >
+                                    {{ invoice.subject }}
+                                </div>
                             </td>
                             <td class="px-4 py-4 text-right whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">
