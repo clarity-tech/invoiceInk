@@ -6,7 +6,8 @@
 # versioned until you choose to merge it, so main stays continuously deployable
 # while releases remain a deliberate act.
 #
-# Deployment is unchanged: docker-build.yml still deploys every push to main.
+# Deployment is unchanged: docker-build.yml still deploys every push to main,
+# though deploy-production now waits on that workflow's test jobs first.
 # A release does not deploy -- it labels an image that is already live. The
 # retag step exists so rollbacks can name a version rather than a 40-character
 # SHA:
@@ -47,7 +48,7 @@ jobs:
       major: ${{ steps.release.outputs.major }}
       minor: ${{ steps.release.outputs.minor }}
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         id: release
         with:
           config-file: release-please-config.json
@@ -82,12 +83,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_DEPLOY_SA }}
 
-      - uses: google-github-actions/setup-gcloud@v2
+      - uses: google-github-actions/setup-gcloud@v3
 
       # release-please tags the same commit that docker-build.yml is building
       # from, and the two workflows run concurrently. Wait for the image rather

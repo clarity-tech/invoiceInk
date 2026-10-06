@@ -191,7 +191,7 @@ A shared test script validates the production Docker image locally and in CI:
 # 3. Runs browser tests (Pest Browser + Playwright) against it
 # 4. Cleans up the container on exit
 #
-# The same script runs in CI (.github/workflows/ci.yml → test-octane job)
+# The same script runs in CI (.github/workflows/docker-build.yml → test-octane job)
 # for full local/CI parity.
 ```
 
@@ -246,7 +246,7 @@ The repository includes automated building and testing of all variants:
 - Standalone Binary Distroless (standalone)
 - Standalone Binary Alpine (standalone-alpine)
 
-# .github/workflows/ci.yml includes:
+# .github/workflows/docker-build.yml includes:
 - test-octane: Builds production image, runs browser tests against it
 ```
 
