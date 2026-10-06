@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.1](https://github.com/clarity-tech/invoicing/compare/v1.4.0...v1.4.1) (2026-10-06)
+
+
+### Bug Fixes
+
+* **fx:** send the rate date as a query parameter, not a path segment ([2e048b3](https://github.com/clarity-tech/invoicing/commit/2e048b37c37feb3edbce4af6435d4ce050b3f9c1))
+* **gst:** parenthesise the rate in GST breakdown labels ([287b73b](https://github.com/clarity-tech/invoicing/commit/287b73b2abb41c0409a65d9c6c51e094cc3c994a))
+
 ## [1.4.0](https://github.com/clarity-tech/invoicing/compare/v1.3.5...v1.4.0) (2026-10-06)
 
 
