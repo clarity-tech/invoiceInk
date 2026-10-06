@@ -169,11 +169,21 @@ describe('NavigationMenu', () => {
         expect(wrapper.text()).toContain('Log Out');
     });
 
-    it('has mobile menu toggle button', () => {
+    it('has mobile menu toggle button', async () => {
         const wrapper = mount(NavigationMenu);
-        // The mobile menu button exists with hamburger icon
-        const mobileBtn = wrapper.find('.sm\\:hidden button');
+
+        // Found by accessible name, not by breakpoint class: this test used to
+        // select '.sm\\:hidden button' and broke when #57 moved the nav's
+        // breakpoints, even though the button itself was unchanged.
+        const mobileBtn = wrapper.find('[aria-label="Toggle navigation menu"]');
         expect(mobileBtn.exists()).toBe(true);
+
+        // The panel it controls must exist and be wired to it.
+        expect(mobileBtn.attributes('aria-controls')).toBe('mobile-nav-panel');
+        expect(mobileBtn.attributes('aria-expanded')).toBe('false');
+
+        await mobileBtn.trigger('click');
+        expect(mobileBtn.attributes('aria-expanded')).toBe('true');
     });
 
     it('calls router.post on logout', async () => {

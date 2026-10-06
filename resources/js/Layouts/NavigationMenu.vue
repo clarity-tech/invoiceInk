@@ -106,7 +106,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                         </Link>
                     </div>
 
-                    <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                    <div class="hidden space-x-8 lg:-my-px lg:ml-10 lg:flex">
                         <Link
                             :href="dashboard.url()"
                             class="inline-flex items-center border-b-2 px-1 pt-1 text-sm leading-5 font-medium transition"
@@ -169,7 +169,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                 </div>
 
                 <!-- Right side -->
-                <div class="hidden sm:ml-6 sm:flex sm:items-center">
+                <div class="hidden lg:ml-6 lg:flex lg:items-center">
                     <div
                         v-if="auth.currentTeam"
                         class="relative mr-3"
@@ -368,9 +368,13 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                 </div>
 
                 <!-- Mobile menu button -->
-                <div class="-mr-2 flex items-center sm:hidden">
+                <div class="-mr-2 flex items-center lg:hidden">
                     <button
+                        type="button"
                         class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none"
+                        aria-label="Toggle navigation menu"
+                        aria-controls="mobile-nav-panel"
+                        :aria-expanded="showMobileMenu"
                         @click="showMobileMenu = !showMobileMenu"
                     >
                         <svg
@@ -406,7 +410,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
         </div>
 
         <!-- Mobile menu -->
-        <div v-show="showMobileMenu" class="sm:hidden">
+        <div id="mobile-nav-panel" v-show="showMobileMenu" class="lg:hidden">
             <div class="space-y-1 pt-2 pb-3">
                 <Link
                     :href="dashboard.url()"
