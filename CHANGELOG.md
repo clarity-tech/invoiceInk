@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.0](https://github.com/clarity-tech/invoicing/compare/v1.6.0...v1.7.0) (2026-10-06)
+
+
+### Features
+
+* **invoices:** show the stored exchange rate on the edit form ([1687854](https://github.com/clarity-tech/invoicing/commit/168785445430ea23f215b8731c1f243ae105c79b))
+
+
+### Bug Fixes
+
+* **fx:** fall back to the nearest recent rate, and fail loudly when there is none ([ea5fddc](https://github.com/clarity-tech/invoicing/commit/ea5fddccb97052ece817f51d8ee53dbd54441ace))
+
 ## [1.6.0](https://github.com/clarity-tech/invoicing/compare/v1.5.2...v1.6.0) (2026-10-06)
 
 
