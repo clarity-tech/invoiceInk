@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0](https://github.com/clarity-tech/invoicing/compare/v1.4.1...v1.5.0) (2026-10-06)
+
+
+### Features
+
+* **invoices:** show the document subject under the customer name ([85e044a](https://github.com/clarity-tech/invoicing/commit/85e044af6563ef1682a0946747c2d9c3089ead3c))
+
+
+### Refactoring
+
+* **invoices:** move Subject into the Invoice Details card ([ad1776d](https://github.com/clarity-tech/invoicing/commit/ad1776d814638787c7f756db8eb1f4b8a5574a37))
+
 ## [1.4.1](https://github.com/clarity-tech/invoicing/compare/v1.4.0...v1.4.1) (2026-10-06)
 
 
