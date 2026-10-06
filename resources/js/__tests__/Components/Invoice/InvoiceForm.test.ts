@@ -273,6 +273,149 @@ describe('Invoice/InvoiceForm', () => {
         });
     });
 
+    describe('stored exchange rate display', () => {
+        // The rate drives every converted figure in reporting and is otherwise
+        // invisible -- not on the form, the public view or the PDF -- so a
+        // wrong total could not be explained without a database query.
+        //
+        // Currency follows the selected customer, so a foreign-currency
+        // document means the USD customer (id 2); the organization is INR.
+
+        const foreignInvoice = (overrides = {}) =>
+            makeInvoice({
+                id: 1,
+                customer_id: 2,
+                currency: 'USD',
+                exchange_rate: 88.4312,
+                issued_at: '2026-03-01',
+                ...overrides,
+            });
+
+        const dateInput = (wrapper: ReturnType<typeof mountComponent>) =>
+            wrapper.findAll('input[type="date"]')[0];
+
+        it('shows the saved rate when editing a foreign-currency document', () => {
+            const wrapper = mountComponent({
+                mode: 'edit',
+                invoice: foreignInvoice(),
+            });
+
+            expect(wrapper.text()).toContain('Saved rate');
+            expect(wrapper.text()).toContain('1 USD =');
+            expect(wrapper.text()).toContain('88.4312');
+            expect(wrapper.text()).toContain('INR');
+        });
+
+        it('stays hidden when the document is already in the organization currency', () => {
+            const wrapper = mountComponent({
+                mode: 'edit',
+                invoice: makeInvoice({
+                    id: 1,
+                    customer_id: 1,
+                    currency: 'INR',
+                    exchange_rate: 1,
+                }),
+            });
+
+            expect(wrapper.text()).not.toContain('Saved rate');
+            expect(wrapper.text()).not.toContain('recalculated');
+        });
+
+        it('stays hidden while creating, where no rate exists yet', () => {
+            // The rate is resolved server-side at save, so there is nothing
+            // truthful to show on a new document.
+            const wrapper = mountComponent({ mode: 'create' });
+
+            expect(wrapper.text()).not.toContain('Saved rate');
+        });
+
+        it('trims trailing precision rather than printing 88.400000', () => {
+            const wrapper = mountComponent({
+                mode: 'edit',
+                invoice: foreignInvoice({ exchange_rate: 88.4 }),
+            });
+
+            expect(wrapper.text()).toContain('88.4');
+            expect(wrapper.text()).not.toContain('88.400000');
+        });
+
+        // The server re-resolves the rate whenever the issue date or the
+        // currency moves, so continuing to show the saved one would promise a
+        // number that is about to be replaced.
+        it('swaps the rate for a notice once the issue date changes', async () => {
+            const wrapper = mountComponent({
+                mode: 'edit',
+                invoice: foreignInvoice(),
+            });
+
+            expect(wrapper.text()).toContain('Saved rate');
+
+            await dateInput(wrapper).setValue('2026-04-15');
+
+            expect(wrapper.text()).not.toContain('Saved rate');
+            expect(wrapper.text()).toContain(
+                'Exchange rate will be recalculated on save',
+            );
+        });
+
+        it('restores the rate when the issue date is changed back', async () => {
+            const wrapper = mountComponent({
+                mode: 'edit',
+                invoice: foreignInvoice(),
+            });
+
+            await dateInput(wrapper).setValue('2026-04-15');
+            await dateInput(wrapper).setValue('2026-03-01');
+
+            expect(wrapper.text()).toContain('Saved rate');
+            expect(wrapper.text()).not.toContain('recalculated');
+        });
+
+        // Dashboard aggregates run through Invoice::invoices(), so an
+        // estimate's rate never reaches reporting -- claiming otherwise in the
+        // tooltip would be false on every estimate.
+        it('explains the rate in terms of reporting on an invoice', () => {
+            const wrapper = mountComponent({
+                mode: 'edit',
+                type: 'invoice',
+                invoice: foreignInvoice(),
+            });
+
+            const hint = wrapper.find('p[title]');
+
+            expect(hint.attributes('title')).toContain('reporting');
+        });
+
+        it('explains the rate in terms of conversion on an estimate', () => {
+            const wrapper = mountComponent({
+                mode: 'edit',
+                type: 'estimate',
+                invoice: foreignInvoice({ type: 'estimate' }),
+            });
+
+            const hint = wrapper.find('p[title]');
+
+            expect(hint.attributes('title')).toContain(
+                'carried over to the invoice',
+            );
+            expect(hint.attributes('title')).not.toContain('reporting');
+        });
+
+        it('swaps the rate for a notice when the customer currency no longer matches', () => {
+            // The USD customer is selected while the document was saved in AED
+            // -- the state left behind by switching customer.
+            const wrapper = mountComponent({
+                mode: 'edit',
+                invoice: foreignInvoice({ currency: 'AED' }),
+            });
+
+            expect(wrapper.text()).not.toContain('Saved rate');
+            expect(wrapper.text()).toContain(
+                'Exchange rate will be recalculated on save',
+            );
+        });
+    });
+
     describe('subject placement', () => {
         // Subject used to be its own card between Line Items and Customer Notes.
         // It belongs with the other document metadata, so it now sits in the

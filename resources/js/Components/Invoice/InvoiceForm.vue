@@ -590,6 +590,92 @@ watch(
 );
 
 const page = usePage();
+
+const orgCurrency = computed<string | null>(
+    () => (page.props as any).auth?.currentTeam?.currency ?? null,
+);
+
+/**
+ * Whether the document, as the form currently stands, needs converting for the
+ * organization's reporting. Currency follows the selected customer, so this
+ * can change mid-edit.
+ */
+const conversionApplies = computed(
+    () =>
+        props.mode === 'edit' &&
+        !!props.invoice &&
+        !!orgCurrency.value &&
+        currentCurrency.value !== orgCurrency.value,
+);
+
+/**
+ * Mirrors the rateInputsChanged check in InvoiceController::update(). The
+ * server keeps the stored rate untouched unless the currency or the issue date
+ * moved, and re-resolves it when they did -- so once either input moves, the
+ * stored rate is no longer the number that will be saved.
+ */
+const rateInputsChanged = computed(() => {
+    if (!props.invoice) {
+        return false;
+    }
+
+    // The form seeds issued_at from the same value, date-only.
+    const storedDate = props.invoice.issued_at?.split('T')[0] ?? null;
+
+    return (
+        currentCurrency.value !== props.invoice.currency ||
+        storedDate === null ||
+        form.issued_at !== storedDate
+    );
+});
+
+/**
+ * The rate saved on the document, resolved for its issue date. Every converted
+ * figure in reporting derives from it, and it is otherwise invisible -- not on
+ * the form, the public view or the PDF -- so a wrong total could not be
+ * explained without a database query.
+ *
+ * Withheld once the inputs change, because at that point it is about to be
+ * replaced and showing it would promise a number that will not be stored.
+ */
+const storedExchangeRate = computed(() => {
+    if (!conversionApplies.value || rateInputsChanged.value) {
+        return null;
+    }
+
+    const rate = Number(props.invoice!.exchange_rate);
+
+    if (!Number.isFinite(rate) || rate <= 0) {
+        return null;
+    }
+
+    return {
+        from: props.invoice!.currency,
+        to: orgCurrency.value,
+        // Trimmed rather than fixed: 26.2 should not read as 26.200000.
+        rate: parseFloat(rate.toPrecision(8)).toString(),
+    };
+});
+
+// Said out loud rather than letting the saved rate silently vanish, which
+// would leave the editor wondering what happened to it.
+const exchangeRateWillChange = computed(
+    () => conversionApplies.value && rateInputsChanged.value,
+);
+
+/**
+ * Why the saved rate matters, which differs by document type. Dashboard
+ * aggregates run through Invoice::invoices(), so an estimate's rate never
+ * reaches reporting -- but EstimateToInvoiceConverter copies it onto the
+ * invoice, so it is not inert either. Safe to read from props: the document
+ * type select is disabled while editing, which is the only time this shows.
+ */
+const storedExchangeRateHint = computed(() =>
+    props.type === 'estimate'
+        ? 'Saved with this estimate and carried over to the invoice if it is converted.'
+        : 'Saved with this document and used for every converted total in reporting.',
+);
+
 const flash = computed(() => (page.props as any).flash ?? {});
 
 // Organization contacts, offered as suggestions in the recipients editor.
@@ -1153,6 +1239,25 @@ const orgContacts = computed<Contact[]>(
                             class="mt-1 text-sm text-red-600"
                         >
                             {{ form.errors.issued_at }}
+                        </p>
+                        <!-- Sits under the issue date because that is the date
+                             the rate was resolved for. Editor only: the public
+                             view and the PDF show document amounts in their own
+                             currency and have no use for the conversion. -->
+                        <p
+                            v-if="storedExchangeRate"
+                            class="mt-1 text-xs text-gray-500"
+                            :title="storedExchangeRateHint"
+                        >
+                            Saved rate: 1 {{ storedExchangeRate.from }} =
+                            {{ storedExchangeRate.rate }}
+                            {{ storedExchangeRate.to }}
+                        </p>
+                        <p
+                            v-else-if="exchangeRateWillChange"
+                            class="mt-1 text-xs text-gray-500"
+                        >
+                            Exchange rate will be recalculated on save.
                         </p>
                     </div>
 

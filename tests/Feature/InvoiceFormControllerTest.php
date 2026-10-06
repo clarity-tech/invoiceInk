@@ -511,6 +511,36 @@ test('edit page renders with invoice data', function () {
         );
 });
 
+/**
+ * The edit form shows the saved exchange rate, and decides whether it is still
+ * current by comparing the form against these four props. They are asserted
+ * here because the component's own tests mount with hand-written props and so
+ * would keep passing if the server stopped sending any of them.
+ */
+test('edit page sends the props the saved exchange rate display depends on', function () {
+    $customer = createCustomerWithLocation(['currency' => 'USD'], [], $this->organization);
+
+    $invoice = createInvoiceWithItems([
+        'currency' => 'USD',
+        'exchange_rate' => 88.4312,
+        'issued_at' => '2026-09-01',
+    ], null, $this->organization, $customer);
+
+    $this->get(route('invoices.edit', $invoice->id))
+        ->assertStatus(200)
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Invoices/Edit')
+            // Drives which customer is selected, and so the document currency.
+            ->where('invoice.customer_id', $customer->id)
+            ->where('invoice.currency', 'USD')
+            ->where('invoice.exchange_rate', fn ($rate) => (float) $rate === 88.4312)
+            // Compared against form.issued_at to detect a changed issue date.
+            ->where('invoice.issued_at', fn ($date) => str_starts_with((string) $date, '2026-09-01'))
+            // The conversion target; without it the line cannot render at all.
+            ->where('auth.currentTeam.currency', $this->organization->currency)
+        );
+});
+
 test('edit page denies access when not authenticated', function () {
     $invoice = createInvoiceWithItems([], null, $this->organization, $this->customer);
 
