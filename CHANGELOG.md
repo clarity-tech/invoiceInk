@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/clarity-tech/invoicing/compare/v1.5.0...v1.5.1) (2026-10-06)
+
+
+### Build & CI
+
+* gate production deploys on the tests, and update every action ([fccf4da](https://github.com/clarity-tech/invoicing/commit/fccf4da9c11a0ea6b36332b7e2435df77a160033))
+
 ## [1.5.0](https://github.com/clarity-tech/invoicing/compare/v1.4.1...v1.5.0) (2026-10-06)
 
 
