@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Currency;
 use App\Models\ExchangeRate;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -21,10 +22,31 @@ class ExchangeRateService
             ->values()
             ->implode(',');
 
-        $url = rtrim(config('services.frankfurter.url'), '/').'/rates/'.$date->toDateString();
+        // The date is a QUERY parameter, not a path segment. Frankfurter v2 served
+        // `/rates/{date}` until around 2026-08-19 -- the last date this app ever
+        // stored a rate for -- and now answers it with a 404, so every fetch since
+        // has returned 0 and every conversion has silently fallen back to 1.0.
+        $url = rtrim(config('services.frankfurter.url'), '/').'/rates';
 
-        $response = Http::timeout((int) config('services.frankfurter.timeout', 10))
-            ->get($url, ['base' => self::BASE, 'quotes' => $quotes]);
+        // The upstream is intermittently slow -- observed timing out on one call
+        // and answering the next in 0.1s. A ConnectionException is thrown rather
+        // than returned, so without this it escapes `fetchAndStore()` and, through
+        // `getRate()`, reaches invoice creation as a 500.
+        try {
+            $response = Http::timeout((int) config('services.frankfurter.timeout', 10))
+                ->get($url, [
+                    'date' => $date->toDateString(),
+                    'base' => self::BASE,
+                    'quotes' => $quotes,
+                ]);
+        } catch (ConnectionException $e) {
+            Log::warning('Could not reach the exchange rate API', [
+                'date' => $date->toDateString(),
+                'error' => $e->getMessage(),
+            ]);
+
+            return 0;
+        }
 
         if ($response->failed()) {
             Log::warning('Failed to fetch exchange rates', [
@@ -35,7 +57,21 @@ class ExchangeRateService
             return 0;
         }
 
-        $rows = collect($response->json())
+        // A date the upstream has no data for -- a future date, say -- answers 200
+        // with an empty body rather than an error. Storing that would persist the
+        // USD self-rate alone and leave every real pair missing, which reads to
+        // `getRate()` exactly like a successful fetch.
+        $quoted = collect($response->json());
+
+        if ($quoted->isEmpty()) {
+            Log::warning('Exchange rate API returned no rates', [
+                'date' => $date->toDateString(),
+            ]);
+
+            return 0;
+        }
+
+        $rows = $quoted
             ->map(fn (array $row) => [
                 'date' => $date->toDateString(),
                 'base' => self::BASE,
