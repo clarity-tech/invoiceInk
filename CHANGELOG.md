@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.4.0](https://github.com/clarity-tech/invoicing/compare/v1.3.5...v1.4.0) (2026-10-06)
+
+
+### Features
+
+* **deploy:** add an MCP staging environment on Cloud Run ([5713a33](https://github.com/clarity-tech/invoicing/commit/5713a33a432ef646add7076f206755c68c499efb))
+* **mcp:** expose invoicing data as a read-only MCP server ([97bcf28](https://github.com/clarity-tech/invoicing/commit/97bcf282df0fa9fbcaccfa165588406f559c3d7b))
+
+
+### Build & CI
+
+* cut CI from six jobs to three and bound every job ([bd80de5](https://github.com/clarity-tech/invoicing/commit/bd80de51009637d9408cafd1c68ae7b8cfd37ad6))
+
 ## [1.3.5](https://github.com/clarity-tech/invoicing/compare/v1.3.4...v1.3.5) (2026-08-20)
 
 
