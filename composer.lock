@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "11b10ed41c771114145768aa517028d5",
+    "content-hash": "4f220365714567ee1fdc816e48236e80",
     "packages": [
         {
             "name": "akaunting/laravel-money",
@@ -9570,6 +9570,77 @@
                 }
             ],
             "time": "2026-02-04T18:08:13+00:00"
+        },
+        {
+            "name": "theriddleofenigma/laravel-google-chat-log",
+            "version": "v3.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/theriddleofenigma/laravel-google-chat-log.git",
+                "reference": "993413ca4e8b6fbddf24dc647ce0c02e460bc5fc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/theriddleofenigma/laravel-google-chat-log/zipball/993413ca4e8b6fbddf24dc647ce0c02e460bc5fc",
+                "reference": "993413ca4e8b6fbddf24dc647ce0c02e460bc5fc",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.8.2|^8.0",
+                "illuminate/support": "^11.0|^12.0|^13.0",
+                "monolog/monolog": "^3.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.30",
+                "orchestra/testbench": "^9.0|^10.0|^11.0",
+                "phpunit/phpunit": "^11.5|^12.0|^13.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Enigma\\GoogleChatLogServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Enigma\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Kumaravel",
+                    "email": "hello@kumaravel.dev"
+                }
+            ],
+            "description": "Send your Laravel/Lumen application logs straight to a Google Chat (Google Workspace) space via incoming webhooks.",
+            "homepage": "https://github.com/theriddleofenigma/laravel-google-chat-log",
+            "keywords": [
+                "Google-Chat",
+                "google-workspace",
+                "laravel",
+                "logging",
+                "lumen",
+                "monolog",
+                "notifications"
+            ],
+            "support": {
+                "issues": "https://github.com/theriddleofenigma/laravel-google-chat-log/issues",
+                "source": "https://github.com/theriddleofenigma/laravel-google-chat-log/tree/v3.2.0"
+            },
+            "funding": [
+                {
+                    "url": "https://www.buymeacoffee.com/riddleofenigma",
+                    "type": "custom"
+                }
+            ],
+            "time": "2026-10-05T17:38:36+00:00"
         },
         {
             "name": "tijsverkoyen/css-to-inline-styles",

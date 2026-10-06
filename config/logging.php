@@ -1,5 +1,6 @@
 <?php
 
+use Enigma\GoogleChatHandler;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -92,6 +93,33 @@ return [
                 'connectionString' => 'tls://'.env('PAPERTRAIL_URL').':'.env('PAPERTRAIL_PORT'),
             ],
             'processors' => [PsrLogMessageProcessor::class],
+        ],
+
+        // Errors and exceptions are mirrored into a Google Chat space so a
+        // production failure is seen rather than sitting in Cloud Logging
+        // waiting for someone to go looking -- which is exactly how a broken
+        // FX fetch went unnoticed for seven weeks.
+        //
+        // Deliberately opt-in and fail-quiet: `enabled` is false unless a
+        // deployment turns it on, and `on_missing_url` is "ignore" rather than
+        // the package default of "throw", so a missing secret can never turn a
+        // logged error into a second exception. Delivery failures fall back to
+        // stderr, so Cloud Logging keeps the record either way.
+        //
+        // Timeouts are deliberately tight: the handler posts synchronously
+        // inside the request, and this application runs on Octane workers.
+        'google-chat' => [
+            'driver' => 'monolog',
+            'handler' => GoogleChatHandler::class,
+            'url' => env('LOG_GOOGLE_CHAT_WEBHOOK_URL'),
+            'level' => env('LOG_GOOGLE_CHAT_LEVEL', 'error'),
+            'enabled' => env('LOG_GOOGLE_CHAT_ENABLED', false),
+            'environments' => env('LOG_GOOGLE_CHAT_ENVIRONMENTS'),
+            'on_missing_url' => env('LOG_GOOGLE_CHAT_ON_MISSING_URL', 'ignore'),
+            'timeout' => env('LOG_GOOGLE_CHAT_TIMEOUT', 5),
+            'connect_timeout' => env('LOG_GOOGLE_CHAT_CONNECT_TIMEOUT', 2),
+            'retries' => env('LOG_GOOGLE_CHAT_RETRIES', 1),
+            'fallback_channel' => env('LOG_GOOGLE_CHAT_FALLBACK_CHANNEL', 'stderr'),
         ],
 
         'stderr' => [
