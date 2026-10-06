@@ -23,11 +23,12 @@ export interface GstBreakdownParams {
 }
 
 /**
- * Format a basis-point rate as a trimmed percentage (900 → "9%", 250 → "2.5%").
+ * Format a basis-point rate as a trimmed, parenthesised percentage
+ * (900 → "(9%)", 250 → "(2.5%)").
  * Mirrors PHP's `sprintf('%g', ...)` used server-side.
  */
 function formatRate(basisPoints: number): string {
-    return `${parseFloat((basisPoints / 100).toPrecision(6))}%`;
+    return `(${parseFloat((basisPoints / 100).toPrecision(6))}%)`;
 }
 
 /**

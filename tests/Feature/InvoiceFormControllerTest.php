@@ -988,8 +988,8 @@ test('store computes and persists the intra-state CGST/SGST breakdown', function
     $invoice = Invoice::first();
     expect($invoice->tax_type)->toBe('GST');
     expect($invoice->tax_breakdown)->toBe([
-        'CGST @ 9%' => 9000,
-        'SGST @ 9%' => 9000,
+        'CGST @ (9%)' => 9000,
+        'SGST @ (9%)' => 9000,
     ]);
     expect(array_sum($invoice->tax_breakdown))->toBe($invoice->tax);
 });
@@ -1015,7 +1015,7 @@ test('store computes and persists the inter-state IGST breakdown', function () {
     ])->assertRedirect();
 
     $invoice = Invoice::first();
-    expect($invoice->tax_breakdown)->toBe(['IGST @ 18%' => 18000]);
+    expect($invoice->tax_breakdown)->toBe(['IGST @ (18%)' => 18000]);
 });
 
 test('store leaves the breakdown null for a non-GST supplier', function () {
@@ -1061,7 +1061,7 @@ test('store computes IGST for an overseas customer', function () {
     ])->assertRedirect();
 
     $invoice = Invoice::first();
-    expect($invoice->tax_breakdown)->toBe(['IGST @ 18%' => 18000]);
+    expect($invoice->tax_breakdown)->toBe(['IGST @ (18%)' => 18000]);
     expect($invoice->tax_type)->toBe('GST');
 });
 

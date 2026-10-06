@@ -37,8 +37,8 @@ it('splits intra-state GST into equal CGST and SGST components', function () {
     ]);
 
     expect($this->service->build($invoice))->toBe([
-        'CGST @ 9%' => 9000,
-        'SGST @ 9%' => 9000,
+        'CGST @ (9%)' => 9000,
+        'SGST @ (9%)' => 9000,
     ]);
 });
 
@@ -49,8 +49,8 @@ it('uses UTGST for an intra-union-territory supply', function () {
     ]);
 
     expect($this->service->build($invoice))->toBe([
-        'CGST @ 9%' => 9000,
-        'UTGST @ 9%' => 9000,
+        'CGST @ (9%)' => 9000,
+        'UTGST @ (9%)' => 9000,
     ]);
 });
 
@@ -61,8 +61,8 @@ it('uses SGST for Delhi despite it being a union territory', function () {
     ]);
 
     expect($this->service->build($invoice))->toBe([
-        'CGST @ 9%' => 9000,
-        'SGST @ 9%' => 9000,
+        'CGST @ (9%)' => 9000,
+        'SGST @ (9%)' => 9000,
     ]);
 });
 
@@ -72,7 +72,7 @@ it('uses IGST for an inter-state supply', function () {
     ]);
 
     expect($this->service->build($invoice))->toBe([
-        'IGST @ 18%' => 18000,
+        'IGST @ (18%)' => 18000,
     ]);
 });
 
@@ -83,10 +83,10 @@ it('produces per-rate rows for mixed GST rates', function () {
     ]);
 
     expect($this->service->build($invoice))->toBe([
-        'CGST @ 9%' => 9000,
-        'SGST @ 9%' => 9000,
-        'CGST @ 2.5%' => 2500,
-        'SGST @ 2.5%' => 2500,
+        'CGST @ (9%)' => 9000,
+        'SGST @ (9%)' => 9000,
+        'CGST @ (2.5%)' => 2500,
+        'SGST @ (2.5%)' => 2500,
     ]);
 });
 
@@ -98,8 +98,8 @@ it('gives the odd cent to the state component so the split reconciles', function
     $breakdown = $this->service->build($invoice);
 
     expect($breakdown)->toBe([
-        'CGST @ 9%' => 45,
-        'SGST @ 9%' => 46,
+        'CGST @ (9%)' => 45,
+        'SGST @ (9%)' => 46,
     ]);
     expect(array_sum($breakdown))->toBe(itemTaxTotal($invoice));
 });
@@ -111,7 +111,7 @@ it('falls back to the customer GSTIN when the place of supply is unset', functio
     ], ['tax_id' => '29XYZAB6789K1Z2']);
 
     expect($this->service->build($invoice))->toBe([
-        'IGST @ 18%' => 18000,
+        'IGST @ (18%)' => 18000,
     ]);
 });
 
@@ -123,7 +123,7 @@ it('treats an overseas customer as an inter-state IGST export', function () {
     ], ['country' => 'US', 'tax_id' => null]);
 
     expect($this->service->build($invoice))->toBe([
-        'IGST @ 18%' => 18000,
+        'IGST @ (18%)' => 18000,
     ]);
 });
 
@@ -136,7 +136,7 @@ it('applies IGST to an overseas customer whose tax id resembles a state code', f
     ], ['country' => 'US', 'tax_id' => '27FOREIGN0001']);
 
     expect($this->service->build($invoice))->toBe([
-        'IGST @ 18%' => 18000,
+        'IGST @ (18%)' => 18000,
     ]);
 });
 

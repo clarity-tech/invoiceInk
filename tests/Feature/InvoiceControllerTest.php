@@ -333,7 +333,7 @@ test('a duplicate saved for an Indian org gets its GST breakdown rebuilt', funct
     // without the CGST/SGST split. store() rebuilds it.
     expect($saved->tax_type)->toBe('GST')
         ->and($saved->tax_breakdown)->not->toBeEmpty()
-        ->and(array_keys($saved->tax_breakdown))->toBe(['CGST @ 9%', 'SGST @ 9%']);
+        ->and(array_keys($saved->tax_breakdown))->toBe(['CGST @ (9%)', 'SGST @ (9%)']);
 });
 
 test('the estimate create form is pre-filled from a duplicated estimate', function () {

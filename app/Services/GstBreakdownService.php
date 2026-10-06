@@ -20,7 +20,7 @@ class GstBreakdownService
 {
     /**
      * Build the tax breakdown map for an invoice, keyed by display label
-     * (e.g. "CGST @ 9%") with amounts in cents.
+     * (e.g. "CGST @ (9%)") with amounts in cents.
      *
      * Returns an empty array when the invoice is not an Indian GST supply or
      * the intra/inter-state split cannot be determined — callers should fall
@@ -171,6 +171,6 @@ class GstBreakdownService
      */
     private function formatRate(float $basisPoints): string
     {
-        return sprintf('%g', $basisPoints / 100).'%';
+        return '('.sprintf('%g', $basisPoints / 100).'%)';
     }
 }

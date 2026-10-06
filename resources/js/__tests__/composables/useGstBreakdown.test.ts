@@ -21,8 +21,8 @@ describe('buildGstBreakdown', () => {
         });
 
         expect(rows).toEqual([
-            { label: 'CGST @ 9%', amount: 9000 },
-            { label: 'SGST @ 9%', amount: 9000 },
+            { label: 'CGST @ (9%)', amount: 9000 },
+            { label: 'SGST @ (9%)', amount: 9000 },
         ]);
     });
 
@@ -34,8 +34,8 @@ describe('buildGstBreakdown', () => {
         });
 
         expect(rows).toEqual([
-            { label: 'CGST @ 9%', amount: 9000 },
-            { label: 'UTGST @ 9%', amount: 9000 },
+            { label: 'CGST @ (9%)', amount: 9000 },
+            { label: 'UTGST @ (9%)', amount: 9000 },
         ]);
     });
 
@@ -46,7 +46,10 @@ describe('buildGstBreakdown', () => {
             placeOfSupplyCode: '07',
         });
 
-        expect(rows.map((r) => r.label)).toEqual(['CGST @ 9%', 'SGST @ 9%']);
+        expect(rows.map((r) => r.label)).toEqual([
+            'CGST @ (9%)',
+            'SGST @ (9%)',
+        ]);
     });
 
     it('uses IGST for an inter-state supply', () => {
@@ -56,7 +59,7 @@ describe('buildGstBreakdown', () => {
             placeOfSupplyCode: '29',
         });
 
-        expect(rows).toEqual([{ label: 'IGST @ 18%', amount: 18000 }]);
+        expect(rows).toEqual([{ label: 'IGST @ (18%)', amount: 18000 }]);
     });
 
     it('produces per-rate rows for mixed GST rates', () => {
@@ -67,10 +70,10 @@ describe('buildGstBreakdown', () => {
         });
 
         expect(rows).toEqual([
-            { label: 'CGST @ 9%', amount: 9000 },
-            { label: 'SGST @ 9%', amount: 9000 },
-            { label: 'CGST @ 2.5%', amount: 2500 },
-            { label: 'SGST @ 2.5%', amount: 2500 },
+            { label: 'CGST @ (9%)', amount: 9000 },
+            { label: 'SGST @ (9%)', amount: 9000 },
+            { label: 'CGST @ (2.5%)', amount: 2500 },
+            { label: 'SGST @ (2.5%)', amount: 2500 },
         ]);
     });
 
@@ -82,8 +85,8 @@ describe('buildGstBreakdown', () => {
         });
 
         expect(rows).toEqual([
-            { label: 'CGST @ 9%', amount: 45 },
-            { label: 'SGST @ 9%', amount: 46 },
+            { label: 'CGST @ (9%)', amount: 45 },
+            { label: 'SGST @ (9%)', amount: 46 },
         ]);
         expect(rows.reduce((sum, r) => sum + r.amount, 0)).toBe(91);
     });
@@ -96,7 +99,7 @@ describe('buildGstBreakdown', () => {
             isForeignCustomer: true,
         });
 
-        expect(rows).toEqual([{ label: 'IGST @ 18%', amount: 18000 }]);
+        expect(rows).toEqual([{ label: 'IGST @ (18%)', amount: 18000 }]);
     });
 
     it('never splits an overseas supply into CGST/SGST', () => {
@@ -109,7 +112,7 @@ describe('buildGstBreakdown', () => {
             isForeignCustomer: true,
         });
 
-        expect(rows).toEqual([{ label: 'IGST @ 18%', amount: 18000 }]);
+        expect(rows).toEqual([{ label: 'IGST @ (18%)', amount: 18000 }]);
     });
 
     it('returns no rows when the state cannot be determined', () => {
