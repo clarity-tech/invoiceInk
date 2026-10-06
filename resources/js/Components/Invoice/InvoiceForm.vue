@@ -1197,6 +1197,29 @@ const orgContacts = computed<Contact[]>(
                 </div>
 
                 <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <!-- Subject spans two of the three columns: it is free text
+                         describing the engagement, so it needs more room than the
+                         order number beside it. -->
+                    <div class="md:col-span-2">
+                        <label
+                            class="mb-1 block text-sm font-medium text-gray-700"
+                            >Subject</label
+                        >
+                        <input
+                            v-model="form.subject"
+                            type="text"
+                            placeholder="e.g. Development work for April"
+                            maxlength="255"
+                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        />
+                        <p
+                            v-if="form.errors.subject"
+                            class="mt-1 text-sm text-red-600"
+                        >
+                            {{ form.errors.subject }}
+                        </p>
+                    </div>
+
                     <div>
                         <label
                             class="mb-1 block text-sm font-medium text-gray-700"
@@ -1451,23 +1474,6 @@ const orgContacts = computed<Contact[]>(
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Subject Section -->
-            <div class="rounded-lg bg-white p-6 shadow">
-                <label class="mb-2 block text-sm font-medium text-gray-700"
-                    >Subject</label
-                >
-                <input
-                    v-model="form.subject"
-                    type="text"
-                    placeholder="e.g. Development work for April"
-                    maxlength="255"
-                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                />
-                <p v-if="form.errors.subject" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.subject }}
-                </p>
             </div>
 
             <!-- Notes Section -->

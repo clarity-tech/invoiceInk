@@ -273,6 +273,52 @@ describe('Invoice/InvoiceForm', () => {
         });
     });
 
+    describe('subject placement', () => {
+        // Subject used to be its own card between Line Items and Customer Notes.
+        // It belongs with the other document metadata, so it now sits in the
+        // Invoice Details card alongside Order Number.
+        const detailsCard = (wrapper: ReturnType<typeof mountComponent>) =>
+            wrapper
+                .findAll('div.rounded-lg')
+                .find((d) => d.text().includes('Invoice Details'))!;
+
+        it('renders the subject input inside the Invoice Details card', () => {
+            const wrapper = mountComponent();
+            const card = detailsCard(wrapper);
+
+            expect(card).toBeTruthy();
+            expect(card.html()).toContain(
+                'placeholder="e.g. Development work for April"',
+            );
+            // Sanity: it is the same card that holds the other metadata.
+            expect(card.text()).toContain('Order Number');
+        });
+
+        it('has no subject input outside that card', () => {
+            const wrapper = mountComponent();
+            const card = detailsCard(wrapper);
+
+            const allSubjectInputs = wrapper.findAll(
+                'input[placeholder="e.g. Development work for April"]',
+            );
+            const insideCard = card.findAll(
+                'input[placeholder="e.g. Development work for April"]',
+            );
+
+            expect(allSubjectInputs).toHaveLength(1);
+            expect(insideCard).toHaveLength(1);
+        });
+
+        it('still binds and still surfaces its validation error', () => {
+            formErrors = { subject: 'The subject field is required.' };
+            const wrapper = mountComponent();
+
+            expect(detailsCard(wrapper).text()).toContain(
+                'The subject field is required.',
+            );
+        });
+    });
+
     describe('create mode - invoice', () => {
         it('renders with mode=create and type=invoice', () => {
             const wrapper = mountComponent();
