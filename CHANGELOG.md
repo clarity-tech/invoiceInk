@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/clarity-tech/invoicing/compare/v1.5.2...v1.6.0) (2026-10-06)
+
+
+### Features
+
+* **logging:** mirror production errors into a Google Chat space ([28f2c43](https://github.com/clarity-tech/invoicing/commit/28f2c43d61d23be3cf5b5f0bc372e788c9446cf2))
+
 ## [1.5.2](https://github.com/clarity-tech/invoicing/compare/v1.5.1...v1.5.2) (2026-10-06)
 
 
