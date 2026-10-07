@@ -44,7 +44,11 @@ watch(
     () => props.modelValue,
     (val) => {
         if (editor.value && editor.value.getHTML() !== val) {
-            editor.value.commands.setContent(val, false);
+            // TipTap's signature changed from (content, emitUpdate, parseOptions)
+            // to (content, options). The bare `false` was silently ignored as an
+            // options object, so emitUpdate fell back to its `true` default and
+            // syncing from the parent emitted an update right back.
+            editor.value.commands.setContent(val, { emitUpdate: false });
         }
     },
 );
