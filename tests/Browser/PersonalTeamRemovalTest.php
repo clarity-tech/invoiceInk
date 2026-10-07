@@ -56,7 +56,7 @@ it('shows the org switcher dropdown for a multi-org user', function () {
         'email' => 'multi-org@example.test',
     ]);
     // The switcher renders the org `name` (not `company_name`), so seed and
-    // assert on `name` to match what the navbar dropdown actually displays.
+    // assert on `name` to match what the menu actually displays.
     $user->currentTeam->update([
         'name' => 'Primary Co',
         'setup_completed_at' => now(),
@@ -70,9 +70,13 @@ it('shows the org switcher dropdown for a multi-org user', function () {
     $this->actingAs($user);
 
     $page = $this->visit('/dashboard')->waitForEvent('networkidle');
-    $page->assertSee('Primary Co')
-        ->click('Primary Co')
-        ->waitForEvent('networkidle')
+
+    // Organization switching moved into the user menu (#57) — it cost ~167px
+    // of nav width, which is what kept the full nav off tablet widths. So the
+    // current org is no longer named in the bar; it is one tap away instead.
+    $page->assertDontSee('Primary Co')
+        ->click('[data-user-dropdown] > button')
+        ->assertSee('Primary Co')
         ->assertSee('Secondary Co')
         ->assertSee('Manage organizations');
 });

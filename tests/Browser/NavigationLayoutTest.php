@@ -8,8 +8,11 @@ use App\Models\User;
  * The desktop nav used to appear at `sm:` (640px) while the hamburger
  * disappeared at the same breakpoint, so between 640px and ~1000px neither
  * layout fitted and the document overflowed horizontally — measured at +300px
- * at 640px and +172px at 768px. Both now switch at `lg:` (1024px), the first
- * standard breakpoint the full desktop nav fits in.
+ * at 640px and +172px at 768px.
+ *
+ * Both now switch at `md:` (768px). That threshold is only reachable because
+ * organization switching moved into the user menu: it cost ~167px of a ~940px
+ * nav, and without it the full set of links fits from 768px.
  *
  * The real guard is `scrollWidth - clientWidth` on the document. `assertSee`
  * would pass on the broken layout too, since overflowing content stays in the
@@ -39,9 +42,9 @@ it('does not overflow the viewport at any width', function () {
 
     $page = visit('/dashboard');
 
-    // 640 / 768 / 1000 all overflowed before the fix; 1023 and 1024 sit either
+    // 640 / 768 / 1000 all overflowed before the fix; 767 and 768 sit either
     // side of the new breakpoint.
-    foreach ([375, 640, 768, 900, 1000, 1023, 1024, 1280, 1440] as $width) {
+    foreach ([375, 640, 700, 767, 768, 900, 1000, 1024, 1280, 1440] as $width) {
         $page->resize($width, 900)
             ->assertScript(
                 'function () {
@@ -61,12 +64,14 @@ it('shows exactly one of the desktop nav and the hamburger at every width', func
     // exactly one (the desktop nav, too wide to fit). It pins the *coordination*
     // instead: moving one of the two breakpoints without the other leaves a band
     // with both layouts, or none at all, which is how the bug arose.
-    foreach ([375, 640, 768, 1000, 1023, 1024, 1440] as $width) {
+    foreach ([375, 640, 700, 767, 768, 1000, 1024, 1440] as $width) {
         $page->resize($width, 900)
             ->assertScript(
                 'function () {
                     const visible = (el) => !!(el && el.offsetParent !== null);
-                    const desktop = document.querySelector("[data-team-dropdown]");
+                    // The user menu is the desktop-only right-hand block.
+                    // (data-team-dropdown now lives inside it, collapsed.)
+                    const desktop = document.querySelector("[data-user-dropdown]");
                     const burger = document.querySelector("[aria-label=\'Toggle navigation menu\']");
                     return visible(desktop) !== visible(burger);
                 }',
@@ -77,7 +82,7 @@ it('shows exactly one of the desktop nav and the hamburger at every width', func
 it('opens and closes the mobile panel below the breakpoint', function () {
     $this->actingAs(navUser('nav-mobile@example.test', 'Clarity Technologies'));
 
-    $page = visit('/dashboard')->resize(768, 900);
+    $page = visit('/dashboard')->resize(700, 900);
 
     $hidden = 'function () {
         const p = document.getElementById("mobile-nav-panel");

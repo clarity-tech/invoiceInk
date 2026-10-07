@@ -134,15 +134,14 @@ describe('NavigationMenu', () => {
         };
         await wrapper.vm.$nextTick();
 
-        // The trigger label must follow the new current team, not stay stale.
-        expect(wrapper.find('[data-team-dropdown] button').text()).toContain(
-            'Second Org',
-        );
-
-        // The checkmark must move to the newly active org in the dropdown.
+        // Organization switching moved into the user menu (#57), so there is no
+        // longer a separate trigger showing the current org name. What must
+        // still hold is that the section marks the active organization, and
+        // that the marking follows a switch rather than going stale.
         const teamButtons = wrapper.findAll(
-            '[data-team-dropdown] .max-h-72 button',
+            '[data-team-dropdown] .max-h-56 button',
         );
+        expect(teamButtons.length).toBe(2);
         const secondOrgButton = teamButtons.find((b) =>
             b.text().includes('Second Org'),
         )!;
