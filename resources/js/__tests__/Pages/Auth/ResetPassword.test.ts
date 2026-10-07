@@ -62,7 +62,7 @@ describe('ResetPassword', () => {
 
     it('pre-fills email from props', () => {
         const wrapper = mountComponent();
-        const emailInput = wrapper.find('input#email');
+        const emailInput = wrapper.find<HTMLInputElement>('input#email');
         expect(emailInput.element.value).toBe('user@example.test');
     });
 

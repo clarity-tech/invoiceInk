@@ -7,7 +7,11 @@ const { mockRouterPost, mockRouterPut, pageState } = vi.hoisted(() => ({
     mockRouterPut: vi.fn(),
     // Holds the reactive page object returned by usePage(). Reset per test so
     // mutating props mirrors how Inertia swaps shared props after navigation.
-    pageState: { current: null as ReturnType<typeof reactive> | null },
+    // `ReturnType<typeof reactive>` without a type argument widens to `object`,
+    // which has no `props` -- so the mock page could not be reached by type.
+    pageState: {
+        current: null as { props: Record<string, unknown> } | null,
+    },
 }));
 
 vi.mock('@inertiajs/vue3', () => ({

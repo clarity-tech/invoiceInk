@@ -137,6 +137,9 @@ function mountComponent(propsOverride = {}) {
                     template: '<div><slot name="header" /><slot /></div>',
                 },
                 CustomerForm: {
+                    // Named so findComponent({ name }) can return a typed
+                    // wrapper; a CSS selector yields WrapperLike, which has no vm.
+                    name: 'CustomerForm',
                     template: '<div data-testid="customer-form" />',
                     props: ['form', 'currencies', 'countries', 'isEditing'],
                     emits: ['submit', 'cancel'],
@@ -338,8 +341,11 @@ describe('Customers/Index', () => {
             .find((b) => b.text() === 'Add Customer');
         await addBtn!.trigger('click');
 
+        // findComponent() with a CSS selector returns WrapperLike, which has no
+        // `vm`. CustomerForm is an inline stub here, so there is no component
+        // binding to pass -- matching on its name gives a typed wrapper.
         await wrapper
-            .findComponent('[data-testid="customer-form"]')
+            .findComponent({ name: 'CustomerForm' })
             .vm.$emit('submit');
 
         expect(mockPost).toHaveBeenCalledWith(
