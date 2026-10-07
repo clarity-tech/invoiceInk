@@ -32,6 +32,10 @@ const props = defineProps<{
 }>();
 
 const isMounted = ref(false);
+
+// Focus lands here after a confirmed delete: the row that opened the
+// dialog is removed, so the dialog cannot hand focus back to it.
+const listRegion = ref<HTMLElement | null>(null);
 onMounted(() => {
     isMounted.value = true;
 });
@@ -301,7 +305,12 @@ function locationSummary(customer: Customer): string {
             </Teleport>
 
             <!-- Customer Table -->
-            <div class="overflow-x-auto bg-white shadow-sm sm:rounded-lg">
+            <div
+                ref="listRegion"
+                tabindex="-1"
+                aria-label="Customers list"
+                class="overflow-x-auto bg-white shadow-sm focus:ring-2 focus:ring-brand-500 focus:outline-none sm:rounded-lg"
+            >
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
@@ -524,6 +533,7 @@ function locationSummary(customer: Customer): string {
 
         <!-- Delete Confirmation -->
         <ConfirmationModal
+            :restore-focus-to="listRegion"
             :show="confirmingDelete"
             title="Delete Customer"
             message="Delete this customer? You can restore them from Trash later."

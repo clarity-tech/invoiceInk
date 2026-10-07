@@ -27,6 +27,10 @@ defineProps<{
 
 const restoring = ref<number | null>(null);
 
+// Focus lands here after a confirmed delete: the row that opened the
+// dialog is removed, so the dialog cannot hand focus back to it.
+const listRegion = ref<HTMLElement | null>(null);
+
 function restoreCustomer(customer: Customer) {
     restoring.value = customer.id;
     router.post(
@@ -86,7 +90,12 @@ function primaryEmail(customer: Customer): string {
         </template>
 
         <div class="py-4">
-            <div class="overflow-x-auto bg-white shadow-sm sm:rounded-lg">
+            <div
+                ref="listRegion"
+                tabindex="-1"
+                aria-label="Trashed customers list"
+                class="overflow-x-auto bg-white shadow-sm focus:ring-2 focus:ring-brand-500 focus:outline-none sm:rounded-lg"
+            >
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
@@ -234,6 +243,7 @@ function primaryEmail(customer: Customer): string {
         </div>
 
         <ConfirmationModal
+            :restore-focus-to="listRegion"
             :show="confirmingForceDelete"
             title="Delete Forever"
             message="Permanently delete this customer? This cannot be undone. If they have any invoices, the deletion will be blocked."

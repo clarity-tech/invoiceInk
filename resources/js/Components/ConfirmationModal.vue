@@ -8,6 +8,12 @@ const props = defineProps<{
     confirmLabel?: string;
     cancelLabel?: string;
     destructive?: boolean;
+    /**
+     * Where to send focus after a confirmed action, for callers whose confirm
+     * removes the element that opened the dialog. Give it a container that
+     * survives the change -- typically the list itself, with tabindex="-1".
+     */
+    restoreFocusTo?: HTMLElement | null;
 }>();
 
 const emit = defineEmits<{
@@ -26,6 +32,13 @@ const cancelButton = ref<HTMLButtonElement | null>(null);
 /** The element to hand focus back to once the dialog closes. */
 let previouslyFocused: HTMLElement | null = null;
 
+/**
+ * Whether this close came from confirming rather than cancelling. A confirmed
+ * destructive action usually removes the row that opened the dialog, so the
+ * opener is the one element we must not rely on.
+ */
+let confirmed = false;
+
 const FOCUSABLE = [
     'a[href]',
     'button:not([disabled])',
@@ -40,6 +53,11 @@ const FOCUSABLE = [
  * visible, so the selector alone is enough — no visibility filtering, which
  * would depend on layout the test environment does not compute.
  */
+function onConfirm() {
+    confirmed = true;
+    emit('confirm');
+}
+
 function focusable(): HTMLElement[] {
     if (!panel.value) {
         return [];
@@ -102,8 +120,27 @@ watch(
         }
 
         document.removeEventListener('keydown', onKeydown);
-        previouslyFocused?.focus?.();
+
+        // Restoring focus to the opener is right after a cancel, but wrong
+        // after a confirm that deletes the row the opener lives in: the node
+        // is detached, .focus() on it does nothing, and focus falls to <body>,
+        // dumping keyboard and screen reader users at the top of the document.
+        //
+        // The detachment is not reliably immediate either -- an optimistic
+        // update removes the row on the next tick, while a plain delete keeps
+        // it until the server replies. Preferring the caller's container on
+        // confirm sidesteps the timing question entirely, because that element
+        // is there either way.
+        const target =
+            confirmed && props.restoreFocusTo
+                ? props.restoreFocusTo
+                : previouslyFocused;
+
+        confirmed = false;
         previouslyFocused = null;
+
+        await nextTick();
+        target?.focus?.();
     },
 );
 
@@ -161,7 +198,7 @@ onBeforeUnmount(() => {
                                     ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
                                     : 'bg-brand-600 hover:bg-brand-700 focus:ring-brand-500'
                             "
-                            @click="emit('confirm')"
+                            @click="onConfirm"
                         >
                             {{ confirmLabel || 'Confirm' }}
                         </button>

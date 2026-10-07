@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { nextTick, ref } from 'vue';
+import { ref } from 'vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import MoneyDisplay from '@/Components/MoneyDisplay.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
@@ -89,7 +89,7 @@ const converting = ref<number | null>(null);
 /** Focus lands here after a delete removes the row that was focused. */
 const listRegion = ref<HTMLElement | null>(null);
 
-async function deleteInvoice() {
+function deleteInvoice() {
     if (!invoiceToDelete.value) {
         return;
     }
@@ -111,15 +111,6 @@ async function deleteInvoice() {
         .delete(`/invoices/${id}`, {
             preserveScroll: true,
         });
-
-    // The dialog hands focus back to the row action that opened it, but the
-    // optimistic update has just removed that row — so the restore lands on a
-    // detached node and focus falls to <body>, dumping keyboard and screen
-    // reader users at the top of the document. Move focus to the list itself
-    // once the re-render has happened; nextTick runs after the dialog's
-    // pre-flush restore, so this wins.
-    await nextTick();
-    listRegion.value?.focus();
 }
 
 function convertEstimate(invoice: Invoice) {
@@ -563,6 +554,7 @@ const tabs = [
 
         <!-- Delete Confirmation -->
         <ConfirmationModal
+            :restore-focus-to="listRegion"
             :show="confirmingDelete"
             title="Delete Document"
             message="Are you sure you want to delete this document? This action cannot be undone."
