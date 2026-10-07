@@ -160,15 +160,67 @@ function onPeriodChange(event: Event) {
     });
 }
 
-const trendMax = computed(() => {
-    return Math.max(1, ...props.monthlyTrend.map((m) => m.invoiced));
+/**
+ * The chart scales to the largest value in either series, not just invoiced --
+ * collected is drawn on the same axis, so sizing it against a different
+ * maximum would make the two bars incomparable.
+ */
+const trendPeak = computed(() =>
+    Math.max(
+        0,
+        ...props.monthlyTrend.map((m) => Math.max(m.invoiced, m.collected)),
+    ),
+);
+
+/** Nothing to plot. Six empty bars would imply a measurement that was taken. */
+const trendIsEmpty = computed(() => trendPeak.value === 0);
+
+/**
+ * Gridline values from zero to the peak. Rendering the amounts on an axis is
+ * what makes the bars mean something: before this they were sized purely as a
+ * percentage of the tallest month, so a bar could be any amount at all.
+ */
+const trendTicks = computed(() => {
+    const peak = trendPeak.value;
+
+    return [peak, peak / 2, 0];
 });
 
 function trendBarHeight(value: number): string {
-    const pct =
-        trendMax.value > 0 ? Math.max(2, (value / trendMax.value) * 100) : 2;
+    if (trendPeak.value === 0) {
+        return '0%';
+    }
 
-    return `${pct}%`;
+    // A non-zero amount always gets a sliver, so that "small" never renders
+    // identically to "none".
+    const pct = (value / trendPeak.value) * 100;
+
+    return `${value > 0 ? Math.max(pct, 1.5) : 0}%`;
+}
+
+/** The currency symbol on its own, taken from a formatted zero. */
+const currencySymbol = computed(() =>
+    formatMoney(0, currency.value).replace(/[\d.,\s]/g, ''),
+);
+
+/**
+ * Axis labels only, where a full amount would not fit. Keeps the magnitude
+ * legible without implying the precision the KPI tiles carry.
+ */
+function fmtCompact(amountInCents: number): string {
+    const major = amountInCents / 100;
+    const abs = Math.abs(major);
+    const symbol = currencySymbol.value;
+
+    if (abs >= 1_000_000) {
+        return `${symbol}${(major / 1_000_000).toFixed(1)}M`;
+    }
+
+    if (abs >= 1_000) {
+        return `${symbol}${(major / 1_000).toFixed(1)}k`;
+    }
+
+    return `${symbol}${Math.round(major)}`;
 }
 
 const totalStatusCount = computed(() =>
@@ -460,36 +512,99 @@ const totalStatusCount = computed(() =>
                     <h3 class="mb-4 text-sm font-semibold text-gray-900">
                         6-Month Trend
                     </h3>
-                    <div class="flex h-40 items-end justify-between gap-2">
+                    <!--
+                        Bars used to be sized as a percentage of the tallest
+                        month with nothing to read them against, so a bar could
+                        stand for any amount at all. They now share one axis,
+                        scaled to the larger of the two series, with the
+                        amounts written next to it.
+                    -->
+                    <div v-if="trendIsEmpty" class="py-10 text-center">
+                        <p class="text-sm text-gray-500">
+                            Nothing invoiced in the last six months
+                        </p>
+                        <p class="mt-1 text-xs text-gray-400">
+                            The chart appears once there is activity to plot.
+                        </p>
+                    </div>
+
+                    <div v-else class="flex gap-3">
+                        <!-- Y axis -->
                         <div
-                            v-for="month in monthlyTrend"
-                            :key="month.label"
-                            class="flex flex-1 flex-col items-center gap-1"
+                            class="flex h-40 flex-col justify-between py-0.5 text-right text-[11px] text-gray-400 tabular-nums"
+                            aria-hidden="true"
                         >
+                            <span v-for="tick in trendTicks" :key="tick">{{
+                                fmtCompact(tick)
+                            }}</span>
+                        </div>
+
+                        <div class="relative flex-1">
+                            <!-- Gridlines, aligned with the axis labels. -->
                             <div
-                                class="flex h-28 w-full flex-col items-center justify-end gap-0.5"
+                                class="pointer-events-none absolute inset-x-0 top-0 flex h-40 flex-col justify-between"
+                                aria-hidden="true"
                             >
                                 <div
-                                    class="w-full max-w-[2rem] rounded-t bg-brand-200 transition-all"
-                                    :style="{
-                                        height: trendBarHeight(month.invoiced),
-                                    }"
-                                    :title="'Invoiced: ' + fmt(month.invoiced)"
-                                />
-                                <div
-                                    v-if="month.collected > 0"
-                                    class="w-full max-w-[2rem] rounded-t bg-green-400 transition-all"
-                                    :style="{
-                                        height: trendBarHeight(month.collected),
-                                    }"
-                                    :title="
-                                        'Collected: ' + fmt(month.collected)
-                                    "
+                                    v-for="tick in trendTicks"
+                                    :key="tick"
+                                    class="border-t border-dashed border-gray-200"
                                 />
                             </div>
-                            <span class="text-xs text-gray-500">{{
-                                month.short
-                            }}</span>
+
+                            <div class="relative flex h-40 items-end gap-2">
+                                <div
+                                    v-for="month in monthlyTrend"
+                                    :key="month.label"
+                                    class="flex h-full flex-1 items-end justify-center gap-1"
+                                >
+                                    <!--
+                                        Both bars always render, so a month
+                                        that collected nothing is visibly
+                                        different from one with no data.
+                                    -->
+                                    <div
+                                        class="w-1/2 max-w-[1.5rem] rounded-t bg-brand-300 transition-all"
+                                        :style="{
+                                            height: trendBarHeight(
+                                                month.invoiced,
+                                            ),
+                                        }"
+                                        :title="`${month.label} invoiced: ${fmt(month.invoiced)}`"
+                                    />
+                                    <div
+                                        class="w-1/2 max-w-[1.5rem] rounded-t bg-green-400 transition-all"
+                                        :style="{
+                                            height: trendBarHeight(
+                                                month.collected,
+                                            ),
+                                        }"
+                                        :title="`${month.label} collected: ${fmt(month.collected)}`"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="mt-1 flex gap-2">
+                                <div
+                                    v-for="month in monthlyTrend"
+                                    :key="month.label"
+                                    class="flex-1 text-center"
+                                >
+                                    <div class="text-xs text-gray-500">
+                                        {{ month.short }}
+                                    </div>
+                                    <!--
+                                        The amounts were reachable only by
+                                        hovering, which is no use on a touch
+                                        screen and invisible to a screen reader.
+                                    -->
+                                    <div
+                                        class="text-[11px] text-gray-400 tabular-nums"
+                                    >
+                                        {{ fmtCompact(month.invoiced) }}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div

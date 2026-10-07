@@ -324,6 +324,67 @@ describe('Dashboard', () => {
         expect(wrapper.text()).toContain('Nov');
     });
 
+    describe('trend chart readability', () => {
+        // Bars used to be sized as a percentage of the tallest month with
+        // nothing to read them against, and the amounts were reachable only by
+        // hovering -- no use on touch, invisible to a screen reader.
+
+        it('writes the amounts next to the chart, not only in tooltips', () => {
+            const wrapper = mountComponent();
+
+            // 8,000,000 cents = 80,000 major units -> compact form.
+            expect(wrapper.text()).toContain('80.0k');
+        });
+
+        it('labels the axis from zero to the peak of either series', () => {
+            const wrapper = mountComponent({
+                monthlyTrend: [
+                    {
+                        label: 'October 2025',
+                        short: 'Oct',
+                        invoiced: 1000000,
+                        collected: 0,
+                    },
+                    {
+                        label: 'November 2025',
+                        short: 'Nov',
+                        // Collected exceeds invoiced, so it must set the peak:
+                        // scaling to invoiced alone would push this off-chart.
+                        invoiced: 500000,
+                        collected: 2000000,
+                    },
+                ],
+            });
+
+            const text = wrapper.text();
+            expect(text).toContain('20.0k');
+            expect(text).toContain('10.0k');
+        });
+
+        it('says so instead of drawing six empty bars when nothing was invoiced', () => {
+            const wrapper = mountComponent({
+                monthlyTrend: [
+                    {
+                        label: 'October 2025',
+                        short: 'Oct',
+                        invoiced: 0,
+                        collected: 0,
+                    },
+                    {
+                        label: 'November 2025',
+                        short: 'Nov',
+                        invoiced: 0,
+                        collected: 0,
+                    },
+                ],
+            });
+
+            expect(wrapper.text()).toContain(
+                'Nothing invoiced in the last six months',
+            );
+        });
+    });
+
     it('renders recent invoices', () => {
         const wrapper = mountComponent();
         expect(wrapper.text()).toContain('Recent Invoices');
