@@ -562,11 +562,17 @@ const totalStatusCount = computed(() =>
                 <div class="rounded-lg bg-white p-5 shadow">
                     <h3 class="mb-4 text-sm font-semibold text-gray-900">
                         Overdue Invoices
+                        <!--
+                            The list is capped at five by the controller, so its
+                            length is not the overdue count. Using it made the
+                            badge disagree with the Outstanding tile on the same
+                            screen -- "11 overdue" above, "5" here.
+                        -->
                         <span
-                            v-if="overdueInvoices.length > 0"
+                            v-if="stats.overdue_count > 0"
                             class="ml-2 inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700"
                         >
-                            {{ overdueInvoices.length }}
+                            {{ stats.overdue_count }}
                         </span>
                     </h3>
                     <div v-if="overdueInvoices.length > 0" class="space-y-3">
@@ -597,6 +603,21 @@ const totalStatusCount = computed(() =>
                                 </div>
                             </div>
                         </div>
+
+                        <!--
+                            Say so when the list is a subset, rather than
+                            leaving the badge and the visible rows to disagree.
+                            Deliberately not a link: the invoice list filters by
+                            status, and overdue is derived from due_at rather
+                            than being one, so there is no URL to send them to.
+                        -->
+                        <p
+                            v-if="stats.overdue_count > overdueInvoices.length"
+                            class="pt-1 text-xs text-gray-500"
+                        >
+                            Showing the {{ overdueInvoices.length }} most
+                            overdue of {{ stats.overdue_count }}
+                        </p>
                     </div>
                     <div v-else class="py-4 text-center">
                         <svg
