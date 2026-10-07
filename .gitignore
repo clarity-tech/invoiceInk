@@ -10,11 +10,16 @@
 /resources/js/actions
 /resources/js/routes
 /resources/js/wayfinder
+
+# Agent instructions, kept per-developer rather than shared.
+/CLAUDE.md
 /vendor
 .DS_Store
 .env
 .env.backup
 .env.production
+.env.dusk.local
+.env.dusk.testing
 *.sqlite
 .phpactor.json
 .phpunit.result.cache
@@ -46,3 +51,6 @@ deploy/cloudrun/app.env
 
 # wrangler local build cache
 deploy/cloudflare/.wrangler/
+
+# This project uses Bun; a stray yarn.lock accumulated history for no reason.
+/yarn.lock
