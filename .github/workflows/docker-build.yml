@@ -232,12 +232,31 @@ jobs:
       - name: Generate Wayfinder typed routes
         run: php artisan wayfinder:generate --path=resources/js --no-interaction
 
-      # Advisory only: `types:check` currently reports 42 pre-existing errors,
-      # so `|| true` keeps it from failing the build. Output is no longer sent
-      # to /dev/null, so the errors are at least visible in the log. Make this
-      # blocking once the backlog is cleared.
-      - name: TypeScript check (advisory)
-        run: bun run types:check || true
+      # A ratchet rather than a plain gate. 21 errors remain, all of them the
+      # same thing: test mocks that are structurally right but are not the
+      # branded `InertiaForm<T>` type the components declare. Clearing those
+      # needs a typed factory and was deliberately deferred, so failing on any
+      # error would fail every build.
+      #
+      # Failing on *more* than the known count still catches every new error,
+      # which is the part worth enforcing. Lower this number as the remainder
+      # is cleared; it must never be raised to accommodate new errors.
+      - name: TypeScript check (ratchet)
+        env:
+          BASELINE: 21
+        run: |
+          set -o pipefail
+          bun run types:check 2>&1 | tee /tmp/tsc.log || true
+          COUNT=$(grep -cE 'error TS' /tmp/tsc.log || true)
+          echo "type errors: $COUNT (baseline $BASELINE)"
+          if [ "$COUNT" -gt "$BASELINE" ]; then
+            echo "::error::$COUNT type errors, above the baseline of $BASELINE."
+            grep -E 'error TS' /tmp/tsc.log || true
+            exit 1
+          fi
+          if [ "$COUNT" -lt "$BASELINE" ]; then
+            echo "::notice::$COUNT type errors, below the baseline of $BASELINE -- lower BASELINE in this workflow."
+          fi
 
       - name: Run Vitest
         run: bun run test
