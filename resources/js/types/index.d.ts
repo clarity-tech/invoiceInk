@@ -326,7 +326,15 @@ export interface SharedProps {
     };
 }
 
-declare module '@inertiajs/vue3' {
-    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-    interface PageProps extends SharedProps {}
+/**
+ * Inertia v3 resolves shared props through `InertiaConfig['sharedPageProps']`
+ * on @inertiajs/core, not through a PageProps interface on @inertiajs/vue3.
+ * The previous augmentation targeted the latter, so it compiled cleanly while
+ * having no effect -- `usePage().props` stayed `{}` and every access to it had
+ * to be cast. Declaring it here is what actually types the shared props.
+ */
+declare module '@inertiajs/core' {
+    interface InertiaConfig {
+        sharedPageProps: SharedProps;
+    }
 }

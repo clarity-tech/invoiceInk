@@ -55,7 +55,10 @@ const props = defineProps<{
 }>();
 
 const page = usePage();
-const currentUserId = (page.props.auth?.user ?? page.props.user)?.id;
+// The server shares the signed-in user at `auth.user` and nowhere else. The
+// old `?? page.props.user` fallback referred to a prop that has never existed;
+// it compiled only because untyped page props made it `unknown`.
+const currentUserId = page.props.auth.user?.id;
 
 const addMemberForm = useForm({
     email: '',

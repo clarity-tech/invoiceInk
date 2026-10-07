@@ -4,7 +4,10 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { store } from '@/routes/teams';
 
 const page = usePage();
-const user = page.props.auth?.user ?? page.props.user;
+// Same dead fallback as TeamMemberManager: there is no top-level `user` prop.
+// `auth.user` is nullable in the shared props, so the owner block guards on it
+// rather than asserting non-null.
+const user = page.props.auth.user;
 
 const form = useForm({
     name: '',
@@ -44,7 +47,7 @@ function createOrganization(): void {
                     </div>
 
                     <!-- Owner -->
-                    <div class="flex items-center gap-3">
+                    <div v-if="user" class="flex items-center gap-3">
                         <img
                             class="size-10 rounded-full object-cover"
                             :src="user.profile_photo_url"
