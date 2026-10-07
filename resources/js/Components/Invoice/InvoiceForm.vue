@@ -250,6 +250,31 @@ const supplierStateCode = computed<string | null>(() => {
     return loc.tax_id.slice(0, 2);
 });
 
+/**
+ * GstBreakdownService falls back to the first two digits of the customer's
+ * GSTIN when the invoice carries no place of supply. With neither, a domestic
+ * supply gets no CGST/SGST/IGST breakdown at all -- getBreakdown() returns an
+ * empty array -- so the document shows a tax total with nothing explaining it.
+ *
+ * Worth saying on the form rather than discovering on the PDF.
+ */
+const placeOfSupplyUnresolved = computed(() => {
+    if (!showPlaceOfSupply.value || form.place_of_supply) {
+        return false;
+    }
+
+    const loc = customerLocations.value.find(
+        (l) => l.id === form.customer_location_id,
+    );
+
+    // Exports are always inter-state, so they need no place of supply.
+    if (!loc || loc.country !== 'IN') {
+        return false;
+    }
+
+    return !loc.tax_id || loc.tax_id.length < 2;
+});
+
 // A customer billed outside India is an export → inter-state → IGST.
 const isForeignCustomer = computed(() => {
     const loc = customerLocations.value.find(
@@ -1004,6 +1029,19 @@ const orgContacts = computed<Contact[]>(
                                     {{ label }}
                                 </option>
                             </select>
+                            <p
+                                v-if="placeOfSupplyUnresolved"
+                                class="mt-1 text-xs text-amber-700"
+                            >
+                                Without this, the GST split is taken from the
+                                customer's GSTIN — and this customer has none,
+                                so the document will show a tax total with no
+                                CGST/SGST/IGST breakdown.
+                            </p>
+                            <p v-else class="mt-1 text-xs text-gray-500">
+                                Decides the CGST/SGST or IGST split. Taken from
+                                the customer's GSTIN when left blank.
+                            </p>
                             <p
                                 v-if="form.errors.place_of_supply"
                                 class="mt-1 text-sm text-red-600"

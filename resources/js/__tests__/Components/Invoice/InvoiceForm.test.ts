@@ -1320,6 +1320,82 @@ describe('Invoice/InvoiceForm', () => {
             expect(wrapper.text()).toContain('Maharashtra (27)');
         });
 
+        // GstBreakdownService falls back to the first two digits of the
+        // customer's GSTIN when the invoice has no place of supply, and
+        // returns an empty breakdown when there is neither -- producing a tax
+        // total on the document with nothing explaining it.
+
+        it('explains what the field decides', () => {
+            const wrapper = mountComponent({ indianStates });
+
+            expect(wrapper.text()).toContain('CGST/SGST or IGST split');
+        });
+
+        it('warns when neither a place of supply nor a GSTIN can supply it', () => {
+            // The billing location decides it: custLocation is Indian and
+            // carries no tax_id, so nothing can supply the state code.
+            const wrapper = mountComponent({
+                indianStates,
+                defaults: {
+                    ...defaultProps().defaults,
+                    customer_id: 1,
+                    customer_location_id: 20,
+                },
+            });
+
+            expect(wrapper.text()).toContain('this customer has none');
+        });
+
+        it('stays quiet for an export, which needs no place of supply', () => {
+            const foreign = makeLocation({
+                id: 30,
+                name: 'Dubai Office',
+                country: 'AE',
+                locatable_type: 'App\\Models\\Customer',
+                locatable_id: 1,
+            });
+            const foreignCustomer = makeCustomer({
+                id: 1,
+                name: 'Sandline LLC',
+                currency: 'AED',
+                primary_location_id: 30,
+                primary_location: foreign,
+                locations: [foreign],
+            });
+
+            const wrapper = mountComponent({
+                customers: [foreignCustomer],
+                indianStates,
+                defaults: {
+                    ...defaultProps().defaults,
+                    customer_id: 1,
+                    customer_location_id: 30,
+                },
+            });
+
+            expect(wrapper.text()).not.toContain('this customer has none');
+        });
+
+        it('drops the warning once a place of supply is chosen', async () => {
+            const gstCustomer = makeCustomer({
+                id: 1,
+                name: 'ACME Corp',
+                currency: 'INR',
+                place_of_supply: '27',
+                primary_location_id: 20,
+                primary_location: custLocation,
+                locations: [custLocation, custLocation2],
+            });
+
+            const wrapper = mountComponent({
+                customers: [gstCustomer],
+                indianStates,
+            });
+            await wrapper.vm.$nextTick();
+
+            expect(wrapper.text()).not.toContain('this customer has none');
+        });
+
         it('prefills the place of supply from the selected customer', async () => {
             const gstCustomer = makeCustomer({
                 id: 1,
