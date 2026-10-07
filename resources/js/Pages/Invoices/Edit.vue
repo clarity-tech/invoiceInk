@@ -4,6 +4,7 @@ import { ref, computed } from 'vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import InvoiceForm from '@/Components/Invoice/InvoiceForm.vue';
 import PaymentModal from '@/Components/Invoice/PaymentModal.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -91,6 +92,25 @@ function deletePayment() {
                     </BreadcrumbPage>
                 </BreadcrumbItem>
             </Breadcrumb>
+
+            <!--
+                The document was identified only as "Edit Invoice". On a page
+                carrying a total, a payment history and a balance due, the
+                number appeared nowhere on screen -- so nothing said which
+                invoice was open, or what state it was in.
+            -->
+            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    {{ invoice.invoice_number }}
+                </h2>
+                <StatusBadge :status="invoice.status" />
+                <span
+                    v-if="invoice.customer?.name"
+                    class="truncate text-sm text-gray-500"
+                >
+                    {{ invoice.customer.name }}
+                </span>
+            </div>
         </template>
 
         <div class="py-4">
