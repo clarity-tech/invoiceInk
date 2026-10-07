@@ -229,8 +229,13 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
+      # --with-form must match `wayfinder({ formVariants: true })` in
+      # vite.config.ts. Without it the generated route helpers have no .form
+      # property, while the Auth pages use it -- so vue-tsc reported seven
+      # errors that exist nowhere but here. The production Dockerfile already
+      # passes this flag; only this step had drifted.
       - name: Generate Wayfinder typed routes
-        run: php artisan wayfinder:generate --path=resources/js --no-interaction
+        run: php artisan wayfinder:generate --path=resources/js --with-form --no-interaction
 
       # A ratchet rather than a plain gate. 21 errors remain, all of them the
       # same thing: test mocks that are structurally right but are not the
