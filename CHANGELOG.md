@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.1](https://github.com/clarity-tech/invoicing/compare/v1.7.0...v1.7.1) (2026-10-07)
+
+
+### Bug Fixes
+
+* **nav:** switch the desktop nav and hamburger at the same breakpoint ([8d1b11e](https://github.com/clarity-tech/invoicing/commit/8d1b11ea4494f57be6359e9472a6168b59ecc0f4))
+
+
+### Refactoring
+
+* **nav:** move organization switching into the user menu ([6c03c29](https://github.com/clarity-tech/invoicing/commit/6c03c2950f3b4edeae0fb892d534ed56578e3f4f))
+
 ## [1.7.0](https://github.com/clarity-tech/invoicing/compare/v1.6.0...v1.7.0) (2026-10-06)
 
 
