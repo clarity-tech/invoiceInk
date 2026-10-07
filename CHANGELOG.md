@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.7.2](https://github.com/clarity-tech/invoicing/compare/v1.7.1...v1.7.2) (2026-10-07)
+
+
+### Bug Fixes
+
+* **editor:** pass setContent an options object, not a bare boolean ([2e926a3](https://github.com/clarity-tech/invoicing/commit/2e926a37f293e66e38819ff721598cd9cdf3676d))
+* **types:** correct three mistyped test wrappers ([319e421](https://github.com/clarity-tech/invoicing/commit/319e421fa4c74ed45b2e39ed6be1a24c8ddc149f))
+* **types:** make vitest and node globals visible to vue-tsc ([7465efb](https://github.com/clarity-tech/invoicing/commit/7465efbee7fe651f4acd59f6a3b42cf6dd76945e))
+* **types:** type the shared Inertia page props, and drop a dead prop fallback ([351b35a](https://github.com/clarity-tech/invoicing/commit/351b35ab5db472fef796d80a085ea3f936d67798))
+
+
+### Build & CI
+
+* generate Wayfinder routes with form variants, as the app expects ([474c29c](https://github.com/clarity-tech/invoicing/commit/474c29c1dd3dd05c3d83079daa5d75a27f1ec6a9))
+* ratchet the TypeScript check instead of ignoring its result ([728b605](https://github.com/clarity-tech/invoicing/commit/728b6052d8667f517cd8facd44c0dffe6e470bf1))
+
 ## [1.7.1](https://github.com/clarity-tech/invoicing/compare/v1.7.0...v1.7.1) (2026-10-07)
 
 
