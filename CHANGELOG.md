@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.10.0](https://github.com/clarity-tech/invoicing/compare/v1.9.0...v1.10.0) (2026-10-08)
+
+
+### Features
+
+* **invoices:** let an invoice say whether it is overdue, and by how long ([07346cf](https://github.com/clarity-tech/invoicing/commit/07346cf316b8e10841aa2ac590c85b5a6d38508a))
+* **invoices:** show what is owed and how late it is on the list ([8fce504](https://github.com/clarity-tech/invoicing/commit/8fce50473515240eef4d7094ff1ea91efeffce10))
+
 ## [1.9.0](https://github.com/clarity-tech/invoicing/compare/v1.8.0...v1.9.0) (2026-10-08)
 
 
