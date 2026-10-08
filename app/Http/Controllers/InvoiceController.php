@@ -69,7 +69,17 @@ class InvoiceController extends Controller
             $query->where('status', $request->status);
         }
 
-        $invoices = $query->latest()->paginate(10)->withQueryString();
+        // `remaining_balance` is an accessor and `is_overdue` is derived, so
+        // neither is serialised by default. The list needs both per row: Total
+        // alone overstates what is collectable on a part-paid document, and
+        // without the overdue age an invoice months late is indistinguishable
+        // from one sent yesterday, since "overdue" is not a status.
+        $invoices = $query->latest()->paginate(10)->withQueryString()
+            ->through(fn (Invoice $invoice) => array_merge($invoice->toArray(), [
+                'remaining_balance' => $invoice->remaining_balance,
+                'is_overdue' => $invoice->isOverdue(),
+                'days_overdue' => $invoice->daysOverdue(),
+            ]));
 
         return Inertia::render('Invoices/Index', [
             'invoices' => $invoices,

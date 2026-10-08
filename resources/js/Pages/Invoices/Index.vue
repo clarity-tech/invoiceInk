@@ -27,6 +27,36 @@ const props = defineProps<{
 }>();
 
 /**
+ * How late the document is, in the plainest form. "Overdue" is not a status --
+ * it is derived from due_at -- so the status badge showed an invoice months
+ * late as plainly "Sent", and the list could not say what needed chasing.
+ */
+function overdueLabel(invoice: Invoice): string {
+    const days = invoice.days_overdue ?? 0;
+
+    if (days < 1) {
+        return 'Overdue today';
+    }
+
+    return days === 1 ? 'Overdue by 1 day' : `Overdue by ${days} days`;
+}
+
+/**
+ * Whether the balance is worth stating. Equal to the total it says nothing the
+ * line above has not, and at zero the document is settled.
+ */
+function showsBalance(invoice: Invoice): boolean {
+    const balance = invoice.remaining_balance;
+
+    return (
+        balance !== undefined &&
+        balance !== null &&
+        balance > 0 &&
+        balance !== invoice.total
+    );
+}
+
+/**
  * The email send is queued, so its outcome lands after the page did. A pending
  * or failed send is worth reporting; a successful one is already implied by the
  * document status, so it stays quiet rather than adding noise to every row.
@@ -364,6 +394,22 @@ const tabs = [
                                         :currency="invoice.currency"
                                     />
                                 </div>
+                                <!--
+                                    Only when it differs from the total. On a
+                                    part-paid document the total overstates what
+                                    is actually collectable, and that was the
+                                    only figure this column showed.
+                                -->
+                                <div
+                                    v-if="showsBalance(invoice)"
+                                    class="text-xs font-medium text-amber-700"
+                                >
+                                    Due:
+                                    <MoneyDisplay
+                                        :amount="invoice.remaining_balance!"
+                                        :currency="invoice.currency"
+                                    />
+                                </div>
                             </td>
                             <td class="px-4 py-4 whitespace-nowrap">
                                 <StatusBadge :status="invoice.status" />
@@ -373,6 +419,17 @@ const tabs = [
                                     clipped once already (f6550132) and a seventh
                                     column would put it back at the edge.
                                 -->
+                                <!--
+                                    "Overdue" is not a status -- it is derived
+                                    from due_at -- so the badge alone showed an
+                                    invoice months late as plainly "Sent".
+                                -->
+                                <div
+                                    v-if="invoice.is_overdue"
+                                    class="mt-1 text-xs font-medium text-red-600"
+                                >
+                                    {{ overdueLabel(invoice) }}
+                                </div>
                                 <div
                                     v-if="sendState(invoice)"
                                     class="mt-1 text-xs"
@@ -385,6 +442,17 @@ const tabs = [
                                 class="px-4 py-4 text-sm whitespace-nowrap text-gray-500"
                             >
                                 {{ formatDate(invoice.issued_at) }}
+                                <!--
+                                    The issue date was the only one shown, but
+                                    the due date is the one that decides whether
+                                    an invoice needs chasing.
+                                -->
+                                <div
+                                    v-if="invoice.due_at"
+                                    class="text-xs text-gray-400"
+                                >
+                                    Due {{ formatDate(invoice.due_at) }}
+                                </div>
                             </td>
                             <td
                                 class="px-4 py-4 text-right text-sm whitespace-nowrap"

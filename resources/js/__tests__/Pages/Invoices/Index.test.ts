@@ -137,6 +137,110 @@ function mountComponent(propsOverride = {}) {
     });
 }
 
+describe('Invoices/Index collection signals', () => {
+    // "Overdue" is not a status -- it is derived from due_at -- so the badge
+    // alone showed an invoice months late as plainly "Sent", and Total alone
+    // overstated what was collectable on a part-paid document.
+
+    it('says how late an overdue document is', () => {
+        const wrapper = mountComponent({
+            invoices: makePaginatedInvoices([
+                makeInvoice({
+                    id: 1,
+                    status: 'sent',
+                    is_overdue: true,
+                    days_overdue: 87,
+                }),
+            ]),
+        });
+
+        expect(wrapper.text()).toContain('Overdue by 87 days');
+    });
+
+    it('says one day rather than 1 days', () => {
+        const wrapper = mountComponent({
+            invoices: makePaginatedInvoices([
+                makeInvoice({
+                    id: 1,
+                    status: 'sent',
+                    is_overdue: true,
+                    days_overdue: 1,
+                }),
+            ]),
+        });
+
+        expect(wrapper.text()).toContain('Overdue by 1 day');
+        expect(wrapper.text()).not.toContain('1 days');
+    });
+
+    it('stays quiet when the document is not overdue', () => {
+        const wrapper = mountComponent({
+            invoices: makePaginatedInvoices([
+                makeInvoice({ id: 1, status: 'sent', is_overdue: false }),
+            ]),
+        });
+
+        expect(wrapper.text()).not.toContain('Overdue');
+    });
+
+    it('states the balance when it differs from the total', () => {
+        const wrapper = mountComponent({
+            invoices: makePaginatedInvoices([
+                makeInvoice({
+                    id: 1,
+                    status: 'partially_paid',
+                    total: 5900000,
+                    amount_paid: 2000000,
+                    remaining_balance: 3900000,
+                }),
+            ]),
+        });
+
+        expect(wrapper.text()).toContain('Due:');
+    });
+
+    it('does not restate the total as a balance when nothing is paid', () => {
+        const wrapper = mountComponent({
+            invoices: makePaginatedInvoices([
+                makeInvoice({
+                    id: 1,
+                    total: 5900000,
+                    amount_paid: 0,
+                    remaining_balance: 5900000,
+                }),
+            ]),
+        });
+
+        expect(wrapper.text()).not.toContain('Due:');
+    });
+
+    it('says nothing about a balance once the document is settled', () => {
+        const wrapper = mountComponent({
+            invoices: makePaginatedInvoices([
+                makeInvoice({
+                    id: 1,
+                    status: 'paid',
+                    total: 5900000,
+                    amount_paid: 5900000,
+                    remaining_balance: 0,
+                }),
+            ]),
+        });
+
+        expect(wrapper.text()).not.toContain('Due:');
+    });
+
+    it('shows the due date, which is what decides whether to chase', () => {
+        const wrapper = mountComponent({
+            invoices: makePaginatedInvoices([
+                makeInvoice({ id: 1, due_at: '2026-10-25' }),
+            ]),
+        });
+
+        expect(wrapper.text()).toContain('Due ');
+    });
+});
+
 describe('Invoices/Index', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -182,8 +286,11 @@ describe('Invoices/Index', () => {
         });
 
         expect(wrapper.text()).toContain('ACME Corp');
-        // No stray empty element where the subject would sit.
-        expect(wrapper.html()).not.toContain('text-xs text-gray-400');
+        // No stray empty element where the subject would sit. Matched on the
+        // width constraint, which is unique to the subject line -- the plain
+        // `text-xs text-gray-400` this used to look for is shared with other
+        // secondary text in the row, so it reported a collision as a failure.
+        expect(wrapper.html()).not.toContain('mt-0.5 max-w-[220px]');
     });
 
     it('constrains the subject to the same width as the customer name', () => {

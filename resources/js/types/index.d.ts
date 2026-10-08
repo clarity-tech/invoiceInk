@@ -153,6 +153,9 @@ export interface Invoice {
     formatted_total?: string;
     formatted_amount_paid?: string;
     remaining_balance?: number;
+    /** Derived for the list; see InvoiceController::index(). */
+    is_overdue?: boolean;
+    days_overdue?: number | null;
     formatted_remaining_balance?: string;
     payment_percentage?: number;
     payments?: Payment[];
