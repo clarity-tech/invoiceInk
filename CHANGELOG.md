@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.9.0](https://github.com/clarity-tech/invoicing/compare/v1.8.0...v1.9.0) (2026-10-08)
+
+
+### Features
+
+* **invoices:** name the document being edited ([f9f6d65](https://github.com/clarity-tech/invoicing/commit/f9f6d6569b09e6c6bede2da082194cac42d8de5d))
+
+
+### Bug Fixes
+
+* **invoices:** put the page's actions where they belong ([01e730f](https://github.com/clarity-tech/invoicing/commit/01e730f65790f33da08959ced38cff476090fe63))
+* **invoices:** say what place of supply decides, and warn when nothing can ([f2304a1](https://github.com/clarity-tech/invoicing/commit/f2304a1c8a52efb3f59b05b92b97ad688b05840b))
+
+
+### Refactoring
+
+* **invoices:** stop repeating what the page already shows ([06a1456](https://github.com/clarity-tech/invoicing/commit/06a1456066777dca29c0a1017c8f21717e031cea))
+
 ## [1.8.0](https://github.com/clarity-tech/invoicing/compare/v1.7.2...v1.8.0) (2026-10-08)
 
 
