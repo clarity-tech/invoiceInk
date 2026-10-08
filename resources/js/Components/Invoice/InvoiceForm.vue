@@ -1756,8 +1756,18 @@ const orgContacts = computed<Contact[]>(
                 </p>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="flex items-center justify-between pt-4">
+            <!--
+                Sticky to the bottom of the viewport. This form runs to roughly
+                three thousand pixels, and on the edit page the payment history
+                sits below it, so a static bar meant scrolling past everything
+                to save and left content stranded underneath the page's
+                apparent end. `bottom-0` with a backdrop keeps Save reachable
+                from any scroll position, and the bar settles into place at the
+                end of the form once it is scrolled to.
+            -->
+            <div
+                class="sticky bottom-0 z-10 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
+            >
                 <button
                     type="button"
                     class="rounded-md border border-gray-300 px-6 py-2 font-medium text-gray-700 hover:bg-gray-50"
