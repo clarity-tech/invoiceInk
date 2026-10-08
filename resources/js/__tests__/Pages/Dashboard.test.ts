@@ -324,6 +324,94 @@ describe('Dashboard', () => {
         expect(wrapper.text()).toContain('Nov');
     });
 
+    describe('period scope and counts', () => {
+        it('takes the overdue badge from the count, not the truncated list', () => {
+            // The controller caps the list at five, so its length could never
+            // exceed 5 while the Outstanding tile reported the real figure --
+            // one screen saying both "11 overdue" and "5".
+            const wrapper = mountComponent({
+                stats: { ...defaultProps().stats, overdue_count: 11 },
+            });
+
+            const text = wrapper.text();
+            expect(text).toContain('11');
+            expect(text).toMatch(/Showing the \d+ most overdue of 11/);
+        });
+
+        it('does not claim truncation when the list is complete', () => {
+            const full = defaultProps().overdueInvoices.length;
+            const wrapper = mountComponent({
+                stats: { ...defaultProps().stats, overdue_count: full },
+            });
+
+            expect(wrapper.text()).not.toContain('most overdue of');
+        });
+
+        it('marks the panels that ignore the period selector', () => {
+            const wrapper = mountComponent({ period: 'this_month' });
+
+            // Customers, Overdue Invoices, Recent Invoices, Recent Payments.
+            const markers = wrapper.text().match(/\(all time\)/g) ?? [];
+            expect(markers.length).toBe(4);
+        });
+
+        it('drops the markers when All Time is selected, where they say nothing', () => {
+            const wrapper = mountComponent({ period: 'all_time' });
+
+            expect(wrapper.text()).not.toContain('(all time)');
+        });
+    });
+
+    describe('KPI colour follows the value', () => {
+        // A flat text-green-600 meant a collected total of zero, next to
+        // overdue invoices and a 0% collection rate, was styled exactly like a
+        // healthy figure. Amber on zero outstanding is the same error in
+        // reverse: it warns about good news.
+
+        const amountClasses = (wrapper: ReturnType<typeof mountComponent>) =>
+            wrapper
+                .findAll('.text-2xl')
+                .map((n) => n.attributes('class') ?? '');
+
+        it('colours a non-zero collected total green', () => {
+            const classes = amountClasses(
+                mountComponent({
+                    stats: {
+                        ...defaultProps().stats,
+                        total_collected: 5000000,
+                        total_outstanding: 2000000,
+                    },
+                }),
+            );
+
+            expect(classes.some((c) => c.includes('text-green-600'))).toBe(
+                true,
+            );
+            expect(classes.some((c) => c.includes('text-amber-600'))).toBe(
+                true,
+            );
+        });
+
+        it('leaves a zero collected total neutral rather than success green', () => {
+            const classes = amountClasses(
+                mountComponent({
+                    stats: {
+                        ...defaultProps().stats,
+                        total_collected: 0,
+                        total_outstanding: 0,
+                    },
+                }),
+            );
+
+            expect(classes.some((c) => c.includes('text-green-600'))).toBe(
+                false,
+            );
+            expect(classes.some((c) => c.includes('text-amber-600'))).toBe(
+                false,
+            );
+        });
+    });
+
     describe('trend chart readability', () => {
         // Bars used to be sized as a percentage of the tallest month with
         // nothing to read them against, and the amounts were reachable only by

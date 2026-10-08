@@ -129,8 +129,20 @@ function fmt(amount: number): string {
         : formatted;
 }
 
-// `Customer::count()` and the `overdue()` scope are not date-filtered, so these
-// two figures ignore the period selector every other stat obeys.
+/**
+ * Several things on this page ignore the period selector, and used to do it
+ * silently: `Customer::count()` and the `overdue()` scope are not date-filtered,
+ * and the Recent Invoices, Recent Payments and Overdue Invoices panels are
+ * deliberately latest-first rather than windowed -- "recent" and "overdue" mean
+ * the same thing whatever period is selected.
+ *
+ * Reading "This Month" at the top while a panel below lists August is only
+ * confusing if nothing says so, so each of them carries an (all time) marker.
+ * The marker is suppressed when All Time is selected, where it would be noise.
+ *
+ * The 6-Month Trend is exempt: it has its own fixed window and its title
+ * already states it.
+ */
 const isAllTime = computed(() => props.period === 'all_time');
 
 const periods = [
@@ -340,7 +352,20 @@ const totalStatusCount = computed(() =>
                             />
                         </svg>
                     </div>
-                    <div class="mt-2 text-2xl font-bold text-green-600">
+                    <!--
+                        Semantic colour has to follow the number. A flat green
+                        made a collected total of zero -- alongside overdue
+                        invoices and a 0% collection rate -- look exactly like
+                        a healthy figure.
+                    -->
+                    <div
+                        class="mt-2 text-2xl font-bold"
+                        :class="
+                            stats.total_collected > 0
+                                ? 'text-green-600'
+                                : 'text-gray-900'
+                        "
+                    >
                         {{ fmt(stats.total_collected) }}
                     </div>
                     <div class="mt-1 text-sm text-gray-500">
@@ -369,7 +394,15 @@ const totalStatusCount = computed(() =>
                             />
                         </svg>
                     </div>
-                    <div class="mt-2 text-2xl font-bold text-amber-600">
+                    <!-- Nothing outstanding is good news; amber would warn about it. -->
+                    <div
+                        class="mt-2 text-2xl font-bold"
+                        :class="
+                            stats.total_outstanding > 0
+                                ? 'text-amber-600'
+                                : 'text-gray-900'
+                        "
+                    >
                         {{ fmt(stats.total_outstanding) }}
                     </div>
                     <div
@@ -471,7 +504,15 @@ const totalStatusCount = computed(() =>
             </div>
 
             <!-- Status Breakdown + Monthly Trend -->
-            <div class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <!--
+                Grid stretches its items by default, so a one-line Status
+                Breakdown inherited the height of the trend chart beside it and
+                rendered as a card of whitespace. Each card now ends where its
+                content does.
+            -->
+            <div
+                class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start"
+            >
                 <!-- Status Breakdown -->
                 <div class="rounded-lg bg-white p-5 shadow">
                     <h3 class="mb-4 text-sm font-semibold text-gray-900">
@@ -627,7 +668,9 @@ const totalStatusCount = computed(() =>
             </div>
 
             <!-- Top Customers + Overdue Invoices -->
-            <div class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div
+                class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start"
+            >
                 <!-- Top Customers -->
                 <div class="rounded-lg bg-white p-5 shadow">
                     <h3 class="mb-4 text-sm font-semibold text-gray-900">
@@ -676,7 +719,12 @@ const totalStatusCount = computed(() =>
                 <!-- Overdue Invoices -->
                 <div class="rounded-lg bg-white p-5 shadow">
                     <h3 class="mb-4 text-sm font-semibold text-gray-900">
-                        Overdue Invoices
+                        Overdue Invoices<span
+                            v-if="!isAllTime"
+                            class="font-normal text-gray-400"
+                        >
+                            (all time)</span
+                        >
                         <!--
                             The list is capped at five by the controller, so its
                             length is not the overdue count. Using it made the
@@ -757,12 +805,19 @@ const totalStatusCount = computed(() =>
             </div>
 
             <!-- Recent Invoices + Recent Payments -->
-            <div class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div
+                class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start"
+            >
                 <!-- Recent Invoices -->
                 <div class="rounded-lg bg-white p-5 shadow">
                     <div class="mb-4 flex items-center justify-between">
                         <h3 class="text-sm font-semibold text-gray-900">
-                            Recent Invoices
+                            Recent Invoices<span
+                                v-if="!isAllTime"
+                                class="font-normal text-gray-400"
+                            >
+                                (all time)</span
+                            >
                         </h3>
                     </div>
                     <div v-if="recentInvoices.length > 0" class="space-y-3">
@@ -796,7 +851,12 @@ const totalStatusCount = computed(() =>
                 <!-- Recent Payments -->
                 <div class="rounded-lg bg-white p-5 shadow">
                     <h3 class="mb-4 text-sm font-semibold text-gray-900">
-                        Recent Payments
+                        Recent Payments<span
+                            v-if="!isAllTime"
+                            class="font-normal text-gray-400"
+                        >
+                            (all time)</span
+                        >
                     </h3>
                     <div v-if="recentPayments.length > 0" class="space-y-3">
                         <div
