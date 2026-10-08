@@ -94,20 +94,15 @@ function deletePayment() {
         </template>
 
         <div class="py-4">
-            <InvoiceForm
-                mode="edit"
-                :type="invoice.type"
-                :invoice="invoice"
-                :customers="customers"
-                :organization-locations="organizationLocations"
-                :tax-options="taxOptions"
-                :numbering-series="numberingSeries"
-                :status-options="statusOptions"
-                :tax-labels="taxLabels"
-                :attachments="attachments"
-                :indian-states="indianStates"
-            />
+            <!--
+                Payment history sits above the form. It used to follow it,
+                which put the Cancel / Save / Save & Send bar in the middle
+                of the page with another card beneath it -- the form
+                appeared to end, and then did not.
 
+                It reads better here regardless: what has been paid is
+                context for the edit, not a footnote to it.
+            -->
             <!-- Payment Section (invoices only, not estimates) -->
             <div
                 v-if="invoice.type === 'invoice'"
@@ -239,6 +234,20 @@ function deletePayment() {
                     No payments recorded yet.
                 </p>
             </div>
+
+            <InvoiceForm
+                mode="edit"
+                :type="invoice.type"
+                :invoice="invoice"
+                :customers="customers"
+                :organization-locations="organizationLocations"
+                :tax-options="taxOptions"
+                :numbering-series="numberingSeries"
+                :status-options="statusOptions"
+                :tax-labels="taxLabels"
+                :attachments="attachments"
+                :indian-states="indianStates"
+            />
         </div>
 
         <!-- Payment Modal -->

@@ -691,30 +691,29 @@ const orgContacts = computed<Contact[]>(
             v-if="mode === 'edit' && invoice?.ulid"
             class="mb-6 flex justify-end"
         >
+            <!--
+                These two open the document as it stands; they neither save nor
+                destroy anything, so they are secondary. Download PDF used to
+                be solid red -- the colour this app reserves for deleting -- and
+                read as a destructive action at a glance. Save & Send also lived
+                here, duplicating the form's own primary action at the bottom.
+            -->
             <div class="flex space-x-2">
-                <button
-                    type="button"
-                    :disabled="form.processing"
-                    class="cursor-pointer rounded bg-purple-500 px-4 py-2 font-bold text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
-                    @click="saveAndSend"
-                >
-                    Save &amp; Send
-                </button>
                 <a
                     :href="`/${invoice.type === 'invoice' ? 'invoices' : 'estimates'}/view/${invoice.ulid}`"
                     target="_blank"
-                    class="rounded bg-green-500 px-4 py-2 font-bold text-white hover:bg-green-700"
+                    class="rounded-md border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:bg-gray-50"
                 >
                     View Public
                 </a>
                 <a
                     :href="`/${invoice.type === 'invoice' ? 'invoices' : 'estimates'}/${invoice.ulid}/pdf`"
-                    class="inline-flex items-center gap-2 rounded bg-red-500 px-4 py-2 font-bold text-white hover:bg-red-700"
+                    class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:bg-gray-50"
                     @click="downloadingPdf = true"
                 >
                     <svg
                         v-if="downloadingPdf"
-                        class="h-4 w-4 animate-spin"
+                        class="h-4 w-4 animate-spin text-gray-500"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
