@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.8.0](https://github.com/clarity-tech/invoicing/compare/v1.7.2...v1.8.0) (2026-10-08)
+
+
+### Features
+
+* **dashboard:** give the trend chart an axis, values and an empty state ([1206aff](https://github.com/clarity-tech/invoicing/commit/1206afff8a23f61f2807ffed0c34930048d28875))
+
+
+### Bug Fixes
+
+* **a11y:** keep focus in the page after a confirmed delete ([88e8444](https://github.com/clarity-tech/invoicing/commit/88e84441a6096fba04014d6f94cee3df222ace08))
+* **dashboard:** count every overdue invoice in the panel badge ([99aa8b9](https://github.com/clarity-tech/invoicing/commit/99aa8b92d9c2a16eaf02345085381e87cfc2e055))
+* **dashboard:** make the tiles and panels say what they mean ([3fa7c5c](https://github.com/clarity-tech/invoicing/commit/3fa7c5cecb60af2b65f9fa2c7cb8fdd627c13633))
+
 ## [1.7.2](https://github.com/clarity-tech/invoicing/compare/v1.7.1...v1.7.2) (2026-10-07)
 
 
