@@ -289,6 +289,35 @@ class Invoice extends Model implements HasMedia
         return $this->formatMoney($this->remaining_balance);
     }
 
+    /**
+     * Whether the document is past its due date and still owed.
+     *
+     * Mirrors scopeOverdue() deliberately: the list needs this per row, and
+     * the dashboard needs it as a query, so the rule is written twice. Keeping
+     * them side by side is the point -- if one changes the other must follow.
+     */
+    public function isOverdue(): bool
+    {
+        return $this->due_at !== null
+            && ! in_array($this->status, [InvoiceStatus::PAID, InvoiceStatus::VOID], true)
+            && $this->due_at->isPast();
+    }
+
+    /**
+     * Whole days since the due date passed, or null when not overdue.
+     *
+     * Measured between day boundaries, so a document due yesterday reads as
+     * one day late rather than some fraction of a day depending on the hour.
+     */
+    public function daysOverdue(): ?int
+    {
+        if (! $this->isOverdue()) {
+            return null;
+        }
+
+        return (int) $this->due_at->startOfDay()->diffInDays(now()->startOfDay());
+    }
+
     public function isFullyPaid(): bool
     {
         return $this->amount_paid >= $this->total;
