@@ -75,14 +75,30 @@ describe('ItemRow', () => {
         expect(wrapper.text()).toContain('Required');
     });
 
-    it('shows SAC code badge when provided', () => {
+    it('shows the SAC code in its input, and drops the hint once set', () => {
         const wrapper = mount(ItemRow, {
             props: {
                 ...defaultProps,
                 item: { ...defaultProps.item, sac_code: '998311' },
             },
         });
-        expect(wrapper.text()).toContain('SAC: 998311');
+
+        // Asserted on the input rather than a badge: the badge used to repeat
+        // the value the input already showed, and was removed.
+        const sac = wrapper.find('input[placeholder="SAC Code (optional)"]');
+        expect((sac.element as HTMLInputElement).value).toBe('998311');
+        expect(wrapper.text()).not.toContain('6-digit code');
+    });
+
+    it('hints at the format while the SAC code is empty', () => {
+        const wrapper = mount(ItemRow, {
+            props: {
+                ...defaultProps,
+                item: { ...defaultProps.item, sac_code: null },
+            },
+        });
+
+        expect(wrapper.text()).toContain('6-digit code');
     });
 });
 

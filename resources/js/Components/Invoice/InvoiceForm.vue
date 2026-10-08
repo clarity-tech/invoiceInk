@@ -1618,39 +1618,52 @@ const orgContacts = computed<Contact[]>(
                 </div>
             </div>
 
-            <!-- Notes Section -->
-            <div class="rounded-lg bg-white p-6 shadow">
-                <label class="mb-2 block text-sm font-medium text-gray-700"
-                    >Customer Notes</label
-                >
-                <textarea
-                    v-model="form.notes"
-                    rows="1"
-                    placeholder="Enter notes for the customer..."
-                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                />
-                <p v-if="form.errors.notes" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.notes }}
-                </p>
-                <p class="mt-1 text-xs text-gray-500">
-                    Displayed on the PDF document.
-                </p>
-            </div>
+            <!--
+                Notes and Terms are a textarea apiece. Full width each, they
+                cost two card heights of scroll to hold two fields; side by
+                side above the small breakpoint they cost one.
+            -->
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
+                <!-- Notes Section -->
+                <div class="rounded-lg bg-white p-6 shadow">
+                    <label class="mb-2 block text-sm font-medium text-gray-700"
+                        >Customer Notes</label
+                    >
+                    <textarea
+                        v-model="form.notes"
+                        rows="1"
+                        placeholder="Enter notes for the customer..."
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                    />
+                    <p
+                        v-if="form.errors.notes"
+                        class="mt-1 text-sm text-red-600"
+                    >
+                        {{ form.errors.notes }}
+                    </p>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Displayed on the PDF document.
+                    </p>
+                </div>
 
-            <!-- Terms & Conditions Section -->
-            <div class="rounded-lg bg-white p-6 shadow">
-                <label class="mb-2 block text-sm font-medium text-gray-700"
-                    >Terms &amp; Conditions</label
-                >
-                <textarea
-                    v-model="form.terms"
-                    rows="2"
-                    placeholder="e.g. Payment due within 7 days..."
-                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                />
-                <p v-if="form.errors.terms" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.terms }}
-                </p>
+                <!-- Terms & Conditions Section -->
+                <div class="rounded-lg bg-white p-6 shadow">
+                    <label class="mb-2 block text-sm font-medium text-gray-700"
+                        >Terms &amp; Conditions</label
+                    >
+                    <textarea
+                        v-model="form.terms"
+                        rows="2"
+                        placeholder="e.g. Payment due within 7 days..."
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                    />
+                    <p
+                        v-if="form.errors.terms"
+                        class="mt-1 text-sm text-red-600"
+                    >
+                        {{ form.errors.terms }}
+                    </p>
+                </div>
             </div>
 
             <!-- Email Recipients Section -->

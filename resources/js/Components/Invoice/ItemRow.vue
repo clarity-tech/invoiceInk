@@ -152,15 +152,14 @@ function errorFor(field: string): string | undefined {
                         )
                     "
                 />
+                <!--
+                    The badge beside this input repeated the value the input
+                    already showed -- "998719" in the field and "SAC: 998719"
+                    next to it, on every line of every invoice.
+                -->
                 <span v-if="!item.sac_code" class="ml-2 text-xs text-gray-400"
                     >6-digit code</span
                 >
-                <span
-                    v-if="item.sac_code"
-                    class="ml-2 inline-flex items-center rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800"
-                >
-                    SAC: {{ item.sac_code }}
-                </span>
             </div>
         </td>
         <td class="px-4 py-3">
