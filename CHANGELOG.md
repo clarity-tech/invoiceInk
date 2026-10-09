@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.1](https://github.com/clarity-tech/invoicing/compare/v1.10.0...v1.10.1) (2026-10-09)
+
+
+### Bug Fixes
+
+* **invoices:** keep payment history last, and make the form actions sticky ([eb500d4](https://github.com/clarity-tech/invoicing/commit/eb500d47ee5bb047e118942e70d912c6730039ab))
+
 ## [1.10.0](https://github.com/clarity-tech/invoicing/compare/v1.9.0...v1.10.0) (2026-10-08)
 
 
