@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import MoneyDisplay from '@/Components/MoneyDisplay.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import { Badge } from '@/Components/ui/badge';
+import { Button } from '@/Components/ui/button';
 import { formatDate } from '@/composables/useFormatDate';
 import { usePermissions } from '@/composables/usePermissions';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -105,58 +106,6 @@ function onStatusChange() {
     applyFilters();
 }
 
-// Delete
-const confirmingDelete = ref(false);
-const invoiceToDelete = ref<Invoice | null>(null);
-
-function confirmDelete(invoice: Invoice) {
-    invoiceToDelete.value = invoice;
-    confirmingDelete.value = true;
-}
-
-const converting = ref<number | null>(null);
-
-/** Focus lands here after a delete removes the row that was focused. */
-const listRegion = ref<HTMLElement | null>(null);
-
-function deleteInvoice() {
-    if (!invoiceToDelete.value) {
-        return;
-    }
-
-    const id = invoiceToDelete.value.id;
-
-    confirmingDelete.value = false;
-    invoiceToDelete.value = null;
-
-    // Optimistic: remove from list immediately, auto-reverts on failure
-    router
-        .optimistic((current: any) => ({
-            invoices: {
-                ...current.invoices,
-                data: current.invoices.data.filter((i: Invoice) => i.id !== id),
-                total: Math.max(0, current.invoices.total - 1),
-            },
-        }))
-        .delete(`/invoices/${id}`, {
-            preserveScroll: true,
-        });
-}
-
-function convertEstimate(invoice: Invoice) {
-    converting.value = invoice.id;
-    router.post(
-        `/invoices/${invoice.id}/convert`,
-        {},
-        {
-            preserveScroll: true,
-            onFinish: () => {
-                converting.value = null;
-            },
-        },
-    );
-}
-
 /**
  * Row actions are otherwise a page full of identical "View" / "Edit" / "PDF"
  * links. Naming each one with its document makes them distinguishable in a
@@ -178,12 +127,6 @@ function pageLinkLabel(label: string): string {
         .trim();
 
     return /^\d+$/.test(text) ? `Go to page ${text}` : text;
-}
-
-function publicUrl(invoice: Invoice): string {
-    return invoice.type === 'invoice'
-        ? `/invoices/view/${invoice.ulid}`
-        : `/estimates/view/${invoice.ulid}`;
 }
 
 function pdfUrl(invoice: Invoice): string {
@@ -231,7 +174,7 @@ const tabs = [
             </div>
         </template>
 
-        <div class="py-4">
+        <div class="px-4 sm:px-0">
             <!-- Filter Tabs and Status -->
             <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div
@@ -278,79 +221,60 @@ const tabs = [
 
             <!-- Table -->
             <div
-                ref="listRegion"
                 tabindex="-1"
                 aria-label="Invoices and estimates list"
-                class="overflow-x-auto bg-white shadow-sm focus:ring-2 focus:ring-brand-500 focus:outline-none sm:rounded-lg"
+                class="overflow-x-auto rounded-xl border border-border bg-card shadow-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
             >
-                <table class="min-w-full divide-y divide-gray-200">
+                <table class="min-w-full divide-y divide-border">
                     <caption class="sr-only">
                         Invoices and estimates
                     </caption>
-                    <thead class="bg-gray-50">
+                    <thead class="bg-muted/60">
                         <tr>
                             <th
                                 scope="col"
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-                            >
-                                Type
-                            </th>
-                            <th
-                                scope="col"
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-2.5 text-left text-xs font-medium text-gray-500"
                             >
                                 Number
                             </th>
                             <th
                                 scope="col"
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-2.5 text-left text-xs font-medium text-gray-500"
                             >
                                 Customer
                             </th>
                             <th
                                 scope="col"
-                                class="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-2.5 text-right text-xs font-medium text-gray-500"
                             >
                                 Total
                             </th>
                             <th
                                 scope="col"
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-2.5 text-left text-xs font-medium text-gray-500"
                             >
                                 Status
                             </th>
                             <th
                                 scope="col"
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-2.5 text-left text-xs font-medium text-gray-500"
                             >
                                 Date
                             </th>
                             <th
                                 scope="col"
-                                class="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-2.5 text-right text-xs font-medium text-gray-500"
                             >
                                 Actions
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white">
+                    <tbody class="divide-y divide-border bg-card">
                         <tr
                             v-for="invoice in invoices.data"
                             :key="invoice.id"
-                            class="hover:bg-gray-50"
+                            class="hover:bg-muted/40"
                         >
-                            <td class="px-4 py-4 whitespace-nowrap">
-                                <span
-                                    class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                                    :class="
-                                        invoice.type === 'invoice'
-                                            ? 'bg-brand-100 text-brand-800'
-                                            : 'bg-green-100 text-green-800'
-                                    "
-                                >
-                                    {{ invoice.type.toUpperCase() }}
-                                </span>
-                            </td>
                             <td class="px-4 py-4 whitespace-nowrap">
                                 <!--
                                     The number is how a row is identified, so it
@@ -366,27 +290,62 @@ const tabs = [
                                 >
                                     {{ invoice.invoice_number }}
                                 </Link>
+                                <!--
+                                    Outside the link, not inside it: the link's
+                                    aria-label already names the type, and a
+                                    badge swallowed by it would be read twice.
+                                -->
+                                <div class="mt-1">
+                                    <Badge
+                                        :variant="
+                                            invoice.type === 'invoice'
+                                                ? 'brandSoft'
+                                                : 'infoSoft'
+                                        "
+                                    >
+                                        {{
+                                            invoice.type === 'invoice'
+                                                ? 'Invoice'
+                                                : 'Estimate'
+                                        }}
+                                    </Badge>
+                                </div>
                             </td>
                             <td class="px-4 py-4 text-sm text-gray-500">
-                                <div
-                                    class="max-w-[220px] truncate"
-                                    :title="invoice.customer?.name ?? 'N/A'"
+                                <!--
+                                    The second way into the document, and the
+                                    one people actually aim at: the number is
+                                    precise but the customer and the subject
+                                    are what a row is scanned for. Both lines
+                                    sit inside the link, so its accessible name
+                                    reads as the document rather than as a
+                                    repeat of the number beside it.
+                                -->
+                                <Link
+                                    :href="`/invoices/${invoice.id}`"
+                                    class="block hover:text-brand-700"
                                 >
-                                    {{ invoice.customer?.name ?? 'N/A' }}
-                                </div>
-                                <!-- Truncated to one line at the same width as
-                                     the name above. Unconstrained it would wrap
-                                     rather than overflow, so this is about
-                                     keeping rows a predictable height, not about
-                                     horizontal overflow. Full text stays on
-                                     `title` for hover and assistive tech. -->
-                                <div
-                                    v-if="invoice.subject"
-                                    class="mt-0.5 max-w-[220px] truncate text-xs text-gray-400"
-                                    :title="invoice.subject"
-                                >
-                                    {{ invoice.subject }}
-                                </div>
+                                    <div
+                                        class="max-w-[220px] truncate"
+                                        :title="invoice.customer?.name ?? 'N/A'"
+                                    >
+                                        {{ invoice.customer?.name ?? 'N/A' }}
+                                    </div>
+                                    <!-- Truncated to one line at the same width
+                                         as the name above. Unconstrained it
+                                         would wrap rather than overflow, so this
+                                         is about keeping rows a predictable
+                                         height, not about horizontal overflow.
+                                         Full text stays on `title` for hover and
+                                         assistive tech. -->
+                                    <div
+                                        v-if="invoice.subject"
+                                        class="mt-0.5 max-w-[220px] truncate text-xs text-gray-400"
+                                        :title="invoice.subject"
+                                    >
+                                        {{ invoice.subject }}
+                                    </div>
+                                </Link>
                             </td>
                             <td class="px-4 py-4 text-right whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">
@@ -468,76 +427,53 @@ const tabs = [
                             <td
                                 class="px-4 py-4 text-right text-sm whitespace-nowrap"
                             >
+                                <!--
+                                    Six coloured links per row, repeated down
+                                    the page, made the list read as a control
+                                    panel rather than a list of documents.
+                                    Opening, editing, sending, converting and
+                                    deleting all belong to one document, so
+                                    they live on that document's page; the
+                                    number in the first column is the way in.
+
+                                    What is left is the pair that are useful
+                                    *without* opening anything: the PDF a row
+                                    is often chased for, and the duplicate that
+                                    starts the next document from this one.
+                                -->
                                 <div
-                                    class="flex items-center justify-end gap-2"
+                                    class="flex items-center justify-end gap-1"
                                 >
-                                    <a
-                                        :href="publicUrl(invoice)"
-                                        target="_blank"
-                                        :aria-label="`${actionLabel('View', invoice)} (opens in a new tab)`"
-                                        class="text-green-700 hover:text-green-900"
-                                        >View</a
-                                    >
-                                    <a
-                                        v-if="can('update')"
-                                        :href="`/invoices/${invoice.id}/edit`"
-                                        :aria-label="
-                                            actionLabel('Edit', invoice)
-                                        "
-                                        class="text-brand-600 hover:text-brand-900"
-                                        >Edit</a
-                                    >
-                                    <a
+                                    <Button
+                                        as="a"
+                                        variant="ghost"
+                                        size="sm"
+                                        class="text-muted-foreground hover:text-foreground"
                                         :href="pdfUrl(invoice)"
                                         :aria-label="`Download PDF of ${invoice.type} ${invoice.invoice_number}`"
-                                        class="text-red-600 hover:text-red-900"
-                                        >PDF</a
                                     >
+                                        PDF
+                                    </Button>
                                     <!-- Opens a pre-filled create form; nothing
                                          is saved until the user submits it. -->
-                                    <a
+                                    <Button
                                         v-if="can('create')"
+                                        as="a"
+                                        variant="ghost"
+                                        size="sm"
+                                        class="text-muted-foreground hover:text-foreground"
                                         :href="`/invoices/${invoice.id}/duplicate`"
                                         :aria-label="
                                             actionLabel('Duplicate', invoice)
                                         "
-                                        class="text-gray-600 hover:text-gray-900"
-                                        >Duplicate</a
                                     >
-                                    <button
-                                        v-if="
-                                            invoice.type === 'estimate' &&
-                                            can('create')
-                                        "
-                                        type="button"
-                                        class="cursor-pointer text-purple-600 hover:text-purple-900 disabled:cursor-not-allowed disabled:opacity-50"
-                                        :disabled="converting === invoice.id"
-                                        :aria-label="`Convert ${invoice.type} ${invoice.invoice_number} to an invoice`"
-                                        :aria-busy="converting === invoice.id"
-                                        @click="convertEstimate(invoice)"
-                                    >
-                                        {{
-                                            converting === invoice.id
-                                                ? 'Converting...'
-                                                : 'Convert'
-                                        }}
-                                    </button>
-                                    <button
-                                        v-if="can('delete')"
-                                        type="button"
-                                        :aria-label="
-                                            actionLabel('Delete', invoice)
-                                        "
-                                        class="cursor-pointer text-red-600 hover:text-red-900"
-                                        @click="confirmDelete(invoice)"
-                                    >
-                                        Delete
-                                    </button>
+                                        Duplicate
+                                    </Button>
                                 </div>
                             </td>
                         </tr>
                         <tr v-if="invoices.data.length === 0">
-                            <td colspan="7" class="px-6 py-12 text-center">
+                            <td colspan="6" class="px-6 py-12 text-center">
                                 <svg
                                     class="mx-auto h-12 w-12 text-gray-300"
                                     aria-hidden="true"
@@ -630,17 +566,5 @@ const tabs = [
                 </nav>
             </div>
         </div>
-
-        <!-- Delete Confirmation -->
-        <ConfirmationModal
-            :restore-focus-to="listRegion"
-            :show="confirmingDelete"
-            title="Delete Document"
-            message="Are you sure you want to delete this document? This action cannot be undone."
-            confirm-label="Delete"
-            :destructive="true"
-            @confirm="deleteInvoice"
-            @cancel="confirmingDelete = false"
-        />
     </AppLayout>
 </template>

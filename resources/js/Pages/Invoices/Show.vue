@@ -594,42 +594,90 @@ function deletePayment() {
                             <CardTitle>Details</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <dl class="space-y-3 text-sm">
-                                <div>
-                                    <dt class="text-xs text-muted-foreground">
+                            <!--
+                                Label and value share a line. Stacked, each
+                                fact cost two lines of a narrow column, and the
+                                card ran longer than the items table beside it
+                                to hold seven short ones. The label does not
+                                wrap; the value takes what is left and is right
+                                aligned, so the values read as a column.
+                            -->
+                            <dl class="space-y-2.5 text-sm">
+                                <div
+                                    class="flex items-baseline justify-between gap-4"
+                                >
+                                    <dt
+                                        class="shrink-0 text-xs text-muted-foreground"
+                                    >
                                         Issued
                                     </dt>
-                                    <dd>{{ formatDate(invoice.issued_at) }}</dd>
+                                    <dd class="min-w-0 text-right">
+                                        {{ formatDate(invoice.issued_at) }}
+                                    </dd>
                                 </div>
-                                <div v-if="paymentTermsLabel">
-                                    <dt class="text-xs text-muted-foreground">
+                                <div
+                                    v-if="paymentTermsLabel"
+                                    class="flex items-baseline justify-between gap-4"
+                                >
+                                    <dt
+                                        class="shrink-0 text-xs text-muted-foreground"
+                                    >
                                         Payment terms
                                     </dt>
-                                    <dd>{{ paymentTermsLabel }}</dd>
+                                    <dd class="min-w-0 text-right">
+                                        {{ paymentTermsLabel }}
+                                    </dd>
                                 </div>
-                                <div v-if="invoice.subject">
-                                    <dt class="text-xs text-muted-foreground">
+                                <div
+                                    v-if="invoice.subject"
+                                    class="flex items-baseline justify-between gap-4"
+                                >
+                                    <dt
+                                        class="shrink-0 text-xs text-muted-foreground"
+                                    >
                                         Subject
                                     </dt>
-                                    <dd>{{ invoice.subject }}</dd>
+                                    <dd class="min-w-0 text-right">
+                                        {{ invoice.subject }}
+                                    </dd>
                                 </div>
-                                <div v-if="invoice.order_number">
-                                    <dt class="text-xs text-muted-foreground">
+                                <div
+                                    v-if="invoice.order_number"
+                                    class="flex items-baseline justify-between gap-4"
+                                >
+                                    <dt
+                                        class="shrink-0 text-xs text-muted-foreground"
+                                    >
                                         Order number
                                     </dt>
-                                    <dd>{{ invoice.order_number }}</dd>
+                                    <dd class="min-w-0 text-right">
+                                        {{ invoice.order_number }}
+                                    </dd>
                                 </div>
-                                <div v-if="placeOfSupplyLabel">
-                                    <dt class="text-xs text-muted-foreground">
+                                <div
+                                    v-if="placeOfSupplyLabel"
+                                    class="flex items-baseline justify-between gap-4"
+                                >
+                                    <dt
+                                        class="shrink-0 text-xs text-muted-foreground"
+                                    >
                                         Place of supply
                                     </dt>
-                                    <dd>{{ placeOfSupplyLabel }}</dd>
+                                    <dd class="min-w-0 text-right">
+                                        {{ placeOfSupplyLabel }}
+                                    </dd>
                                 </div>
-                                <div>
-                                    <dt class="text-xs text-muted-foreground">
+                                <div
+                                    class="flex items-baseline justify-between gap-4"
+                                >
+                                    <dt
+                                        class="shrink-0 text-xs text-muted-foreground"
+                                    >
                                         Currency
                                     </dt>
-                                    <dd>{{ invoice.currency }}</dd>
+                                    <dd class="min-w-0 text-right">
+                                        {{ invoice.currency }}
+                                    </dd>
                                 </div>
                                 <!--
                                     The customer's own view of this document.
@@ -637,11 +685,15 @@ function deletePayment() {
                                     link in the list, which said nothing about
                                     which of the two views it opened.
                                 -->
-                                <div>
-                                    <dt class="text-xs text-muted-foreground">
+                                <div
+                                    class="flex items-baseline justify-between gap-4"
+                                >
+                                    <dt
+                                        class="shrink-0 text-xs text-muted-foreground"
+                                    >
                                         Public link
                                     </dt>
-                                    <dd>
+                                    <dd class="min-w-0 text-right">
                                         <a
                                             :href="publicUrl"
                                             target="_blank"

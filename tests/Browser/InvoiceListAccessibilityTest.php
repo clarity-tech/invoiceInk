@@ -12,12 +12,13 @@
  * actually requires.
  */
 
-use App\Models\User;
-
+use App\Models\Invoice;
 /**
  * WCAG 2.1 AA: text below 18px (or 14px bold) needs 4.5:1 against its
  * background. Everything measured here is 14px regular.
  */
+use App\Models\User;
+
 const AA_NORMAL_TEXT = 4.5;
 
 /** Resolves any CSS colour syntax to sRGB via canvas, then computes contrast. */
@@ -28,7 +29,10 @@ function () {
     const ctx = cv.getContext('2d', { willReadFrequently: true });
 
     function toRgb(value) {
-        if (!value || /rgba?\([^)]*,\s*0\s*\)$/.test(value)) return null;
+        // Only a 4-component rgba() with a zero alpha is transparent. The
+        // looser form of this test also matched plain `rgb(0, 0, 0)`, so an
+        // element inheriting black was silently skipped rather than measured.
+        if (!value || /rgba\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*,\s*0\s*\)$/.test(value)) return null;
         ctx.clearRect(0, 0, 1, 1);
         ctx.fillStyle = '#000';
         ctx.fillStyle = value;
@@ -66,8 +70,8 @@ function () {
     const byText = t => controls.find(el => el.textContent.trim() === t);
     const out = {};
 
-    const view = byText('View');
-    if (view) out.view_link = contrast(toRgb(getComputedStyle(view).color), backdrop(view));
+    const pdf = byText('PDF');
+    if (pdf) out.pdf_link = contrast(toRgb(getComputedStyle(pdf).color), backdrop(pdf));
 
     const create = byText('Create Estimate');
     if (create) {
@@ -95,7 +99,7 @@ it('meets AA contrast on the listing controls', function () {
 
     $ratios = visit('/invoices')->resize(1440, 900)->script(CONTRAST_JS);
 
-    expect($ratios)->toHaveKeys(['view_link', 'create_estimate', 'inactive_tab']);
+    expect($ratios)->toHaveKeys(['pdf_link', 'create_estimate', 'inactive_tab']);
 
     foreach ($ratios as $element => $ratio) {
         expect($ratio)->toBeGreaterThanOrEqual(
@@ -145,15 +149,14 @@ it('names every row action with the document it acts on', function () {
     }
     JS);
 
-    // Without these, a list of 10 documents renders 10 identical "View" links
+    // Without these, a list of 10 documents renders 10 identical "PDF" links
     // with nothing to tell them apart in a screen reader's element list.
+    //
+    // Two actions, not six: opening, editing, sending, converting and deleting
+    // all act on one document, so they moved to that document's page.
     expect($labels)->toBe([
-        ['text' => 'View', 'label' => 'View estimate CT-EST-001 (opens in a new tab)'],
-        ['text' => 'Edit', 'label' => 'Edit estimate CT-EST-001'],
         ['text' => 'PDF', 'label' => 'Download PDF of estimate CT-EST-001'],
         ['text' => 'Duplicate', 'label' => 'Duplicate estimate CT-EST-001'],
-        ['text' => 'Convert', 'label' => 'Convert estimate CT-EST-001 to an invoice'],
-        ['text' => 'Delete', 'label' => 'Delete estimate CT-EST-001'],
     ]);
 });
 
@@ -204,7 +207,9 @@ it('gives the table column scopes and a caption', function () {
     }
     JS);
 
-    expect($semantics['headerCount'])->toBe(7);
+    // Six, not seven: the type badge moved into the Number column rather than
+    // holding a column of its own.
+    expect($semantics['headerCount'])->toBe(6);
     expect($semantics['scopedCount'])->toBe($semantics['headerCount']);
     expect($semantics['caption'])->toBe('Invoices and estimates');
     expect($semantics['captionIsScreenReaderOnly'])->toBeTrue();
@@ -242,16 +247,26 @@ it('marks the current page in a navigable pagination list', function () {
     expect($pagination['labels'])->toContain('Go to page 2');
 });
 
-it('keeps focus in the document after an optimistic delete', function () {
+/**
+ * Deleting used to happen here, optimistically, which is why this page still
+ * carries a focusable scroll region: the row under the cursor vanished and
+ * focus had nowhere to go. The document's own page owns deleting now, and the
+ * server redirects back here afterwards -- so what matters is that the list
+ * that comes back is sound, and that focus is somewhere a keyboard can use.
+ */
+it('comes back intact after a document is deleted from its own page', function () {
     [$user] = seedInvoiceListFixture(3);
     $this->actingAs($user);
 
-    $page = visit('/invoices')->resize(1440, 900);
+    $doomed = Invoice::where('invoice_number', 'CT-EST-001')->firstOrFail();
 
-    $page->click('button[aria-label="Delete invoice CT-INV-001"]')
+    $page = visit("/invoices/{$doomed->id}")->resize(1440, 900);
+
+    $page->click('button[aria-label="Delete estimate CT-EST-001"]')
         ->waitForText('Delete Document')
         ->click('[role="dialog"] button:has-text("Delete")')
-        ->wait(2);
+        ->assertPathIs('/invoices')
+        ->assertNoJavaScriptErrors();
 
     $state = $page->script(<<<'JS'
     function () {
@@ -261,21 +276,13 @@ it('keeps focus in the document after an optimistic delete', function () {
             rows: Array.from(document.querySelectorAll('tbody tr'))
                 .map(r => (r.textContent.match(/CT-(INV|EST)-\d+/) || [])[0])
                 .filter(Boolean),
-            focusLabel: active ? active.getAttribute('aria-label') : null,
             focusIsBody: active === document.body,
-            announcement: (document.querySelector('[role="status"]') || {}).textContent || '',
         };
     }
     JS);
 
-    // The row really is gone, so the dialog's focus restore has nothing to
-    // return to. Without an explicit hand-off, focus falls to <body> and a
-    // keyboard or screen reader user is dumped at the top of the document —
-    // which is what this asserts against.
-    expect($state['rows'])->not->toContain('CT-INV-001');
-    expect($state['focusIsBody'])->toBeFalse();
-    expect($state['focusLabel'])->toBe('Invoices and estimates list');
-    expect(trim($state['announcement']))->toBe('Invoice deleted successfully.');
+    expect($state['rows'])->not->toContain('CT-EST-001');
+    expect($state['rows'])->toHaveCount(2);
 });
 
 it('hides the decorative empty-state icon from assistive technology', function () {

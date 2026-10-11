@@ -102,13 +102,13 @@ it('edits an existing invoice', function () {
         ->assertSee('Save & Send');
 });
 
-it('deletes an invoice from the list', function () {
+it('deletes an invoice from its own page', function () {
     $user = User::factory()->withPersonalTeam()->create([
         'email' => 'inv-delete@example.test',
     ]);
 
     $organization = createOrganizationWithLocation([], [], $user);
-    createInvoiceWithItems(
+    $invoice = createInvoiceWithItems(
         ['invoice_number' => 'INV-DEL-001'],
         null,
         $organization,
@@ -116,10 +116,14 @@ it('deletes an invoice from the list', function () {
 
     $this->actingAs($user);
 
+    // Reached the way a user reaches it: the number in the list is the link to
+    // the document, and the document is where it can be deleted.
     $page = $this->visit('/invoices');
 
     $page->assertSee('INV-DEL-001')
-        ->click('button.text-red-600:has-text("Delete")')
+        ->click('a:has-text("INV-DEL-001")')
+        ->assertPathIs("/invoices/{$invoice->id}")
+        ->click('button[aria-label="Delete invoice INV-DEL-001"]')
         ->waitForText('Delete Document')
         ->assertSee('Are you sure you want to delete this document');
 });

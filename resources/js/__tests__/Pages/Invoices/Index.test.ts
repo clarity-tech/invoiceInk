@@ -364,7 +364,7 @@ describe('Invoices/Index', () => {
         const wrapper = mountComponent({
             invoices: makePaginatedInvoices([inv]),
         });
-        expect(wrapper.text()).toContain('INVOICE');
+        expect(wrapper.text()).toContain('Invoice');
     });
 
     it('renders type badge for estimate', () => {
@@ -372,56 +372,51 @@ describe('Invoices/Index', () => {
         const wrapper = mountComponent({
             invoices: makePaginatedInvoices([inv]),
         });
-        expect(wrapper.text()).toContain('ESTIMATE');
+        expect(wrapper.text()).toContain('Estimate');
     });
 
-    it('shows Convert button only for estimates', () => {
+    // Convert, Edit, Delete and the public View all act on one document, so
+    // they live on that document's page now. The list keeps only the two that
+    // are useful without opening anything.
+    it('leaves per-document actions to the document page', () => {
         const invoice = makeInvoice({ id: 1, type: 'invoice' });
         const estimate = makeInvoice({ id: 2, type: 'estimate' });
         const wrapper = mountComponent({
             invoices: makePaginatedInvoices([invoice, estimate]),
         });
-        const convertButtons = wrapper
-            .findAll('button')
-            .filter((b) => b.text() === 'Convert');
-        expect(convertButtons).toHaveLength(1);
+
+        const labels = [
+            ...wrapper.findAll('button'),
+            ...wrapper.findAll('a'),
+        ].map((el) => el.text());
+
+        expect(labels).not.toContain('Convert');
+        expect(labels).not.toContain('Edit');
+        expect(labels).not.toContain('Delete');
+        expect(labels).not.toContain('View');
     });
 
-    it('opens delete confirmation modal', async () => {
-        const inv = makeInvoice({ id: 1 });
-        const wrapper = mountComponent({
-            invoices: makePaginatedInvoices([inv]),
-        });
-        const deleteBtn = wrapper
-            .findAll('button')
-            .find((b) => b.text() === 'Delete');
-        await deleteBtn!.trigger('click');
-        expect(wrapper.find('[data-testid="confirm-modal"]').exists()).toBe(
-            true,
-        );
-    });
-
-    it('calls router.optimistic().delete on confirm delete', async () => {
+    // The list used to delete optimistically, which is why it still carries
+    // the focus-restoring scroll region. Deleting now happens on the document's
+    // own page, where the server redirects here afterwards, so nothing on this
+    // page should be able to destroy a row.
+    it('never deletes from the list', async () => {
         const inv = makeInvoice({ id: 5 });
         const wrapper = mountComponent({
             invoices: makePaginatedInvoices([inv]),
         });
 
-        // Open modal
-        const deleteBtn = wrapper
-            .findAll('button')
-            .find((b) => b.text() === 'Delete');
-        await deleteBtn!.trigger('click');
-
-        // Confirm
-        const confirmBtn = wrapper.find('[data-testid="confirm-btn"]');
-        await confirmBtn.trigger('click');
-
-        expect(mockOptimistic).toHaveBeenCalled();
-        expect(mockOptimisticDelete).toHaveBeenCalledWith(
-            '/invoices/5',
-            expect.any(Object),
+        expect(wrapper.find('[data-testid="confirm-modal"]').exists()).toBe(
+            false,
         );
+
+        for (const button of wrapper.findAll('button')) {
+            await button.trigger('click');
+        }
+
+        expect(mockOptimistic).not.toHaveBeenCalled();
+        expect(mockOptimisticDelete).not.toHaveBeenCalled();
+        expect(mockRouterDelete).not.toHaveBeenCalled();
     });
 
     it('links to the duplicate form instead of posting', async () => {
@@ -463,30 +458,33 @@ describe('Invoices/Index', () => {
         expect(createEstimate).toBeTruthy();
     });
 
-    it('renders edit and PDF links for each invoice', () => {
+    it('opens the document from its number, and keeps the PDF on the row', () => {
         const inv = makeInvoice({ id: 7, ulid: 'TESTULID123' });
         const wrapper = mountComponent({
             invoices: makePaginatedInvoices([inv]),
         });
         const links = wrapper.findAll('a');
-        expect(
-            links.some((a) => a.attributes('href') === '/invoices/7/edit'),
-        ).toBe(true);
+
+        expect(links.some((a) => a.attributes('href') === '/invoices/7')).toBe(
+            true,
+        );
         expect(
             links.some(
                 (a) => a.attributes('href') === '/invoices/TESTULID123/pdf',
             ),
         ).toBe(true);
+        // The edit form is reached through the document, not from the row.
+        expect(
+            links.some((a) => a.attributes('href') === '/invoices/7/edit'),
+        ).toBe(false);
     });
 
-    it('generates correct public URL for estimate', () => {
+    it('uses the estimate path for an estimate PDF', () => {
         const est = makeInvoice({ type: 'estimate', ulid: 'EST_ULID_123' });
         const wrapper = mountComponent({
             invoices: makePaginatedInvoices([est]),
         });
-        const viewLink = wrapper.findAll('a').find((a) => a.text() === 'View');
-        expect(viewLink!.attributes('href')).toBe(
-            '/estimates/view/EST_ULID_123',
-        );
+        const pdfLink = wrapper.findAll('a').find((a) => a.text() === 'PDF');
+        expect(pdfLink!.attributes('href')).toBe('/estimates/EST_ULID_123/pdf');
     });
 });

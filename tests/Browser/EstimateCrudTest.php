@@ -43,9 +43,12 @@ it('shows estimate actions and badge in the list', function () {
     $page = $this->visit('/invoices');
 
     $page->assertSee('EST-ACTIONS-001')
-        ->assertSee('ESTIMATE')
-        ->assertSee('Convert')
+        // Sentence case, and muted rather than filled: a green "ESTIMATE" pill
+        // one column from a green "Paid" status badge read as a status.
+        ->assertSee('Estimate')
         ->assertSee('Duplicate')
+        // Converting acts on one document, so it lives on that document's page.
+        ->assertDontSee('Convert')
         ->assertNoJavascriptErrors();
 });
 

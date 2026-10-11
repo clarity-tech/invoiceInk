@@ -114,6 +114,15 @@ it('renders the invoice detail page for a part-paid overdue document', function 
         ->assertSee('Balance due')
         ->assertSee('Overdue by 12 days')
         ->assertSee('Echocardiography system, installation and commissioning')
+        // The right-hand rail is four cards, and a template edit to any one of
+        // them can silently take a neighbour with it: every card below is
+        // asserted by something it uniquely contains.
+        ->assertSee('Payment terms')
+        ->assertSee('Public link')
+        ->assertSee('Addresses')
+        ->assertSee('Billed to')
+        ->assertSee('Issued from')
+        ->assertSee('123 Business Street')
         ->assertSee('CGST 9%')
         ->assertSee('NEFT/2026/90551')
         // The page must not overflow sideways at desktop width; the invoice

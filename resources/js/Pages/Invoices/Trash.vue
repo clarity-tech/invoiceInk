@@ -119,7 +119,7 @@ const tabs = [
             </div>
         </template>
 
-        <div class="py-4">
+        <div class="px-4 sm:px-0">
             <div class="mb-4 flex items-center justify-between">
                 <div class="flex gap-1 rounded-lg bg-gray-100 p-1">
                     <button
@@ -143,53 +143,53 @@ const tabs = [
                 ref="listRegion"
                 tabindex="-1"
                 aria-label="Trashed invoices list"
-                class="overflow-x-auto bg-white shadow-sm focus:ring-2 focus:ring-brand-500 focus:outline-none sm:rounded-lg"
+                class="overflow-x-auto rounded-xl border border-border bg-card shadow-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
             >
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-border">
+                    <thead class="bg-muted/60">
                         <tr>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-6 py-2.5 text-left text-xs font-medium text-muted-foreground"
                             >
                                 Type
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-6 py-2.5 text-left text-xs font-medium text-muted-foreground"
                             >
                                 Number
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-6 py-2.5 text-left text-xs font-medium text-muted-foreground"
                             >
                                 Customer
                             </th>
                             <th
-                                class="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-6 py-2.5 text-right text-xs font-medium text-muted-foreground"
                             >
                                 Total
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-6 py-2.5 text-left text-xs font-medium text-muted-foreground"
                             >
                                 Status
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-6 py-2.5 text-left text-xs font-medium text-muted-foreground"
                             >
                                 Deleted
                             </th>
                             <th
-                                class="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-6 py-2.5 text-right text-xs font-medium text-muted-foreground"
                             >
                                 Actions
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white">
+                    <tbody class="divide-y divide-border bg-card">
                         <tr
                             v-for="invoice in invoices.data"
                             :key="invoice.id"
-                            class="hover:bg-gray-50"
+                            class="hover:bg-muted/40"
                         >
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span

@@ -224,7 +224,7 @@ function locationSummary(customer: Customer): string {
             </div>
         </template>
 
-        <div class="py-4">
+        <div class="px-4 sm:px-0">
             <!-- Search -->
             <div class="mb-4">
                 <div class="relative max-w-sm">
@@ -309,49 +309,49 @@ function locationSummary(customer: Customer): string {
                 ref="listRegion"
                 tabindex="-1"
                 aria-label="Customers list"
-                class="overflow-x-auto bg-white shadow-sm focus:ring-2 focus:ring-brand-500 focus:outline-none sm:rounded-lg"
+                class="overflow-x-auto rounded-xl border border-border bg-card shadow-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
             >
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-border">
+                    <thead class="bg-muted/60">
                         <tr>
                             <th
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground"
                             >
                                 Name
                             </th>
                             <th
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground"
                             >
                                 Email
                             </th>
                             <th
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground"
                             >
                                 Phone
                             </th>
                             <th
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground"
                             >
                                 Currency
                             </th>
                             <th
-                                class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground"
                             >
                                 Location
                             </th>
                             <th
-                                class="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
+                                class="px-4 py-2.5 text-right text-xs font-medium text-muted-foreground"
                             >
                                 Actions
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white">
+                    <tbody class="divide-y divide-border bg-card">
                         <template
                             v-for="customer in customers.data"
                             :key="customer.id"
                         >
-                            <tr class="hover:bg-gray-50">
+                            <tr class="hover:bg-muted/40">
                                 <td
                                     class="px-4 py-4 text-sm font-medium text-gray-900"
                                 >
