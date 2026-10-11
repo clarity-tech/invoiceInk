@@ -42,6 +42,7 @@ import {
     TableRow,
 } from '@/Components/ui/table';
 import { formatBytes } from '@/composables/useFileAttachments';
+import { currencySymbol } from '@/composables/useFormatMoney';
 import { formatDate } from '@/composables/useFormatDate';
 import { formatLocationLine } from '@/composables/useLocationFormat';
 import { usePermissions } from '@/composables/usePermissions';
@@ -463,6 +464,7 @@ function deletePayment() {
                                             class="text-right tabular-nums"
                                         >
                                             <MoneyDisplay
+                                                bare
                                                 :amount="item.unit_price"
                                                 :currency="invoice.currency"
                                             />
@@ -476,6 +478,7 @@ function deletePayment() {
                                             class="text-right font-medium tabular-nums"
                                         >
                                             <MoneyDisplay
+                                                bare
                                                 :amount="item.line_total ?? 0"
                                                 :currency="invoice.currency"
                                             />
@@ -497,6 +500,7 @@ function deletePayment() {
                                     </dt>
                                     <dd class="tabular-nums">
                                         <MoneyDisplay
+                                            bare
                                             :amount="invoice.subtotal"
                                             :currency="invoice.currency"
                                         />
@@ -512,6 +516,7 @@ function deletePayment() {
                                     </dt>
                                     <dd class="tabular-nums">
                                         <MoneyDisplay
+                                            bare
                                             :amount="tax.amount"
                                             :currency="invoice.currency"
                                         />
@@ -524,6 +529,7 @@ function deletePayment() {
                                     <dt class="text-muted-foreground">Tax</dt>
                                     <dd class="tabular-nums">
                                         <MoneyDisplay
+                                            bare
                                             :amount="invoice.tax"
                                             :currency="invoice.currency"
                                         />
@@ -538,6 +544,7 @@ function deletePayment() {
                                     </dt>
                                     <dd class="tabular-nums">
                                         −<MoneyDisplay
+                                            bare
                                             :amount="invoice.tds_amount"
                                             :currency="invoice.currency"
                                         />
@@ -552,6 +559,7 @@ function deletePayment() {
                                     </dt>
                                     <dd class="tabular-nums">
                                         <MoneyDisplay
+                                            bare
                                             :amount="invoice.tcs_amount"
                                             :currency="invoice.currency"
                                         />
@@ -560,9 +568,20 @@ function deletePayment() {
                                 <div
                                     class="flex justify-between gap-4 border-t border-border pt-1.5 font-semibold"
                                 >
-                                    <dt>Total</dt>
+                                    <!--
+                                        The one place the currency is named.
+                                        Every figure above shares it, and
+                                        repeating it per line stops a column of
+                                        numbers lining up on its decimal point.
+                                    -->
+                                    <dt>
+                                        Total ({{
+                                            currencySymbol(invoice.currency)
+                                        }})
+                                    </dt>
                                     <dd class="tabular-nums">
                                         <MoneyDisplay
+                                            bare
                                             :amount="invoice.total"
                                             :currency="invoice.currency"
                                         />

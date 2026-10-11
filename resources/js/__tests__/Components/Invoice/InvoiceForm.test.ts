@@ -88,9 +88,15 @@ vi.mock('@inertiajs/vue3', () => {
 vi.mock('@/composables/useFormatMoney', () => ({
     formatMoney: (amount: number, currency: string) =>
         `${currency} ${(amount / 100).toFixed(2)}`,
+    // The figure without its symbol, for the columns that name the currency
+    // once beside their total rather than on every line.
+    formatAmount: (amount: number) => (amount / 100).toFixed(2),
+    currencySymbol: (currency: string) => currency,
     useFormatMoney: () => ({
         formatMoney: (amount: number, currency: string) =>
             `${currency} ${(amount / 100).toFixed(2)}`,
+        formatAmount: (amount: number) => (amount / 100).toFixed(2),
+        currencySymbol: (currency: string) => currency,
     }),
 }));
 
@@ -1083,7 +1089,8 @@ describe('Invoice/InvoiceForm', () => {
             const wrapper = mountComponent();
             expect(wrapper.text()).toContain('Subtotal:');
             expect(wrapper.text()).toContain('Tax:');
-            expect(wrapper.text()).toContain('Total:');
+            // The currency is named once, on the total the figures add up to.
+            expect(wrapper.text()).toContain('Total (INR)');
         });
     });
 

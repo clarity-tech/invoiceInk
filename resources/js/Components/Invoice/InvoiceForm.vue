@@ -71,7 +71,7 @@ const props = defineProps<{
     defaults?: InvoiceFormDefaults;
 }>();
 
-const { formatMoney } = useFormatMoney();
+const { formatAmount, currencySymbol } = useFormatMoney();
 const showEmailModal = ref(false);
 // Build initial items — from the invoice being edited, or from the defaults
 // when the create form was seeded by "Duplicate".
@@ -838,7 +838,7 @@ const orgContacts = computed<Contact[]>(
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-600">Subtotal:</span>
                                 <span class="font-medium text-gray-900">{{
-                                    formatMoney(
+                                    formatAmount(
                                         totals.subtotal,
                                         currentCurrency,
                                     )
@@ -854,14 +854,17 @@ const orgContacts = computed<Contact[]>(
                                         >{{ row.label }}:</span
                                     >
                                     <span class="font-medium text-gray-900">{{
-                                        formatMoney(row.amount, currentCurrency)
+                                        formatAmount(
+                                            row.amount,
+                                            currentCurrency,
+                                        )
                                     }}</span>
                                 </div>
                             </template>
                             <div v-else class="flex justify-between text-sm">
                                 <span class="text-gray-600">Tax:</span>
                                 <span class="font-medium text-gray-900">{{
-                                    formatMoney(totals.tax, currentCurrency)
+                                    formatAmount(totals.tax, currentCurrency)
                                 }}</span>
                             </div>
                             <div
@@ -874,7 +877,7 @@ const orgContacts = computed<Contact[]>(
                                 <span class="font-medium text-gray-900"
                                     >+
                                     {{
-                                        formatMoney(tcsAmount, currentCurrency)
+                                        formatAmount(tcsAmount, currentCurrency)
                                     }}</span
                                 >
                             </div>
@@ -888,20 +891,28 @@ const orgContacts = computed<Contact[]>(
                                 <span class="font-medium text-gray-900"
                                     >&minus;
                                     {{
-                                        formatMoney(tdsAmount, currentCurrency)
+                                        formatAmount(tdsAmount, currentCurrency)
                                     }}</span
                                 >
                             </div>
                             <div
                                 class="flex justify-between border-t border-gray-300 pt-2"
                             >
-                                <span class="text-lg font-bold text-gray-900"
-                                    >Total:</span
-                                >
+                                <!--
+                                    The one place the currency is named. Every
+                                    figure above shares it, and repeating it on
+                                    each line stops a column of numbers lining
+                                    up on its decimal point.
+                                -->
+                                <span class="text-lg font-bold text-gray-900">
+                                    Total ({{
+                                        currencySymbol(currentCurrency)
+                                    }})
+                                </span>
                                 <span
                                     class="text-lg font-bold text-brand-600"
                                     >{{
-                                        formatMoney(netTotal, currentCurrency)
+                                        formatAmount(netTotal, currentCurrency)
                                     }}</span
                                 >
                             </div>

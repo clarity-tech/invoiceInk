@@ -29,8 +29,10 @@ describe('ItemRow', () => {
 
     it('displays formatted line total', () => {
         const wrapper = mount(ItemRow, { props: defaultProps });
-        // 2 × 50000 = 100000 + 18% tax = 118000 → $1,180.00
-        expect(wrapper.text()).toContain('$1,180.00');
+        // 2 × 50000 = 100000 + 18% tax = 118000 → 1,180.00. No symbol: the
+        // column shares one currency, named once beside the total below it.
+        expect(wrapper.text()).toContain('1,180.00');
+        expect(wrapper.text()).not.toContain('$1,180.00');
     });
 
     it('shows remove button when canRemove is true', () => {

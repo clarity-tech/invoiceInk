@@ -24,7 +24,7 @@ const emit = defineEmits<{
     remove: [];
 }>();
 
-const { formatMoney } = useFormatMoney();
+const { formatAmount } = useFormatMoney();
 
 const lineTotal = computed(() => calcLineTotalWithTax(props.item));
 
@@ -292,7 +292,7 @@ async function editSac() {
         </td>
         <td class="px-2 py-2 text-right">
             <span class="text-sm font-medium text-foreground">
-                {{ formatMoney(lineTotal, currency) }}
+                {{ formatAmount(lineTotal, currency) }}
             </span>
         </td>
         <td class="px-2 py-2 text-center">
