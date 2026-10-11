@@ -22,6 +22,71 @@
     --color-brand-950: #2e1065;
 }
 
+/* Design tokens for the components in `Components/ui` (shadcn-vue's Tailwind v4
+ * `cssVariables` form). Purely additive: every name here is new, so no existing
+ * markup changes appearance. Four parts of shadcn's published block are left out
+ * on purpose, because each one would silently restyle pages nobody is editing:
+ *
+ *   - the `--radius-*` scale, which would resize every existing `rounded-*`
+ *     (`rounded-lg` 0.5rem -> 0.625rem) across the whole app;
+ *   - `@layer base { * { border-border; outline-ring/50 } }`, which would
+ *     repaint the default border and focus ring on every element;
+ *   - the `.dark` block and `@custom-variant dark` — there is no dark mode and
+ *     no `dark:` utility anywhere in the app, so they are dead weight;
+ *   - the chart and sidebar tokens, which nothing uses.
+ *
+ * `--primary` and `--ring` point at the brand violet rather than shadcn's
+ * near-black default, so adopting the components does not cost the app its
+ * identity. Everything else is shadcn's neutral base.
+ */
+:root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: var(--color-brand-600);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.985 0 0);
+    --success: oklch(0.527 0.154 150.069);
+    --success-foreground: oklch(0.985 0 0);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: var(--color-brand-600);
+}
+
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+}
+
 [x-cloak] {
     display: none;
 }

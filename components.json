@@ -4,8 +4,17 @@
     "typescript": true,
     "tsConfigPath": "./tsconfig.json",
     "framework": "vite",
+    "iconLibrary": "lucide",
+    "tailwind": {
+        "config": "",
+        "css": "resources/css/app.css",
+        "baseColor": "neutral",
+        "cssVariables": true,
+        "prefix": ""
+    },
     "aliases": {
-        "components": "@/Components/ui",
+        "components": "@/Components",
+        "ui": "@/Components/ui",
         "utils": "@/lib/utils",
         "composables": "@/composables",
         "lib": "@/lib"
