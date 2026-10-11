@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.11.0](https://github.com/clarity-tech/invoicing/compare/v1.10.1...v1.11.0) (2026-10-11)
+
+
+### Features
+
+* **invoices:** give a document a page of its own ([bca91ae](https://github.com/clarity-tech/invoicing/commit/bca91ae1d3b45105c295a7f8ea52eeb761852624))
+* **ui:** adopt shadcn-vue, with the primitives this app actually needs ([ec32f23](https://github.com/clarity-tech/invoicing/commit/ec32f237c9bf4e4cc4b552ca11957430d03398b7))
+
+
+### Refactoring
+
+* **invoices:** leave the list to listing ([9046880](https://github.com/clarity-tech/invoicing/commit/9046880f09037e10ff440a76c01755448fe21cae))
+* **invoices:** name the currency once, beside the total ([f511eda](https://github.com/clarity-tech/invoicing/commit/f511eda4b9c3c8cf4d5e2299d3236e6117e6ba97))
+* **invoices:** rebuild the invoice form ([e47d12e](https://github.com/clarity-tech/invoicing/commit/e47d12e3ef3a80d421442246376a80a93629af36))
+
 ## [1.10.1](https://github.com/clarity-tech/invoicing/compare/v1.10.0...v1.10.1) (2026-10-09)
 
 
