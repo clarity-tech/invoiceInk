@@ -241,8 +241,9 @@ describe('InvoiceCreationFlow', () => {
         const invoice = makeInvoice({ id: 1, ulid: 'abc123' });
         const wrapper = mountComponent({ mode: 'edit', invoice });
         expect(wrapper.text()).toContain('Save & Send');
-        expect(wrapper.text()).toContain('View Public');
-        expect(wrapper.text()).toContain('Download PDF');
+        // View Public and Download PDF are the page's, not the form's.
+        expect(wrapper.text()).not.toContain('View Public');
+        expect(wrapper.text()).not.toContain('Download PDF');
     });
 
     it('navigates back on cancel click', async () => {

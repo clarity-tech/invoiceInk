@@ -25,7 +25,7 @@ it('duplicates an invoice into an unsaved, pre-filled create form', function () 
         ->assertSee('Create Invoice')
         // The copied line item is carried into the form...
         ->assertValue(
-            'input[placeholder="Item description"]',
+            'textarea[placeholder="Item description"]',
             'Duplicated consulting line'
         );
 

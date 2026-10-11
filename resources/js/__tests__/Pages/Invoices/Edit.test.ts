@@ -82,7 +82,12 @@ function mountComponent(propsOverride = {}) {
         },
         global: {
             stubs: {
-                AppLayout: { template: '<div><slot /></div>' },
+                // The header slot carries the document's identity and the
+                // View Public / Download PDF actions, so the stub has to
+                // render it -- a bare default slot would hide all of it.
+                AppLayout: {
+                    template: '<div><slot name="header" /><slot /></div>',
+                },
                 InvoiceForm: {
                     template:
                         '<div data-testid="invoice-form">{{ mode }} {{ type }}</div>',
@@ -269,5 +274,48 @@ describe('Invoices/Edit', () => {
         expect(wrapper.text()).toContain('Total');
         expect(wrapper.text()).toContain('Paid');
         expect(wrapper.text()).toContain('Balance Due');
+    });
+
+    describe('document actions in the header', () => {
+        it('links to the public view and the PDF', () => {
+            const wrapper = mountComponent({
+                invoice: makeInvoice({
+                    id: 7,
+                    ulid: 'abc123',
+                    type: 'invoice',
+                }),
+            });
+
+            expect(wrapper.text()).toContain('View Public');
+            expect(wrapper.text()).toContain('Download PDF');
+
+            const hrefs = wrapper.findAll('a').map((a) => a.attributes('href'));
+            expect(hrefs).toContain('/invoices/view/abc123');
+            expect(hrefs).toContain('/invoices/abc123/pdf');
+        });
+
+        it('uses the estimate paths for an estimate', () => {
+            const wrapper = mountComponent({
+                invoice: makeInvoice({
+                    id: 7,
+                    ulid: 'abc123',
+                    type: 'estimate',
+                }),
+            });
+
+            const hrefs = wrapper.findAll('a').map((a) => a.attributes('href'));
+            expect(hrefs).toContain('/estimates/view/abc123');
+            expect(hrefs).toContain('/estimates/abc123/pdf');
+        });
+
+        // An estimate has no payments, so the card that would hold them -- and
+        // the Record Payment button inside it -- must not render at all.
+        it('hides the payments card for an estimate', () => {
+            const wrapper = mountComponent({
+                invoice: makeInvoice({ type: 'estimate' }),
+            });
+
+            expect(wrapper.text()).not.toContain('Record Payment');
+        });
     });
 });

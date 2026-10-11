@@ -24,7 +24,7 @@ it('explains why an invoice cannot be saved for a customer with no location', fu
 
     $page->select('select:has(option:text("Select customer"))', (string) $customer->id)
         ->assertSee('no billing address yet')
-        ->fill('input[placeholder="Item description"]', 'Consulting')
+        ->fill('textarea[placeholder="Item description"]', 'Consulting')
         ->fill('input[type="number"][min="1"]', '1')
         ->fill('input[type="number"][min="0"][placeholder="0.00"] >> nth=0', '1000')
         ->click('button[type="submit"]')
@@ -47,7 +47,7 @@ it('creates an invoice with a single item', function () {
     $page->assertPathIs('/invoices/create')
         ->assertNoJavascriptErrors()
         ->select('select:has(option:text("Select customer"))', (string) $customer->id)
-        ->fill('input[placeholder="Item description"]', 'Web Development Service')
+        ->fill('textarea[placeholder="Item description"]', 'Web Development Service')
         ->fill('input[type="number"][min="1"]', '5')
         ->fill('input[type="number"][min="0"][placeholder="0.00"] >> nth=0', '10000')
         ->click('button[type="submit"]')
@@ -68,11 +68,13 @@ it('creates invoice with multiple items', function () {
     $page = $this->visit('/invoices/create');
 
     $page->select('select:has(option:text("Select customer"))', (string) $customer->id)
-        ->fill('input[placeholder="Item description"] >> nth=0', 'Service One')
+        ->fill('textarea[placeholder="Item description"] >> nth=0', 'Service One')
         ->fill('input[type="number"][min="1"] >> nth=0', '2')
         ->fill('input[type="number"][min="0"][placeholder="0.00"] >> nth=0', '5000')
-        ->click('button:has-text("Add Item")')
-        ->fill('input[placeholder="Item description"] >> nth=1', 'Service Two')
+        // Two of them now, one above the lines and one below; either will do,
+        // but Playwright refuses a selector that matches both.
+        ->click('button:has-text("Add Item") >> nth=0')
+        ->fill('textarea[placeholder="Item description"] >> nth=1', 'Service Two')
         ->fill('input[type="number"][min="1"] >> nth=1', '3')
         ->fill('input[type="number"][min="0"][placeholder="0.00"] >> nth=1', '8000')
         ->click('button[type="submit"]')
@@ -139,7 +141,7 @@ it('shows validation error without selecting a customer', function () {
 
     $page = $this->visit('/invoices/create');
 
-    $page->fill('input[placeholder="Item description"]', 'Some Service')
+    $page->fill('textarea[placeholder="Item description"]', 'Some Service')
         ->fill('input[type="number"][min="1"]', '1')
         ->fill('input[type="number"][min="0"][placeholder="0.00"] >> nth=0', '5000')
         ->click('button[type="submit"]')

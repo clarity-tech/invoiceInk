@@ -18,10 +18,13 @@ const defaultProps = {
 };
 
 describe('ItemRow', () => {
-    it('renders item description input', () => {
+    // A textarea, not an input: a line item's description is regularly several
+    // sentences, and a one-line field hid all but the first while it was being
+    // written.
+    it('renders the item description in a textarea', () => {
         const wrapper = mount(ItemRow, { props: defaultProps });
-        const input = wrapper.find('input[type="text"]');
-        expect((input.element as HTMLInputElement).value).toBe('Consulting');
+        const field = wrapper.find('textarea');
+        expect((field.element as HTMLTextAreaElement).value).toBe('Consulting');
     });
 
     it('displays formatted line total', () => {
@@ -56,7 +59,7 @@ describe('ItemRow', () => {
 
     it('emits update when description changes', async () => {
         const wrapper = mount(ItemRow, { props: defaultProps });
-        const input = wrapper.find('input[type="text"]');
+        const input = wrapper.find('textarea');
         await input.setValue('New description');
         expect(wrapper.emitted('update')).toBeTruthy();
         const emitted = wrapper.emitted('update')!;
@@ -75,7 +78,10 @@ describe('ItemRow', () => {
         expect(wrapper.text()).toContain('Required');
     });
 
-    it('shows the SAC code in its input, and drops the hint once set', () => {
+    // Set once and then only read, so it reads as a line of text and becomes
+    // an input when asked for -- it used to be a second field under every
+    // description, costing each row the height of something nobody edits.
+    it('shows a set SAC code as text, not as a field', () => {
         const wrapper = mount(ItemRow, {
             props: {
                 ...defaultProps,
@@ -83,14 +89,31 @@ describe('ItemRow', () => {
             },
         });
 
-        // Asserted on the input rather than a badge: the badge used to repeat
-        // the value the input already showed, and was removed.
-        const sac = wrapper.find('input[placeholder="SAC Code (optional)"]');
-        expect((sac.element as HTMLInputElement).value).toBe('998311');
-        expect(wrapper.text()).not.toContain('6-digit code');
+        expect(wrapper.text()).toContain('SAC 998311');
+        expect(
+            wrapper.find('input[aria-label="SAC Code (optional)"]').exists(),
+        ).toBe(false);
     });
 
-    it('hints at the format while the SAC code is empty', () => {
+    it('opens an input when the SAC code is clicked', async () => {
+        const wrapper = mount(ItemRow, {
+            props: {
+                ...defaultProps,
+                item: { ...defaultProps.item, sac_code: '998311' },
+            },
+        });
+
+        await wrapper
+            .find('button[aria-label="Edit SAC code for item 1"]')
+            .trigger('click');
+
+        const field = wrapper.find('input[aria-label="SAC Code (optional)"]');
+        expect((field.element as HTMLInputElement).value).toBe('998311');
+        // The six-digit hint moved onto the field it describes.
+        expect(field.attributes('placeholder')).toBe('6-digit code');
+    });
+
+    it('offers to add one while the SAC code is empty', () => {
         const wrapper = mount(ItemRow, {
             props: {
                 ...defaultProps,
@@ -98,7 +121,11 @@ describe('ItemRow', () => {
             },
         });
 
-        expect(wrapper.text()).toContain('6-digit code');
+        expect(
+            wrapper
+                .find('button[aria-label="Add a SAC code to item 1"]')
+                .exists(),
+        ).toBe(true);
     });
 });
 

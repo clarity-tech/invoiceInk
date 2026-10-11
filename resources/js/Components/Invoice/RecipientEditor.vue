@@ -231,7 +231,7 @@ const availableSuggestions = computed(() => {
             <label
                 v-for="recipient in model"
                 :key="recipient.email"
-                class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border py-1 pr-2 pl-2.5 text-sm transition-colors"
+                class="inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-md border py-1 pr-2 pl-2.5 text-sm transition-colors"
                 :class="
                     recipient.checked
                         ? 'border-brand-300 bg-brand-50'
@@ -250,7 +250,13 @@ const availableSuggestions = computed(() => {
                 >
                     {{ initialFor(recipient.email) }}
                 </span>
-                <span class="whitespace-nowrap">
+                <!--
+                    A chip carries "Name <address@example.com>", which is
+                    wider than a phone. Held at `whitespace-nowrap` with no
+                    bound it pushed the whole page sideways, so it truncates
+                    instead; the full value stays in the title attribute.
+                -->
+                <span class="min-w-0 truncate" :title="recipient.email">
                     <span
                         v-if="displayName(recipient.email)"
                         class="font-medium text-gray-900"

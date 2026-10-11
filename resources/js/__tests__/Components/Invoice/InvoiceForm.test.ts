@@ -8,7 +8,10 @@ import {
     makeInvoice,
 } from '../../helpers';
 
-const { mockPost, mockPut, mockRouterGet } = vi.hoisted(() => ({
+const { mockPost, mockPut, mockRouterGet, formRef } = vi.hoisted(() => ({
+    // The payload the component would submit. `transform` is a no-op in this
+    // mock, so the form object itself is the only place to read it from.
+    formRef: { current: null as Record<string, unknown> | null },
     mockPost: vi.fn(),
     mockPut: vi.fn(),
     mockRouterGet: vi.fn(),
@@ -25,7 +28,7 @@ vi.mock('@inertiajs/vue3', () => {
             // re-render when the component mutates a field (mirrors the real
             // useForm, whose returned object is reactive).
             const data = reactive({ ...initial });
-            return new Proxy(data, {
+            const form = new Proxy(data, {
                 get(target, prop) {
                     if (prop === 'post') return mockPost;
                     if (prop === 'put') return mockPut;
@@ -45,6 +48,10 @@ vi.mock('@inertiajs/vue3', () => {
                     return true;
                 },
             });
+
+            formRef.current = form as unknown as Record<string, unknown>;
+
+            return form;
         },
         Head: { template: '<div />' },
         Link: { template: '<a :href="href"><slot /></a>', props: ['href'] },
@@ -178,6 +185,11 @@ function mountComponent(propsOverride = {}) {
         props: { ...defaultProps(), ...propsOverride },
         global: {
             stubs: {
+                // The Status field teleports to a slot the page header owns.
+                // Stubbing Teleport renders it in place, so these tests keep
+                // asserting on the field rather than on where it lands --
+                // Pages/Invoices/Edit.test.ts covers the landing.
+                teleport: true,
                 ItemRow: {
                     template:
                         '<tr data-testid="item-row"><td>Item Row Stub</td><td><button data-testid="row-remove-btn" @click="$emit(\'remove\')">x</button></td></tr>',
@@ -422,7 +434,10 @@ describe('Invoice/InvoiceForm', () => {
         // Invoice Details card alongside Order Number.
         const detailsCard = (wrapper: ReturnType<typeof mountComponent>) =>
             wrapper
-                .findAll('div.rounded-lg')
+                // Card renders `rounded-xl`; the hand-rolled section wrapper
+                // this replaced was `rounded-lg`. What is being asserted is
+                // unchanged -- only how the card is located.
+                .findAll('div.rounded-xl')
                 .find((d) => d.text().includes('Invoice Details'))!;
 
         it('renders the subject input inside the Invoice Details card', () => {
@@ -555,18 +570,21 @@ describe('Invoice/InvoiceForm', () => {
                 mode: 'edit',
                 invoice: editInvoice,
             });
-            expect(wrapper.text()).toContain('View Public');
             expect(wrapper.text()).toContain('Save');
         });
 
-        it('shows Save & Send, View Public, Download PDF buttons', () => {
+        // View Public and Download PDF used to sit in a bare row above the
+        // first card, inside this component. They open the document rather
+        // than changing it, so they moved to the page header; Edit.vue owns
+        // them now and Pages/Invoices/Edit.test.ts asserts they render there.
+        it('shows Save & Send, and leaves the document actions to the page', () => {
             const wrapper = mountComponent({
                 mode: 'edit',
                 invoice: editInvoice,
             });
             expect(wrapper.text()).toContain('Save & Send');
-            expect(wrapper.text()).toContain('View Public');
-            expect(wrapper.text()).toContain('Download PDF');
+            expect(wrapper.text()).not.toContain('View Public');
+            expect(wrapper.text()).not.toContain('Download PDF');
             expect(wrapper.text()).not.toContain('Send Email');
         });
 
@@ -1343,7 +1361,10 @@ describe('Invoice/InvoiceForm', () => {
                 },
             });
 
-            expect(wrapper.text()).toContain('this customer has none');
+            // The warning is deliberately short -- it sits in a third of a
+            // row now, not across the card -- so this matches the clause that
+            // carries its meaning rather than the whole sentence.
+            expect(wrapper.text()).toContain('This customer has no GSTIN');
         });
 
         it('stays quiet for an export, which needs no place of supply', () => {
@@ -1465,24 +1486,26 @@ describe('Invoice/InvoiceForm', () => {
         });
     });
 
-    describe('document type selector', () => {
-        it('renders document type dropdown', () => {
+    describe('document type', () => {
+        // The selector is gone: on edit it was disabled and could never do
+        // anything, and on create the type is settled by which button was
+        // pressed. What matters is that the value still reaches the server.
+        it('offers no control for it', () => {
             const wrapper = mountComponent();
-            expect(wrapper.text()).toContain('Document Type');
+
+            expect(wrapper.text()).not.toContain('Document Type');
+            expect(
+                wrapper.findAll('option').some((o) => o.text() === 'Estimate'),
+            ).toBe(false);
         });
 
-        it('type selector is disabled in edit mode', () => {
-            const invoice = makeInvoice({ id: 1 });
-            const wrapper = mountComponent({ mode: 'edit', invoice });
-            const selects = wrapper.findAll('select');
-            const typeSelect = selects.find((s) => {
-                const opts = s.findAll('option');
-                return (
-                    opts.some((o) => o.text() === 'Invoice') &&
-                    opts.some((o) => o.text() === 'Estimate')
-                );
-            });
-            expect(typeSelect?.attributes('disabled')).toBeDefined();
+        it('still submits the type the page was opened as', async () => {
+            const wrapper = mountComponent({ type: 'estimate' });
+
+            await wrapper.find('form').trigger('submit');
+
+            expect(mockPost).toHaveBeenCalled();
+            expect(formRef.current?.type).toBe('estimate');
         });
     });
 });

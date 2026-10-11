@@ -17,22 +17,42 @@ import { cn } from '@/lib/utils';
 const props = defineProps<{
     label?: string;
     required?: boolean;
+    /**
+     * Keeps the label for assistive technology but takes it off the screen,
+     * for the few places where what the control is is already obvious from
+     * what it sits beside.
+     */
+    hideLabel?: boolean;
     hint?: string;
+    /**
+     * A caution about a choice that is still valid -- the document will save,
+     * but something about it will not be what the user expects. Distinct from
+     * `error`, which means the server refused it.
+     */
+    warning?: string;
     error?: string;
     class?: HTMLAttributes['class'];
 }>();
 
 const id = useId();
 
-/** An error replaces the hint, so only ever one element describes the field. */
+/** Only ever one element describes the field: error, then warning, then hint. */
 const describedBy = computed(() =>
-    props.error || props.hint ? `${id}-description` : undefined,
+    props.error || props.warning || props.hint
+        ? `${id}-description`
+        : undefined,
 );
 </script>
 
 <template>
     <div :class="cn('space-y-1.5', props.class)">
-        <Label v-if="label" :for="id" :required="required">{{ label }}</Label>
+        <Label
+            v-if="label"
+            :for="id"
+            :required="required"
+            :class="hideLabel && 'sr-only'"
+            >{{ label }}</Label
+        >
 
         <slot :id="id" :described-by="describedBy" :invalid="Boolean(error)" />
 
@@ -42,6 +62,13 @@ const describedBy = computed(() =>
             class="text-xs text-destructive"
         >
             {{ error }}
+        </p>
+        <p
+            v-else-if="warning"
+            :id="`${id}-description`"
+            class="text-xs text-amber-700"
+        >
+            {{ warning }}
         </p>
         <p
             v-else-if="hint"

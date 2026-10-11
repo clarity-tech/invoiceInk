@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Link, router } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { ref, computed, onUnmounted } from 'vue';
+import { Download, ExternalLink, Plus } from 'lucide-vue-next';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import InvoiceForm from '@/Components/Invoice/InvoiceForm.vue';
 import PaymentModal from '@/Components/Invoice/PaymentModal.vue';
-import StatusBadge from '@/Components/StatusBadge.vue';
+import MoneyDisplay from '@/Components/MoneyDisplay.vue';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -12,13 +13,29 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from '@/Components/ui/breadcrumb';
+import { Button } from '@/Components/ui/button';
+import {
+    Card,
+    CardAction,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from '@/Components/ui/card';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/Components/ui/table';
 import { formatDate } from '@/composables/useFormatDate';
-import { formatMoney } from '@/composables/useFormatMoney';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import type {
     Invoice,
     Customer,
     Location,
+    Payment,
     TaxRateOption,
     InvoiceNumberingSeries,
     InvoiceAttachment,
@@ -45,8 +62,43 @@ const balanceDue = computed(() =>
     Math.max(0, (props.invoice.total ?? 0) - (props.invoice.amount_paid ?? 0)),
 );
 
-function fmt(amount: number): string {
-    return formatMoney(amount, props.invoice.currency);
+const publicPath = computed(
+    () =>
+        `/${props.invoice.type === 'invoice' ? 'invoices' : 'estimates'}/view/${props.invoice.ulid}`,
+);
+
+const pdfPath = computed(
+    () =>
+        `/${props.invoice.type === 'invoice' ? 'invoices' : 'estimates'}/${props.invoice.ulid}/pdf`,
+);
+
+/**
+ * A PDF download replaces no page, so nothing tells us when it finished. The
+ * spinner is released on a timer rather than left spinning for ever; a real
+ * render takes about ten seconds because the document is rendered twice.
+ */
+const downloadingPdf = ref(false);
+let pdfTimer: ReturnType<typeof setTimeout> | null = null;
+
+function startPdfDownload() {
+    downloadingPdf.value = true;
+    pdfTimer = setTimeout(() => {
+        downloadingPdf.value = false;
+    }, 15000);
+}
+
+onUnmounted(() => {
+    if (pdfTimer) {
+        clearTimeout(pdfTimer);
+    }
+});
+
+function methodOf(payment: Payment): string {
+    return (
+        payment.payment_method
+            ?.replace('_', ' ')
+            ?.replace(/\b\w/g, (c: string) => c.toUpperCase()) ?? '—'
+    );
 }
 
 function confirmDeletePayment(paymentId: number) {
@@ -110,22 +162,70 @@ function deletePayment() {
                 carrying a total, a payment history and a balance due, the
                 number appeared nowhere on screen -- so nothing said which
                 invoice was open, or what state it was in.
+
+                View Public and Download PDF used to float in a bare row above
+                the first card, belonging to no section. They open the document
+                as it stands rather than changing it, so they belong up here
+                with the rest of the page's identity, the way the detail page
+                arranges the same two.
             -->
-            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <h2 class="text-lg font-semibold text-gray-900">
-                    {{ invoice.invoice_number }}
-                </h2>
-                <StatusBadge :status="invoice.status" />
-                <span
-                    v-if="invoice.customer?.name"
-                    class="truncate text-sm text-gray-500"
+            <div
+                class="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-2"
+            >
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        {{ invoice.invoice_number }}
+                    </h2>
+                    <!--
+                        The form teleports its Status field in here. A badge
+                        sat here before, reporting a value the user had to
+                        scroll down a card to change -- and reporting the saved
+                        one, not the one they had just picked.
+                    -->
+                    <div id="document-status-control" />
+                    <span
+                        v-if="invoice.customer?.name"
+                        class="truncate text-sm text-muted-foreground"
+                    >
+                        {{ invoice.customer.name }}
+                    </span>
+                </div>
+
+                <div
+                    v-if="invoice.ulid"
+                    class="flex flex-wrap items-center gap-2"
                 >
-                    {{ invoice.customer.name }}
-                </span>
+                    <Button
+                        as="a"
+                        variant="outline"
+                        size="sm"
+                        :href="publicPath"
+                        target="_blank"
+                    >
+                        <ExternalLink />
+                        View Public
+                    </Button>
+                    <Button
+                        as="a"
+                        variant="outline"
+                        size="sm"
+                        :href="pdfPath"
+                        :aria-busy="downloadingPdf"
+                        @click="startPdfDownload"
+                    >
+                        <Download :class="downloadingPdf && 'animate-pulse'" />
+                        {{ downloadingPdf ? 'Generating…' : 'Download PDF' }}
+                    </Button>
+                </div>
             </div>
         </template>
 
-        <div class="py-4">
+        <!--
+            One wrapper owns the gutter and the step between sections. The
+            layout already supplies the vertical page padding; `px-4 sm:px-0`
+            is the phone gutter the layout stops short of.
+        -->
+        <div class="space-y-5 px-4 sm:px-0">
             <InvoiceForm
                 mode="edit"
                 :type="invoice.type"
@@ -141,141 +241,131 @@ function deletePayment() {
             />
 
             <!--
-                Payment history is reference material about a document
-                already saved, so it reads last rather than interrupting
-                the form. The form keeps its own action bar reachable from
-                anywhere, so nothing is stranded below it.
+                Payment history is reference material about a document already
+                saved, so it reads last rather than interrupting the form. The
+                detail page orders it the same way.
             -->
-            <!-- Payment Section (invoices only, not estimates) -->
-            <div
-                v-if="invoice.type === 'invoice'"
-                class="mt-8 rounded-lg border border-gray-200 bg-white p-6"
-            >
-                <div class="mb-4 flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">
-                        Payments
-                    </h3>
-                    <button
-                        v-if="(invoice.amount_paid ?? 0) < (invoice.total ?? 0)"
-                        type="button"
-                        class="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-                        @click="showPaymentModal = true"
-                    >
-                        Record Payment
-                    </button>
-                </div>
-
-                <!-- Payment summary -->
-                <div
-                    class="mb-4 grid grid-cols-3 gap-4 rounded-md bg-gray-50 p-4"
-                >
-                    <div>
-                        <div class="text-xs text-gray-500">Total</div>
-                        <div class="text-sm font-semibold">
-                            {{ fmt(invoice.total ?? 0) }}
-                        </div>
-                    </div>
-                    <div>
-                        <div class="text-xs text-gray-500">Paid</div>
-                        <div class="text-sm font-semibold text-green-600">
-                            {{ fmt(invoice.amount_paid ?? 0) }}
-                        </div>
-                    </div>
-                    <div>
-                        <div class="text-xs text-gray-500">Balance Due</div>
-                        <div
-                            class="text-sm font-semibold"
-                            :class="
-                                (invoice.amount_paid ?? 0) >=
-                                (invoice.total ?? 0)
-                                    ? 'text-green-600'
-                                    : 'text-red-600'
-                            "
-                        >
-                            {{ fmt(balanceDue) }}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payment history -->
-                <div
-                    v-if="invoice.payments && invoice.payments.length > 0"
-                    class="overflow-hidden rounded-md border border-gray-200"
-                >
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th
-                                    class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
-                                >
-                                    Date
-                                </th>
-                                <th
-                                    class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
-                                >
-                                    Method
-                                </th>
-                                <th
-                                    class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
-                                >
-                                    Reference
-                                </th>
-                                <th
-                                    class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase"
-                                >
-                                    Amount
-                                </th>
-                                <th
-                                    class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase"
-                                >
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr
-                                v-for="payment in invoice.payments"
-                                :key="payment.id"
+            <div v-if="invoice.type === 'invoice'">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Payments</CardTitle>
+                        <CardAction>
+                            <Button
+                                v-if="balanceDue > 0"
+                                variant="outline"
+                                size="sm"
+                                @click="showPaymentModal = true"
                             >
-                                <td class="px-4 py-3 text-sm text-gray-900">
-                                    {{ formatDate(payment.payment_date) }}
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-600">
-                                    {{
-                                        payment.payment_method
-                                            ?.replace('_', ' ')
-                                            ?.replace(/\b\w/g, (c: string) =>
-                                                c.toUpperCase(),
-                                            ) ?? '—'
-                                    }}
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-500">
-                                    {{ payment.reference ?? '—' }}
-                                </td>
-                                <td
-                                    class="px-4 py-3 text-right text-sm font-medium text-green-600"
-                                >
-                                    {{ fmt(payment.amount) }}
-                                </td>
-                                <td class="px-4 py-3 text-right">
-                                    <button
-                                        type="button"
-                                        class="cursor-pointer text-xs text-red-600 hover:text-red-800"
-                                        @click="
-                                            confirmDeletePayment(payment.id)
-                                        "
-                                    >
-                                        Delete
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                                <Plus />
+                                Record Payment
+                            </Button>
+                        </CardAction>
+                    </CardHeader>
 
-                <p v-else class="text-center text-sm text-gray-400">
-                    No payments recorded yet.
-                </p>
+                    <CardContent class="px-0 py-0">
+                        <dl
+                            class="grid gap-px border-b border-border bg-border sm:grid-cols-3"
+                        >
+                            <div class="bg-card px-5 py-3">
+                                <dt class="text-xs text-muted-foreground">
+                                    Total
+                                </dt>
+                                <dd class="mt-0.5 text-sm font-semibold">
+                                    <MoneyDisplay
+                                        :amount="invoice.total ?? 0"
+                                        :currency="invoice.currency"
+                                    />
+                                </dd>
+                            </div>
+                            <div class="bg-card px-5 py-3">
+                                <dt class="text-xs text-muted-foreground">
+                                    Paid
+                                </dt>
+                                <dd class="mt-0.5 text-sm font-semibold">
+                                    <MoneyDisplay
+                                        :amount="invoice.amount_paid ?? 0"
+                                        :currency="invoice.currency"
+                                    />
+                                </dd>
+                            </div>
+                            <div class="bg-card px-5 py-3">
+                                <dt class="text-xs text-muted-foreground">
+                                    Balance Due
+                                </dt>
+                                <dd
+                                    class="mt-0.5 text-sm font-semibold"
+                                    :class="
+                                        balanceDue > 0 ? 'text-destructive' : ''
+                                    "
+                                >
+                                    <MoneyDisplay
+                                        :amount="balanceDue"
+                                        :currency="invoice.currency"
+                                    />
+                                </dd>
+                            </div>
+                        </dl>
+
+                        <Table
+                            v-if="invoice.payments && invoice.payments.length"
+                        >
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Method</TableHead>
+                                    <TableHead>Reference</TableHead>
+                                    <TableHead class="text-right">
+                                        Amount
+                                    </TableHead>
+                                    <TableHead class="w-0" />
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow
+                                    v-for="payment in invoice.payments"
+                                    :key="payment.id"
+                                >
+                                    <TableCell class="whitespace-nowrap">
+                                        {{ formatDate(payment.payment_date) }}
+                                    </TableCell>
+                                    <TableCell class="text-muted-foreground">
+                                        {{ methodOf(payment) }}
+                                    </TableCell>
+                                    <TableCell class="text-muted-foreground">
+                                        {{ payment.reference ?? '—' }}
+                                    </TableCell>
+                                    <TableCell
+                                        class="text-right font-medium tabular-nums"
+                                    >
+                                        <MoneyDisplay
+                                            :amount="payment.amount"
+                                            :currency="invoice.currency"
+                                        />
+                                    </TableCell>
+                                    <TableCell class="text-right">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            class="text-muted-foreground hover:text-destructive"
+                                            @click="
+                                                confirmDeletePayment(payment.id)
+                                            "
+                                        >
+                                            Delete
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+
+                        <p
+                            v-else
+                            class="px-5 py-6 text-center text-sm text-muted-foreground"
+                        >
+                            No payments recorded yet.
+                        </p>
+                    </CardContent>
+                </Card>
             </div>
         </div>
 

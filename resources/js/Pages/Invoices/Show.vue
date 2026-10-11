@@ -328,13 +328,26 @@ function deletePayment() {
             </div>
         </template>
 
-        <div class="space-y-5 py-4">
+        <!--
+            The same wrapper as the edit page: one step between sections, and
+            the phone gutter the layout stops short of. Without it the cards
+            ran edge to edge on a 390px screen.
+        -->
+        <div class="space-y-5 px-4 sm:px-0">
             <!--
                 The three figures the page exists to answer, before any detail.
                 An estimate has no payments, so it carries its total alone
                 rather than a Paid and Balance of zero.
             -->
-            <Card>
+            <!--
+                `overflow-hidden` is the whole fix for this card's corners. The
+                hairlines between the figures are gaps in a `bg-border` grid
+                showing through, and that grid is a square rectangle: without
+                clipping, its grey corners sat inside the card's rounded border
+                where the white cells could not reach, so each corner carried a
+                small grey wedge and the frame read as uneven.
+            -->
+            <Card class="overflow-hidden">
                 <CardContent
                     class="grid gap-px bg-border p-0 sm:grid-cols-2"
                     :class="isEstimate ? 'lg:grid-cols-2' : 'lg:grid-cols-4'"

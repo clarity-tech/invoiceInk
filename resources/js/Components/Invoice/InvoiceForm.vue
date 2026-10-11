@@ -1,7 +1,29 @@
 <script setup lang="ts">
 import { useForm, router, usePage } from '@inertiajs/vue3';
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, provide, watch, onMounted } from 'vue';
+import { ChevronDown, Plus, X } from 'lucide-vue-next';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
+import { Button } from '@/Components/ui/button';
+import {
+    Card,
+    CardAction,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from '@/Components/ui/card';
+import { Checkbox } from '@/Components/ui/checkbox';
+import { Field } from '@/Components/ui/field';
+import { Input } from '@/Components/ui/input';
+import { Label } from '@/Components/ui/label';
+import { Select } from '@/Components/ui/select';
+import { Separator } from '@/Components/ui/separator';
+import { Textarea } from '@/Components/ui/textarea';
+import AddressLines from './AddressLines.vue';
+import DetailsCard from './Form/DetailsCard.vue';
+import PartiesCard from './Form/PartiesCard.vue';
+import ExtrasCard from './Form/ExtrasCard.vue';
+import { InvoiceFormKey } from './Form/formContext';
+import SourceTaxesCard from './Form/SourceTaxesCard.vue';
 import AttachmentDropzone from './AttachmentDropzone.vue';
 import EmailModal from './EmailModal.vue';
 import ItemRow from './ItemRow.vue';
@@ -51,24 +73,6 @@ const props = defineProps<{
 
 const { formatMoney } = useFormatMoney();
 const showEmailModal = ref(false);
-const downloadingPdf = ref(false);
-let pdfTimer: ReturnType<typeof setTimeout> | null = null;
-
-// Reset PDF loading state after download starts
-watch(downloadingPdf, (val) => {
-    if (val) {
-        pdfTimer = setTimeout(() => {
-            downloadingPdf.value = false;
-        }, 5000);
-    }
-});
-
-onUnmounted(() => {
-    if (pdfTimer) {
-        clearTimeout(pdfTimer);
-    }
-});
-
 // Build initial items — from the invoice being edited, or from the defaults
 // when the create form was seeded by "Duplicate".
 function buildInitialItems(): LineItem[] {
@@ -224,13 +228,11 @@ const form = useForm({
     removed_attachment_ids: [] as number[],
 });
 
-// Existing invoice attachments still visible (i.e. not marked for removal).
-const visibleAttachments = computed(() =>
-    (props.attachments ?? []).filter(
-        (a) => !form.removed_attachment_ids.includes(a.id),
-    ),
-);
+// Shared with the section components below rather than passed as a prop; see
+// Form/formContext.ts for why.
+provide(InvoiceFormKey, form);
 
+// Existing invoice attachments still visible (i.e. not marked for removal).
 const selectedOrgLocation = computed(
     () =>
         props.organizationLocations.find(
@@ -248,31 +250,6 @@ const supplierStateCode = computed<string | null>(() => {
     }
 
     return loc.tax_id.slice(0, 2);
-});
-
-/**
- * GstBreakdownService falls back to the first two digits of the customer's
- * GSTIN when the invoice carries no place of supply. With neither, a domestic
- * supply gets no CGST/SGST/IGST breakdown at all -- getBreakdown() returns an
- * empty array -- so the document shows a tax total with nothing explaining it.
- *
- * Worth saying on the form rather than discovering on the PDF.
- */
-const placeOfSupplyUnresolved = computed(() => {
-    if (!showPlaceOfSupply.value || form.place_of_supply) {
-        return false;
-    }
-
-    const loc = customerLocations.value.find(
-        (l) => l.id === form.customer_location_id,
-    );
-
-    // Exports are always inter-state, so they need no place of supply.
-    if (!loc || loc.country !== 'IN') {
-        return false;
-    }
-
-    return !loc.tax_id || loc.tax_id.length < 2;
 });
 
 // A customer billed outside India is an export → inter-state → IGST.
@@ -330,21 +307,6 @@ const tcsLabel = computed(() =>
 );
 
 // A percentage rate stored as basis points (1000 = 10%). Empty clears it.
-function rateAsPercent(rate: number | null): string {
-    return rate == null ? '' : String(rate / 100);
-}
-
-function onSourceRateInput(field: 'tds_rate' | 'tcs_rate', value: string) {
-    const trimmed = value.trim();
-    form[field] = trimmed === '' ? null : Math.round(Number(trimmed) * 100);
-}
-
-function removeExistingAttachment(id: number) {
-    if (!form.removed_attachment_ids.includes(id)) {
-        form.removed_attachment_ids.push(id);
-    }
-}
-
 // Reflect the server's status when it changes the invoice (e.g. draft -> sent
 // after an email is sent). The backend is the source of truth; we only mirror
 // the returned prop, never decide the status on the client.
@@ -580,16 +542,6 @@ function cancel() {
     router.get('/invoices');
 }
 
-const selectedBillingLocation = computed(() =>
-    customerLocations.value.find((l) => l.id === form.customer_location_id),
-);
-
-const selectedShippingLocation = computed(() =>
-    customerLocations.value.find(
-        (l) => l.id === form.customer_shipping_location_id,
-    ),
-);
-
 // "Same as billing" toggle for the shipping address. Defaults to enabled when
 // shipping already matches billing (always the case in create mode after the
 // customer auto-fill, and in edit mode when no separate shipping was chosen).
@@ -710,68 +662,26 @@ const orgContacts = computed<Contact[]>(
 </script>
 
 <template>
-    <div class="px-4 py-6 sm:px-0">
-        <!-- Action buttons (edit mode only) -->
-        <div
-            v-if="mode === 'edit' && invoice?.ulid"
-            class="mb-6 flex justify-end"
-        >
-            <!--
-                These two open the document as it stands; they neither save nor
-                destroy anything, so they are secondary. Download PDF used to
-                be solid red -- the colour this app reserves for deleting -- and
-                read as a destructive action at a glance. Save & Send also lived
-                here, duplicating the form's own primary action at the bottom.
-            -->
-            <div class="flex space-x-2">
-                <a
-                    :href="`/${invoice.type === 'invoice' ? 'invoices' : 'estimates'}/view/${invoice.ulid}`"
-                    target="_blank"
-                    class="rounded-md border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:bg-gray-50"
-                >
-                    View Public
-                </a>
-                <a
-                    :href="`/${invoice.type === 'invoice' ? 'invoices' : 'estimates'}/${invoice.ulid}/pdf`"
-                    class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:bg-gray-50"
-                    @click="downloadingPdf = true"
-                >
-                    <svg
-                        v-if="downloadingPdf"
-                        class="h-4 w-4 animate-spin text-gray-500"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                    >
-                        <circle
-                            class="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            stroke-width="4"
-                        ></circle>
-                        <path
-                            class="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                        ></path>
-                    </svg>
-                    {{ downloadingPdf ? 'Generating...' : 'Download PDF' }}
-                </a>
-            </div>
-        </div>
+    <!--
+        No padding of its own. The page owns the gutter and the top and bottom
+        margin, so the form sits on the same rhythm as whatever is above or
+        below it -- the payment history on the edit page, for one, which used
+        to be 44px away while the form's own cards were 24px apart.
 
+        `space-y-5` here and on the form below is the same step the detail page
+        uses between its cards, so the two pages scroll at the same pace.
+    -->
+    <div class="space-y-5">
         <!-- Flash message -->
         <div
             v-if="flash.success"
-            class="mb-4 rounded border border-green-300 bg-green-100 p-4 text-green-700"
+            class="rounded-xl border border-green-300 bg-green-100 p-4 text-green-700"
         >
             {{ flash.success }}
         </div>
         <div
             v-if="flash.error"
-            class="mb-4 rounded border border-red-300 bg-red-100 p-4 text-red-700"
+            class="rounded-xl border border-red-300 bg-red-100 p-4 text-red-700"
         >
             {{ flash.error }}
         </div>
@@ -781,7 +691,7 @@ const orgContacts = computed<Contact[]>(
              otherwise leave the save button doing nothing at all. -->
         <div
             v-if="form.hasErrors"
-            class="mb-4 rounded border border-red-300 bg-red-50 p-4"
+            class="rounded-xl border border-red-300 bg-red-50 p-4"
             role="alert"
         >
             <p class="text-sm font-medium text-red-800">
@@ -797,1000 +707,255 @@ const orgContacts = computed<Contact[]>(
             </ul>
         </div>
 
-        <form @submit.prevent="save" class="space-y-6">
-            <!-- Organization Location Section -->
-            <div class="rounded-lg bg-white p-6 shadow">
-                <h2 class="mb-4 text-lg font-semibold text-gray-800">
-                    Organization Location
-                </h2>
-                <div v-if="organizationLocations.length > 0" class="max-w-md">
-                    <label class="mb-1 block text-sm font-medium text-gray-700"
-                        >Location *</label
-                    >
-                    <select
-                        v-model="form.organization_location_id"
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                    >
-                        <option :value="null">Select location</option>
-                        <option
-                            v-for="loc in organizationLocations"
-                            :key="loc.id"
-                            :value="loc.id"
-                        >
-                            {{ loc.name }} - {{ loc.city }}
-                        </option>
-                    </select>
-                    <p
-                        v-if="form.errors.organization_location_id"
-                        class="mt-1 text-sm text-red-600"
-                    >
-                        {{ form.errors.organization_location_id }}
-                    </p>
-                </div>
-                <div
-                    v-else
-                    class="max-w-md rounded-md border border-yellow-200 bg-yellow-50 p-3"
-                >
-                    <p class="text-sm text-yellow-700">
-                        No locations found.
-                        <a
-                            href="/organizations"
-                            class="font-medium underline"
-                            target="_blank"
-                            >Add a location</a
-                        >
-                    </p>
-                </div>
-            </div>
+        <form @submit.prevent="save" class="space-y-5">
+            <PartiesCard
+                v-model:selected-customer-id="selectedCustomerId"
+                v-model:same-as-billing="sameAsBilling"
+                :organization-locations="organizationLocations"
+                :customers="customers"
+                :customer-locations="customerLocations"
+                :selected-customer="selectedCustomer"
+                :show-place-of-supply="showPlaceOfSupply"
+                :indian-states="indianStates"
+                :tax-labels="taxLabels"
+            />
 
-            <!-- Customer & Address Section -->
-            <div class="rounded-lg bg-white p-6 shadow">
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <!-- Left: Customer & Billing -->
-                    <div class="space-y-4">
-                        <div>
-                            <label
-                                class="mb-1 block text-sm font-medium text-gray-700"
-                                >Customer *</label
-                            >
-                            <select
-                                v-model="selectedCustomerId"
-                                class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                            >
-                                <option :value="null">Select customer</option>
-                                <option
-                                    v-for="customer in customers"
-                                    :key="customer.id"
-                                    :value="customer.id"
-                                >
-                                    {{ customer.name
-                                    }}{{
-                                        customer.deleted_at ? ' (Archived)' : ''
-                                    }}
-                                </option>
-                            </select>
-                            <p
-                                v-if="form.errors.customer_id"
-                                class="mt-1 text-sm text-red-600"
-                            >
-                                {{ form.errors.customer_id }}
-                            </p>
-
-                            <div
-                                v-if="customers.length === 0"
-                                class="mt-2 rounded-md border border-brand-200 bg-brand-50 p-3"
-                            >
-                                <p class="text-sm text-brand-700">
-                                    No customers found.
-                                    <a
-                                        href="/customers"
-                                        class="font-medium underline"
-                                        target="_blank"
-                                        >Create your first customer</a
-                                    >
-                                </p>
-                            </div>
-                        </div>
-
-                        <div
-                            v-if="
-                                selectedCustomerId &&
-                                customerLocations.length > 0
-                            "
-                            class="rounded-md border border-gray-200 bg-gray-50 p-4"
-                        >
-                            <h3
-                                class="mb-2 text-sm font-semibold text-gray-700"
-                            >
-                                Billing Address
-                            </h3>
-                            <select
-                                v-model="form.customer_location_id"
-                                class="mb-3 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                            >
-                                <option :value="null">Select location</option>
-                                <option
-                                    v-for="loc in customerLocations"
-                                    :key="loc.id"
-                                    :value="loc.id"
-                                >
-                                    {{ loc.name }} - {{ loc.city
-                                    }}{{
-                                        selectedCustomer?.primary_location_id ===
-                                        loc.id
-                                            ? ' (Primary)'
-                                            : ''
-                                    }}{{ loc.deleted_at ? ' (Archived)' : '' }}
-                                </option>
-                            </select>
-                            <p
-                                v-if="form.errors.customer_location_id"
-                                class="text-sm text-red-600"
-                            >
-                                {{ form.errors.customer_location_id }}
-                            </p>
-
-                            <div
-                                v-if="selectedBillingLocation"
-                                class="space-y-1 text-sm text-gray-600"
-                            >
-                                <p
-                                    v-if="
-                                        selectedBillingLocation.address_line_1
-                                    "
-                                >
-                                    {{ selectedBillingLocation.address_line_1 }}
-                                </p>
-                                <p
-                                    v-if="
-                                        selectedBillingLocation.address_line_2
-                                    "
-                                >
-                                    {{ selectedBillingLocation.address_line_2 }}
-                                </p>
-                                <p>
-                                    {{ selectedBillingLocation.city }}
-                                    <span v-if="selectedBillingLocation.state"
-                                        >,
-                                        {{
-                                            selectedBillingLocation.state
-                                        }}</span
-                                    >
-                                    <span
-                                        v-if="
-                                            selectedBillingLocation.postal_code
-                                        "
-                                    >
-                                        -
-                                        {{
-                                            selectedBillingLocation.postal_code
-                                        }}</span
-                                    >
-                                </p>
-                                <p v-if="selectedBillingLocation.country">
-                                    {{ selectedBillingLocation.country }}
-                                </p>
-                                <p
-                                    v-if="selectedBillingLocation.tax_id"
-                                    class="mt-1 font-medium text-gray-700"
-                                >
-                                    <span class="text-gray-500"
-                                        >{{
-                                            taxLabelFor(
-                                                selectedBillingLocation.country,
-                                                taxLabels,
-                                            )
-                                        }}:</span
-                                    >
-                                    {{ selectedBillingLocation.tax_id }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Billing/shipping selects are hidden when the customer
-                             has no location, and with them the `customer_location_id`
-                             error. Without this warning, submitting just failed
-                             silently. -->
-                        <div
-                            v-else-if="selectedCustomerId"
-                            class="rounded-md border border-yellow-200 bg-yellow-50 p-3"
-                        >
-                            <p class="text-sm text-yellow-700">
-                                This customer has no billing address yet, so the
-                                invoice cannot be saved.
-                                <a
-                                    :href="`/customers/${selectedCustomerId}`"
-                                    class="font-medium underline"
-                                    target="_blank"
-                                    >Add a location</a
-                                >, then reload this page.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Right: Shipping -->
-                    <div class="space-y-4">
-                        <!-- Place of Supply (GST organizations only) -->
-                        <div v-if="showPlaceOfSupply">
-                            <label
-                                class="mb-1 block text-sm font-medium text-gray-700"
-                                >Place of Supply</label
-                            >
-                            <select
-                                v-model="form.place_of_supply"
-                                class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                            >
-                                <option value="">Select a state…</option>
-                                <option
-                                    v-for="(label, value) in indianStates"
-                                    :key="value"
-                                    :value="value"
-                                >
-                                    {{ label }}
-                                </option>
-                            </select>
-                            <p
-                                v-if="placeOfSupplyUnresolved"
-                                class="mt-1 text-xs text-amber-700"
-                            >
-                                Without this, the GST split is taken from the
-                                customer's GSTIN — and this customer has none,
-                                so the document will show a tax total with no
-                                CGST/SGST/IGST breakdown.
-                            </p>
-                            <p v-else class="mt-1 text-xs text-gray-500">
-                                Decides the CGST/SGST or IGST split. Taken from
-                                the customer's GSTIN when left blank.
-                            </p>
-                            <p
-                                v-if="form.errors.place_of_supply"
-                                class="mt-1 text-sm text-red-600"
-                            >
-                                {{ form.errors.place_of_supply }}
-                            </p>
-                        </div>
-
-                        <div
-                            v-if="
-                                selectedCustomerId &&
-                                customerLocations.length > 0
-                            "
-                            class="rounded-md border border-gray-200 bg-gray-50 p-4"
-                            :class="{ 'mt-20': !showPlaceOfSupply }"
-                        >
-                            <div class="mb-2 flex items-center justify-between">
-                                <h3 class="text-sm font-semibold text-gray-700">
-                                    Shipping Address
-                                </h3>
-                                <label
-                                    class="flex cursor-pointer items-center gap-2 text-sm text-gray-600"
-                                >
-                                    <input
-                                        v-model="sameAsBilling"
-                                        type="checkbox"
-                                        class="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-                                    />
-                                    Same as billing address
-                                </label>
-                            </div>
-                            <p
-                                v-if="sameAsBilling"
-                                class="text-sm text-gray-500"
-                            >
-                                Shipping address is the same as the billing
-                                address.
-                            </p>
-                            <select
-                                v-if="!sameAsBilling"
-                                v-model="form.customer_shipping_location_id"
-                                class="mb-3 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                            >
-                                <option :value="null">Select location</option>
-                                <option
-                                    v-for="loc in customerLocations"
-                                    :key="loc.id"
-                                    :value="loc.id"
-                                >
-                                    {{ loc.name }} - {{ loc.city
-                                    }}{{
-                                        selectedCustomer?.primary_location_id ===
-                                        loc.id
-                                            ? ' (Primary)'
-                                            : ''
-                                    }}{{ loc.deleted_at ? ' (Archived)' : '' }}
-                                </option>
-                            </select>
-                            <p
-                                v-if="form.errors.customer_shipping_location_id"
-                                class="text-sm text-red-600"
-                            >
-                                {{ form.errors.customer_shipping_location_id }}
-                            </p>
-
-                            <div
-                                v-if="
-                                    selectedShippingLocation && !sameAsBilling
-                                "
-                                class="space-y-1 text-sm text-gray-600"
-                            >
-                                <p
-                                    v-if="
-                                        selectedShippingLocation.address_line_1
-                                    "
-                                >
-                                    {{
-                                        selectedShippingLocation.address_line_1
-                                    }}
-                                </p>
-                                <p
-                                    v-if="
-                                        selectedShippingLocation.address_line_2
-                                    "
-                                >
-                                    {{
-                                        selectedShippingLocation.address_line_2
-                                    }}
-                                </p>
-                                <p>
-                                    {{ selectedShippingLocation.city }}
-                                    <span v-if="selectedShippingLocation.state"
-                                        >,
-                                        {{
-                                            selectedShippingLocation.state
-                                        }}</span
-                                    >
-                                    <span
-                                        v-if="
-                                            selectedShippingLocation.postal_code
-                                        "
-                                    >
-                                        -
-                                        {{
-                                            selectedShippingLocation.postal_code
-                                        }}</span
-                                    >
-                                </p>
-                                <p v-if="selectedShippingLocation.country">
-                                    {{ selectedShippingLocation.country }}
-                                </p>
-                                <p
-                                    v-if="selectedShippingLocation.tax_id"
-                                    class="mt-1 font-medium text-gray-700"
-                                >
-                                    <span class="text-gray-500"
-                                        >{{
-                                            taxLabelFor(
-                                                selectedShippingLocation.country,
-                                                taxLabels,
-                                            )
-                                        }}:</span
-                                    >
-                                    {{ selectedShippingLocation.tax_id }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Invoice Details Section -->
-            <div class="rounded-lg bg-white p-6 shadow">
-                <h2 class="mb-4 text-lg font-semibold text-gray-800">
-                    Invoice Details
-                </h2>
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div>
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                            >Document Type</label
-                        >
-                        <select
-                            v-model="form.type"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                            :disabled="mode === 'edit'"
-                        >
-                            <option value="invoice">Invoice</option>
-                            <option value="estimate">Estimate</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                            >Status *</label
-                        >
-                        <select
-                            v-model="form.status"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        >
-                            <option
-                                v-for="(label, value) in statusOptions"
-                                :key="value"
-                                :value="value"
-                            >
-                                {{ label }}
-                            </option>
-                        </select>
-                        <p
-                            v-if="form.errors.status"
-                            class="mt-1 text-sm text-red-600"
-                        >
-                            {{ form.errors.status }}
-                        </p>
-                    </div>
-
-                    <div
-                        v-if="
-                            type === 'invoice' &&
-                            numberingSeries.length > 0 &&
-                            mode === 'create'
-                        "
-                    >
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                            >Numbering Series</label
-                        >
-                        <select
-                            v-model="form.invoice_numbering_series_id"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        >
-                            <option :value="null">Auto-select</option>
-                            <option
-                                v-for="series in numberingSeries"
-                                :key="series.id"
-                                :value="series.id"
-                            >
-                                {{ series.name }}
-                                {{
-                                    series.location
-                                        ? `(${series.location.name})`
-                                        : '(Org-wide)'
-                                }}
-                            </option>
-                        </select>
-                        <p
-                            v-if="form.errors.invoice_numbering_series_id"
-                            class="mt-1 text-sm text-red-600"
-                        >
-                            {{ form.errors.invoice_numbering_series_id }}
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Issue date, payment terms and due date are interdependent,
-                     so they share one row on md+ screens (single column below). -->
-                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div>
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                            >Issue Date *</label
-                        >
-                        <input
-                            v-model="form.issued_at"
-                            type="date"
-                            required
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        />
-                        <p
-                            v-if="form.errors.issued_at"
-                            class="mt-1 text-sm text-red-600"
-                        >
-                            {{ form.errors.issued_at }}
-                        </p>
-                        <!-- Sits under the issue date because that is the date
-                             the rate was resolved for. Editor only: the public
-                             view and the PDF show document amounts in their own
-                             currency and have no use for the conversion. -->
-                        <p
-                            v-if="storedExchangeRate"
-                            class="mt-1 text-xs text-gray-500"
-                            :title="storedExchangeRateHint"
-                        >
-                            Saved rate: 1 {{ storedExchangeRate.from }} =
-                            {{ storedExchangeRate.rate }}
-                            {{ storedExchangeRate.to }}
-                        </p>
-                        <p
-                            v-else-if="exchangeRateWillChange"
-                            class="mt-1 text-xs text-gray-500"
-                        >
-                            Exchange rate will be recalculated on save.
-                        </p>
-                    </div>
-
-                    <div>
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                            >Payment Terms *</label
-                        >
-                        <select
-                            v-model="paymentTerm"
-                            required
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        >
-                            <option
-                                v-for="option in PAYMENT_TERM_OPTIONS"
-                                :key="String(option.value)"
-                                :value="option.value"
-                            >
-                                {{ option.label }}
-                            </option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                            >Due Date *</label
-                        >
-                        <input
-                            v-model="form.due_at"
-                            type="date"
-                            required
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        />
-                        <p
-                            v-if="form.errors.due_at"
-                            class="mt-1 text-sm text-red-600"
-                        >
-                            {{ form.errors.due_at }}
-                        </p>
-                    </div>
-                </div>
-
-                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <!-- Subject spans two of the three columns: it is free text
-                         describing the engagement, so it needs more room than the
-                         order number beside it. -->
-                    <div class="md:col-span-2">
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                            >Subject</label
-                        >
-                        <input
-                            v-model="form.subject"
-                            type="text"
-                            placeholder="e.g. Development work for April"
-                            maxlength="255"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        />
-                        <p
-                            v-if="form.errors.subject"
-                            class="mt-1 text-sm text-red-600"
-                        >
-                            {{ form.errors.subject }}
-                        </p>
-                    </div>
-
-                    <div>
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                            >Order Number</label
-                        >
-                        <input
-                            v-model="form.order_number"
-                            type="text"
-                            placeholder="Customer's purchase order number"
-                            maxlength="255"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                        />
-                        <p
-                            v-if="form.errors.order_number"
-                            class="mt-1 text-sm text-red-600"
-                        >
-                            {{ form.errors.order_number }}
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <DetailsCard
+                v-model:payment-term="paymentTerm"
+                :mode="mode"
+                :type="type"
+                :status-options="statusOptions"
+                :numbering-series="numberingSeries"
+                :stored-exchange-rate="storedExchangeRate"
+                :stored-exchange-rate-hint="storedExchangeRateHint"
+                :exchange-rate-will-change="exchangeRateWillChange"
+            />
 
             <!-- Items Section -->
-            <div class="rounded-lg bg-white p-6 shadow">
-                <div class="mb-4 flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-gray-800">
-                        Line Items
-                    </h2>
-                    <button
-                        type="button"
-                        class="rounded bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
-                        @click="addItem"
+            <Card>
+                <CardHeader>
+                    <CardTitle>Line Items</CardTitle>
+                    <CardAction>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            @click="addItem"
+                        >
+                            <Plus />
+                            Add Item
+                        </Button>
+                    </CardAction>
+                </CardHeader>
+                <!--
+                    `px-0 py-0` so the table meets the card edge, the way the
+                    detail page's items table does. Inset by the card's own
+                    padding it sat a few pixels in from every other table in
+                    the app, with its header stripe floating rather than
+                    spanning.
+                -->
+                <CardContent class="px-0 py-0">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-border">
+                            <thead class="bg-muted/60">
+                                <tr>
+                                    <th
+                                        class="px-2 py-2 text-left text-xs font-medium text-muted-foreground"
+                                    >
+                                        Description *
+                                    </th>
+                                    <th
+                                        class="w-20 py-2 pr-5 pl-2 text-right text-xs font-medium text-muted-foreground"
+                                    >
+                                        Qty *
+                                    </th>
+                                    <th
+                                        class="w-32 py-2 pr-5 pl-2 text-right text-xs font-medium text-muted-foreground"
+                                    >
+                                        Unit Price
+                                    </th>
+                                    <th
+                                        class="w-40 px-2 py-2 text-left text-xs font-medium text-muted-foreground"
+                                    >
+                                        Tax Rate
+                                    </th>
+                                    <th
+                                        class="w-32 px-2 py-2 text-right text-xs font-medium text-muted-foreground"
+                                    >
+                                        Amount
+                                    </th>
+                                    <!--
+                                        No heading. The column holds one
+                                        control that is invisible until the row
+                                        is pointed at, so a permanent "Action"
+                                        label announced a column that usually
+                                        shows nothing. The name stays for a
+                                        screen reader, which has no hover.
+                                    -->
+                                    <th class="w-10 px-2 py-2">
+                                        <span class="sr-only">Remove</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                                <ItemRow
+                                    v-for="(item, index) in items"
+                                    :key="itemKeys[index]"
+                                    :item="item"
+                                    :index="index"
+                                    :currency="currentCurrency"
+                                    :tax-options="taxOptions"
+                                    :can-remove="items.length > 1"
+                                    :errors="form.errors"
+                                    @update="updateItem(index, $event)"
+                                    @remove="requestRemoveItem(index)"
+                                />
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!--
+                        Totals, and the second way to add a line. The only
+                        other one is in the card header, which on a document
+                        with a dozen items is a scroll away from the row you
+                        just finished typing -- so it shares the strip the
+                        totals already occupy and costs no extra height.
+                    -->
+                    <div
+                        class="flex flex-col gap-4 border-t border-border px-5 py-4 md:flex-row md:items-start md:justify-between"
                     >
-                        Add Item
-                    </button>
-                </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            @click="addItem"
+                        >
+                            <Plus />
+                            Add Item
+                        </Button>
 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th
-                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                        <div class="w-full space-y-2 md:w-1/3">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Subtotal:</span>
+                                <span class="font-medium text-gray-900">{{
+                                    formatMoney(
+                                        totals.subtotal,
+                                        currentCurrency,
+                                    )
+                                }}</span>
+                            </div>
+                            <template v-if="gstBreakdown.length > 0">
+                                <div
+                                    v-for="row in gstBreakdown"
+                                    :key="row.label"
+                                    class="flex justify-between text-sm"
                                 >
-                                    Description *
-                                </th>
-                                <th
-                                    class="w-24 px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-                                >
-                                    Qty *
-                                </th>
-                                <th
-                                    class="w-36 px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-                                >
-                                    Unit Price
-                                </th>
-                                <th
-                                    class="w-32 px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
-                                >
-                                    Tax Rate
-                                </th>
-                                <th
-                                    class="w-32 px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
-                                >
-                                    Amount
-                                </th>
-                                <th
-                                    class="w-16 px-4 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase"
-                                >
-                                    Action
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 bg-white">
-                            <ItemRow
-                                v-for="(item, index) in items"
-                                :key="itemKeys[index]"
-                                :item="item"
-                                :index="index"
-                                :currency="currentCurrency"
-                                :tax-options="taxOptions"
-                                :can-remove="items.length > 1"
-                                :errors="form.errors"
-                                @update="updateItem(index, $event)"
-                                @remove="requestRemoveItem(index)"
-                            />
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Totals -->
-                <div class="mt-6 flex justify-end">
-                    <div class="w-full space-y-2 md:w-1/3">
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Subtotal:</span>
-                            <span class="font-medium text-gray-900">{{
-                                formatMoney(totals.subtotal, currentCurrency)
-                            }}</span>
-                        </div>
-                        <template v-if="gstBreakdown.length > 0">
+                                    <span class="text-gray-600"
+                                        >{{ row.label }}:</span
+                                    >
+                                    <span class="font-medium text-gray-900">{{
+                                        formatMoney(row.amount, currentCurrency)
+                                    }}</span>
+                                </div>
+                            </template>
+                            <div v-else class="flex justify-between text-sm">
+                                <span class="text-gray-600">Tax:</span>
+                                <span class="font-medium text-gray-900">{{
+                                    formatMoney(totals.tax, currentCurrency)
+                                }}</span>
+                            </div>
                             <div
-                                v-for="row in gstBreakdown"
-                                :key="row.label"
+                                v-if="tcsAmount > 0"
                                 class="flex justify-between text-sm"
                             >
                                 <span class="text-gray-600"
-                                    >{{ row.label }}:</span
+                                    >{{ tcsLabel }}:</span
                                 >
-                                <span class="font-medium text-gray-900">{{
-                                    formatMoney(row.amount, currentCurrency)
-                                }}</span>
+                                <span class="font-medium text-gray-900"
+                                    >+
+                                    {{
+                                        formatMoney(tcsAmount, currentCurrency)
+                                    }}</span
+                                >
                             </div>
-                        </template>
-                        <div v-else class="flex justify-between text-sm">
-                            <span class="text-gray-600">Tax:</span>
-                            <span class="font-medium text-gray-900">{{
-                                formatMoney(totals.tax, currentCurrency)
-                            }}</span>
-                        </div>
-                        <div
-                            v-if="tcsAmount > 0"
-                            class="flex justify-between text-sm"
-                        >
-                            <span class="text-gray-600">{{ tcsLabel }}:</span>
-                            <span class="font-medium text-gray-900"
-                                >+
-                                {{
-                                    formatMoney(tcsAmount, currentCurrency)
-                                }}</span
+                            <div
+                                v-if="tdsAmount > 0"
+                                class="flex justify-between text-sm"
                             >
-                        </div>
-                        <div
-                            v-if="tdsAmount > 0"
-                            class="flex justify-between text-sm"
-                        >
-                            <span class="text-gray-600">{{ tdsLabel }}:</span>
-                            <span class="font-medium text-gray-900"
-                                >&minus;
-                                {{
-                                    formatMoney(tdsAmount, currentCurrency)
-                                }}</span
+                                <span class="text-gray-600"
+                                    >{{ tdsLabel }}:</span
+                                >
+                                <span class="font-medium text-gray-900"
+                                    >&minus;
+                                    {{
+                                        formatMoney(tdsAmount, currentCurrency)
+                                    }}</span
+                                >
+                            </div>
+                            <div
+                                class="flex justify-between border-t border-gray-300 pt-2"
                             >
-                        </div>
-                        <div
-                            class="flex justify-between border-t border-gray-300 pt-2"
-                        >
-                            <span class="text-lg font-bold text-gray-900"
-                                >Total:</span
-                            >
-                            <span class="text-lg font-bold text-brand-600">{{
-                                formatMoney(netTotal, currentCurrency)
-                            }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TDS / TCS Section (Indian organizations only) -->
-            <div v-if="showSourceTaxes" class="rounded-lg bg-white p-6 shadow">
-                <h2 class="mb-1 text-lg font-semibold text-gray-800">
-                    TDS / TCS
-                </h2>
-                <p class="mb-4 text-sm text-gray-500">
-                    Tax deducted or collected at source. TDS is subtracted from
-                    the total; TCS is added. Leave blank if not applicable.
-                </p>
-
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div
-                        class="space-y-3 rounded-md border border-gray-200 p-4"
-                    >
-                        <h3 class="text-sm font-semibold text-gray-700">
-                            TDS (deducted)
-                        </h3>
-                        <div>
-                            <label
-                                class="mb-1 block text-xs font-medium text-gray-600"
-                                >Rate (%)</label
-                            >
-                            <input
-                                :value="rateAsPercent(form.tds_rate)"
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="0.01"
-                                placeholder="e.g. 10"
-                                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                                @input="
-                                    onSourceRateInput(
-                                        'tds_rate',
-                                        ($event.target as HTMLInputElement)
-                                            .value,
-                                    )
-                                "
-                            />
-                        </div>
-                        <div>
-                            <label
-                                class="mb-1 block text-xs font-medium text-gray-600"
-                                >Section</label
-                            >
-                            <input
-                                v-model="form.tds_section"
-                                type="text"
-                                maxlength="20"
-                                placeholder="e.g. 194J"
-                                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                            />
-                        </div>
-                    </div>
-
-                    <div
-                        class="space-y-3 rounded-md border border-gray-200 p-4"
-                    >
-                        <h3 class="text-sm font-semibold text-gray-700">
-                            TCS (collected)
-                        </h3>
-                        <div>
-                            <label
-                                class="mb-1 block text-xs font-medium text-gray-600"
-                                >Rate (%)</label
-                            >
-                            <input
-                                :value="rateAsPercent(form.tcs_rate)"
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="0.01"
-                                placeholder="e.g. 0.1"
-                                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                                @input="
-                                    onSourceRateInput(
-                                        'tcs_rate',
-                                        ($event.target as HTMLInputElement)
-                                            .value,
-                                    )
-                                "
-                            />
-                        </div>
-                        <div>
-                            <label
-                                class="mb-1 block text-xs font-medium text-gray-600"
-                                >Section</label
-                            >
-                            <input
-                                v-model="form.tcs_section"
-                                type="text"
-                                maxlength="20"
-                                placeholder="e.g. 206C(1H)"
-                                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!--
-                Notes and Terms are a textarea apiece. Full width each, they
-                cost two card heights of scroll to hold two fields; side by
-                side above the small breakpoint they cost one.
-            -->
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
-                <!-- Notes Section -->
-                <div class="rounded-lg bg-white p-6 shadow">
-                    <label class="mb-2 block text-sm font-medium text-gray-700"
-                        >Customer Notes</label
-                    >
-                    <textarea
-                        v-model="form.notes"
-                        rows="1"
-                        placeholder="Enter notes for the customer..."
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                    />
-                    <p
-                        v-if="form.errors.notes"
-                        class="mt-1 text-sm text-red-600"
-                    >
-                        {{ form.errors.notes }}
-                    </p>
-                    <p class="mt-1 text-xs text-gray-500">
-                        Displayed on the PDF document.
-                    </p>
-                </div>
-
-                <!-- Terms & Conditions Section -->
-                <div class="rounded-lg bg-white p-6 shadow">
-                    <label class="mb-2 block text-sm font-medium text-gray-700"
-                        >Terms &amp; Conditions</label
-                    >
-                    <textarea
-                        v-model="form.terms"
-                        rows="2"
-                        placeholder="e.g. Payment due within 7 days..."
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                    />
-                    <p
-                        v-if="form.errors.terms"
-                        class="mt-1 text-sm text-red-600"
-                    >
-                        {{ form.errors.terms }}
-                    </p>
-                </div>
-            </div>
-
-            <!-- Email Recipients Section -->
-            <div
-                v-if="selectedCustomerId"
-                class="rounded-lg bg-white p-6 shadow"
-            >
-                <label class="mb-2 block text-sm font-medium text-gray-700"
-                    >Email Recipients</label
-                >
-                <p class="mb-3 text-xs text-gray-500">
-                    Selected contacts are pre-filled when you email this
-                    {{ type === 'estimate' ? 'estimate' : 'invoice' }}. Uncheck
-                    to skip a contact, or add extra addresses just for this
-                    {{ type === 'estimate' ? 'estimate' : 'invoice' }}.
-                </p>
-                <RecipientEditor
-                    v-model="form.email_recipients"
-                    :contacts="customerContacts"
-                    :suggestions="orgContacts"
-                />
-                <p
-                    v-if="form.errors.email_recipients"
-                    class="mt-1 text-sm text-red-600"
-                >
-                    {{ form.errors.email_recipients }}
-                </p>
-            </div>
-
-            <!-- Attachments Section -->
-            <div class="rounded-lg bg-white p-6 shadow">
-                <label class="mb-2 block text-sm font-medium text-gray-700"
-                    >Attachments</label
-                >
-                <p class="mb-3 text-xs text-gray-500">
-                    Files saved with this
-                    {{ type === 'estimate' ? 'estimate' : 'invoice' }}. They can
-                    be attached when emailing it.
-                </p>
-
-                <!-- Existing (saved) attachments -->
-                <ul v-if="visibleAttachments.length > 0" class="mb-3 space-y-1">
-                    <li
-                        v-for="attachment in visibleAttachments"
-                        :key="attachment.id"
-                        class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2"
-                    >
-                        <div class="min-w-0 flex-1">
-                            <a
-                                :href="attachment.url"
-                                target="_blank"
-                                rel="noopener"
-                                class="truncate text-sm font-medium text-brand-600 hover:text-brand-800 hover:underline"
-                            >
-                                {{ attachment.name }}
-                            </a>
-                            <div class="text-xs text-gray-500">
-                                {{ formatBytes(attachment.size) }}
+                                <span class="text-lg font-bold text-gray-900"
+                                    >Total:</span
+                                >
+                                <span
+                                    class="text-lg font-bold text-brand-600"
+                                    >{{
+                                        formatMoney(netTotal, currentCurrency)
+                                    }}</span
+                                >
                             </div>
                         </div>
-                        <button
-                            type="button"
-                            class="ml-2 text-gray-400 hover:text-red-600"
-                            aria-label="Remove attachment"
-                            @click="removeExistingAttachment(attachment.id)"
-                        >
-                            <svg
-                                class="h-4 w-4"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
-                        </button>
-                    </li>
-                </ul>
-
-                <!-- New files (uploaded on save) -->
-                <AttachmentDropzone v-model="form.attachments" />
-
-                <p
-                    v-if="form.errors.attachments"
-                    class="mt-1 text-sm text-red-600"
-                >
-                    {{ form.errors.attachments }}
-                </p>
-            </div>
+                    </div>
+                </CardContent>
+            </Card>
 
             <!--
-                Sticky to the bottom of the viewport. This form runs to roughly
-                three thousand pixels, and on the edit page the payment history
-                sits below it, so a static bar meant scrolling past everything
-                to save and left content stranded underneath the page's
-                apparent end. `bottom-0` with a backdrop keeps Save reachable
-                from any scroll position, and the bar settles into place at the
-                end of the form once it is scrolled to.
+                TDS / TCS applies to a minority of documents but cost a full
+                card of height on every Indian invoice, almost always empty.
+                The card collapses itself; see SourceTaxesCard.
+            -->
+            <SourceTaxesCard v-if="showSourceTaxes" />
+
+            <ExtrasCard
+                :type="type"
+                :show-recipients="Boolean(selectedCustomerId)"
+                :contacts="customerContacts"
+                :suggestions="orgContacts"
+                :attachments="attachments ?? []"
+            />
+
+            <!--
+                Sticky to the bottom of the viewport. This form still runs to
+                roughly two and a half thousand pixels, and on the edit page the
+                payment history sits below it, so a static bar meant scrolling
+                past everything to save and left content stranded underneath the
+                page's apparent end. `bottom-0` with a backdrop keeps Save
+                reachable from any scroll position, and the bar settles into
+                place at the end of the form once it is scrolled to.
             -->
             <div
-                class="sticky bottom-0 z-10 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
+                class="sticky bottom-0 z-10 flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
             >
-                <button
-                    type="button"
-                    class="rounded-md border border-gray-300 px-6 py-2 font-medium text-gray-700 hover:bg-gray-50"
-                    @click="cancel"
-                >
+                <Button type="button" variant="outline" @click="cancel">
                     Cancel
-                </button>
+                </Button>
                 <div class="flex items-center gap-3">
-                    <button
+                    <Button
                         type="submit"
+                        variant="outline"
+                        class="border-primary text-primary hover:bg-primary/5"
                         :disabled="form.processing"
-                        class="cursor-pointer rounded-md border border-brand-600 px-6 py-2 font-medium text-brand-700 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {{ form.processing ? 'Saving...' : 'Save' }}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="button"
                         :disabled="form.processing"
-                        class="cursor-pointer rounded-md bg-brand-600 px-6 py-2 font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
                         @click="saveAndSend"
                     >
                         {{ form.processing ? 'Saving...' : 'Save & Send' }}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </form>

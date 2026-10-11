@@ -48,9 +48,21 @@ defineProps<{
                     </BreadcrumbPage>
                 </BreadcrumbItem>
             </Breadcrumb>
+
+            <!--
+                The same slot the edit page carries, so the form can teleport
+                its Status field to the same place on both. Without it the
+                teleport would have nowhere to land.
+            -->
+            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    New {{ type === 'estimate' ? 'Estimate' : 'Invoice' }}
+                </h2>
+                <div id="document-status-control" />
+            </div>
         </template>
 
-        <div class="py-4">
+        <div class="px-4 sm:px-0">
             <InvoiceForm
                 mode="create"
                 :type="type"
