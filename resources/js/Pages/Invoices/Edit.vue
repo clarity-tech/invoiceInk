@@ -83,6 +83,18 @@ function deletePayment() {
                     <BreadcrumbLink href="/invoices"> Invoices </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
+                <!--
+                    The document itself is now a page, so the trail goes back to
+                    it rather than jumping straight to the list. The final crumb
+                    keeps its full "Edit Invoice" wording: it is the sentinel
+                    several browser tests use to confirm this page loaded.
+                -->
+                <BreadcrumbItem>
+                    <BreadcrumbLink :href="`/invoices/${invoice.id}`">
+                        {{ invoice.invoice_number }}
+                    </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
                 <BreadcrumbItem>
                     <BreadcrumbPage>
                         Edit

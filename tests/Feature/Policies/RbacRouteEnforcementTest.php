@@ -249,3 +249,57 @@ test('a numbering series cannot be moved into an org where the user lacks manage
 
     expect($series->fresh()->organization_id)->toBe($this->org->id);
 });
+
+/*
+|--------------------------------------------------------------------------
+| #7 The invoice detail page is a read, but every action on it is not
+|--------------------------------------------------------------------------
+*/
+
+test('a viewer can open the invoice detail page', function () {
+    $member = rbacMember($this->org, 'viewer');
+
+    // Deliberately allowed: viewing needs only "read". This is what makes the
+    // button gating on the page load-bearing rather than cosmetic -- a viewer
+    // genuinely arrives here.
+    $this->actingAs($member)
+        ->get("/invoices/{$this->invoice->id}")
+        ->assertOk();
+});
+
+test('a viewer cannot act on the invoice they can read', function () {
+    $member = rbacMember($this->org, 'viewer');
+
+    $this->actingAs($member)
+        ->post("/invoices/{$this->invoice->id}/payments", [
+            'amount' => 5000,
+            'payment_date' => now()->toDateString(),
+        ])
+        ->assertForbidden();
+
+    $this->actingAs($member)
+        ->post("/invoices/{$this->invoice->id}/send-email", [
+            'recipients' => ['someone@example.test'],
+            'subject' => 'Subject',
+            'body' => 'Body',
+        ])
+        ->assertForbidden();
+
+    expect($this->invoice->fresh()->payments)->toHaveCount(0);
+});
+
+test('an editor can record a payment but cannot delete one', function () {
+    $member = rbacMember($this->org, 'editor');
+    $payment = Payment::factory()->create([
+        'invoice_id' => $this->invoice->id,
+        'amount' => 5000,
+    ]);
+
+    // Deleting a payment authorizes "delete" on the invoice, which an editor
+    // lacks -- so the row's Delete control has to be hidden from them.
+    $this->actingAs($member)
+        ->delete("/invoices/{$this->invoice->id}/payments/{$payment->id}")
+        ->assertForbidden();
+
+    expect(Payment::find($payment->id))->not->toBeNull();
+});

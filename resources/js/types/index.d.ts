@@ -160,6 +160,8 @@ export interface Invoice {
     payment_percentage?: number;
     payments?: Payment[];
     latest_email_delivery?: EmailDelivery | null;
+    /** Every send attempt, newest first. Loaded by InvoiceController::show(). */
+    email_deliveries?: EmailDelivery[];
     created_at: string;
     updated_at: string;
     deleted_at?: string | null;
@@ -209,6 +211,13 @@ export interface InvoiceItem {
     quantity: number;
     unit_price: number;
     tax_rate: number;
+    /**
+     * Computed server-side; see InvoiceController::show(). Both are model
+     * methods rather than attributes, and the tax one rounds, so they are sent
+     * rather than recomputed in the browser.
+     */
+    line_total?: number;
+    tax_amount?: number;
     created_at: string;
     updated_at: string;
 }

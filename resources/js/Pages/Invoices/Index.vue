@@ -352,9 +352,20 @@ const tabs = [
                                 </span>
                             </td>
                             <td class="px-4 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">
+                                <!--
+                                    The number is how a row is identified, so it
+                                    is also how the document opens. Reading an
+                                    invoice previously meant the Edit link --
+                                    a form, for a question that only needed
+                                    looking at it.
+                                -->
+                                <Link
+                                    :href="`/invoices/${invoice.id}`"
+                                    class="text-sm font-medium text-gray-900 hover:text-brand-700 hover:underline"
+                                    :aria-label="actionLabel('Open', invoice)"
+                                >
                                     {{ invoice.invoice_number }}
-                                </div>
+                                </Link>
                             </td>
                             <td class="px-4 py-4 text-sm text-gray-500">
                                 <div

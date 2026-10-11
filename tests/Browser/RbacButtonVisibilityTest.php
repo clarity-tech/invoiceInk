@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Organization;
+use App\Models\Payment;
 use App\Models\User;
 
 /*
@@ -160,4 +161,57 @@ it('shows a viewer no actions on the invoice trash page', function () {
         ->assertSee('Trash Invoice Customer')
         ->assertDontSee('Restore')
         ->assertDontSee('Delete Forever');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Invoice detail page actions
+|--------------------------------------------------------------------------
+|
+| The detail page is reachable with "read" alone, so unlike the pages above it
+| genuinely renders for a viewer. Every action on it needs update or delete.
+|
+*/
+
+it('hides every action on the invoice detail page from a viewer', function () {
+    $org = createOrganizationWithLocation([], [], createUserWithTeam());
+    $customer = createCustomerWithLocation(['name' => 'Test Customer'], [], $org);
+    $invoice = createInvoiceWithItems([
+        'invoice_number' => 'RBAC-INV-001',
+        'total' => 11800,
+    ], null, $org, $customer);
+
+    $this->actingAs(rbacBrowserMember($org, 'viewer'));
+
+    $this->visit("/invoices/{$invoice->id}")
+        ->waitForText('RBAC-INV-001')
+        ->assertNoJavaScriptErrors()
+        // The PDF needs only "read", so it stays.
+        ->assertSee('PDF')
+        ->assertDontSee('Edit')
+        ->assertDontSee('Send')
+        ->assertDontSee('Record payment');
+});
+
+it('hides the payment delete control on the invoice detail page from an editor', function () {
+    $org = createOrganizationWithLocation([], [], createUserWithTeam());
+    $customer = createCustomerWithLocation(['name' => 'Test Customer'], [], $org);
+    $invoice = createInvoiceWithItems([
+        'invoice_number' => 'RBAC-INV-002',
+        'total' => 11800,
+    ], null, $org, $customer);
+    Payment::factory()->create([
+        'invoice_id' => $invoice->id,
+        'amount' => 5000,
+        'reference' => 'RBAC-REF-002',
+    ]);
+
+    $this->actingAs(rbacBrowserMember($org, 'editor'));
+
+    $this->visit("/invoices/{$invoice->id}")
+        ->waitForText('RBAC-REF-002')
+        ->assertNoJavaScriptErrors()
+        ->assertSee('Edit') // editors keep update-level controls
+        ->assertSee('Record payment')
+        ->assertDontSee('Delete'); // delete is hidden everywhere on the page
 });

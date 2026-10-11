@@ -91,6 +91,69 @@ class InvoiceController extends Controller
         ]);
     }
 
+    /**
+     * The document as a page in its own right.
+     *
+     * Until now the only way to read an invoice was to open the edit form —
+     * a form built for changing a document, used to answer questions that
+     * only require looking at one: what is still owed, whether it ever
+     * reached the customer, what was paid and when.
+     */
+    public function show(Invoice $invoice): Response
+    {
+        $this->authorize('view', $invoice);
+
+        $invoice->load([
+            'items',
+            'customer',
+            'organization',
+            'organizationLocation',
+            'customerLocation',
+            'customerShippingLocation',
+            // Newest first in both cases: the page is read top-down and the
+            // most recent payment and send attempt are what gets looked up.
+            'payments' => fn ($query) => $query->orderByDesc('payment_date')->orderByDesc('id'),
+            'emailDeliveries' => fn ($query) => $query->latest(),
+        ]);
+
+        return Inertia::render('Invoices/Show', [
+            // The same three derived values the listing needs, for the same
+            // reason: `remaining_balance` is an accessor and the overdue age is
+            // computed, so neither is serialised, and "overdue" is not a status.
+            'invoice' => array_merge($invoice->toArray(), [
+                'remaining_balance' => $invoice->remaining_balance,
+                'is_overdue' => $invoice->isOverdue(),
+                'days_overdue' => $invoice->daysOverdue(),
+                // Both are methods, so neither survives toArray(), and the tax
+                // one rounds. Recomputing them in the browser would risk a line
+                // that disagrees by a paisa with the PDF of the same document.
+                'items' => $invoice->items
+                    ->map(fn (InvoiceItem $item): array => array_merge($item->toArray(), [
+                        'line_total' => $item->getLineTotal(),
+                        'tax_amount' => $item->getTaxAmount(),
+                    ]))
+                    ->all(),
+            ]),
+            'attachments' => $invoice->attachmentsForDisplay(),
+            // Model methods rather than attributes, so they do not survive
+            // toArray() and have to be passed explicitly.
+            //
+            // hasShippingAddress() is specifically "a shipping address that is
+            // not the billing one". Most documents ship where they bill, and
+            // without this the page prints the same address twice under two
+            // headings, which reads as a second fact when it is not one.
+            'hasShippingAddress' => $invoice->hasShippingAddress(),
+            'paymentTermsLabel' => $invoice->paymentTermsLabel(),
+            'placeOfSupplyLabel' => $invoice->placeOfSupplyLabel(),
+            'tdsLabel' => $invoice->tdsLabel(),
+            'tcsLabel' => $invoice->tcsLabel(),
+            'taxLabels' => Country::taxLabels(),
+            // Addresses render through formatLocationLine(), which resolves a
+            // country code to its name from this map.
+            'countryNames' => Country::names(),
+        ]);
+    }
+
     public function create(Request $request): Response
     {
         $this->authorize('create', Invoice::class);
@@ -666,7 +729,10 @@ class InvoiceController extends Controller
 
         $invoice->delete();
 
-        return back()->with('success', "{$label} deleted successfully.");
+        // Not back(): the only place a document is deleted from is its own
+        // page, and that page 404s the moment the record is soft-deleted.
+        return redirect()->route('invoices.index')
+            ->with('success', "{$label} deleted successfully.");
     }
 
     public function trash(Request $request): Response

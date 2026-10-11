@@ -59,8 +59,12 @@ test('can delete invoice', function () {
 
     expect(Invoice::count())->toBe(1);
 
-    $this->delete("/invoices/{$invoice->id}")
-        ->assertRedirect();
+    // The target matters: the only page a document is deleted from is its own,
+    // and that page 404s once the record is soft-deleted. A bare
+    // assertRedirect() would pass on a back() that lands there.
+    $this->from(route('invoices.show', $invoice))
+        ->delete("/invoices/{$invoice->id}")
+        ->assertRedirect(route('invoices.index'));
 
     expect(Invoice::count())->toBe(0);
     expect(Invoice::withTrashed()->count())->toBe(1);

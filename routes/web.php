@@ -116,6 +116,10 @@ Route::middleware([
         Route::get('/invoices/{invoice}/attachments/{media}', [InvoiceController::class, 'showAttachment'])->name('invoices.attachments.show');
         Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
         Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
+        // Deliberately registered below /invoices/create and /invoices/trash, and
+        // constrained to a numeric id: a bare {invoice} placeholder matches those
+        // literal paths too, which would turn both into 404s.
+        Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show')->whereNumber('invoice');
         Route::get('/invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit');
         Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
         Route::get('/estimates/create', [InvoiceController::class, 'create'])->name('estimates.create');
