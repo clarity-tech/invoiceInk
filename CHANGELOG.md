@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/clarity-tech/invoicing/compare/v1.11.1...v1.12.0) (2026-10-12)
+
+
+### Features
+
+* **documents:** mark the status on the preview, not in a panel beside it ([d8d4d14](https://github.com/clarity-tech/invoicing/commit/d8d4d149920ca39221a21fef3dd45c89a2e2b238))
+
 ## [1.11.1](https://github.com/clarity-tech/invoicing/compare/v1.11.0...v1.11.1) (2026-10-12)
 
 
