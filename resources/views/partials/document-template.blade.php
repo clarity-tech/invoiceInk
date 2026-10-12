@@ -14,6 +14,7 @@
 
     $organization = $document->organization;
     $logoUrl = $isPdf ? $organization->logo_base64 : $organization->logo_url;
+
     $orgLocation = $document->organizationLocation;
     $custLocation = $document->customerLocation;
     $isGstInvoice = $document->isGstInvoice();
@@ -168,9 +169,14 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            /* Positioning context for the status ribbon, which the PDF has no
+               use for -- leaving the PDF card exactly as it was. */
+            position: relative;
             border-radius: 10px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 6px 16px rgba(0,0,0,0.04);
-            padding: 48px;
+            /* Matches Gotenberg's page margin, so the preview is framed the
+               way the PDF is rather than more generously. */
+            padding: 36px;
 @endif
         }
 
@@ -229,23 +235,59 @@
             margin-top: 2px;
         }
 
-        /* Status pill */
-        .status-pill {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 999px;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.03em;
-            text-transform: uppercase;
-            margin-top: 8px;
+@if(! $isPdf)
+        /* ── Status ribbon ────────────────────────────────
+           A band across the top-left of the preview. It belongs to the preview
+           rather than to the document: the PDF carries no status, and neither
+           does a printed preview -- hence `no-print` on the band itself.
+
+           It clips itself rather than relying on `overflow` on .document-card:
+           that card is a block that has to stay printable, and a clipped box
+           that fragments across pages is what Chromium gets wrong. */
+        .doc-ribbon {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 130px;
+            height: 130px;
+            overflow: hidden;
+            pointer-events: none;
+            border-top-left-radius: 10px;
         }
-        .status-paid { background: #d1fae5; color: #065f46; }
-        .status-partially_paid { background: #fef3c7; color: #92400e; }
-        .status-draft { background: #f3f4f6; color: #6b7280; }
-        .status-sent { background: #dbeafe; color: #1e40af; }
-        .status-accepted { background: #d1fae5; color: #065f46; }
-        .status-void { background: #fee2e2; color: #991b1b; }
+        .doc-ribbon span {
+            /* Geometry, since it is not guessable: the band covers the strip
+               where x + y falls within half its thickness of (left + width/2 +
+               top + height/2). Closer to the corner means less to clear but a
+               shorter band -- and it still has to hold "Partially Paid". */
+            position: absolute;
+            top: 18px;
+            left: -42px;
+            width: 150px;
+            padding: 5px 0;
+            transform: rotate(-45deg);
+            text-align: center;
+            /* Sentence case, like the reference: set at 45 degrees, uppercase
+               with tracking reads cramped. */
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            color: #fff;
+            background: #6b7280;
+        }
+        /* Keyed to InvoiceStatus::color() rather than to each status, so the
+           enum stays the one place that decides what a status means and this
+           only decides what that looks like on a dark band. */
+        .doc-ribbon-brand span { background: #7A5A9E; }
+        .doc-ribbon-yellow span { background: #a16207; }
+        .doc-ribbon-amber span { background: #d97706; }
+        .doc-ribbon-green span { background: #059669; }
+        .doc-ribbon-red span { background: #b91c1c; }
+
+        /* Nothing reserves room for the band. It is an overlay: it lies over
+           the top-left of the document and leaves the document exactly where
+           it would be without it, which is also how the reference does it --
+           the band crosses the logo rather than pushing it down. */
+@endif
 
         /* ── Bill To + Details ────────────────────────────── */
         .meta-row {
@@ -467,6 +509,12 @@
         @endif
 
         <div class="document-card">
+            @unless($isPdf)
+                {{-- Not aria-hidden: the band is the only place the status is
+                     stated now, and it reads as text in document order. --}}
+                <div class="doc-ribbon no-print doc-ribbon-{{ $document->status->color() }}"><span>{{ $document->status->label() }}</span></div>
+            @endunless
+
             {{-- A. Header ──────────────────────────────────── --}}
             <div class="doc-header">
                 <div>
@@ -490,10 +538,6 @@
                 <div class="doc-title-block">
                     <div class="doc-title text-brand-theme">{{ $headerTitle }}</div>
                     <div class="doc-number"># {{ $document->invoice_number }}</div>
-
-                    @if($isInvoice && !$isPdf)
-                        <span class="status-pill status-{{ $document->status->value }}">{{ $document->status->label() }}</span>
-                    @endif
 
                     <div style="margin-top: 12px;">
                         <div style="font-size: 11px; font-weight: 700; color: #374151; letter-spacing: 0.04em;">{{ $balanceLabel }}</div>

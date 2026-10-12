@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\InvoiceStatus;
+
 test('public invoice template renders with all new elements', function () {
     $organization = createOrganizationWithLocation([
         'bank_details' => [
@@ -203,4 +205,47 @@ test('total in words displays correctly for INR invoice', function () {
 
     $response->assertStatus(200);
     $response->assertSee('Indian Rupee Forty-Seven Thousand Two Hundred Only');
+});
+
+test('the band overlays the document without moving it', function () {
+    // It is an overlay. Nothing reserves room for it, so the document sits
+    // exactly where it would without a band -- the band crosses the logo
+    // rather than pushing it down, as the reference does. Earlier revisions
+    // reserved header space and the gap was visible above the logo.
+    $organization = createOrganizationWithLocation(['setup_completed_at' => now()]);
+    $customer = createCustomerWithLocation([], [], $organization);
+    $invoice = createInvoiceWithItems(['status' => 'draft'], null, $organization, $customer);
+
+    expect(view('public.invoice', ['invoice' => $invoice])->render())
+        ->toContain('<div class="doc-ribbon no-print')
+        ->not->toContain('.doc-header > div:first-child');
+});
+
+test('every status is drawn as a band on the preview, coloured by what the status means', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+    $invoice = createInvoiceWithItems([], null, $organization, $customer);
+
+    foreach (InvoiceStatus::cases() as $status) {
+        // Reassigned rather than re-created: only the rendered status varies.
+        $invoice->status = $status;
+
+        expect(view('public.invoice', ['invoice' => $invoice])->render())
+            ->toContain('<div class="doc-ribbon no-print doc-ribbon-'.$status->color().'">')
+            ->toContain('<span>'.$status->label().'</span>');
+    }
+});
+
+test('the pdf carries no status band at all', function () {
+    // The band belongs to the preview. What the customer receives says nothing
+    // about whether the document is a draft, paid or void -- and the PDF keeps
+    // the layout it had before the band existed, with nothing reserved for it.
+    // One status is enough: the PDF branch discards the status before anything
+    // reads it, so no status can produce a different answer.
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+    $invoice = createInvoiceWithItems(['status' => 'paid'], null, $organization, $customer);
+
+    expect(view('pdf.invoice', ['invoice' => $invoice])->render())
+        ->not->toContain('doc-ribbon');
 });
