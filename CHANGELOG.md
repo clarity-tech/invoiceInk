@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.1](https://github.com/clarity-tech/invoicing/compare/v1.11.0...v1.11.1) (2026-10-12)
+
+
+### Bug Fixes
+
+* **invoices:** render the GST split from the map the server stores ([47299ed](https://github.com/clarity-tech/invoicing/commit/47299ed3ec4a1bfbd901b453b5116c9c2049cef0))
+
 ## [1.11.0](https://github.com/clarity-tech/invoicing/compare/v1.10.1...v1.11.0) (2026-10-11)
 
 
