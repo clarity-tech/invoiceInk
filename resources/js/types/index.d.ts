@@ -132,7 +132,8 @@ export interface Invoice {
     total: number;
     amount_paid: number;
     tax_type: string | null;
-    tax_breakdown: TaxBreakdownItem[] | null;
+    /** Tax label to amount in cents, e.g. `{'CGST @ (9%)': 1800000}`. */
+    tax_breakdown: Record<string, number> | null;
     tds_rate: number | null;
     tds_amount: number;
     tds_section: string | null;
@@ -220,12 +221,6 @@ export interface InvoiceItem {
     tax_amount?: number;
     created_at: string;
     updated_at: string;
-}
-
-export interface TaxBreakdownItem {
-    name: string;
-    rate: number;
-    amount: number;
 }
 
 export interface TaxRateOption {

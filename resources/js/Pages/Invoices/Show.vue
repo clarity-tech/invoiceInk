@@ -97,7 +97,18 @@ const canRecordPayment = computed(
 const items = computed(() => props.invoice.items ?? []);
 const payments = computed(() => props.invoice.payments ?? []);
 const deliveries = computed(() => props.invoice.email_deliveries ?? []);
-const taxBreakdown = computed(() => props.invoice.tax_breakdown ?? []);
+/**
+ * The server stores the GST split as a map of label to amount in cents --
+ * `{'CGST @ (9%)': 1800000}` -- which is what the PDF template iterates. A
+ * `v-for` over that object would yield bare numbers, so it is normalised to a
+ * list here; `.length` then also answers whether a split exists at all.
+ */
+const taxBreakdown = computed(() =>
+    Object.entries(props.invoice.tax_breakdown ?? {}).map(([name, amount]) => ({
+        name,
+        amount,
+    })),
+);
 
 /**
  * EmailModal looks the customer up by id out of a list, so the one customer

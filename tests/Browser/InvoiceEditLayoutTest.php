@@ -52,9 +52,10 @@ function editLayoutFixture(string $email): array
         'tax' => 3600000,
         'total' => 23600000,
         'amount_paid' => 9000000,
+        // Label to amount in cents, as GstBreakdownService writes it.
         'tax_breakdown' => [
-            ['name' => 'CGST 9%', 'rate' => 900, 'amount' => 1800000],
-            ['name' => 'SGST 9%', 'rate' => 900, 'amount' => 1800000],
+            'CGST @ (9%)' => 1800000,
+            'SGST @ (9%)' => 1800000,
         ],
         'notes' => 'Instalment 2 of 3. Remaining balance falls due on delivery of the final consignment.',
         'terms' => 'Interest at 1.5% per month applies to amounts outstanding beyond the due date.',

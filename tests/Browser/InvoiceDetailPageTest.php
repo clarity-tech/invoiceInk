@@ -4,6 +4,7 @@ use App\Models\EmailDelivery;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
 use App\Models\User;
+use App\Services\GstBreakdownService;
 
 /**
  * Visual snapshot + render guard for the invoice detail page.
@@ -32,7 +33,7 @@ it('renders the invoice detail page for a part-paid overdue document', function 
         'currency' => 'INR',
         'country_code' => 'IN',
         'setup_completed_at' => now(),
-    ], [], $user);
+    ], ['tax_id' => '29ABCDE1234F1Z5'], $user);
 
     $customer = createCustomerWithLocation([
         'name' => 'Riverbend Institute of Medical Sciences Limited',
@@ -51,10 +52,10 @@ it('renders the invoice detail page for a part-paid overdue document', function 
         'tax' => 3600000,
         'total' => 23600000,
         'amount_paid' => 9000000,
-        'tax_breakdown' => [
-            ['name' => 'CGST 9%', 'rate' => 900, 'amount' => 1800000],
-            ['name' => 'SGST 9%', 'rate' => 900, 'amount' => 1800000],
-        ],
+        // Supplier and place of supply both Karnataka, so the tax splits
+        // into CGST + SGST. The split itself is derived below rather than
+        // written out here.
+        'place_of_supply' => '29',
         'notes' => 'Instalment 2 of 3. Remaining balance falls due on delivery of the final consignment.',
         'terms' => 'Interest at 1.5% per month applies to amounts outstanding beyond the due date.',
     ], [], $org, $customer);
@@ -76,6 +77,19 @@ it('renders the invoice detail page for a part-paid overdue document', function 
         'unit_price' => 5000000,
         'tax_rate' => 1800,
     ]);
+
+    // Derived with the service that writes it in production rather than typed
+    // out by hand. A hand-written fixture is what let the page render a map as
+    // though it were a list of objects: the test agreed with the bug.
+    $invoice->load(['items', 'organizationLocation', 'customerLocation']);
+    $breakdown = app(GstBreakdownService::class)->build($invoice);
+
+    expect($breakdown)->toBe([
+        'CGST @ (9%)' => 1800000,
+        'SGST @ (9%)' => 1800000,
+    ]);
+
+    $invoice->update(['tax_breakdown' => $breakdown, 'tax_type' => 'GST']);
 
     Payment::factory()->create([
         'invoice_id' => $invoice->id,
@@ -123,7 +137,23 @@ it('renders the invoice detail page for a part-paid overdue document', function 
         ->assertSee('Billed to')
         ->assertSee('Issued from')
         ->assertSee('123 Business Street')
-        ->assertSee('CGST 9%')
+        ->assertSee('CGST @ (9%)')
+        ->assertSee('SGST @ (9%)')
+        // Both halves of what a map rendered as a list produced in production:
+        // a blank row reading NaN, and -- because an object has no `.length`
+        // -- the aggregate Tax row printed underneath the split as well.
+        //
+        // Not assertDontSee('NaN'): Playwright matches case-insensitively, so
+        // it also matches the "nan" inside "maintenance" and fails on a page
+        // that is perfectly correct.
+        ->assertScript(
+            'function() { return (document.body.innerText.match(/NaN/g) || []).length; }',
+            0,
+        )
+        ->assertScript(
+            'function() { return Array.from(document.querySelectorAll("dl dt")).filter(function (dt) { return dt.textContent.trim() === "Tax"; }).length; }',
+            0,
+        )
         ->assertSee('NEFT/2026/90551')
         // The page must not overflow sideways at desktop width; the invoice
         // list has regressed on exactly this before (f6550132).
