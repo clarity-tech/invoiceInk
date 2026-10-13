@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\InvoiceStatus;
+use App\Support\Branding;
 
 test('public invoice template renders with all new elements', function () {
     $organization = createOrganizationWithLocation([
@@ -248,4 +249,91 @@ test('the pdf carries no status band at all', function () {
 
     expect(view('pdf.invoice', ['invoice' => $invoice])->render())
         ->not->toContain('doc-ribbon');
+});
+
+test('the public page frames the document with the sender, the balance and the actions', function () {
+    // The card is a facsimile of the PDF, so the things a recipient needs that
+    // are not part of the document itself -- who sent it, what is outstanding,
+    // and how to print or save it -- belong to the page around it.
+    $organization = createOrganizationWithLocation(['company_name' => 'Clarity Technologies']);
+    $customer = createCustomerWithLocation([], [], $organization);
+    $invoice = createInvoiceWithItems([
+        'invoice_number' => 'INV-25219',
+        'due_at' => now()->addDays(10),
+    ], null, $organization, $customer);
+
+    $response = $this->get(route('invoices.public', $invoice->ulid));
+    $response->assertStatus(200);
+
+    // Scoped to the chrome: the number, the balance and the date all appear in
+    // the document too, so asserting against the whole page would pass just as
+    // happily with the chrome deleted.
+    preg_match('/<div class="doc-chrome.*?(?=<div class="page-wrapper")/s', $response->getContent(), $matches);
+    $chrome = $matches[0] ?? '';
+
+    expect($chrome)
+        ->toContain('Clarity Technologies')
+        ->toContain('INV-25219')
+        ->toContain($invoice->due_at->format('d/m/Y'))
+        ->toContain($invoice->formatted_remaining_balance)
+        // Icon-only buttons, so the label has to reach a screen reader some
+        // other way.
+        ->toContain('aria-label="'.__('actions.buttons.download_pdf').'"')
+        ->toContain('aria-label="'.__('actions.buttons.print_invoice').'"');
+});
+
+test('the chrome names the sender exactly as the document does', function () {
+    // Two different company names on one page is a reason for a recipient to
+    // doubt the invoice. The bar used to render the organization's short name
+    // while the document rendered its registered one.
+    $organization = createOrganizationWithLocation([
+        'name' => 'Clarity Tech',
+        'company_name' => 'Clarity Technologies Private Limited',
+    ]);
+    $customer = createCustomerWithLocation([], [], $organization);
+    $invoice = createInvoiceWithItems([], null, $organization, $customer);
+
+    $html = view('public.invoice', ['invoice' => $invoice])->render();
+
+    expect($html)
+        ->toContain('<div class="doc-chrome-inner">Clarity Technologies Private Limited</div>')
+        ->toContain('<div class="company-name">Clarity Technologies Private Limited</div>');
+});
+
+test('the pdf carries none of the page chrome', function () {
+    // Same template, so the chrome has to be fenced off from the PDF branch as
+    // firmly as the status band is -- a stray brand bar would print.
+    $organization = createOrganizationWithLocation(['name' => 'Clarity Technologies']);
+    $customer = createCustomerWithLocation([], [], $organization);
+    $invoice = createInvoiceWithItems([], null, $organization, $customer);
+
+    expect(view('pdf.invoice', ['invoice' => $invoice])->render())
+        ->not->toContain('doc-chrome')
+        ->not->toContain('doc-brandbar')
+        ->not->toContain('doc-summary')
+        ->not->toContain('doc-pagefoot')
+        ->not->toContain('icon-btn');
+});
+
+test('the page keeps a linked platform lockup along the bottom of the window', function () {
+    // Drawn from the same places the document's own footer draws from -- the
+    // translation, the branding config and the attribution helper -- so none
+    // of it is written out twice and the link can be told apart from the one
+    // printed inside the document.
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+    $invoice = createInvoiceWithItems([], null, $organization, $customer);
+
+    $html = view('public.invoice', ['invoice' => $invoice])->render();
+
+    preg_match('/<div class="doc-pagefoot.*?<\/div>\s*<\/div>/s', $html, $matches);
+    $footer = $matches[0] ?? '';
+
+    expect($footer)
+        ->toContain(__('messages.email.powered_by'))
+        ->toContain(config('branding.tagline'))
+        ->toContain('href="'.e(Branding::attributedUrl('web', 'page_footer')).'"')
+        // A placement of its own: the document's footer link is tagged
+        // powered_by, so referrals from the two are distinguishable.
+        ->not->toContain('utm_content=powered_by');
 });

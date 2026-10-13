@@ -21,6 +21,10 @@
     $pageMargin = '1mm 5mm';
 
     $organization = $document->organization;
+    // The sender's name as the document states it. Named once because the page
+    // chrome repeats it above the sheet, and a page showing two different
+    // company names gives a recipient a reason to doubt the invoice.
+    $senderName = $organization->company_name ?? $organization->name;
     $logoUrl = $isPdf ? $organization->logo_base64 : $organization->logo_url;
 
     $orgLocation = $document->organizationLocation;
@@ -36,12 +40,14 @@
     if ($isInvoice) {
         $headerTitle = $isGstInvoice ? __('documents.headers.tax_invoice_upper') : __('documents.headers.invoice_upper');
         $balanceLabel = __('documents.financial.balance_due');
+        $numberLabel = __('documents.fields.invoice_number');
         $footerMessage = __('messages.footer.computer_generated_invoice');
         $pdfRoute = route('invoices.pdf', $document->ulid);
         $printLabel = __('actions.buttons.print_invoice');
     } else {
         $headerTitle = __('documents.headers.estimate_upper');
         $balanceLabel = __('documents.financial.estimated_total');
+        $numberLabel = __('documents.fields.estimate_number');
         $footerMessage = __('messages.footer.computer_generated_estimate');
         $pdfRoute = route('estimates.pdf', $document->ulid);
         $printLabel = __('actions.buttons.print_estimate');
@@ -69,6 +75,10 @@
         : (config('branding.logo_url') ?: asset(config('branding.logo')));
     // Brand link with UTM attribution for the placement (PDF or public web).
     $brandUrl = \App\Support\Branding::poweredByUrl($isPdf ? 'pdf' : 'web');
+    // The public page carries a second lockup along the bottom of the window.
+    // Its own placement, so its referrals stay distinguishable from the one
+    // printed inside the document.
+    $pageBrandUrl = \App\Support\Branding::attributedUrl('web', 'page_footer');
 
     // Display amounts as-is, including the currency symbol (renders fine in the PDF).
     $amt = fn(string $formatted): string => $formatted;
@@ -100,7 +110,7 @@
             /* Printing the preview from the browser goes through @page like the
                PDF does, so the card drops the inset it draws on screen rather
                than adding a second one on top of the page margin. */
-            .document-card { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; }
+            .document-card { box-shadow: none !important; padding: 0 !important; }
         }
 
         body {
@@ -128,37 +138,116 @@
             {{ $isPdf ? '' : 'padding: 32px 16px;' }}
         }
 
-        /* ── Action Bar ───────────────────────────────────── */
-        .action-bar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 24px;
+@if(! $isPdf)
+        /* ── Page chrome (web only) ───────────────────────────
+           The card below is a facsimile of the PDF, so everything that
+           belongs to the page rather than to the document sits up here:
+           who sent it, what is outstanding, and what you can do with it.
+           Sticky, so the actions stay reachable down a long invoice. */
+        .doc-chrome {
+            position: sticky;
+            top: 0;
+            z-index: 20;
         }
-        .action-bar a,
-        .action-bar button {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 18px;
-            font-size: 13px;
-            font-weight: 600;
-            border-radius: 6px;
-            text-decoration: none;
-            cursor: pointer;
-            border: none;
-            transition: background 0.15s, box-shadow 0.15s;
+        .doc-chrome-inner {
+            /* The same column as the sheet, so the chrome lines up with the
+               document rather than with the window. */
+            max-width: calc({{ $pageWidth }} + 32px);
+            margin: 0 auto;
+            padding: 0 16px;
         }
-        .btn-secondary {
-            background: #fff;
-            color: #374151;
-            border: 1px solid #d1d5db;
-        }
-        .btn-secondary:hover { background: #f9fafb; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .btn-primary {
-            background: #6d28d9;
+        .doc-brandbar {
+            background: #7A5A9E;
             color: #fff;
         }
-        .btn-primary:hover { background: #5b21b6; }
+        .doc-brandbar .doc-chrome-inner {
+            display: flex;
+            align-items: center;
+            min-height: 56px;
+            font-size: 17px;
+            font-weight: 700;
+        }
+        .doc-summary {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .doc-summary .doc-chrome-inner {
+            /* One row: the figure, what it refers to, and what you can do
+               about it, read left to right without the eye travelling down. */
+            display: flex;
+            align-items: flex-end;
+            gap: 28px;
+            padding-top: 16px;
+            padding-bottom: 16px;
+        }
+        .doc-summary-amount {
+            font-size: 27px;
+            font-weight: 700;
+            line-height: 1.15;
+            color: #111827;
+        }
+        .doc-summary-label {
+            margin-top: 2px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #b45309;
+        }
+        .doc-summary-meta { display: flex; }
+        .doc-summary-meta > div + div {
+            margin-left: 24px;
+            padding-left: 24px;
+            border-left: 1px solid #e5e7eb;
+        }
+        .doc-summary-meta dt { font-size: 12px; color: #6b7280; }
+        .doc-summary-meta dd {
+            margin-top: 2px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
+        }
+        .doc-summary-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+        .icon-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 36px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: #fff;
+            color: #374151;
+            cursor: pointer;
+            transition: background 0.15s, box-shadow 0.15s;
+        }
+        .icon-btn:hover { background: #f9fafb; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+        /* The platform lockup, along the bottom of the window. The document
+           prints its own in the footer; this one belongs to the page, so it
+           stays in view the way the chrome above does. */
+        .doc-pagefoot {
+            position: sticky;
+            bottom: 0;
+            z-index: 18;
+            background: #fff;
+            border-top: 1px solid #e5e7eb;
+        }
+        .doc-pagefoot .doc-chrome-inner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            min-height: 36px;
+            font-size: 11px;
+            color: #6b7280;
+        }
+        .doc-pagefoot a { display: inline-flex; align-items: center; }
+        .doc-pagefoot img { display: block; height: 15px; width: auto; }
+        .doc-pagefoot .powered-tagline { color: #9ca3af; }
+@endif
 
         /* ── Document Card ────────────────────────────────── */
         /*
@@ -189,7 +278,6 @@
             /* Positioning context for the status ribbon, which the PDF has no
                use for -- leaving the PDF card exactly as it was. */
             position: relative;
-            border-radius: 10px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 6px 16px rgba(0,0,0,0.04);
 @endif
         }
@@ -275,7 +363,6 @@
             height: 130px;
             overflow: hidden;
             pointer-events: none;
-            border-top-left-radius: 10px;
         }
         .doc-ribbon span {
             /* Geometry, since it is not guessable: the band covers the strip
@@ -495,6 +582,23 @@
             .page-wrapper { padding: 16px 12px; }
             .document-card { padding: 22px 18px; }
 
+            /* Scrolls away on a phone. Pinned it would hold around a fifth of
+               the screen for the whole document, and a recipient opening the
+               link on a phone has little enough room as it is. */
+            .doc-chrome { position: static; }
+            .doc-chrome-inner { padding: 0 12px; }
+            .doc-brandbar .doc-chrome-inner { min-height: 48px; font-size: 15px; }
+            /* Too little width for one row, so it breaks where it reads best:
+               the figure and the two actions keep the first line, and the
+               number and date drop underneath them together. */
+            .doc-summary .doc-chrome-inner { flex-wrap: wrap; gap: 12px 16px; }
+            .doc-summary-meta { order: 3; flex-basis: 100%; }
+
+            /* The tagline is the first thing to go: it is the longest part of
+               the lockup and the least load-bearing, and keeping it would wrap
+               the bar onto two ragged lines. */
+            .doc-pagefoot .powered-tagline { display: none; }
+
             /* Stack the logo/title header */
             .doc-header { flex-direction: column; }
             .doc-title-block { text-align: left; padding-left: 0; margin-top: 14px; }
@@ -516,21 +620,46 @@
     </style>
 </head>
 <body class="text-inv-gray">
-    <div class="page-wrapper">
-        @if(!$isPdf)
-            {{-- Action Bar --}}
-            <div class="action-bar no-print">
-                <button onclick="window.print()" class="btn-secondary">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                    {{ $printLabel }}
-                </button>
-                <a href="{{ $pdfRoute }}" class="btn-primary">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    {{ __('actions.buttons.download_pdf') }}
-                </a>
+@if(!$isPdf)
+    {{-- Page chrome: the sender, the one figure that matters, and the two
+         things a recipient does with an invoice. Full-bleed, so it frames the
+         sheet instead of sitting on it. --}}
+    <div class="doc-chrome no-print">
+        <div class="doc-brandbar">
+            <div class="doc-chrome-inner">{{ $senderName }}</div>
+        </div>
+        <div class="doc-summary">
+            <div class="doc-chrome-inner">
+                <div class="doc-summary-balance">
+                    <div class="doc-summary-amount">{{ $formattedBalance }}</div>
+                    <div class="doc-summary-label">{{ $balanceLabel }}</div>
+                </div>
+                <dl class="doc-summary-meta">
+                    <div>
+                        <dt>{{ $numberLabel }}</dt>
+                        <dd>{{ $document->invoice_number }}</dd>
+                    </div>
+                    @if($document->due_at)
+                        <div>
+                            <dt>{{ __('documents.fields.due_date') }}</dt>
+                            <dd>{{ $document->due_at->format('d/m/Y') }}</dd>
+                        </div>
+                    @endif
+                </dl>
+                <div class="doc-summary-actions">
+                    <button type="button" onclick="window.print()" class="icon-btn" title="{{ $printLabel }}" aria-label="{{ $printLabel }}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    </button>
+                    <a href="{{ $pdfRoute }}" class="icon-btn" title="{{ __('actions.buttons.download_pdf') }}" aria-label="{{ __('actions.buttons.download_pdf') }}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </a>
+                </div>
             </div>
-        @endif
+        </div>
+    </div>
+@endif
 
+    <div class="page-wrapper">
         <div class="document-card">
             @unless($isPdf)
                 {{-- Not aria-hidden: the band is the only place the status is
@@ -544,7 +673,7 @@
                     @if($logoUrl)
                         <img src="{{ $logoUrl }}" alt="{{ $organization->name }}" class="company-logo">
                     @endif
-                    <div class="company-name">{{ $organization->company_name ?? $organization->name }}</div>
+                    <div class="company-name">{{ $senderName }}</div>
                     <div class="company-meta">
                         {{ $orgLocation->address_line_1 }}@if($orgLocation->address_line_2), {{ $orgLocation->address_line_2 }}@endif<br>
                         {{ $orgLocation->city }} {{ $orgLocation->state }} {{ $orgLocation->postal_code }}<br>
@@ -820,5 +949,18 @@
             </div>{{-- /.doc-bottom --}}
         </div>
     </div>
+@if(!$isPdf)
+    {{-- The same lockup the document prints, kept in view along the bottom of
+         the window rather than only at the end of a long invoice. --}}
+    <div class="doc-pagefoot no-print">
+        <div class="doc-chrome-inner">
+            <span>{{ __('messages.email.powered_by') }}</span>
+            <a href="{{ $pageBrandUrl }}">
+                <img src="{{ $brandLogo }}" alt="{{ config('app.name', 'InvoiceInk') }}">
+            </a>
+            <span class="powered-tagline">{{ config('branding.tagline') }}</span>
+        </div>
+    </div>
+@endif
 </body>
 </html>
