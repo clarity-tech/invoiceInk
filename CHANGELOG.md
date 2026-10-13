@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.1](https://github.com/clarity-tech/invoicing/compare/v1.12.0...v1.12.1) (2026-10-13)
+
+
+### Bug Fixes
+
+* **documents:** lay the preview out on the same sheet as the PDF ([08eeeef](https://github.com/clarity-tech/invoicing/commit/08eeeef4e4e41538c12e4b5bef25d31cd9ebb6f1))
+
 ## [1.12.0](https://github.com/clarity-tech/invoicing/compare/v1.11.1...v1.12.0) (2026-10-12)
 
 
