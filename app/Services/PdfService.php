@@ -133,6 +133,8 @@ class PdfService implements PdfServiceInterface
             ->post($url, [
                 'paperWidth' => '8.27',    // A4 width in inches
                 'paperHeight' => '11.7',   // A4 height in inches
+                // Fallback only: the template's own `@page` rule overrides these,
+                // so the document's margins are set there, not here.
                 'marginTop' => '0.39',     // ~10mm
                 'marginBottom' => '0.39',
                 'marginLeft' => '0.39',

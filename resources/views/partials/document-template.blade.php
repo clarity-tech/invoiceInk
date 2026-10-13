@@ -12,6 +12,14 @@
     // first (measuring) PDF render; set to the page count on the final render.
     $fillPages = $fillPages ?? null;
 
+    // The sheet the document is laid out on. `@page` below wins over the
+    // margins PdfService sends to Gotenberg, so these -- not the API's 0.39in
+    // -- are what decide where content lands on the paper. The web card is
+    // built from the same three values so the preview is the same sheet.
+    $pageWidth = '210mm';
+    $pageHeight = '297mm';
+    $pageMargin = '1mm 5mm';
+
     $organization = $document->organization;
     $logoUrl = $isPdf ? $organization->logo_base64 : $organization->logo_url;
 
@@ -83,13 +91,16 @@
 
         @page {
             size: A4;
-            margin: 1mm 5mm;
+            margin: {{ $pageMargin }};
         }
 
         @media print {
             .no-print { display: none !important; }
             body { background: #fff !important; }
-            .document-card { box-shadow: none !important; border-radius: 0 !important; }
+            /* Printing the preview from the browser goes through @page like the
+               PDF does, so the card drops the inset it draws on screen rather
+               than adding a second one on top of the page margin. */
+            .document-card { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; }
         }
 
         body {
@@ -109,7 +120,10 @@
 
         /* ── Page Wrapper ─────────────────────────────────── */
         .page-wrapper {
-            max-width: 820px;
+            /* One page wide, plus its own 16px gutters: anything narrower would
+               squeeze the card below A4 and the document would wrap its text
+               differently from the PDF. */
+            max-width: calc({{ $pageWidth }} + 32px);
             margin: 0 auto;
             {{ $isPdf ? '' : 'padding: 32px 16px;' }}
         }
@@ -168,15 +182,15 @@
 @else
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
+            /* The card is the sheet of paper, so it carries the page's own
+               margin and no more: content then starts where the PDF starts it
+               and has the same width to wrap in. */
+            padding: {{ $pageMargin }};
             /* Positioning context for the status ribbon, which the PDF has no
                use for -- leaving the PDF card exactly as it was. */
             position: relative;
             border-radius: 10px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 6px 16px rgba(0,0,0,0.04);
-            /* Matches Gotenberg's page margin, so the preview is framed the
-               way the PDF is rather than more generously. */
-            padding: 36px;
 @endif
         }
 
@@ -192,6 +206,15 @@
 @else
         .doc-bottom {
             margin-top: auto;
+        }
+
+        /* A page tall, not a viewport tall: the spare room above the footer is
+           then the same spare room the PDF has, instead of however deep the
+           window happens to be. Screen only -- in print the page box already
+           decides the height, and a card taller than it would spill onto a
+           second sheet. */
+        @media screen {
+            .document-card { min-height: {{ $pageHeight }}; }
         }
 @endif
 
