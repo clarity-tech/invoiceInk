@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.0](https://github.com/clarity-tech/invoicing/compare/v1.12.2...v1.13.0) (2026-10-13)
+
+
+### Features
+
+* **documents:** frame the public document with the sender and the balance ([64a49fc](https://github.com/clarity-tech/invoicing/commit/64a49fcbd008271a92ae1d8d3b20eccc0aff03cf))
+
 ## [1.12.2](https://github.com/clarity-tech/invoicing/compare/v1.12.1...v1.12.2) (2026-10-13)
 
 
