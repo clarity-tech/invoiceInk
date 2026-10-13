@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.2](https://github.com/clarity-tech/invoicing/compare/v1.12.1...v1.12.2) (2026-10-13)
+
+
+### Bug Fixes
+
+* **deps:** clear the bun audit advisories that have a patched release ([fc3eb74](https://github.com/clarity-tech/invoicing/commit/fc3eb74cb90859315a929485384dd907cb6d1a4e))
+
 ## [1.12.1](https://github.com/clarity-tech/invoicing/compare/v1.12.0...v1.12.1) (2026-10-13)
 
 
