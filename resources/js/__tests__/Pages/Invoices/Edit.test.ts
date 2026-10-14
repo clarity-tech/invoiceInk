@@ -83,7 +83,7 @@ function mountComponent(propsOverride = {}) {
         global: {
             stubs: {
                 // The header slot carries the document's identity and the
-                // View Public / Download PDF actions, so the stub has to
+                // View public / Download PDF actions, so the stub has to
                 // render it -- a bare default slot would hide all of it.
                 AppLayout: {
                     template: '<div><slot name="header" /><slot /></div>',
@@ -286,7 +286,7 @@ describe('Invoices/Edit', () => {
                 }),
             });
 
-            expect(wrapper.text()).toContain('View Public');
+            expect(wrapper.text()).toContain('View public');
             expect(wrapper.text()).toContain('Download PDF');
 
             const hrefs = wrapper.findAll('a').map((a) => a.attributes('href'));

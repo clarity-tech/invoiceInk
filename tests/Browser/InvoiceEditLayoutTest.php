@@ -124,7 +124,7 @@ it('renders the edit form without running away vertically', function () {
         ->assertSee('Riverbend Institute of Medical Sciences Limited')
         // Both open the document rather than change it, so they live in the
         // header now rather than in a floating row above the first card.
-        ->assertSee('View Public')
+        ->assertSee('View public')
         ->assertSee('Download PDF')
         // Two ways to add a line: the card header, and the strip under the
         // last row. On a document with a dozen items the header is a scroll

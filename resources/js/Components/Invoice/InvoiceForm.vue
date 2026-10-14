@@ -653,8 +653,6 @@ const storedExchangeRateHint = computed(() =>
         : 'Saved with this document and used for every converted total in reporting.',
 );
 
-const flash = computed(() => (page.props as any).flash ?? {});
-
 // Organization contacts, offered as suggestions in the recipients editor.
 const orgContacts = computed<Contact[]>(
     () => (page.props as any).auth?.currentTeam?.emails ?? [],
@@ -672,20 +670,12 @@ const orgContacts = computed<Contact[]>(
         uses between its cards, so the two pages scroll at the same pace.
     -->
     <div class="space-y-5">
-        <!-- Flash message -->
-        <div
-            v-if="flash.success"
-            class="rounded-xl border border-green-300 bg-green-100 p-4 text-green-700"
-        >
-            {{ flash.success }}
-        </div>
-        <div
-            v-if="flash.error"
-            class="rounded-xl border border-red-300 bg-red-100 p-4 text-red-700"
-        >
-            {{ flash.error }}
-        </div>
-
+        <!--
+            No flash message here. The layout renders one for every page, with
+            the live regions and the auto-dismiss this copy never had, so a
+            saved document reported itself twice: once in a bordered green box
+            from the form and once in a plain one from the layout.
+        -->
         <!-- A validation error whose field is conditionally hidden (a customer
              with no location hides the whole billing block, for one) would
              otherwise leave the save button doing nothing at all. -->

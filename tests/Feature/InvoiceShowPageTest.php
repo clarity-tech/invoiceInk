@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\GstTreatment;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -215,6 +216,35 @@ test('a shipping address is only reported when it differs from the billing one',
 
     $this->get("/invoices/{$shippedElsewhere->id}")
         ->assertInertia(fn ($page) => $page->where('hasShippingAddress', true));
+});
+
+test('the place of supply is offered only where a document could carry one', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+    $this->actingAs($organization->owner);
+
+    // Indian organization, domestic customer, no state recorded: the page says
+    // so rather than hiding the row, because without one the document shows a
+    // single tax total and no CGST/SGST/IGST split.
+    $unset = createInvoiceWithItems([], null, $organization, $customer);
+
+    $this->get("/invoices/{$unset->id}")
+        ->assertInertia(fn ($page) => $page
+            ->where('placeOfSupplyApplies', true)
+            ->where('placeOfSupplyLabel', null)
+        );
+
+    // An export has no place of supply to record, so the absence is not news
+    // and the row stays away. The label alone cannot tell the two apart.
+    $overseas = createCustomerWithLocation(
+        ['gst_treatment' => GstTreatment::Overseas],
+        ['country' => 'AE'],
+        $organization
+    );
+    $export = createInvoiceWithItems(['place_of_supply' => null], null, $organization, $overseas);
+
+    $this->get("/invoices/{$export->id}")
+        ->assertInertia(fn ($page) => $page->where('placeOfSupplyApplies', false));
 });
 
 test('recording a payment from the detail page comes back to it', function () {

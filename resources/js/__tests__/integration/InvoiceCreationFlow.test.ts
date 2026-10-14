@@ -179,7 +179,7 @@ describe('InvoiceCreationFlow', () => {
     it('renders the invoice form in create mode', () => {
         const wrapper = mountComponent();
         expect(wrapper.text()).toContain('Save & Send');
-        expect(wrapper.text()).not.toContain('View Public');
+        expect(wrapper.text()).not.toContain('View public');
     });
 
     it('renders customer dropdown with options', () => {
@@ -248,8 +248,8 @@ describe('InvoiceCreationFlow', () => {
         const invoice = makeInvoice({ id: 1, ulid: 'abc123' });
         const wrapper = mountComponent({ mode: 'edit', invoice });
         expect(wrapper.text()).toContain('Save & Send');
-        // View Public and Download PDF are the page's, not the form's.
-        expect(wrapper.text()).not.toContain('View Public');
+        // View public and Download PDF are the page's, not the form's.
+        expect(wrapper.text()).not.toContain('View public');
         expect(wrapper.text()).not.toContain('Download PDF');
     });
 

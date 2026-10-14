@@ -145,6 +145,12 @@ class InvoiceController extends Controller
             'hasShippingAddress' => $invoice->hasShippingAddress(),
             'paymentTermsLabel' => $invoice->paymentTermsLabel(),
             'placeOfSupplyLabel' => $invoice->placeOfSupplyLabel(),
+            // Whether the state is a fact this document can carry at all --
+            // the same terms the form offers it on. The label above is null
+            // both when it does not apply and when it was simply never set,
+            // and the page says different things about the two.
+            'placeOfSupplyApplies' => $invoice->organization?->country_code === Country::IN
+                && ! $invoice->customer?->isOverseas(),
             'tdsLabel' => $invoice->tdsLabel(),
             'tcsLabel' => $invoice->tcsLabel(),
             'taxLabels' => Country::taxLabels(),

@@ -1,22 +1,59 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useFlash } from '@/composables/useFlash';
 
 const { flash, hasFlash } = useFlash();
 const visible = ref(false);
+let hideTimer: ReturnType<typeof setTimeout> | null = null;
+let stopListening: (() => void) | null = null;
 
-watch(
-    hasFlash,
-    (val) => {
-        if (val) {
-            visible.value = true;
-            setTimeout(() => {
-                visible.value = false;
-            }, 4000);
-        }
-    },
-    { immediate: true },
-);
+/**
+ * Show whatever the latest response flashed, for four seconds.
+ *
+ * Tied to the response rather than to the value, because the value is not
+ * reliably new. Inertia reuses the previous object for any prop that comes
+ * back deep-equal (see `isEqual` in its response handler), so saving twice in
+ * a row -- the same page, the same words -- changes nothing a watcher could
+ * see, and the second save confirmed itself silently. A visit always fires an
+ * event, whatever it carries.
+ */
+function announce() {
+    if (hideTimer) {
+        clearTimeout(hideTimer);
+        hideTimer = null;
+    }
+
+    // A page that flashed nothing clears the one still on screen, rather than
+    // carrying someone else's news into it.
+    visible.value = hasFlash.value;
+
+    if (!hasFlash.value) {
+        return;
+    }
+
+    hideTimer = setTimeout(() => {
+        visible.value = false;
+        hideTimer = null;
+    }, 4000);
+}
+
+// The first page of a session arrives with the document rather than through a
+// visit, so it is announced here -- during setup, before the first render, so
+// the message is in the markup rather than appearing a tick later.
+announce();
+
+onMounted(() => {
+    stopListening = router.on('success', announce);
+});
+
+onBeforeUnmount(() => {
+    if (hideTimer) {
+        clearTimeout(hideTimer);
+    }
+
+    stopListening?.();
+});
 
 const showError = computed(() => visible.value && !!flash.value.error);
 const showPolite = computed(

@@ -6,6 +6,7 @@ import StatusBadge from '@/Components/StatusBadge.vue';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { formatDate } from '@/composables/useFormatDate';
+import { overdueLabel } from '@/composables/useOverdueLabel';
 import { usePermissions } from '@/composables/usePermissions';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import type { Invoice } from '@/types';
@@ -26,21 +27,6 @@ const props = defineProps<{
     filters: { type: string | null; status: string | null };
     statusOptions: Record<string, string>;
 }>();
-
-/**
- * How late the document is, in the plainest form. "Overdue" is not a status --
- * it is derived from due_at -- so the status badge showed an invoice months
- * late as plainly "Sent", and the list could not say what needed chasing.
- */
-function overdueLabel(invoice: Invoice): string {
-    const days = invoice.days_overdue ?? 0;
-
-    if (days < 1) {
-        return 'Overdue today';
-    }
-
-    return days === 1 ? 'Overdue by 1 day' : `Overdue by ${days} days`;
-}
 
 /**
  * Whether the balance is worth stating. Equal to the total it says nothing the

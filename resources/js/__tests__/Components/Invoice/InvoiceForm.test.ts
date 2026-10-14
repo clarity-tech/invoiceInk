@@ -79,7 +79,11 @@ vi.mock('@inertiajs/vue3', () => {
                         currency: 'INR',
                     },
                 },
-                flash: { success: null, error: null, message: null },
+                flash: {
+                    success: 'Invoice updated successfully.',
+                    error: null,
+                    message: null,
+                },
             },
         }),
     };
@@ -487,7 +491,7 @@ describe('Invoice/InvoiceForm', () => {
         it('renders with mode=create and type=invoice', () => {
             const wrapper = mountComponent();
             expect(wrapper.text()).toContain('Save & Send');
-            expect(wrapper.text()).not.toContain('View Public');
+            expect(wrapper.text()).not.toContain('View public');
         });
 
         it('shows cancel button', () => {
@@ -502,9 +506,9 @@ describe('Invoice/InvoiceForm', () => {
             expect(labels).toContain('Save & Send');
         });
 
-        it('does not show edit-only buttons (View Public, Download PDF)', () => {
+        it('does not show edit-only buttons (View public, Download PDF)', () => {
             const wrapper = mountComponent();
-            expect(wrapper.text()).not.toContain('View Public');
+            expect(wrapper.text()).not.toContain('View public');
             expect(wrapper.text()).not.toContain('Download PDF');
         });
 
@@ -579,7 +583,7 @@ describe('Invoice/InvoiceForm', () => {
             expect(wrapper.text()).toContain('Save');
         });
 
-        // View Public and Download PDF used to sit in a bare row above the
+        // View public and Download PDF used to sit in a bare row above the
         // first card, inside this component. They open the document rather
         // than changing it, so they moved to the page header; Edit.vue owns
         // them now and Pages/Invoices/Edit.test.ts asserts they render there.
@@ -589,7 +593,7 @@ describe('Invoice/InvoiceForm', () => {
                 invoice: editInvoice,
             });
             expect(wrapper.text()).toContain('Save & Send');
-            expect(wrapper.text()).not.toContain('View Public');
+            expect(wrapper.text()).not.toContain('View public');
             expect(wrapper.text()).not.toContain('Download PDF');
             expect(wrapper.text()).not.toContain('Send Email');
         });
@@ -1484,12 +1488,15 @@ describe('Invoice/InvoiceForm', () => {
     });
 
     describe('flash messages', () => {
-        it('displays success flash message', () => {
-            // Need to override usePage to return flash
-            // Since usePage is mocked at module level, we test the template binding
+        // The layout renders one for every page. The form had a second copy
+        // without the live regions or the auto-dismiss, so saving reported
+        // itself twice, one box above the other.
+        it('leaves them to the layout', () => {
             const wrapper = mountComponent();
-            // Flash is null by default so no flash shown
-            expect(wrapper.find('.bg-green-100').exists()).toBe(false);
+
+            expect(wrapper.text()).not.toContain(
+                'Invoice updated successfully.',
+            );
         });
     });
 

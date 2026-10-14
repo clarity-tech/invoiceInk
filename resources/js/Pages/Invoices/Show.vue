@@ -1,19 +1,9 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import {
-    Download,
-    ExternalLink,
-    FileCheck,
-    FileText,
-    Mail,
-    Paperclip,
-    Pencil,
-    Plus,
-    Trash2,
-} from 'lucide-vue-next';
+import { FileCheck, Paperclip, Pencil, Plus, Trash2 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
-import EmailModal from '@/Components/Invoice/EmailModal.vue';
+import DocumentOpenActions from '@/Components/Invoice/DocumentOpenActions.vue';
 import PaymentModal from '@/Components/Invoice/PaymentModal.vue';
 import MoneyDisplay from '@/Components/MoneyDisplay.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
@@ -26,13 +16,7 @@ import {
     BreadcrumbSeparator,
 } from '@/Components/ui/breadcrumb';
 import { Button } from '@/Components/ui/button';
-import {
-    Card,
-    CardAction,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from '@/Components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import {
     Table,
     TableBody,
@@ -45,6 +29,7 @@ import { formatBytes } from '@/composables/useFileAttachments';
 import { currencySymbol } from '@/composables/useFormatMoney';
 import { formatDate } from '@/composables/useFormatDate';
 import { formatLocationLine } from '@/composables/useLocationFormat';
+import { overdueLabel } from '@/composables/useOverdueLabel';
 import { usePermissions } from '@/composables/usePermissions';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import type {
@@ -60,6 +45,7 @@ const props = defineProps<{
     hasShippingAddress: boolean;
     paymentTermsLabel: string | null;
     placeOfSupplyLabel: string | null;
+    placeOfSupplyApplies: boolean;
     tdsLabel: string | null;
     tcsLabel: string | null;
     taxLabels: Record<string, string>;
@@ -90,6 +76,51 @@ const documentLabel = computed(() =>
 const balanceDue = computed(() => props.invoice.remaining_balance ?? 0);
 const amountPaid = computed(() => props.invoice.amount_paid ?? 0);
 
+/**
+ * Whether money has actually moved against this document, which decides
+ * whether Paid and Balance are worth a tile each. Keyed to the amount rather
+ * than to the payment rows so a document paid by any other route still splits
+ * its figures.
+ */
+const hasPayments = computed(() => !isEstimate.value && amountPaid.value > 0);
+
+/**
+ * The summary strip's tiles, in reading order: what it comes to, what has been
+ * paid against it, then when it was raised, on what terms and when it is due.
+ * Issued and the terms were rows in Details, which is where you go to look
+ * something up -- the dates are what you read the document against, so they
+ * belong with the figures.
+ *
+ * A tile is skipped rather than printed empty, so the count varies. That
+ * matters more than it looks: the hairlines between tiles are a `bg-border`
+ * grid showing through `gap-px`, so a column short of a full row is not a gap
+ * but a grey block the size of a tile. Hence only counts that divide exactly,
+ * and literal class strings -- Tailwind cannot see a computed one.
+ */
+const tileCount = computed(
+    () =>
+        1 +
+        (hasPayments.value ? 2 : 0) +
+        (props.invoice.issued_at ? 1 : 0) +
+        (props.paymentTermsLabel ? 1 : 0) +
+        (props.invoice.due_at ? 1 : 0),
+);
+
+const tileColumns = computed(
+    () =>
+        ({
+            1: '',
+            2: 'grid-cols-2',
+            3: 'sm:grid-cols-3',
+            4: 'grid-cols-2 lg:grid-cols-4',
+            // One row of six only once there is room for it: below 1280px
+            // six tiles squeeze a long total onto two lines. Three keeps the
+            // money on one line and the dates on the next, which is how they
+            // group anyway.
+            6: 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-6',
+        })[tileCount.value] ?? 'sm:grid-cols-2',
+);
+
 const canRecordPayment = computed(
     () => !isEstimate.value && balanceDue.value > 0 && canUpdate.value,
 );
@@ -110,16 +141,7 @@ const taxBreakdown = computed(() =>
     })),
 );
 
-/**
- * EmailModal looks the customer up by id out of a list, so the one customer
- * this document belongs to is the whole list it needs.
- */
-const customersForEmail = computed(() =>
-    props.invoice.customer ? [props.invoice.customer] : [],
-);
-
 const showPaymentModal = ref(false);
-const showEmailModal = ref(false);
 /**
  * Deleting is the one action on this page that destroys the page. The server
  * redirects to the list rather than back here, because the document 404s the
@@ -131,12 +153,6 @@ function deleteDocument() {
     confirmingDelete.value = false;
     router.delete(`/invoices/${props.invoice.id}`);
 }
-
-/** The customer's view of this document; no authentication, shareable. */
-const publicUrl = computed(
-    () =>
-        `/${props.invoice.type === 'invoice' ? 'invoices' : 'estimates'}/view/${props.invoice.ulid}`,
-);
 
 const confirmingPaymentDelete = ref(false);
 const paymentToDelete = ref<number | null>(null);
@@ -158,6 +174,17 @@ function convertEstimate() {
         },
     );
 }
+
+/**
+ * The shipping address, when the document names one of its own. An address
+ * equal to the billing one is not a second fact, so it reads as "same as
+ * billing" rather than printing the same lines twice under two headings.
+ */
+const shippingAddressLine = computed(() =>
+    props.hasShippingAddress
+        ? addressOf(props.invoice.customer_shipping_location)
+        : '',
+);
 
 function addressOf(location: Location | undefined): string {
     return location ? formatLocationLine(location, props.countryNames) : '';
@@ -241,7 +268,7 @@ function deletePayment() {
             </Breadcrumb>
 
             <div
-                class="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-2"
+                class="mt-1 flex min-h-10 flex-wrap items-center justify-between gap-x-4 gap-y-2"
             >
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <h1 class="text-lg font-semibold text-gray-900">
@@ -249,16 +276,10 @@ function deletePayment() {
                     </h1>
                     <StatusBadge :status="invoice.status" />
                     <!--
-                        Overdue is derived, not a status, so without this the
-                        page could show "Sent" on a document months late.
+                        Overdue is derived rather than a status, so it is said
+                        separately -- but in the summary strip, under the due
+                        date, not as a second badge here.
                     -->
-                    <Badge v-if="invoice.is_overdue" variant="destructive">
-                        {{
-                            invoice.days_overdue === 1
-                                ? 'Overdue by 1 day'
-                                : `Overdue by ${invoice.days_overdue} days`
-                        }}
-                    </Badge>
                     <span
                         v-if="invoice.customer?.name"
                         class="truncate text-sm text-muted-foreground"
@@ -268,9 +289,20 @@ function deletePayment() {
                 </div>
 
                 <!--
-                    One primary action only. Everything else is an outline or a
-                    ghost, so the page has a single obvious next step rather
-                    than six buttons competing for it.
+                    Sending is not here: it belongs with the document you are
+                    about to send, and the editor's "Save & Send" sends what is
+                    on screen rather than a copy saved some time earlier. This
+                    row is what you do with the document as it stands.
+
+                    One action leads, quietly. A filled accent button shouted
+                    across a row of outlines and over the document it belongs
+                    to; secondary keeps it first among equals without being the
+                    loudest thing on the page.
+
+                    The row is a fixed height on both this page and the edit
+                    page, because the edit page's status control is taller than
+                    a badge and the two otherwise shared a right edge at
+                    different heights -- following Edit made every control jump.
                 -->
                 <div class="flex flex-wrap items-center gap-2">
                     <Button
@@ -285,29 +317,12 @@ function deletePayment() {
                     </Button>
                     <Button
                         v-if="canRecordPayment"
+                        variant="secondary"
                         size="sm"
                         @click="showPaymentModal = true"
                     >
                         <Plus />
                         Record payment
-                    </Button>
-                    <Button
-                        v-if="canUpdate"
-                        variant="outline"
-                        size="sm"
-                        @click="showEmailModal = true"
-                    >
-                        <Mail />
-                        Send
-                    </Button>
-                    <Button
-                        as="a"
-                        variant="outline"
-                        size="sm"
-                        :href="`/invoices/${invoice.id}/download`"
-                    >
-                        <Download />
-                        PDF
                     </Button>
                     <Button
                         v-if="canUpdate"
@@ -320,22 +335,14 @@ function deletePayment() {
                         Edit
                     </Button>
                     <!--
-                        Destructive, rarely wanted, and the only control here
-                        that ends the page -- so it is an unlabelled icon that
-                        stays grey until hovered, rather than a sixth button
-                        competing for the eye. The label names the document:
-                        the payment rows below carry "Delete" buttons too.
+                        Opening the customer's view and taking the PDF are the
+                        same two controls the edit page offers, so they are the
+                        same component on both -- see DocumentOpenActions for
+                        what that is worth. The public view was a row in
+                        Details before, which is a list of facts about the
+                        document; opening it is something you do with it.
                     -->
-                    <Button
-                        v-if="canDelete"
-                        variant="ghost"
-                        size="icon"
-                        class="text-muted-foreground hover:text-destructive"
-                        :aria-label="`Delete ${invoice.type} ${invoice.invoice_number}`"
-                        @click="confirmingDelete = true"
-                    >
-                        <Trash2 />
-                    </Button>
+                    <DocumentOpenActions :invoice="invoice" />
                 </div>
             </div>
         </template>
@@ -347,9 +354,11 @@ function deletePayment() {
         -->
         <div class="space-y-5 px-4 sm:px-0">
             <!--
-                The three figures the page exists to answer, before any detail.
-                An estimate has no payments, so it carries its total alone
-                rather than a Paid and Balance of zero.
+                What the page exists to answer, before any detail: the figures,
+                and the dates they fall due against. Paid and Balance only once
+                a payment exists: until then Balance is the total restated and
+                Paid is a zero, so an unpaid invoice showed one number three
+                times. An estimate never has either.
             -->
             <!--
                 `overflow-hidden` is the whole fix for this card's corners. The
@@ -361,8 +370,8 @@ function deletePayment() {
             -->
             <Card class="overflow-hidden">
                 <CardContent
-                    class="grid gap-px bg-border p-0 sm:grid-cols-2"
-                    :class="isEstimate ? 'lg:grid-cols-2' : 'lg:grid-cols-4'"
+                    class="grid gap-px bg-border p-0"
+                    :class="tileColumns"
                 >
                     <div class="bg-card px-5 py-4">
                         <div class="text-xs text-muted-foreground">Total</div>
@@ -373,7 +382,7 @@ function deletePayment() {
                             />
                         </div>
                     </div>
-                    <template v-if="!isEstimate">
+                    <template v-if="hasPayments">
                         <div class="bg-card px-5 py-4">
                             <div class="text-xs text-muted-foreground">
                                 Paid
@@ -406,12 +415,41 @@ function deletePayment() {
                             </div>
                         </div>
                     </template>
-                    <div class="bg-card px-5 py-4">
+                    <div v-if="invoice.issued_at" class="bg-card px-5 py-4">
+                        <div class="text-xs text-muted-foreground">Issued</div>
+                        <div class="mt-1 text-xl font-semibold">
+                            {{ formatDate(invoice.issued_at) }}
+                        </div>
+                    </div>
+                    <div v-if="paymentTermsLabel" class="bg-card px-5 py-4">
+                        <div class="text-xs text-muted-foreground">
+                            Payment terms
+                        </div>
+                        <div class="mt-1 text-xl font-semibold">
+                            {{ paymentTermsLabel }}
+                        </div>
+                    </div>
+                    <div v-if="invoice.due_at" class="bg-card px-5 py-4">
                         <div class="text-xs text-muted-foreground">
                             {{ isEstimate ? 'Valid until' : 'Due' }}
                         </div>
                         <div class="mt-1 text-xl font-semibold">
                             {{ formatDate(invoice.due_at) }}
+                        </div>
+                        <!--
+                            How late it is, under the date it is late against.
+                            This was a filled red badge up in the header, where
+                            it was the loudest thing on the page and sat beside
+                            a status that disagreed with it. The listing has
+                            always stated it as a quiet line; the fact is the
+                            same either way, and here it has its date to read
+                            it against.
+                        -->
+                        <div
+                            v-if="invoice.is_overdue"
+                            class="mt-1 text-xs font-medium text-destructive"
+                        >
+                            {{ overdueLabel(invoice) }}
                         </div>
                     </div>
                 </CardContent>
@@ -641,38 +679,27 @@ function deletePayment() {
                                 Label and value share a line. Stacked, each
                                 fact cost two lines of a narrow column, and the
                                 card ran longer than the items table beside it
-                                to hold seven short ones. The label does not
-                                wrap; the value takes what is left and is right
-                                aligned, so the values read as a column.
+                                to hold them all. The label does not wrap; the
+                                value takes what is left and is right aligned,
+                                so the values read as a column.
+
+                                Every row here is optional now that the dates
+                                have gone up to the summary strip, so the list
+                                and its rule only appear when a document
+                                actually carries one of them -- otherwise the
+                                rule sat directly under the title, fencing off
+                                nothing.
                             -->
                             <dl class="space-y-2.5 text-sm">
+                                <!--
+                                    Subject keeps its row even when the
+                                    document has none, so the card always says
+                                    what a document can carry here rather than
+                                    leaving you to wonder whether it is unset
+                                    or unsupported. The rest appear only when
+                                    they have something to report.
+                                -->
                                 <div
-                                    class="flex items-baseline justify-between gap-4"
-                                >
-                                    <dt
-                                        class="shrink-0 text-xs text-muted-foreground"
-                                    >
-                                        Issued
-                                    </dt>
-                                    <dd class="min-w-0 text-right">
-                                        {{ formatDate(invoice.issued_at) }}
-                                    </dd>
-                                </div>
-                                <div
-                                    v-if="paymentTermsLabel"
-                                    class="flex items-baseline justify-between gap-4"
-                                >
-                                    <dt
-                                        class="shrink-0 text-xs text-muted-foreground"
-                                    >
-                                        Payment terms
-                                    </dt>
-                                    <dd class="min-w-0 text-right">
-                                        {{ paymentTermsLabel }}
-                                    </dd>
-                                </div>
-                                <div
-                                    v-if="invoice.subject"
                                     class="flex items-baseline justify-between gap-4"
                                 >
                                     <dt
@@ -680,8 +707,15 @@ function deletePayment() {
                                     >
                                         Subject
                                     </dt>
-                                    <dd class="min-w-0 text-right">
-                                        {{ invoice.subject }}
+                                    <dd
+                                        class="min-w-0 text-right"
+                                        :class="
+                                            invoice.subject
+                                                ? ''
+                                                : 'text-muted-foreground'
+                                        "
+                                    >
+                                        {{ invoice.subject || 'Not set' }}
                                     </dd>
                                 </div>
                                 <div
@@ -697,8 +731,18 @@ function deletePayment() {
                                         {{ invoice.order_number }}
                                     </dd>
                                 </div>
+                                <!--
+                                    Shown whenever the document could carry one
+                                    -- an Indian organization selling to a
+                                    customer that is not overseas -- because
+                                    its absence is a fact about the tax: with
+                                    no place of supply the document shows a
+                                    single tax total and no CGST/SGST/IGST
+                                    split. Hidden entirely where it cannot
+                                    apply, which is not the same as unset.
+                                -->
                                 <div
-                                    v-if="placeOfSupplyLabel"
+                                    v-if="placeOfSupplyApplies"
                                     class="flex items-baseline justify-between gap-4"
                                 >
                                     <dt
@@ -706,57 +750,28 @@ function deletePayment() {
                                     >
                                         Place of supply
                                     </dt>
-                                    <dd class="min-w-0 text-right">
-                                        {{ placeOfSupplyLabel }}
-                                    </dd>
-                                </div>
-                                <div
-                                    class="flex items-baseline justify-between gap-4"
-                                >
-                                    <dt
-                                        class="shrink-0 text-xs text-muted-foreground"
+                                    <dd
+                                        class="min-w-0 text-right"
+                                        :class="
+                                            placeOfSupplyLabel
+                                                ? ''
+                                                : 'text-muted-foreground'
+                                        "
                                     >
-                                        Currency
-                                    </dt>
-                                    <dd class="min-w-0 text-right">
-                                        {{ invoice.currency }}
-                                    </dd>
-                                </div>
-                                <!--
-                                    The customer's own view of this document.
-                                    It used to be reachable only from a "View"
-                                    link in the list, which said nothing about
-                                    which of the two views it opened.
-                                -->
-                                <div
-                                    class="flex items-baseline justify-between gap-4"
-                                >
-                                    <dt
-                                        class="shrink-0 text-xs text-muted-foreground"
-                                    >
-                                        Public link
-                                    </dt>
-                                    <dd class="min-w-0 text-right">
-                                        <a
-                                            :href="publicUrl"
-                                            target="_blank"
-                                            rel="noopener"
-                                            class="inline-flex items-center gap-1 font-medium text-brand-600 hover:text-brand-800 hover:underline"
-                                        >
-                                            View public
-                                            <ExternalLink class="size-3.5" />
-                                        </a>
+                                        {{ placeOfSupplyLabel || 'Not set' }}
                                     </dd>
                                 </div>
                             </dl>
-                        </CardContent>
-                    </Card>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Addresses</CardTitle>
-                        </CardHeader>
-                        <CardContent>
+                            <!--
+                                Who it is for, under the same heading as the
+                                rest of what you look up about a document.
+                                They were two cards, which made the rail long
+                                enough to outrun the items table beside it for
+                                the sake of one more title.
+                            -->
+                            <hr class="my-4 border-border" />
+
                             <dl class="space-y-3 text-sm">
                                 <div>
                                     <dt class="text-xs text-muted-foreground">
@@ -788,51 +803,44 @@ function deletePayment() {
                                         }}
                                     </dd>
                                 </div>
-                                <div
-                                    v-if="
-                                        hasShippingAddress &&
-                                        addressOf(
-                                            invoice.customer_shipping_location,
-                                        )
-                                    "
-                                >
+                                <!--
+                                    Always said, because "nothing here" and
+                                    "ships where it bills" are the same picture
+                                    and only one of them is true. The row used
+                                    to appear only for a separate address, so
+                                    the common case looked like a document
+                                    nobody had told where to send anything.
+                                -->
+                                <div>
                                     <dt class="text-xs text-muted-foreground">
                                         Shipped to
                                     </dt>
-                                    <dd class="text-muted-foreground">
-                                        {{
-                                            addressOf(
-                                                invoice.customer_shipping_location,
-                                            )
-                                        }}
+                                    <dd
+                                        v-if="shippingAddressLine"
+                                        class="text-muted-foreground"
+                                    >
+                                        {{ shippingAddressLine }}
                                     </dd>
-                                </div>
-                                <div
-                                    v-if="
-                                        addressOf(invoice.organization_location)
-                                    "
-                                >
-                                    <dt class="text-xs text-muted-foreground">
-                                        Issued from
-                                    </dt>
-                                    <dd class="text-muted-foreground">
-                                        {{
-                                            addressOf(
-                                                invoice.organization_location,
-                                            )
-                                        }}
+                                    <dd v-else class="text-muted-foreground">
+                                        Same as billing address
                                     </dd>
                                 </div>
                             </dl>
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <!--
+                        Only once there is a history. An empty card saying
+                        "Never sent" held a card's worth of the rail to report
+                        the absence of news, where Attachments and Notes &
+                        terms simply stay away until they have something.
+                    -->
+                    <Card v-if="deliveries.length">
                         <CardHeader>
                             <CardTitle>Email history</CardTitle>
                         </CardHeader>
                         <CardContent class="text-sm">
-                            <ul v-if="deliveries.length" class="space-y-3">
+                            <ul class="space-y-3">
                                 <li
                                     v-for="delivery in deliveries"
                                     :key="delivery.id"
@@ -872,13 +880,6 @@ function deletePayment() {
                                     </Badge>
                                 </li>
                             </ul>
-                            <div
-                                v-else
-                                class="flex items-center gap-2 text-muted-foreground"
-                            >
-                                <FileText class="size-4" />
-                                Never sent.
-                            </div>
                         </CardContent>
                     </Card>
 
@@ -920,23 +921,18 @@ function deletePayment() {
                 edit page settled on in eb500d47. Inside the grid it would have
                 stacked above the right-hand rail on a phone, which is mid-page.
             -->
-            <Card v-if="!isEstimate">
+            <!--
+                Only once there is something to list. Recording the first one
+                is the header's primary action, which this card's own button
+                only repeated; an empty table under a title said less than the
+                Balance figure above it already does.
+            -->
+            <Card v-if="!isEstimate && payments.length">
                 <CardHeader>
                     <CardTitle>Payments</CardTitle>
-                    <CardAction>
-                        <Button
-                            v-if="canRecordPayment"
-                            variant="outline"
-                            size="sm"
-                            @click="showPaymentModal = true"
-                        >
-                            <Plus />
-                            Record payment
-                        </Button>
-                    </CardAction>
                 </CardHeader>
-                <CardContent :class="payments.length ? 'px-0 py-0' : undefined">
-                    <Table v-if="payments.length">
+                <CardContent class="px-0 py-0">
+                    <Table>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Date</TableHead>
@@ -988,11 +984,41 @@ function deletePayment() {
                             </TableRow>
                         </TableBody>
                     </Table>
-                    <p v-else class="text-sm text-muted-foreground">
-                        No payments recorded yet.
-                    </p>
                 </CardContent>
             </Card>
+
+            <!--
+                Below everything, because it is the one control on the page
+                that ends it, and rare enough that it should not sit in the row
+                you reach for daily. A line rather than a danger-zone card: the
+                delete is soft and already behind a confirmation, so a panel
+                would overstate it -- and it says so, since "delete" reads as
+                final when it is not.
+            -->
+            <div
+                v-if="canDelete"
+                class="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-4"
+            >
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    class="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    :aria-label="`Delete ${invoice.type} ${invoice.invoice_number}`"
+                    @click="confirmingDelete = true"
+                >
+                    <Trash2 />
+                    Delete {{ invoice.type }}
+                </Button>
+                <span class="text-sm text-muted-foreground">
+                    Moves it to
+                    <Link
+                        href="/invoices/trash"
+                        class="underline hover:text-foreground"
+                    >
+                        Trash</Link
+                    >, where it can be restored.
+                </span>
+            </div>
         </div>
 
         <PaymentModal
@@ -1001,18 +1027,16 @@ function deletePayment() {
             @close="showPaymentModal = false"
         />
 
-        <EmailModal
-            :show="showEmailModal"
-            :invoice="invoice"
-            :customers="customersForEmail"
-            :invoice-attachments="attachments"
-            @close="showEmailModal = false"
-        />
-
+        <!--
+            It said the deletion could not be undone, which was never true: the
+            model soft-deletes, there is a Trash page, and a restore route to
+            come back from. The permanent one is a separate action taken from
+            Trash. The title matches the control that opened this.
+        -->
         <ConfirmationModal
             :show="confirmingDelete"
-            title="Delete Document"
-            message="Are you sure you want to delete this document? This action cannot be undone."
+            :title="`Delete ${invoice.type}`"
+            :message="`${invoice.invoice_number} moves to Trash, where you can restore it. Deleting it for good is a separate step taken from there.`"
             confirm-label="Delete"
             :destructive="true"
             @confirm="deleteDocument"

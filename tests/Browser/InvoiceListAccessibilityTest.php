@@ -263,7 +263,7 @@ it('comes back intact after a document is deleted from its own page', function (
     $page = visit("/invoices/{$doomed->id}")->resize(1440, 900);
 
     $page->click('button[aria-label="Delete estimate CT-EST-001"]')
-        ->waitForText('Delete Document')
+        ->waitForText('moves to Trash')
         ->click('[role="dialog"] button:has-text("Delete")')
         ->assertPathIs('/invoices')
         ->assertNoJavaScriptErrors();

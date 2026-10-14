@@ -52,7 +52,14 @@ it('creates an invoice with a single item', function () {
         ->fill('input[type="number"][min="0"][placeholder="0.00"] >> nth=0', '10000')
         ->click('button[type="submit"]')
         ->waitForText('Edit Invoice')
-        ->assertSee('Edit Invoice');
+        ->assertSee('Edit Invoice')
+        // Said once. The form carried its own copy of the flash message on top
+        // of the one the layout renders for every page, so a save reported
+        // itself twice, one green box above the other.
+        ->assertScript(
+            'function() { return (document.body.innerText.match(/Invoice created successfully/g) || []).length; }',
+            1,
+        );
 });
 
 it('creates invoice with multiple items', function () {
@@ -126,8 +133,12 @@ it('deletes an invoice from its own page', function () {
         ->click('a:has-text("INV-DEL-001")')
         ->assertPathIs("/invoices/{$invoice->id}")
         ->click('button[aria-label="Delete invoice INV-DEL-001"]')
-        ->waitForText('Delete Document')
-        ->assertSee('Are you sure you want to delete this document');
+        // The dialog names the document and says where it goes. It used
+        // to claim the delete could not be undone, which was never true of a
+        // soft delete.
+        ->waitForText('moves to Trash')
+        ->assertSee('INV-DEL-001 moves to Trash')
+        ->assertDontSee('cannot be undone');
 });
 
 it('shows validation error without selecting a customer', function () {
@@ -212,4 +223,51 @@ it('shows invoice number in the list', function () {
 
     $page->assertSee('INV-VISIBLE-999')
         ->assertNoJavascriptErrors();
+});
+
+/**
+ * Saving on the edit page redirects back to the same page, so Inertia swaps
+ * the props without remounting anything. The confirmation has to survive that
+ * -- and it is now the only one on the page, the form's own copy having been
+ * removed for reporting the save a second time.
+ */
+it('confirms every save on the edit page, not only the first', function () {
+    $user = User::factory()->withPersonalTeam()->create([
+        'email' => 'inv-edit-flash@example.test',
+    ]);
+
+    $organization = createOrganizationWithLocation([], [], $user);
+    $customer = createCustomerWithLocation(['name' => 'Repeat Saver'], [], $organization);
+    // Dates included: the helper leaves them null, and the form's date inputs
+    // are required, so without them the browser blocks the submit and nothing
+    // reaches the server at all.
+    $invoice = createInvoiceWithItems([
+        'invoice_number' => 'INV-FLASH-001',
+        'issued_at' => now()->subDays(3),
+        'due_at' => now()->addDays(27),
+    ], null, $organization, $customer);
+
+    $this->actingAs($user);
+
+    $page = $this->visit("/invoices/{$invoice->id}/edit");
+
+    $page->click('button[type="submit"]')
+        ->waitForText('updated successfully')
+        // Said once: the form used to carry its own copy on top of the one the
+        // layout renders for every page.
+        ->assertScript(
+            'function() { return (document.body.innerText.match(/updated successfully/g) || []).length; }',
+            1,
+        )
+        // It clears itself after four seconds. The second save is the one that
+        // went silent when the notice was keyed to "is there a flash at all"
+        // rather than to the response that carried it.
+        ->wait(5)
+        ->assertDontSee('updated successfully')
+        ->click('button[type="submit"]')
+        ->waitForText('updated successfully')
+        ->assertScript(
+            'function() { return (document.body.innerText.match(/updated successfully/g) || []).length; }',
+            1,
+        );
 });

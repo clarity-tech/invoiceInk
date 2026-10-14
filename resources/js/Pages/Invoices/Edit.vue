@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { ref, computed, onUnmounted } from 'vue';
-import { Download, ExternalLink, Plus } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
+import { Plus } from 'lucide-vue-next';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
+import DocumentOpenActions from '@/Components/Invoice/DocumentOpenActions.vue';
 import InvoiceForm from '@/Components/Invoice/InvoiceForm.vue';
 import PaymentModal from '@/Components/Invoice/PaymentModal.vue';
 import MoneyDisplay from '@/Components/MoneyDisplay.vue';
@@ -61,37 +62,6 @@ const paymentToDelete = ref<number | null>(null);
 const balanceDue = computed(() =>
     Math.max(0, (props.invoice.total ?? 0) - (props.invoice.amount_paid ?? 0)),
 );
-
-const publicPath = computed(
-    () =>
-        `/${props.invoice.type === 'invoice' ? 'invoices' : 'estimates'}/view/${props.invoice.ulid}`,
-);
-
-const pdfPath = computed(
-    () =>
-        `/${props.invoice.type === 'invoice' ? 'invoices' : 'estimates'}/${props.invoice.ulid}/pdf`,
-);
-
-/**
- * A PDF download replaces no page, so nothing tells us when it finished. The
- * spinner is released on a timer rather than left spinning for ever; a real
- * render takes about ten seconds because the document is rendered twice.
- */
-const downloadingPdf = ref(false);
-let pdfTimer: ReturnType<typeof setTimeout> | null = null;
-
-function startPdfDownload() {
-    downloadingPdf.value = true;
-    pdfTimer = setTimeout(() => {
-        downloadingPdf.value = false;
-    }, 15000);
-}
-
-onUnmounted(() => {
-    if (pdfTimer) {
-        clearTimeout(pdfTimer);
-    }
-});
 
 function methodOf(payment: Payment): string {
     return (
@@ -163,14 +133,14 @@ function deletePayment() {
                 number appeared nowhere on screen -- so nothing said which
                 invoice was open, or what state it was in.
 
-                View Public and Download PDF used to float in a bare row above
+                View public and Download PDF used to float in a bare row above
                 the first card, belonging to no section. They open the document
                 as it stands rather than changing it, so they belong up here
-                with the rest of the page's identity, the way the detail page
-                arranges the same two.
+                with the rest of the page's identity -- as the same component
+                the detail page uses, so the pair cannot drift apart again.
             -->
             <div
-                class="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-2"
+                class="mt-1 flex min-h-10 flex-wrap items-center justify-between gap-x-4 gap-y-2"
             >
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <h2 class="text-lg font-semibold text-gray-900">
@@ -191,32 +161,7 @@ function deletePayment() {
                     </span>
                 </div>
 
-                <div
-                    v-if="invoice.ulid"
-                    class="flex flex-wrap items-center gap-2"
-                >
-                    <Button
-                        as="a"
-                        variant="outline"
-                        size="sm"
-                        :href="publicPath"
-                        target="_blank"
-                    >
-                        <ExternalLink />
-                        View Public
-                    </Button>
-                    <Button
-                        as="a"
-                        variant="outline"
-                        size="sm"
-                        :href="pdfPath"
-                        :aria-busy="downloadingPdf"
-                        @click="startPdfDownload"
-                    >
-                        <Download :class="downloadingPdf && 'animate-pulse'" />
-                        {{ downloadingPdf ? 'Generating…' : 'Download PDF' }}
-                    </Button>
-                </div>
+                <DocumentOpenActions v-if="invoice.ulid" :invoice="invoice" />
             </div>
         </template>
 

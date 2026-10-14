@@ -52,6 +52,6 @@ it('shows action buttons on invoice edit page', function () {
     $page->assertPathIs("/invoices/{$invoice->id}/edit")
         ->assertNoJavascriptErrors()
         ->assertSee('Save & Send')
-        ->assertSee('View Public')
+        ->assertSee('View public')
         ->assertSee('Download PDF');
 });
