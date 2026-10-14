@@ -71,7 +71,7 @@ it('renders the dark choice on the shared document', function (string $type) {
     $document = createInvoiceWithItems(['type' => $type]);
 
     $response = $this->withUnencryptedCookie(Appearance::COOKIE, 'dark')
-        ->get("/{$type}s/view/{$document->ulid}");
+        ->get($document->shareUrl());
 
     $response->assertOk();
     $html = $response->getContent();
@@ -88,7 +88,7 @@ it('keeps the PDF light whatever the choice', function (string $type) {
     $document = createInvoiceWithItems(['type' => $type]);
 
     $this->withUnencryptedCookie(Appearance::COOKIE, 'dark')
-        ->get("/{$type}s/{$document->ulid}/pdf")
+        ->get($document->sharePdfUrl(now()->addDay()))
         ->assertOk();
 
     $renders = Http::recorded()->map(fn (array $exchange): string => $exchange[0]->body());

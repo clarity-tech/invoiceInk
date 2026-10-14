@@ -33,10 +33,6 @@ class TemplateVariableResolver
             $daysOverdue = (int) $invoice->due_at->diffInDays(now());
         }
 
-        $viewRoute = $invoice->isInvoice()
-            ? route('invoices.public', $invoice->ulid)
-            : route('estimates.public', $invoice->ulid);
-
         return [
             '{{customer_name}}' => e($invoice->customer?->name ?? 'Customer'),
             '{{invoice_number}}' => e($invoice->invoice_number ?? ''),
@@ -48,7 +44,7 @@ class TemplateVariableResolver
             '{{issue_date}}' => e($invoice->issued_at?->format('M d, Y') ?? ''),
             '{{organization_name}}' => e($invoice->organization?->company_name ?? $invoice->organization?->name ?? ''),
             '{{organization_email}}' => e($orgEmail),
-            '{{view_url}}' => $viewRoute,
+            '{{view_url}}' => e($invoice->shareUrl()),
             '{{days_overdue}}' => (string) $daysOverdue,
             '{{status}}' => e(ucfirst($invoice->status?->value ?? 'draft')),
         ];

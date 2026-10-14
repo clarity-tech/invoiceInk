@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Contracts\Services\PdfServiceInterface;
 use App\Models\Invoice;
 use App\Models\Scopes\OrganizationScope;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 
 class PublicViewController extends Controller
 {
-    public function showInvoice(string $ulid): View
+    public function showInvoice(Request $request, string $ulid): View
     {
         $invoice = Invoice::withoutGlobalScope(OrganizationScope::class)
             ->with([
@@ -25,10 +27,16 @@ class PublicViewController extends Controller
             ->where('type', 'invoice')
             ->firstOrFail();
 
-        return view('public.invoice', compact('invoice'));
+        $linkExpiresAt = $this->linkExpiry($request);
+
+        return view('public.invoice', [
+            'invoice' => $invoice,
+            'pdfUrl' => $invoice->sharePdfUrl($linkExpiresAt),
+            'linkExpiresAt' => $linkExpiresAt,
+        ]);
     }
 
-    public function showEstimate(string $ulid): View
+    public function showEstimate(Request $request, string $ulid): View
     {
         $estimate = Invoice::withoutGlobalScope(OrganizationScope::class)
             ->with([
@@ -43,7 +51,13 @@ class PublicViewController extends Controller
             ->where('type', 'estimate')
             ->firstOrFail();
 
-        return view('public.estimate', compact('estimate'));
+        $linkExpiresAt = $this->linkExpiry($request);
+
+        return view('public.estimate', [
+            'estimate' => $estimate,
+            'pdfUrl' => $estimate->sharePdfUrl($linkExpiresAt),
+            'linkExpiresAt' => $linkExpiresAt,
+        ]);
     }
 
     public function downloadInvoicePdf(string $ulid, PdfServiceInterface $pdfService): Response
@@ -80,5 +94,14 @@ class PublicViewController extends Controller
             ->firstOrFail();
 
         return $pdfService->downloadEstimatePdf($estimate);
+    }
+
+    /**
+     * When the link this page was opened with stops working. ValidateShareLink
+     * has already checked it is signed and still in date.
+     */
+    private function linkExpiry(Request $request): Carbon
+    {
+        return Carbon::createFromTimestamp((int) $request->query('expires'));
     }
 }

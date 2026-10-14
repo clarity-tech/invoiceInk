@@ -160,25 +160,25 @@ it('captures public document views', function () {
 
     // Public invoice view — paid
     $paid = $data['invoices']['paid'];
-    $this->visit("/invoices/view/{$paid->ulid}")
+    $this->visit(sharePath($paid))
         ->assertSee($paid->invoice_number)
         ->screenshot(fullPage: true, filename: 'journeys/07-public-views/01-public-invoice-paid');
 
     // Public invoice view — sent (with due date)
     $sent = $data['invoices']['sent'];
-    $this->visit("/invoices/view/{$sent->ulid}")
+    $this->visit(sharePath($sent))
         ->assertSee($sent->invoice_number)
         ->screenshot(fullPage: true, filename: 'journeys/07-public-views/02-public-invoice-sent');
 
     // Public invoice view — overdue
     $overdue = $data['invoices']['overdue'];
-    $this->visit("/invoices/view/{$overdue->ulid}")
+    $this->visit(sharePath($overdue))
         ->assertSee($overdue->invoice_number)
         ->screenshot(fullPage: true, filename: 'journeys/07-public-views/03-public-invoice-overdue');
 
     // Public estimate view
     $estimate = $data['estimates']['sent'];
-    $this->visit("/estimates/view/{$estimate->ulid}")
+    $this->visit(sharePath($estimate))
         ->assertSee($estimate->invoice_number)
         ->screenshot(fullPage: true, filename: 'journeys/07-public-views/04-public-estimate');
 });

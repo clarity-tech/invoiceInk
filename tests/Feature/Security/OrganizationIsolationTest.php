@@ -353,18 +353,23 @@ test('removed team member cannot access former organizations data via policy', f
 | Public Document Access Tests
 |--------------------------------------------------------------------------
 |
-| Verify that public ULID routes work without authentication and that
-| invalid ULIDs are rejected.
+| Verify that a share link opens a document without authentication, that
+| the ULID alone does not, and that invalid ULIDs are rejected.
 |
 */
 
-test('public invoice is accessible without authentication via ULID', function () {
-    $response = $this->get(route('invoices.public', $this->invoiceA->ulid));
+test('public invoice is accessible without authentication via its share link', function () {
+    $response = $this->get($this->invoiceA->shareUrl());
 
     $response->assertStatus(200);
 });
 
-test('public estimate is accessible without authentication via ULID', function () {
+test('public invoice is not accessible by its ULID alone', function () {
+    $this->get(route('invoices.public', $this->invoiceA->ulid))->assertForbidden();
+    $this->get(route('invoices.pdf', $this->invoiceA->ulid))->assertForbidden();
+});
+
+test('public estimate is accessible without authentication via its share link', function () {
     $estimate = createInvoiceWithItems(
         ['type' => 'estimate', 'invoice_number' => 'EST-'.uniqid()],
         null,
@@ -372,7 +377,7 @@ test('public estimate is accessible without authentication via ULID', function (
         $this->customerA,
     );
 
-    $response = $this->get(route('estimates.public', $estimate->ulid));
+    $response = $this->get($estimate->shareUrl());
 
     $response->assertStatus(200);
 });

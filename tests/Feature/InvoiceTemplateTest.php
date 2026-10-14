@@ -32,7 +32,7 @@ test('public invoice template renders with all new elements', function () {
         'order_number' => 'PO-2026-4471',
     ], null, $organization, $customer);
 
-    $response = $this->get(route('invoices.public', $invoice->ulid));
+    $response = $this->get($invoice->shareUrl());
 
     $response->assertStatus(200);
     $response->assertSee('TAX INVOICE');
@@ -62,7 +62,7 @@ test('public invoice template renders INVOICE header when no GSTIN', function ()
         'type' => 'invoice',
     ], null, $organization, $customer);
 
-    $response = $this->get(route('invoices.public', $invoice->ulid));
+    $response = $this->get($invoice->shareUrl());
 
     $response->assertStatus(200);
     $response->assertSee('INVOICE');
@@ -87,7 +87,7 @@ test('public invoice renders TRN label for UAE organization location', function 
         'type' => 'invoice',
     ], null, $organization, $customer);
 
-    $response = $this->get(route('invoices.public', $invoice->ulid));
+    $response = $this->get($invoice->shareUrl());
 
     $response->assertStatus(200);
     $response->assertSee('TRN 100123456700003', false);
@@ -110,7 +110,7 @@ test('public invoice does not show TAX INVOICE header for non-Indian organizatio
         'type' => 'invoice',
     ], null, $organization, $customer);
 
-    $response = $this->get(route('invoices.public', $invoice->ulid));
+    $response = $this->get($invoice->shareUrl());
 
     $response->assertStatus(200);
     $response->assertSee('INVOICE');
@@ -134,7 +134,7 @@ test('public invoice hides Place of Supply for non-Indian customer', function ()
         'type' => 'invoice',
     ], null, $organization, $customer);
 
-    $response = $this->get(route('invoices.public', $invoice->ulid));
+    $response = $this->get($invoice->shareUrl());
 
     $response->assertStatus(200);
     $response->assertDontSee('Place of Supply');
@@ -149,7 +149,7 @@ test('public invoice template hides bank details when not configured', function 
         'type' => 'invoice',
     ], null, $organization, $customer);
 
-    $response = $this->get(route('invoices.public', $invoice->ulid));
+    $response = $this->get($invoice->shareUrl());
 
     $response->assertStatus(200);
     $response->assertDontSee('Account No:');
@@ -164,7 +164,7 @@ test('public invoice template renders tax breakdown when available', function ()
         'tax_breakdown' => ['CGST (9%)' => 900, 'SGST (9%)' => 900],
     ], null, $organization, $customer);
 
-    $response = $this->get(route('invoices.public', $invoice->ulid));
+    $response = $this->get($invoice->shareUrl());
 
     $response->assertStatus(200);
     $response->assertSee('CGST (9%)');
@@ -180,7 +180,7 @@ test('public estimate template renders with Zoho style', function () {
         'terms' => 'Valid for 30 days',
     ], null, $organization, $customer);
 
-    $response = $this->get(route('estimates.public', $estimate->ulid));
+    $response = $this->get($estimate->shareUrl());
 
     $response->assertStatus(200);
     $response->assertSee('ESTIMATE');
@@ -202,7 +202,7 @@ test('total in words displays correctly for INR invoice', function () {
         'currency' => 'INR',
     ], null, $organization, $customer);
 
-    $response = $this->get(route('invoices.public', $invoice->ulid));
+    $response = $this->get($invoice->shareUrl());
 
     $response->assertStatus(200);
     $response->assertSee('Indian Rupee Forty-Seven Thousand Two Hundred Only');
@@ -217,7 +217,7 @@ test('the band overlays the document without moving it', function () {
     $customer = createCustomerWithLocation([], [], $organization);
     $invoice = createInvoiceWithItems(['status' => 'draft'], null, $organization, $customer);
 
-    expect(view('public.invoice', ['invoice' => $invoice])->render())
+    expect(view('public.invoice', ['invoice' => $invoice, 'pdfUrl' => $invoice->sharePdfUrl(now()->addDay()), 'linkExpiresAt' => now()->addDay()])->render())
         ->toContain('<div class="doc-ribbon no-print')
         ->not->toContain('.doc-header > div:first-child');
 });
@@ -231,7 +231,7 @@ test('every status is drawn as a band on the preview, coloured by what the statu
         // Reassigned rather than re-created: only the rendered status varies.
         $invoice->status = $status;
 
-        expect(view('public.invoice', ['invoice' => $invoice])->render())
+        expect(view('public.invoice', ['invoice' => $invoice, 'pdfUrl' => $invoice->sharePdfUrl(now()->addDay()), 'linkExpiresAt' => now()->addDay()])->render())
             ->toContain('<div class="doc-ribbon no-print doc-ribbon-'.$status->color().'">')
             ->toContain('<span>'.$status->label().'</span>');
     }
@@ -262,7 +262,7 @@ test('the public page frames the document with the sender, the balance and the a
         'due_at' => now()->addDays(10),
     ], null, $organization, $customer);
 
-    $response = $this->get(route('invoices.public', $invoice->ulid));
+    $response = $this->get($invoice->shareUrl());
     $response->assertStatus(200);
 
     // Scoped to the chrome: the number, the balance and the date all appear in
@@ -293,10 +293,10 @@ test('the chrome names the sender exactly as the document does', function () {
     $customer = createCustomerWithLocation([], [], $organization);
     $invoice = createInvoiceWithItems([], null, $organization, $customer);
 
-    $html = view('public.invoice', ['invoice' => $invoice])->render();
+    $html = view('public.invoice', ['invoice' => $invoice, 'pdfUrl' => $invoice->sharePdfUrl(now()->addDay()), 'linkExpiresAt' => now()->addDay()])->render();
 
     expect($html)
-        ->toContain('<div class="doc-chrome-inner">Clarity Technologies Private Limited</div>')
+        ->toContain('<span class="doc-sender">Clarity Technologies Private Limited</span>')
         ->toContain('<div class="company-name">Clarity Technologies Private Limited</div>');
 });
 
@@ -324,7 +324,7 @@ test('the page keeps a linked platform lockup along the bottom of the window', f
     $customer = createCustomerWithLocation([], [], $organization);
     $invoice = createInvoiceWithItems([], null, $organization, $customer);
 
-    $html = view('public.invoice', ['invoice' => $invoice])->render();
+    $html = view('public.invoice', ['invoice' => $invoice, 'pdfUrl' => $invoice->sharePdfUrl(now()->addDay()), 'linkExpiresAt' => now()->addDay()])->render();
 
     preg_match('/<div class="doc-pagefoot.*?<\/div>\s*<\/div>/s', $html, $matches);
     $footer = $matches[0] ?? '';

@@ -483,9 +483,10 @@ it('links to the public view of the document', function () {
     visit("/invoices/{$estimate->id}")
         ->assertNoJavaScriptErrors()
         ->assertSee('View public')
-        // An estimate's public view lives under /estimates, not /invoices.
+        // An estimate's public view lives under /estimates, not /invoices, and
+        // is a signed link rather than the bare ULID.
         ->assertScript(
-            "function() { return document.querySelector('a[href=\"/estimates/view/{$estimate->ulid}\"]') !== null; }",
+            "function() { return document.querySelector('a[href*=\"/estimates/view/{$estimate->ulid}?expires=\"][href*=\"&signature=\"]') !== null; }",
         );
 });
 

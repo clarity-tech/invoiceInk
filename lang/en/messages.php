@@ -122,6 +122,14 @@ return [
         'maintenance_mode' => 'The application is currently under maintenance. Please try again later.',
     ],
 
+    'share_link' => [
+        'expired_title' => 'This link has expired',
+        'expired_body' => 'The link to :document :number from :organization is no longer active.',
+        'expired_help' => 'Ask :organization to send it again, and the new email will carry a link that works.',
+        'expired_contact' => 'Email :email',
+        'works_until' => 'This link works until :date.',
+    ],
+
     'footer' => [
         'computer_generated_invoice' => 'This is a computer-generated invoice. No signature required.',
         'computer_generated_estimate' => 'This is a computer-generated estimate. Valid until the specified date.',

@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
     makeInvoice,
@@ -66,6 +66,10 @@ vi.mock('@inertiajs/vue3', () => ({
 
 import Edit from '@/Pages/Invoices/Edit.vue';
 
+// Minted and signed by the server; the page only passes it on.
+const SHARE_URL =
+    'https://invoiceink.test/invoices/view/abc123?expires=1767225600&signature=abc';
+
 function mountComponent(propsOverride = {}) {
     return mount(Edit, {
         props: {
@@ -77,6 +81,10 @@ function mountComponent(propsOverride = {}) {
             statusOptions: { draft: 'Draft', sent: 'Sent', paid: 'Paid' },
             taxLabels: { IN: 'GSTIN', US: 'EIN' },
             attachments: [],
+            shareLink: {
+                url: SHARE_URL,
+                expires_at: '2026-11-13T10:00:00+05:30',
+            },
             indianStates: {},
             ...propsOverride,
         },
@@ -277,7 +285,7 @@ describe('Invoices/Edit', () => {
     });
 
     describe('document actions in the header', () => {
-        it('links to the public view and the PDF', () => {
+        it('links to the signed share link and the signed-in PDF download', () => {
             const wrapper = mountComponent({
                 invoice: makeInvoice({
                     id: 7,
@@ -290,11 +298,13 @@ describe('Invoices/Edit', () => {
             expect(wrapper.text()).toContain('Download PDF');
 
             const hrefs = wrapper.findAll('a').map((a) => a.attributes('href'));
-            expect(hrefs).toContain('/invoices/view/abc123');
-            expect(hrefs).toContain('/invoices/abc123/pdf');
+            expect(hrefs).toContain(SHARE_URL);
+            expect(hrefs).toContain('/invoices/7/download');
         });
 
-        it('uses the estimate paths for an estimate', () => {
+        // The public PDF route now needs a signed link, so the page must not
+        // build one from the ULID; an estimate downloads like an invoice.
+        it('downloads an estimate through the same signed-in route', () => {
             const wrapper = mountComponent({
                 invoice: makeInvoice({
                     id: 7,
@@ -304,8 +314,53 @@ describe('Invoices/Edit', () => {
             });
 
             const hrefs = wrapper.findAll('a').map((a) => a.attributes('href'));
-            expect(hrefs).toContain('/estimates/view/abc123');
-            expect(hrefs).toContain('/estimates/abc123/pdf');
+            expect(hrefs).toContain('/invoices/7/download');
+            expect(hrefs.some((href) => href?.includes('abc123/pdf'))).toBe(
+                false,
+            );
+        });
+
+        describe('copying the share link', () => {
+            function stubClipboard(writeText: (text: string) => Promise<void>) {
+                Object.defineProperty(navigator, 'clipboard', {
+                    value: { writeText },
+                    configurable: true,
+                });
+            }
+
+            async function clickCopy(
+                wrapper: ReturnType<typeof mountComponent>,
+            ) {
+                const button = wrapper
+                    .findAll('button')
+                    .find((b) => b.text() === 'Copy link');
+                await button!.trigger('click');
+                await flushPromises();
+            }
+
+            it('copies the link and says how long it works', async () => {
+                const writeText = vi.fn().mockResolvedValue(undefined);
+                stubClipboard(writeText);
+                const wrapper = mountComponent();
+
+                await clickCopy(wrapper);
+
+                expect(writeText).toHaveBeenCalledWith(SHARE_URL);
+                expect(wrapper.find('[role="status"]').text()).toBe(
+                    'Link copied. It works until 13 Nov 2026.',
+                );
+            });
+
+            it('says where to find the link when the browser will not copy', async () => {
+                stubClipboard(vi.fn().mockRejectedValue(new Error('denied')));
+                const wrapper = mountComponent();
+
+                await clickCopy(wrapper);
+
+                expect(wrapper.find('[role="status"]').text()).toBe(
+                    'Could not copy. Open View public and copy its address instead.',
+                );
+            });
         });
 
         // An estimate has no payments, so the card that would hold them -- and

@@ -98,7 +98,7 @@ class DocumentMailer extends Mailable
         $html = view('emails.custom-document', [
             'customBody' => $body,
             'invoice' => $this->invoice,
-            'viewUrl' => $this->getPublicViewUrl(),
+            'shareLink' => $this->invoice->shareLink(),
             'includeViewOnlineButton' => $this->includeViewOnlineButton,
         ])->render();
 
@@ -138,12 +138,5 @@ class DocumentMailer extends Mailable
 
         return app(EmailTemplateService::class)
             ->render($this->invoice, $type)['body'];
-    }
-
-    private function getPublicViewUrl(): string
-    {
-        $routeName = $this->invoice->isInvoice() ? 'invoices.public' : 'estimates.public';
-
-        return route($routeName, $this->invoice->ulid);
     }
 }

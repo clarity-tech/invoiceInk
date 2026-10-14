@@ -38,7 +38,7 @@ it('dashboard has no javascript errors for authenticated users', function () {
 it('public invoice view has no javascript errors', function () {
     $invoice = createInvoiceWithItems(['invoice_number' => 'INV-A11Y-001']);
 
-    $page = $this->visit("/invoices/view/{$invoice->ulid}");
+    $page = $this->visit(sharePath($invoice));
 
     $page->assertNoJavascriptErrors();
 });

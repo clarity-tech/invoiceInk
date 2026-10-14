@@ -37,11 +37,14 @@ import type {
     Invoice,
     InvoiceAttachment,
     Location,
+    ShareLink,
 } from '@/types';
 
 const props = defineProps<{
     invoice: Invoice;
     attachments: InvoiceAttachment[];
+    shareLink: ShareLink;
+    shareLinkDays: number;
     hasShippingAddress: boolean;
     paymentTermsLabel: string | null;
     placeOfSupplyLabel: string | null;
@@ -348,7 +351,10 @@ function deletePayment() {
                         Details before, which is a list of facts about the
                         document; opening it is something you do with it.
                     -->
-                    <DocumentOpenActions :invoice="invoice" />
+                    <DocumentOpenActions
+                        :invoice="invoice"
+                        :share-link="shareLink"
+                    />
                 </div>
             </div>
         </template>
@@ -886,6 +892,16 @@ function deletePayment() {
                                     </Badge>
                                 </li>
                             </ul>
+                            <!--
+                                What a sent link is good for, said once for
+                                the card: a send does not record whether its
+                                email carried a link, so a date on each row
+                                would be a guess.
+                            -->
+                            <p class="mt-4 text-xs text-muted-foreground">
+                                Links in these emails work for
+                                {{ shareLinkDays }} days after sending.
+                            </p>
                         </CardContent>
                     </Card>
 

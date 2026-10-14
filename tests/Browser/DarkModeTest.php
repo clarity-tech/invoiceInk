@@ -195,14 +195,14 @@ it('offers the switch on the signed-out pages', function () {
 it('offers the switch on the shared invoice', function () {
     $invoice = createInvoiceWithItems(['status' => 'sent']);
 
-    $page = visit("/invoices/view/{$invoice->ulid}")->inDarkMode();
+    $page = visit(sharePath($invoice))->inDarkMode();
     $page->assertAttribute('[data-appearance-switch]', 'aria-pressed', 'true')
         ->click('[data-appearance-switch]')
         ->assertScript(IS_DARK, false)
         ->assertAttribute('[data-appearance-switch]', 'aria-pressed', 'false');
 
     // Stored, so the page no longer follows the dark system.
-    $page->navigate("/invoices/view/{$invoice->ulid}")->assertScript(IS_DARK, false);
+    $page->navigate(sharePath($invoice))->assertScript(IS_DARK, false);
 });
 
 it('carries the choice to the signed-out pages', function () {
@@ -235,7 +235,7 @@ it('darkens the page around the shared document but not the document', function 
     // The document is the sheet that prints and becomes the PDF, so it looks
     // the same in both themes; only the page around it follows dark mode.
     $document = createInvoiceWithItems(['type' => $type, 'status' => 'sent']);
-    $url = "/{$type}s/view/{$document->ulid}";
+    $url = sharePath($document);
 
     $light = visit($url)->inLightMode()->script(SHARED_PAGE_COLOURS);
     $page = visit($url)->inDarkMode();
@@ -259,7 +259,7 @@ it('carries a choice made in the app to the shared invoice', function () {
 
     $page = chooseAppearance(visit('/dashboard')->inDarkMode(), 'light');
 
-    $page->navigate("/invoices/view/{$invoice->ulid}")->assertScript(IS_DARK, false);
+    $page->navigate(sharePath($invoice))->assertScript(IS_DARK, false);
 });
 
 /**
@@ -441,7 +441,7 @@ it('keeps the signed-out pages legible in dark mode', function (string $path) {
 it('keeps the page around the shared invoice legible on a phone in dark mode', function () {
     $invoice = createInvoiceWithItems(['status' => 'sent']);
 
-    $page = visit("/invoices/view/{$invoice->ulid}")->on()->mobile()->inDarkMode();
+    $page = visit(sharePath($invoice))->on()->mobile()->inDarkMode();
 
     $page->assertScript(IS_DARK, true);
     assertNoContrastFailures($page, [SHARED_DOCUMENT]);

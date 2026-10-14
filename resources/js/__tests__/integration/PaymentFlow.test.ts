@@ -126,6 +126,10 @@ function mountEdit(invoiceOverrides = {}, propsOverride = {}) {
             statusOptions: { draft: 'Draft', sent: 'Sent', paid: 'Paid' },
             taxLabels: { IN: 'GSTIN', US: 'EIN' },
             attachments: [],
+            shareLink: {
+                url: 'https://invoiceink.test/invoices/view/abc123?expires=1&signature=abc',
+                expires_at: '2026-11-13T10:00:00+00:00',
+            },
             indianStates: {},
             ...propsOverride,
         },

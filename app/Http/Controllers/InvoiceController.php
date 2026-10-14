@@ -135,6 +135,11 @@ class InvoiceController extends Controller
                     ->all(),
             ]),
             'attachments' => $invoice->attachmentsForDisplay(),
+            // Signed and expiring, so it is minted here rather than built from
+            // the ULID in the browser. The lifetime is for the email history,
+            // which says how long the links it sent last.
+            'shareLink' => $invoice->shareLink()->toArray(),
+            'shareLinkDays' => config('app.share_link_days'),
             // Model methods rather than attributes, so they do not survive
             // toArray() and have to be passed explicitly.
             //
@@ -487,6 +492,7 @@ class InvoiceController extends Controller
         return Inertia::render('Invoices/Edit', [
             'invoice' => $invoice,
             'attachments' => $invoice->attachmentsForDisplay(),
+            'shareLink' => $invoice->shareLink()->toArray(),
             'customers' => $customers,
             'organizationLocations' => $organizationLocations,
             'taxOptions' => $taxOptions,

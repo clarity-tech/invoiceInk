@@ -5,6 +5,9 @@
         $document       - Invoice model instance
         $isInvoice      - bool (true = invoice, false = estimate)
         $isPdf          - bool (true = PDF render, false = public web view)
+        $pdfUrl         - signed link to the PDF, web view only; it expires with
+                          the link the page was opened by
+        $linkExpiresAt  - when that link stops working, web view only
 
     In dark mode the web view darkens the page around the document, never the
     document itself; the PDF and a printed web view are the same light sheet.
@@ -46,14 +49,12 @@
         $balanceLabel = __('documents.financial.balance_due');
         $numberLabel = __('documents.fields.invoice_number');
         $footerMessage = __('messages.footer.computer_generated_invoice');
-        $pdfRoute = route('invoices.pdf', $document->ulid);
         $printLabel = __('actions.buttons.print_invoice');
     } else {
         $headerTitle = __('documents.headers.estimate_upper');
         $balanceLabel = __('documents.financial.estimated_total');
         $numberLabel = __('documents.fields.estimate_number');
         $footerMessage = __('messages.footer.computer_generated_estimate');
-        $pdfRoute = route('estimates.pdf', $document->ulid);
         $printLabel = __('actions.buttons.print_estimate');
     }
 
@@ -238,10 +239,21 @@
         }
         .doc-brandbar .doc-chrome-inner {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
+            column-gap: 16px;
             min-height: 56px;
             font-size: 17px;
             font-weight: 700;
+        }
+        /* How long the recipient can come back to this page. Chrome rather
+           than document, and set beside the sender rather than among the
+           figures, so it is not read as a second due date. */
+        .doc-link-expiry {
+            margin-left: auto;
+            font-size: 12px;
+            font-weight: 400;
+            opacity: 0.85;
         }
         .doc-summary {
             background: var(--card);
@@ -669,6 +681,7 @@
             .doc-chrome { position: static; }
             .doc-chrome-inner { padding: 0 12px; }
             .doc-brandbar .doc-chrome-inner { min-height: 48px; font-size: 15px; }
+            .doc-link-expiry { flex-basis: 100%; margin: -6px 0 0; padding-bottom: 10px; }
             /* Too little width for one row, so it breaks where it reads best:
                the figure and the two actions keep the first line, and the
                number and date drop underneath them together. */
@@ -707,7 +720,10 @@
          sheet instead of sitting on it. --}}
     <div class="doc-chrome no-print">
         <div class="doc-brandbar">
-            <div class="doc-chrome-inner">{{ $senderName }}</div>
+            <div class="doc-chrome-inner">
+                <span class="doc-sender">{{ $senderName }}</span>
+                <span class="doc-link-expiry">{{ __('messages.share_link.works_until', ['date' => $linkExpiresAt->format('j M Y')]) }}</span>
+            </div>
         </div>
         <div class="doc-summary">
             <div class="doc-chrome-inner">
@@ -738,7 +754,7 @@
                     <button type="button" onclick="window.print()" class="icon-btn" title="{{ $printLabel }}" aria-label="{{ $printLabel }}">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                     </button>
-                    <a href="{{ $pdfRoute }}" class="icon-btn" title="{{ __('actions.buttons.download_pdf') }}" aria-label="{{ __('actions.buttons.download_pdf') }}">
+                    <a href="{{ $pdfUrl }}" class="icon-btn" title="{{ __('actions.buttons.download_pdf') }}" aria-label="{{ __('actions.buttons.download_pdf') }}">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     </a>
                 </div>

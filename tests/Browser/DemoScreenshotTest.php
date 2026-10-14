@@ -274,13 +274,13 @@ it('captures public document view screenshots', function () {
 
     // Public invoice view (the sent invoice has realistic data)
     $invoice = $data['invoices']['sent'];
-    $this->visit("/invoices/view/{$invoice->ulid}")
+    $this->visit(sharePath($invoice))
         ->assertSee($invoice->invoice_number)
         ->screenshot(fullPage: true, filename: 'demo/10-public-invoice');
 
     // Public estimate view
     $estimate = $data['estimates']['sent'];
-    $this->visit("/estimates/view/{$estimate->ulid}")
+    $this->visit(sharePath($estimate))
         ->assertSee($estimate->invoice_number)
         ->screenshot(fullPage: true, filename: 'demo/11-public-estimate');
 });

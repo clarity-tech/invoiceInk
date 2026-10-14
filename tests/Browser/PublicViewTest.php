@@ -3,7 +3,7 @@
 it('loads public invoice view without authentication', function () {
     $invoice = createInvoiceWithItems(['invoice_number' => 'INV-PUB-VIEW-001']);
 
-    $page = $this->visit("/invoices/view/{$invoice->ulid}");
+    $page = $this->visit(sharePath($invoice));
 
     $page->assertSee('INV-PUB-VIEW-001')
         ->assertNoJavascriptErrors();
@@ -15,7 +15,7 @@ it('loads public estimate view without authentication', function () {
         'invoice_number' => 'EST-PUB-VIEW-001',
     ]);
 
-    $page = $this->visit("/estimates/view/{$estimate->ulid}");
+    $page = $this->visit(sharePath($estimate));
 
     $page->assertSee('EST-PUB-VIEW-001')
         ->assertNoJavascriptErrors();
@@ -26,7 +26,7 @@ it('shows correct invoice data on public view', function () {
         'invoice_number' => 'INV-PUB-DATA-001',
     ]);
 
-    $page = $this->visit("/invoices/view/{$invoice->ulid}");
+    $page = $this->visit(sharePath($invoice));
 
     $page->assertSee('INV-PUB-DATA-001')
         ->assertSee($invoice->customer->name);

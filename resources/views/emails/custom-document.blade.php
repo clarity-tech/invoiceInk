@@ -173,6 +173,15 @@
             background-color: #6d28d9;
         }
 
+        /* Pulled up under the button's own bottom margin, so it reads as the
+           button's caption rather than a paragraph of its own. */
+        .cta-note {
+            margin: -13px 0 0 0;
+            color: #6b7280;
+            font-size: 12px;
+            text-align: center;
+        }
+
         .footer {
             margin-top: 32px;
             padding-top: 14px;
@@ -293,6 +302,10 @@
                 background-color: #8b5cf6 !important;
             }
 
+            .cta-note {
+                color: #9ca3af !important;
+            }
+
             .footer {
                 border-top-color: #333333 !important;
                 color: #9ca3af !important;
@@ -335,9 +348,10 @@
 
                             @if($includeViewOnlineButton)
                             <div class="cta-wrapper">
-                                <a href="{{ $viewUrl }}" class="cta-button">
+                                <a href="{{ $shareLink->url }}" class="cta-button">
                                     View {{ ucfirst($invoice->type) }} Online
                                 </a>
+                                <p class="cta-note">{{ __('messages.share_link.works_until', ['date' => $shareLink->expiresAt->format('j M Y')]) }}</p>
                             </div>
                             @endif
 

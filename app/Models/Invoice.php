@@ -8,6 +8,8 @@ use App\Currency;
 use App\Enums\IndianState;
 use App\Enums\InvoiceStatus;
 use App\Models\Scopes\OrganizationScope;
+use App\ValueObjects\ShareLink;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,6 +18,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\URL;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -133,6 +137,46 @@ class Invoice extends Model implements HasMedia
     public function isEstimate(): bool
     {
         return $this->type === 'estimate';
+    }
+
+    /**
+     * A link to this document that opens without signing in, until it expires.
+     *
+     * The signature covers the path and the expiry but not the host, because a
+     * link is minted on one origin and opened on another: emails render on the
+     * queue worker, and every visit arrives through the Cloudflare Worker.
+     */
+    public function shareLink(?DateTimeInterface $expiresAt = null): ShareLink
+    {
+        $expiresAt = Carbon::instance($expiresAt ?? now()->addDays(config('app.share_link_days')));
+
+        return new ShareLink(
+            $this->signedUrl($this->isInvoice() ? 'invoices.public' : 'estimates.public', $expiresAt),
+            $expiresAt,
+        );
+    }
+
+    /**
+     * Just the address of shareLink(), for where the expiry is not shown.
+     */
+    public function shareUrl(?DateTimeInterface $expiresAt = null): string
+    {
+        return $this->shareLink($expiresAt)->url;
+    }
+
+    /**
+     * The PDF of this document by the same kind of link. The public page passes
+     * the expiry of the link it was opened with, so the download cannot be used
+     * to outlive it.
+     */
+    public function sharePdfUrl(DateTimeInterface $expiresAt): string
+    {
+        return $this->signedUrl($this->isInvoice() ? 'invoices.pdf' : 'estimates.pdf', $expiresAt);
+    }
+
+    private function signedUrl(string $route, DateTimeInterface $expiresAt): string
+    {
+        return url(URL::temporarySignedRoute($route, $expiresAt, ['ulid' => $this->ulid], absolute: false));
     }
 
     public function typeLabel(): string

@@ -36,7 +36,7 @@ it('draws the status as a corner ribbon on the public document', function (strin
         'currency' => 'INR',
     ], null, $org, $customer);
 
-    $page = visit("/invoices/view/{$invoice->ulid}")->resize(1100, 900);
+    $page = visit(sharePath($invoice))->resize(1100, 900);
 
     $page->assertNoJavaScriptErrors()
         ->assertSee($label)

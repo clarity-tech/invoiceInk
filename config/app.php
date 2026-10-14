@@ -75,6 +75,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Share Link Lifetime
+    |--------------------------------------------------------------------------
+    |
+    | How many days a link to an invoice or estimate keeps working for someone
+    | who is not signed in. Every link is signed and carries its expiry, so a
+    | bare ULID opens nothing. Each email mints a new link, reminders included,
+    | so a customer who is still being chased always holds a working one.
+    |
+    */
+
+    'share_link_days' => (int) env('SHARE_LINK_DAYS', 30),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

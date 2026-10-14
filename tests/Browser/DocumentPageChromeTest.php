@@ -33,7 +33,7 @@ it('frames the document with chrome that stays put while the document scrolls', 
         'due_at' => now()->addDays(10),
     ], null, $org, $customer);
 
-    $page = visit("/invoices/view/{$invoice->ulid}")->resize(1280, 900);
+    $page = visit(sharePath($invoice))->resize(1280, 900);
 
     $page->assertNoJavaScriptErrors()
         ->assertSee('Clarity Technologies')
@@ -41,7 +41,7 @@ it('frames the document with chrome that stays put while the document scrolls', 
         // One sender, named once. The bar and the document's own header have
         // to agree, or the page shows a recipient two company names.
         ->assertScript(
-            'function() { var bar = document.querySelector(".doc-brandbar .doc-chrome-inner").textContent.trim(); var doc = document.querySelector(".company-name").textContent.trim(); return bar === doc ? "agree" : bar + " != " + doc; }',
+            'function() { var bar = document.querySelector(".doc-brandbar .doc-sender").textContent.trim(); var doc = document.querySelector(".company-name").textContent.trim(); return bar === doc ? "agree" : bar + " != " + doc; }',
             'agree',
         )
         // The chrome shares the sheet's column, so it frames the document
@@ -66,13 +66,13 @@ it('frames the document with chrome that stays put while the document scrolls', 
     // Screenshots are taken on a viewport tall enough to hold the whole page.
     // A full-page capture of a shorter one freezes the sticky chrome at its
     // pinned position, which lands it halfway down the image.
-    visit("/invoices/view/{$invoice->ulid}")
+    visit(sharePath($invoice))
         ->resize(1280, 1500)
         ->screenshot(filename: 'layout/document-page-chrome-desktop');
 
     // Narrow: the figures and the actions share the width -- wrapping onto a
     // second line if they must -- rather than pushing the page sideways.
-    visit("/invoices/view/{$invoice->ulid}")
+    visit(sharePath($invoice))
         ->resize(414, 900)
         ->assertSee('Clarity Technologies')
         ->assertScript(
@@ -94,7 +94,7 @@ it('frames the document with chrome that stays put while the document scrolls', 
             'sticky',
         );
 
-    visit("/invoices/view/{$invoice->ulid}")
+    visit(sharePath($invoice))
         ->resize(414, 1800)
         ->screenshot(filename: 'layout/document-page-chrome-mobile');
 });
@@ -110,7 +110,7 @@ it('keeps the chrome off the printed page', function () {
     $customer = createCustomerWithLocation([], [], $org);
     $invoice = createInvoiceWithItems([], null, $org, $customer);
 
-    visit("/invoices/view/{$invoice->ulid}")
+    visit(sharePath($invoice))
         ->assertScript(
             'function() { var chrome = document.querySelector(".doc-chrome").classList.contains("no-print"); var foot = document.querySelector(".doc-pagefoot").classList.contains("no-print"); return (chrome && foot) ? "hidden" : "prints"; }',
             'hidden',

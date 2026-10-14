@@ -168,6 +168,12 @@ export interface Invoice {
     deleted_at?: string | null;
 }
 
+/** A signed link to a document's public page, and when it stops working. */
+export interface ShareLink {
+    url: string;
+    expires_at: string;
+}
+
 export type EmailDeliveryStatus = 'queued' | 'sending' | 'sent' | 'failed';
 
 export interface EmailDelivery {

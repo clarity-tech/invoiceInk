@@ -311,3 +311,19 @@ if (! function_exists('seedInvoiceListFixture')) {
         return [$user, $organization, $customer];
     }
 }
+
+if (! function_exists('sharePath')) {
+    /**
+     * The path and query of a document's share link, without the host.
+     *
+     * The signature does not cover the host, and the browser plugin serves the
+     * app on a random port, so visit() needs the link relative to wherever the
+     * test is running.
+     */
+    function sharePath(Invoice $invoice): string
+    {
+        $url = $invoice->shareUrl();
+
+        return parse_url($url, PHP_URL_PATH).'?'.parse_url($url, PHP_URL_QUERY);
+    }
+}

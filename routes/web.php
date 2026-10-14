@@ -19,6 +19,7 @@ use App\Http\Controllers\TeamInvitationController;
 use App\Http\Controllers\TermsOfServiceController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Middleware\AuthenticateSession;
+use App\Http\Middleware\ValidateShareLink;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => auth()->check() ? redirect('/dashboard') : view('welcome'));
@@ -34,17 +35,22 @@ Route::get('/team-invitations/{invitation}', [TeamInvitationController::class, '
     ->middleware(['signed'])
     ->name('team-invitations.accept');
 
-// Public view routes for invoices and estimates (no authentication required, rate limited)
-Route::middleware('throttle:60,1')->group(function () {
+// Public view routes for invoices and estimates (no authentication required, rate limited).
+// Reached only by a signed, expiring link -- see Invoice::shareUrl().
+//
+// The ULID pattern is set before group() so it reaches the routes; chained after
+// it, as it used to be, it constrained nothing.
+Route::middleware(['throttle:60,1', ValidateShareLink::class])->where(['ulid' => '[0-9A-HJ-KM-NP-TV-Za-hj-km-np-tv-z]{26}'])->group(function () {
     Route::get('/invoices/view/{ulid}', [PublicViewController::class, 'showInvoice'])->name('invoices.public');
     Route::get('/estimates/view/{ulid}', [PublicViewController::class, 'showEstimate'])->name('estimates.public');
-})->where('ulid', '[0-9A-HJ-KM-NP-TV-Za-hj-km-np-tv-z]{26}');
+});
 
-// PDF download routes (no authentication required, stricter rate limit due to resource cost)
-Route::middleware('throttle:10,1')->group(function () {
+// PDF download routes (no authentication required, stricter rate limit due to resource cost).
+// Signed like the pages above; signed-in users download through invoices.download.
+Route::middleware(['throttle:10,1', ValidateShareLink::class])->where(['ulid' => '[0-9A-HJ-KM-NP-TV-Za-hj-km-np-tv-z]{26}'])->group(function () {
     Route::get('/invoices/{ulid}/pdf', [PublicViewController::class, 'downloadInvoicePdf'])->name('invoices.pdf');
     Route::get('/estimates/{ulid}/pdf', [PublicViewController::class, 'downloadEstimatePdf'])->name('estimates.pdf');
-})->where('ulid', '[0-9A-HJ-KM-NP-TV-Za-hj-km-np-tv-z]{26}');
+});
 
 // Protected application routes
 Route::middleware([

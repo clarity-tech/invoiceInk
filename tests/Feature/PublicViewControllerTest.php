@@ -7,6 +7,7 @@ use App\Models\Location;
 use App\Models\Organization;
 use App\Services\PdfService;
 use App\ValueObjects\ContactCollection;
+use Illuminate\Support\Facades\URL;
 
 beforeEach(function () {
     // Create test organization with location
@@ -73,7 +74,7 @@ test('can view public invoice page', function () {
         'tax_rate' => 18,
     ]);
 
-    $response = $this->get("/invoices/view/{$invoice->ulid}");
+    $response = $this->get($invoice->shareUrl());
 
     $response->assertStatus(200);
     $response->assertViewIs('public.invoice');
@@ -113,7 +114,7 @@ test('can view public estimate page', function () {
         'tax_rate' => 18,
     ]);
 
-    $response = $this->get("/estimates/view/{$estimate->ulid}");
+    $response = $this->get($estimate->shareUrl());
 
     $response->assertStatus(200);
     $response->assertViewIs('public.estimate');
@@ -155,7 +156,7 @@ test('returns 404 when accessing invoice with estimate ULID', function () {
         'total' => 3540,
     ]);
 
-    $response = $this->get("/invoices/view/{$estimate->ulid}");
+    $response = $this->get(URL::temporarySignedRoute('invoices.public', now()->addDay(), ['ulid' => $estimate->ulid], absolute: false));
 
     $response->assertStatus(404);
 });
@@ -177,7 +178,7 @@ test('returns 404 when accessing estimate with invoice ULID', function () {
         'total' => 4720,
     ]);
 
-    $response = $this->get("/estimates/view/{$invoice->ulid}");
+    $response = $this->get(URL::temporarySignedRoute('estimates.public', now()->addDay(), ['ulid' => $invoice->ulid], absolute: false));
 
     $response->assertStatus(404);
 });
@@ -199,7 +200,7 @@ test('public invoice page displays all address details', function () {
         'total' => 2360,
     ]);
 
-    $response = $this->get("/invoices/view/{$invoice->ulid}");
+    $response = $this->get($invoice->shareUrl());
 
     $response->assertStatus(200);
     $response->assertSee('123 Business Street');
@@ -249,7 +250,7 @@ test('public invoice page displays multiple items correctly', function () {
         'tax_rate' => 12,
     ]);
 
-    $response = $this->get("/invoices/view/{$invoice->ulid}");
+    $response = $this->get($invoice->shareUrl());
 
     $response->assertStatus(200);
     $response->assertSee('Web Development');
@@ -287,7 +288,7 @@ test('can download invoice PDF', function () {
             ]));
     });
 
-    $response = $this->get("/invoices/{$invoice->ulid}/pdf");
+    $response = $this->get($invoice->sharePdfUrl(now()->addDay()));
 
     $response->assertStatus(200);
     $response->assertHeader('Content-Type', 'application/pdf');
@@ -320,7 +321,7 @@ test('can download estimate PDF', function () {
             ]));
     });
 
-    $response = $this->get("/estimates/{$estimate->ulid}/pdf");
+    $response = $this->get($estimate->sharePdfUrl(now()->addDay()));
 
     $response->assertStatus(200);
     $response->assertHeader('Content-Type', 'application/pdf');

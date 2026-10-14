@@ -40,6 +40,7 @@ import type {
     TaxRateOption,
     InvoiceNumberingSeries,
     InvoiceAttachment,
+    ShareLink,
 } from '@/types';
 
 const props = defineProps<{
@@ -51,6 +52,7 @@ const props = defineProps<{
     statusOptions: Record<string, string>;
     taxLabels: Record<string, string>;
     attachments: InvoiceAttachment[];
+    shareLink: ShareLink;
     indianStates: Record<string, string>;
 }>();
 
@@ -164,7 +166,10 @@ function deletePayment() {
                     </span>
                 </div>
 
-                <DocumentOpenActions v-if="invoice.ulid" :invoice="invoice" />
+                <DocumentOpenActions
+                    :invoice="invoice"
+                    :share-link="shareLink"
+                />
             </div>
         </template>
 

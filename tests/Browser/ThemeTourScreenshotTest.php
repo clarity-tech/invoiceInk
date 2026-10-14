@@ -339,6 +339,6 @@ it('tours the empty states', function () {
 it('tours the public documents', function () {
     $data = seedTourData();
 
-    tourShot(tourVisit("/invoices/view/{$data['invoices']['sent']->ulid}"), '54-public-invoice');
-    tourShot(tourVisit("/estimates/view/{$data['estimates']['sent']->ulid}"), '55-public-estimate');
+    tourShot(tourVisit(sharePath($data['invoices']['sent'])), '54-public-invoice');
+    tourShot(tourVisit(sharePath($data['estimates']['sent'])), '55-public-estimate');
 });
