@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.16.0](https://github.com/clarity-tech/invoicing/compare/v1.15.2...v1.16.0) (2026-10-14)
+
+
+### Features
+
+* **mcp:** serve the MCP endpoint in production ([1ca95d2](https://github.com/clarity-tech/invoicing/commit/1ca95d258217bc92526e622ea9e3148994f69c63))
+
+
+### Build & CI
+
+* fix the Screenshots workflow's branch names and slow-page timeout ([#111](https://github.com/clarity-tech/invoicing/issues/111)) ([dc1d038](https://github.com/clarity-tech/invoicing/commit/dc1d038944f689148aa909b1c25f0e743d02a113))
+
 ## [1.15.2](https://github.com/clarity-tech/invoicing/compare/v1.15.1...v1.15.2) (2026-10-14)
 
 
