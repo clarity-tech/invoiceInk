@@ -30,7 +30,7 @@ on:
         options: [both, light, dark]
         default: both
       branch:
-        description: Branch to commit the screenshots to (screenshots, screenshots/... or screenshots-...)
+        description: Branch to commit the screenshots to (screenshots, or screenshots-something)
         required: true
         default: screenshots
 
@@ -67,8 +67,10 @@ jobs:
         run: |
           # The publish job pushes to this branch, so it must never be able
           # to name a real one. It only runs once this job has succeeded.
-          if [[ ! "$OUTPUT_BRANCH" =~ ^screenshots([/-][A-Za-z0-9._-]+)*$ || "$OUTPUT_BRANCH" == *..* ]]; then
-            echo "::error::The branch must be 'screenshots', or start with 'screenshots/' or 'screenshots-'."
+          # Not screenshots/...: git cannot hold that next to a `screenshots`
+          # branch, as one name would have to be a file and a folder at once.
+          if [[ ! "$OUTPUT_BRANCH" =~ ^screenshots(-[A-Za-z0-9._-]+)?$ || "$OUTPUT_BRANCH" == *..* ]]; then
+            echo "::error::The branch must be 'screenshots', or start with 'screenshots-'."
             exit 1
           fi
           case "$SCHEMES" in

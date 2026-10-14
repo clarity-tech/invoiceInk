@@ -137,6 +137,11 @@ beforeEach(function () {
         $this->markTestSkipped('Set THEME_TOUR=before|after to capture the theme tour.');
     }
 
+    // Pest allows a page 5s to load, and a fresh phone context on a CI runner,
+    // fetching its fonts, can take longer. The tour only takes pictures, so a
+    // slow page is not a failure. Set here so other runs keep the 5s.
+    pest()->browser()->timeout(15_000);
+
     // The same data and clock on every run, so two runs of the same code take
     // the same screenshots.
     fake()->seed(20261014);
