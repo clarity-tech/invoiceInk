@@ -143,7 +143,7 @@ function removeEmail(email: string) {
                 v-model="query"
                 type="email"
                 :placeholder="placeholder"
-                class="min-w-[200px] flex-1 border-none p-1 text-sm outline-none focus:ring-0"
+                class="min-w-[200px] flex-1 border-none p-1 text-sm outline-none focus:ring-0 pointer-coarse:text-base"
                 @focus="open = true"
                 @blur="onBlur"
                 @keydown.enter.prevent="addTyped"

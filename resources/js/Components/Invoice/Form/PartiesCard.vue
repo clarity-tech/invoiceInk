@@ -95,10 +95,14 @@ function locationLabel(loc: Location): string {
                 It used to hold a block of its own below, which cost 102px of
                 a 473px card to carry one select; sharing a row costs it only
                 the height of its own hint.
+
+                One column below 1024px. Three across an iPad in portrait left
+                each select about 235px, which cut a customer's name off a
+                third of the way in ("Riverbend Institute of Medical Sc").
             -->
             <div
                 class="grid gap-5"
-                :class="showPlaceOfSupply ? 'md:grid-cols-3' : 'md:grid-cols-2'"
+                :class="showPlaceOfSupply ? 'lg:grid-cols-3' : 'lg:grid-cols-2'"
             >
                 <Field
                     v-if="organizationLocations.length > 0"
@@ -170,7 +174,7 @@ function locationLabel(loc: Location): string {
                 -->
                 <Field
                     v-if="showPlaceOfSupply"
-                    class="md:col-start-1"
+                    class="lg:col-start-1"
                     label="Place of Supply"
                     :error="form.errors.place_of_supply"
                     :warning="

@@ -104,6 +104,14 @@ function errorFor(field: string): string | undefined {
 }
 
 /**
+ * An id per field, so each can carry a real label. The form also uses the
+ * description's to move focus into a line it has just added.
+ */
+function fieldId(field: string): string {
+    return `item-${props.index}-${field}`;
+}
+
+/**
  * The SAC code is a six-digit classification: set once, then only read. As a
  * second input under every description it cost each row the height of a field
  * nobody was editing, so it reads as a line of text and becomes an input when
@@ -120,9 +128,36 @@ async function editSac() {
 </script>
 
 <template>
-    <tr class="group align-top">
-        <td class="px-2 py-2">
+    <!--
+        A table row from 1024px up, a card below it. The same markup either
+        way -- restyled, not duplicated -- so there is one set of fields to
+        type into and every selector that finds them holds at any width.
+
+        Six columns did not fit below 1024px. On a 375px phone the description
+        was squeezed to 64px, a word to a line, and the price to 39px, where
+        75000 read as "75"; the tax select showed only its arrow. An iPad in
+        portrait still left the description 130-220px. The card gives the
+        description the whole width and sets the figures two to a row, four on
+        a tablet.
+    -->
+    <tr
+        class="group align-top max-lg:relative max-lg:grid max-lg:grid-cols-2 max-lg:gap-x-3 max-lg:gap-y-3 max-lg:px-5 max-lg:py-4 md:max-lg:grid-cols-4"
+    >
+        <td class="px-2 py-2 max-lg:col-span-full max-lg:p-0">
+            <!--
+                Each field's label is its column heading on the table, where it
+                stays for a screen reader only. A card has no headings, so there
+                it shows. The fields had no accessible name before this: only
+                the SAC code and the custom rate carried one.
+            -->
+            <label
+                :for="fieldId('description')"
+                class="text-xs font-medium text-muted-foreground max-lg:mb-1.5 max-lg:flex max-lg:min-h-10 max-lg:items-center max-lg:pr-12 lg:sr-only"
+            >
+                Item {{ index + 1 }}<span class="sr-only"> description</span>
+            </label>
             <Textarea
+                :id="fieldId('description')"
                 :model-value="item.description"
                 rows="1"
                 autosize
@@ -150,6 +185,7 @@ async function editSac() {
                     ref="sacInput"
                     :model-value="item.sac_code"
                     type="text"
+                    inputmode="numeric"
                     placeholder="6-digit code"
                     aria-label="SAC Code (optional)"
                     class="w-40 px-2 py-1 text-xs"
@@ -162,10 +198,15 @@ async function editSac() {
                         )
                     "
                 />
+                <!--
+                    20px tall under a mouse, which is fine for a mouse. A
+                    finger needs more, so a touch screen gets a taller target
+                    without the text growing with it.
+                -->
                 <button
                     v-else
                     type="button"
-                    class="inline-flex cursor-pointer items-center gap-1 rounded px-1 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                    class="inline-flex cursor-pointer items-center gap-1 rounded px-1 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground pointer-coarse:min-h-9 pointer-coarse:px-2"
                     :aria-label="
                         item.sac_code
                             ? `Edit SAC code for item ${index + 1}`
@@ -181,10 +222,26 @@ async function editSac() {
                 </button>
             </div>
         </td>
-        <td class="px-2 py-2">
+        <td class="px-2 py-2 max-lg:p-0">
+            <label
+                :for="fieldId('quantity')"
+                class="block text-xs font-medium text-muted-foreground max-lg:mb-1.5 lg:sr-only"
+            >
+                Qty
+            </label>
+            <!--
+                `inputmode` picks the keyboard: digits for a count, digits and
+                a decimal point for money. `type="number"` alone gives an
+                iPhone its full keyboard on the numbers page.
+
+                An empty field stays empty rather than snapping to 0, which
+                is what it did the moment it was cleared to type over.
+            -->
             <Input
-                :model-value="item.quantity"
+                :id="fieldId('quantity')"
+                :model-value="item.quantity || ''"
                 type="number"
+                inputmode="numeric"
                 min="1"
                 :class="[quietControlClasses, 'text-right']"
                 :aria-invalid="Boolean(errorFor('quantity')) || undefined"
@@ -202,17 +259,28 @@ async function editSac() {
                 {{ errorFor('quantity') }}
             </p>
         </td>
-        <td class="px-2 py-2">
+        <td class="px-2 py-2 max-lg:p-0">
+            <label
+                :for="fieldId('unit_price')"
+                class="block text-xs font-medium text-muted-foreground max-lg:mb-1.5 lg:sr-only"
+            >
+                Unit price
+            </label>
             <!--
                 No currency symbol per line. A document has one currency, named
                 in the Amount column and again in the totals, and repeating it
                 on every row cost a prefix whose left padding had to change
                 with the symbol's length -- 8px for a dollar, 12px for an AED.
+
+                A price of nothing shows the placeholder rather than a literal
+                0, so a new line is typed into rather than typed over.
             -->
             <div>
                 <Input
-                    :model-value="item.unit_price / 100"
+                    :id="fieldId('unit_price')"
+                    :model-value="item.unit_price ? item.unit_price / 100 : ''"
                     type="number"
+                    inputmode="decimal"
                     min="0"
                     step="0.01"
                     placeholder="0.00"
@@ -237,8 +305,15 @@ async function editSac() {
                 {{ errorFor('unit_price') }}
             </p>
         </td>
-        <td class="px-2 py-2">
+        <td class="px-2 py-2 max-lg:p-0">
+            <label
+                :for="fieldId('tax_rate')"
+                class="block text-xs font-medium text-muted-foreground max-lg:mb-1.5 lg:sr-only"
+            >
+                Tax rate
+            </label>
             <Select
+                :id="fieldId('tax_rate')"
                 :model-value="taxMode"
                 :class="quietControlClasses"
                 @change="
@@ -258,8 +333,9 @@ async function editSac() {
 
             <div v-if="showCustomRate" class="relative mt-2">
                 <Input
-                    :model-value="item.tax_rate / 100"
+                    :model-value="item.tax_rate ? item.tax_rate / 100 : ''"
                     type="number"
+                    inputmode="decimal"
                     min="0"
                     max="100"
                     step="0.01"
@@ -290,12 +366,26 @@ async function editSac() {
                 {{ errorFor('tax_rate') }}
             </p>
         </td>
-        <td class="px-2 py-2 text-right">
-            <span class="text-sm font-medium text-foreground">
+        <td class="px-2 py-2 text-right max-lg:p-0">
+            <!-- Not a field, so a caption rather than a label. -->
+            <span
+                class="block text-xs font-medium text-muted-foreground max-lg:mb-1.5 lg:hidden"
+            >
+                Amount
+            </span>
+            <span
+                class="text-sm font-medium text-foreground max-lg:flex max-lg:min-h-10 max-lg:items-center max-lg:justify-end"
+            >
                 {{ formatAmount(lineTotal, currency) }}
             </span>
         </td>
-        <td class="px-2 py-2 text-center">
+        <!--
+            Pinned to the card's top-right corner below 1024px, level with the
+            "Item 1" label, so it does not take a row of its own.
+        -->
+        <td
+            class="px-2 py-2 text-center max-lg:absolute max-lg:top-4 max-lg:right-3 max-lg:p-0"
+        >
             <!--
                 Hidden until the row is pointed at. A bare red glyph was the
                 loudest thing in the row, on every line of every invoice; even
@@ -311,7 +401,7 @@ async function editSac() {
                 type="button"
                 variant="ghost"
                 size="icon"
-                class="text-muted-foreground transition-opacity hover:text-destructive [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:focus-visible:opacity-100"
+                class="text-muted-foreground transition-opacity hover:text-destructive pointer-coarse:size-10 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:focus-visible:opacity-100"
                 :aria-label="`Remove item ${index + 1}`"
                 @click="emit('remove')"
             >

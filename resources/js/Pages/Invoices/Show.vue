@@ -267,8 +267,14 @@ function deletePayment() {
                 </BreadcrumbItem>
             </Breadcrumb>
 
+            <!--
+                The same floor as the edit page's row, so following Edit does
+                not move the shared buttons: there a status select stands where
+                this page has a badge. 44px on touch, where the select's 16px
+                text makes it 42px tall.
+            -->
             <div
-                class="mt-1 flex min-h-10 flex-wrap items-center justify-between gap-x-4 gap-y-2"
+                class="mt-1 flex min-h-10 flex-wrap items-center justify-between gap-x-4 gap-y-2 pointer-coarse:min-h-11"
             >
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <h1 class="text-lg font-semibold text-foreground">

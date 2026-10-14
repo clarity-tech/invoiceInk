@@ -138,9 +138,12 @@ function deletePayment() {
                 as it stands rather than changing it, so they belong up here
                 with the rest of the page's identity -- as the same component
                 the detail page uses, so the pair cannot drift apart again.
+
+                The row's floor matches the detail page's (see Show.vue), 44px
+                on touch, where the status select's 16px text makes it 42px.
             -->
             <div
-                class="mt-1 flex min-h-10 flex-wrap items-center justify-between gap-x-4 gap-y-2"
+                class="mt-1 flex min-h-10 flex-wrap items-center justify-between gap-x-4 gap-y-2 pointer-coarse:min-h-11"
             >
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <h2 class="text-lg font-semibold text-foreground">
@@ -257,8 +260,20 @@ function deletePayment() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Date</TableHead>
-                                    <TableHead>Method</TableHead>
-                                    <TableHead>Reference</TableHead>
+                                    <!--
+                                        Below 640px method and reference
+                                        fold under the date. Five columns
+                                        made the table 545px wide on a 375px
+                                        phone, with the amount -- the one
+                                        figure a payment is -- off the right
+                                        edge.
+                                    -->
+                                    <TableHead class="max-sm:hidden">
+                                        Method
+                                    </TableHead>
+                                    <TableHead class="max-sm:hidden">
+                                        Reference
+                                    </TableHead>
                                     <TableHead class="text-right">
                                         Amount
                                     </TableHead>
@@ -270,13 +285,27 @@ function deletePayment() {
                                     v-for="payment in invoice.payments"
                                     :key="payment.id"
                                 >
-                                    <TableCell class="whitespace-nowrap">
-                                        {{ formatDate(payment.payment_date) }}
+                                    <TableCell>
+                                        <div class="whitespace-nowrap">
+                                            {{
+                                                formatDate(payment.payment_date)
+                                            }}
+                                        </div>
+                                        <div
+                                            class="mt-0.5 text-xs text-muted-foreground sm:hidden"
+                                        >
+                                            {{ methodOf(payment) }} ·
+                                            {{ payment.reference ?? '—' }}
+                                        </div>
                                     </TableCell>
-                                    <TableCell class="text-muted-foreground">
+                                    <TableCell
+                                        class="text-muted-foreground max-sm:hidden"
+                                    >
                                         {{ methodOf(payment) }}
                                     </TableCell>
-                                    <TableCell class="text-muted-foreground">
+                                    <TableCell
+                                        class="text-muted-foreground max-sm:hidden"
+                                    >
                                         {{ payment.reference ?? '—' }}
                                     </TableCell>
                                     <TableCell

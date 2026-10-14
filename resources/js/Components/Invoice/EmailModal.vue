@@ -238,7 +238,7 @@ function send() {
                         <div class="flex flex-1 items-center gap-2">
                             <select
                                 v-model="selectedTemplateType"
-                                class="flex-1 rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
+                                class="flex-1 rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none pointer-coarse:text-base"
                             >
                                 <option
                                     v-for="(label, value) in templateTypes"
@@ -313,7 +313,7 @@ function send() {
                         <input
                             v-model="form.subject"
                             type="text"
-                            class="flex-1 rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
+                            class="flex-1 rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none pointer-coarse:text-base"
                         />
                     </div>
                     <p

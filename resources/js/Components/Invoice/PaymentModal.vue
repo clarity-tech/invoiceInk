@@ -135,9 +135,10 @@ function fmt(amount: number): string {
                         <input
                             :value="form.amount / 100"
                             type="number"
+                            inputmode="decimal"
                             min="0.01"
                             step="0.01"
-                            class="w-full rounded-md border border-input py-2 pr-3 pl-14 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
+                            class="w-full rounded-md border border-input py-2 pr-3 pl-14 text-sm focus:ring-2 focus:ring-ring focus:outline-none pointer-coarse:text-base"
                             @input="
                                 form.amount = Math.round(
                                     Number(
@@ -165,7 +166,7 @@ function fmt(amount: number): string {
                     <input
                         v-model="form.payment_date"
                         type="date"
-                        class="w-full rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
+                        class="w-full rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none pointer-coarse:text-base"
                     />
                     <p
                         v-if="form.errors.payment_date"
@@ -183,7 +184,7 @@ function fmt(amount: number): string {
                     >
                     <select
                         v-model="form.payment_method"
-                        class="w-full rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
+                        class="w-full rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none pointer-coarse:text-base"
                     >
                         <option value="">Select method</option>
                         <option value="bank_transfer">Bank Transfer</option>
@@ -206,7 +207,7 @@ function fmt(amount: number): string {
                         v-model="form.reference"
                         type="text"
                         placeholder="e.g. TXN-12345"
-                        class="w-full rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
+                        class="w-full rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none pointer-coarse:text-base"
                     />
                 </div>
 
@@ -220,7 +221,7 @@ function fmt(amount: number): string {
                         v-model="form.notes"
                         rows="2"
                         placeholder="Optional notes..."
-                        class="w-full rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
+                        class="w-full rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none pointer-coarse:text-base"
                     />
                 </div>
 

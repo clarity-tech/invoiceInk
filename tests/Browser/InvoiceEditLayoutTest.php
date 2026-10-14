@@ -247,6 +247,254 @@ it('keeps the edit form inside the viewport on a phone', function () {
 });
 
 /**
+ * The first line's fields, measured. Shared by the tests below, which emulate
+ * real devices rather than resizing a desktop window: half of what they pin is
+ * keyed to the input, not the width. A touch screen has no hover to reveal a
+ * borderless field, and iOS zooms into any field set under 16px.
+ */
+const LINE_FIELDS = <<<'JS'
+() => {
+    const row = document.querySelector('form tbody tr');
+    const fields = [
+        row.querySelector('textarea'),
+        row.querySelector('input[type=number][min="1"]'),
+        row.querySelector('input[placeholder="0.00"]'),
+        row.querySelector('select'),
+    ];
+    const box = (el) => el.getBoundingClientRect();
+    const shownLabel = (el) => {
+        const label = document.querySelector(`label[for="${el.id}"]`);
+
+        return label && box(label).width > 1 ? label.textContent.trim() : null;
+    };
+    const tax = fields[3];
+    const cs = getComputedStyle(tax);
+    const probe = document.createElement('span');
+    probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font:' + cs.font;
+    probe.textContent = tax.selectedOptions[0].text;
+    document.body.appendChild(probe);
+    const taxRoom = box(tax).width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const taxText = box(probe).width;
+    probe.remove();
+    const sac = [...row.querySelectorAll('button')].find((b) => /SAC/.test(b.textContent));
+
+    return {
+        headings: getComputedStyle(document.querySelector('form thead')).display,
+        widths: fields.map((el) => Math.round(box(el).width)),
+        figureRows: fields.slice(1).map((el) => Math.round(box(el).top)),
+        labels: fields.map(shownLabel),
+        boxed: fields.every((el) => getComputedStyle(el).borderTopColor !== 'rgba(0, 0, 0, 0)'),
+        taxReadable: taxRoom >= taxText,
+        // Fields that take typing or a pick; iOS does not zoom for a radio
+        // or a checkbox, whatever their size.
+        smallestText: Math.min(...[...document.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=file]), textarea, select')]
+            .map((el) => parseFloat(getComputedStyle(el).fontSize))),
+        keyboards: [fields[1].inputMode, fields[2].inputMode],
+        sacHeight: Math.round(box(sac).height),
+        sideways: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+}
+JS;
+
+/**
+ * Six columns did not fit a phone. At 375px the description was squeezed to
+ * 64px, a word to a line, the price to 39px -- 75000 read as "75" -- and the
+ * tax select showed only its arrow. Below 1024px a line is now a card.
+ */
+it('sets each line out as a labelled card on a phone', function () {
+    [$user, $invoice] = editLayoutFixture('invoice-edit-phone-lines@example.test');
+
+    $this->actingAs($user);
+
+    $page = visit("/invoices/{$invoice->id}/edit")->on()->mobile()->inLightMode();
+
+    $page->assertNoJavaScriptErrors();
+    $fields = $page->script(LINE_FIELDS);
+
+    expect($fields['headings'])->toBe('none')
+        ->and($fields['labels'])->toBe(['Item 1 description', 'Qty', 'Unit price', 'Tax rate'])
+        ->and($fields['widths'][0])->toBeGreaterThan(280)
+        ->and(min(array_slice($fields['widths'], 1)))->toBeGreaterThan(120)
+        ->and($fields['taxReadable'])->toBeTrue()
+        // A touch screen never hovers, so a field that only shows its box on
+        // hover read as plain text: nothing said the line could be edited.
+        ->and($fields['boxed'])->toBeTrue()
+        // Under 16px, iOS zooms the page into whichever field is tapped.
+        ->and($fields['smallestText'])->toBeGreaterThanOrEqual(16.0)
+        ->and($fields['keyboards'])->toBe(['numeric', 'decimal'])
+        ->and($fields['sideways'])->toBe(0);
+
+    // Not a full-page capture: Playwright takes those as a hover-capable
+    // device, so the boxes and remove buttons fade out of the picture.
+    $page->screenshotElement('form table', 'layout/invoice-edit-phone-lines');
+});
+
+it('keeps the save bar whole on a 320px phone', function () {
+    [$user, $invoice] = editLayoutFixture('invoice-edit-phone-bar@example.test');
+
+    $this->actingAs($user);
+
+    visit("/invoices/{$invoice->id}/edit")
+        ->on()->iPhoneSE()->inLightMode()
+        ->assertNoJavaScriptErrors()
+        // At 320px the three buttons ran 11px past the bar and clipped Save
+        // & Send.
+        ->assertScript(
+            "function() { const bar = document.querySelector('[data-sticky-actions]'); return bar.scrollWidth - bar.clientWidth; }",
+            0,
+        )
+        ->assertScript(
+            'function() { return document.documentElement.scrollWidth - document.documentElement.clientWidth; }',
+            0,
+        );
+});
+
+/**
+ * Five columns made the payments table 545px wide on a 375px phone, with the
+ * amount -- the one figure a payment is -- off the right-hand edge.
+ */
+it('shows each payment\'s amount on a phone without scrolling sideways', function () {
+    [$user, $invoice] = editLayoutFixture('invoice-edit-phone-payments@example.test');
+
+    $this->actingAs($user);
+
+    visit("/invoices/{$invoice->id}/edit")
+        ->on()->mobile()->inLightMode()
+        ->assertNoJavaScriptErrors()
+        ->assertSee('NEFT/2026/88213')
+        ->assertScript(
+            "function() {
+                const table = [...document.querySelectorAll('table')].find(t => t.textContent.includes('NEFT/2026/88213'));
+                const scroller = table.parentElement;
+                return scroller.scrollWidth - scroller.clientWidth;
+            }",
+            0,
+        );
+});
+
+/**
+ * Typed with real keystrokes rather than `fill()`, which sets the value in one
+ * go and never passes through the empty field that used to snap back to 0.
+ */
+it('types a new line on a phone and saves it', function () {
+    [$user, $invoice] = editLayoutFixture('invoice-edit-phone-typing@example.test');
+
+    $this->actingAs($user);
+
+    $page = visit("/invoices/{$invoice->id}/edit")->on()->mobile()->inLightMode();
+    $quantity = 'input[type="number"][min="1"] >> nth=1';
+
+    $page->click($quantity)->keys($quantity, ['End', 'Backspace']);
+
+    expect($page->script("() => document.querySelectorAll('input[type=number][min=\"1\"]')[1].value"))->toBe('');
+
+    $page->keys($quantity, ['3'])
+        ->click('button:text-is("Add Item") >> nth=1');
+
+    // Straight into the new line, scrolled clear of the sticky Save bar, with
+    // its price waiting on the placeholder rather than a literal 0.
+    expect($page->script(
+        "() => {
+            const focused = document.activeElement;
+            const bar = document.querySelector('[data-sticky-actions]').getBoundingClientRect();
+            const at = focused.getBoundingClientRect();
+            return {
+                focused: focused.id,
+                inView: at.top >= 0 && at.bottom <= bar.top,
+                price: document.querySelectorAll('input[placeholder=\"0.00\"]')[2].value,
+            };
+        }",
+    ))->toBe(['focused' => 'item-2-description', 'inView' => true, 'price' => '']);
+
+    $page->fill('#item-2-description', 'Site survey')
+        ->fill('input[placeholder="0.00"] >> nth=2', '1200')
+        ->click('button[type="submit"]')
+        ->waitForText('updated successfully')
+        ->assertNoJavaScriptErrors();
+
+    $this->assertDatabaseHas('invoice_items', [
+        'invoice_id' => $invoice->id,
+        'description' => 'Annual maintenance contract, year one',
+        'quantity' => 3,
+    ]);
+    $this->assertDatabaseHas('invoice_items', [
+        'invoice_id' => $invoice->id,
+        'description' => 'Site survey',
+        'quantity' => 1,
+        'unit_price' => 120000,
+    ]);
+});
+
+/**
+ * An iPad in portrait is 744-834px wide, where the table still left the
+ * description 130-220px. Real iPad sizes, resized on Pest's touch-enabled
+ * tablet: its own presets are the original iPad mini and the 12.9" Pro.
+ */
+it('stacks the lines and the parties on an iPad in portrait', function () {
+    [$user, $invoice] = editLayoutFixture('invoice-edit-ipad-portrait@example.test');
+
+    $this->actingAs($user);
+
+    $page = visit("/invoices/{$invoice->id}/edit")->on()->iPadMini()->inLightMode()->resize(834, 1194);
+
+    $page->assertNoJavaScriptErrors();
+    $fields = $page->script(LINE_FIELDS);
+
+    expect($fields['headings'])->toBe('none')
+        // Qty, price and tax on one row: four across on a tablet, two on a phone.
+        ->and(array_unique($fields['figureRows']))->toHaveCount(1)
+        ->and($fields['widths'][0])->toBeGreaterThan(600)
+        ->and($fields['boxed'])->toBeTrue();
+
+    // Three selects across an iPad in portrait were ~235px each, cutting a
+    // customer's name off a third of the way in.
+    $page->assertScript(
+        "function() { return getComputedStyle(document.querySelector('form [data-slot=card] .grid')).gridTemplateColumns.split(' ').length; }",
+        1,
+    );
+});
+
+it('keeps the table on an iPad in landscape, with fields a finger can find', function () {
+    [$user, $invoice] = editLayoutFixture('invoice-edit-ipad-landscape@example.test');
+
+    $this->actingAs($user);
+
+    $page = visit("/invoices/{$invoice->id}/edit")->on()->iPadMini()->inLightMode()->resize(1194, 834);
+
+    $page->assertNoJavaScriptErrors();
+    $fields = $page->script(LINE_FIELDS);
+
+    expect($fields['headings'])->toBe('table-header-group')
+        // Still touch: the boxes stay, the text stays at 16px, and the SAC
+        // code is more than the 20px sliver it is under a mouse.
+        ->and($fields['boxed'])->toBeTrue()
+        ->and($fields['smallestText'])->toBeGreaterThanOrEqual(16.0)
+        ->and($fields['sacHeight'])->toBeGreaterThanOrEqual(32)
+        ->and($fields['sideways'])->toBe(0);
+});
+
+/**
+ * Everything above is keyed to touch or to width, and none of it may leak onto
+ * the desktop table: under a mouse the fields stay borderless until pointed
+ * at, the text stays at 14px, and the labels stay for a screen reader only.
+ */
+it('leaves the desktop line items as they were', function () {
+    [$user, $invoice] = editLayoutFixture('invoice-edit-desktop-lines@example.test');
+
+    $this->actingAs($user);
+
+    $page = visit("/invoices/{$invoice->id}/edit")->resize(1440, 1200);
+
+    $page->assertNoJavaScriptErrors();
+    $fields = $page->script(LINE_FIELDS);
+
+    expect($fields['headings'])->toBe('table-header-group')
+        ->and($fields['boxed'])->toBeFalse()
+        ->and($fields['smallestText'])->toBe(14)
+        ->and($fields['labels'])->toBe([null, null, null, null]);
+});
+
+/**
  * Create renders the same component with nothing filled in, so every change to
  * the form lands here too -- and some of them only show here. With no customer
  * chosen the recipients column is hidden, which leaves Attachments alone in a

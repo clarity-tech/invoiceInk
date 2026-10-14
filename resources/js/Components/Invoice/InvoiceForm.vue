@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm, router, usePage } from '@inertiajs/vue3';
-import { ref, computed, provide, watch, onMounted } from 'vue';
+import { ref, computed, provide, watch, onMounted, nextTick } from 'vue';
 import { ChevronDown, Plus, X } from 'lucide-vue-next';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import { Button } from '@/Components/ui/button';
@@ -427,7 +427,7 @@ watch(selectedCustomerId, (newId) => {
     }
 });
 
-function addItem() {
+async function addItem() {
     items.value.push({
         description: '',
         sac_code: null,
@@ -436,6 +436,14 @@ function addItem() {
         tax_rate: 0,
     });
     itemKeys.value.push(nextItemKey++);
+
+    // Straight into the new line. It lands under the last one -- on a phone
+    // a long scroll from the header's button -- and focusing it brings it into
+    // view and opens the keyboard in one step, where before nothing moved.
+    await nextTick();
+    document
+        .getElementById(`item-${items.value.length - 1}-description`)
+        ?.focus();
 }
 
 const confirmingItemRemove = ref(false);
@@ -746,8 +754,15 @@ const orgContacts = computed<Contact[]>(
                 -->
                 <CardContent class="px-0 py-0">
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-border">
-                            <thead class="bg-muted/60">
+                        <!--
+                            Block below 1024px, where each row is a card that
+                            labels its own fields (see ItemRow), so the
+                            headings would only label columns that are gone.
+                        -->
+                        <table
+                            class="min-w-full divide-y divide-border max-lg:block"
+                        >
+                            <thead class="bg-muted/60 max-lg:hidden">
                                 <tr>
                                     <th
                                         class="px-2 py-2 text-left text-xs font-medium text-muted-foreground"
@@ -787,7 +802,9 @@ const orgContacts = computed<Contact[]>(
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-border bg-card">
+                            <tbody
+                                class="divide-y divide-border bg-card max-lg:block"
+                            >
                                 <ItemRow
                                     v-for="(item, index) in items"
                                     :key="itemKeys[index]"
@@ -933,14 +950,21 @@ const orgContacts = computed<Contact[]>(
                 page's apparent end. `bottom-0` with a backdrop keeps Save
                 reachable from any scroll position, and the bar settles into
                 place at the end of the form once it is scrolled to.
+
+                `data-sticky-actions` reserves the bar's height at the foot of
+                the page's scroll area (app.css), so a field the browser brings
+                into view on focus is not left underneath it. Tighter below
+                640px: at 320px the three buttons ran 11px past the bar and
+                clipped Save & Send.
             -->
             <div
-                class="sticky bottom-0 z-10 flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
+                data-sticky-actions
+                class="sticky bottom-0 z-10 flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.06)] sm:gap-3 sm:px-4"
             >
                 <Button type="button" variant="outline" @click="cancel">
                     Cancel
                 </Button>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 sm:gap-3">
                     <Button
                         type="submit"
                         variant="outline"

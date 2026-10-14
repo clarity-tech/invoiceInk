@@ -190,7 +190,7 @@ const availableSuggestions = computed(() => {
                     v-model="query"
                     type="email"
                     placeholder="Add email"
-                    class="w-48 rounded-md border border-input px-3 py-1.5 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
+                    class="w-48 rounded-md border border-input px-3 py-1.5 text-sm focus:ring-2 focus:ring-ring focus:outline-none pointer-coarse:text-base"
                     @focus="open = true"
                     @blur="onBlur"
                     @keydown.enter.prevent="addTyped"

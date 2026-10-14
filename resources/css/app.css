@@ -341,6 +341,14 @@
     html input:where([type='checkbox'], [type='radio']):focus {
         --tw-ring-offset-color: var(--card);
     }
+
+    /* A form whose actions bar sticks to the bottom of the viewport (the
+     * invoice form's Save bar) hides whatever scrolls beneath it, and a
+     * browser bringing a focused field into view does not know the bar is
+     * there. Reserving its height keeps the field being typed into above it. */
+    html:has([data-sticky-actions]) {
+        scroll-padding-bottom: 5rem;
+    }
 }
 
 /* The typography plugin's `prose` palette, pointed at the tokens so long-form

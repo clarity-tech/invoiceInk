@@ -40,7 +40,7 @@ function () {
 }
 JS;
 
-it('keeps the shared controls in the same place on the detail and edit pages', function () {
+it('keeps the shared controls in the same place on the detail and edit pages', function (string $device) {
     $user = User::factory()->withPersonalTeam()->create([
         'email' => 'header-consistency@example.test',
     ]);
@@ -64,8 +64,16 @@ it('keeps the shared controls in the same place on the detail and edit pages', f
 
     $this->actingAs($user);
 
-    $detail = visit("/invoices/{$invoice->id}")->resize(1440, 1000)->script(HEADER_PROBE);
-    $edit = visit("/invoices/{$invoice->id}/edit")->resize(1440, 1000)->script(HEADER_PROBE);
+    $open = fn (string $url) => match ($device) {
+        'mouse' => visit($url)->resize(1440, 1000),
+        // An iPad in landscape, where both headers fit on one row. On touch
+        // the edit page's status select has 16px text, which makes it taller
+        // than it is under a mouse, and taller than the badge it stands in for.
+        'touch' => visit($url)->on()->iPadMini()->inLightMode()->resize(1194, 834),
+    };
+
+    $detail = $open("/invoices/{$invoice->id}")->script(HEADER_PROBE);
+    $edit = $open("/invoices/{$invoice->id}/edit")->script(HEADER_PROBE);
 
     // Both pages offer these two, so both must put them in the same place.
     foreach (['View public', 'Download PDF'] as $label) {
@@ -87,4 +95,4 @@ it('keeps the shared controls in the same place on the detail and edit pages', f
     // if one page's action row is taller or wraps onto a second line.
     expect(abs($detail['bodyTop'] - $edit['bodyTop']))
         ->toBeLessThanOrEqual(1, 'the page body starts at a different height on the two pages');
-});
+})->with(['mouse', 'touch']);

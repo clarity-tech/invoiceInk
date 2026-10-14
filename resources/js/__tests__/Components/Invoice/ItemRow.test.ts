@@ -219,4 +219,59 @@ describe('ItemRow tax control', () => {
             wrapper.find('input[aria-label="Custom tax rate"]').exists(),
         ).toBe(true);
     });
+
+    // Below 1024px the row is a card with no column headings, so each field
+    // carries its own label -- and before this the figures had no accessible
+    // name at all, only the SAC code and the custom rate did.
+    it('labels every field of the line', () => {
+        const wrapper = mount(ItemRow, {
+            props: { ...defaultProps, index: 2 },
+        });
+
+        const labelled = [
+            'description',
+            'quantity',
+            'unit_price',
+            'tax_rate',
+        ].map((field) => {
+            const label = wrapper.find(`label[for="item-2-${field}"]`);
+            const control = wrapper.find(`#item-2-${field}`);
+
+            return control.exists() ? label.text() : null;
+        });
+
+        expect(labelled).toEqual([
+            'Item 3 description',
+            'Qty',
+            'Unit price',
+            'Tax rate',
+        ]);
+    });
+
+    // A cleared field used to snap straight back to "0" while it was being
+    // typed over, and a new line's price read "0" rather than its placeholder.
+    it('leaves an empty quantity and price blank rather than showing 0', () => {
+        const wrapper = mount(ItemRow, {
+            props: {
+                ...defaultProps,
+                item: { ...defaultProps.item, quantity: 0, unit_price: 0 },
+            },
+        });
+
+        const quantity = wrapper.find('#item-0-quantity')
+            .element as HTMLInputElement;
+        const price = wrapper.find('#item-0-unit_price')
+            .element as HTMLInputElement;
+
+        expect([quantity.value, price.value]).toEqual(['', '']);
+    });
+
+    it('shows a price in whole units', () => {
+        const wrapper = mount(ItemRow, { props: defaultProps });
+
+        const price = wrapper.find('#item-0-unit_price')
+            .element as HTMLInputElement;
+
+        expect(price.value).toBe('500');
+    });
 });
