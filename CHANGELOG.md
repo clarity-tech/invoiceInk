@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.2](https://github.com/clarity-tech/invoicing/compare/v1.15.1...v1.15.2) (2026-10-14)
+
+
+### Bug Fixes
+
+* **invoices:** make the edit form usable on phones and tablets ([b520561](https://github.com/clarity-tech/invoicing/commit/b5205619267c73aa88b021e78a1dc8d954141512))
+
 ## [1.15.1](https://github.com/clarity-tech/invoicing/compare/v1.15.0...v1.15.1) (2026-10-14)
 
 
