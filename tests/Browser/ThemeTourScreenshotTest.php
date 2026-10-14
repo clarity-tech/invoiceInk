@@ -46,7 +46,27 @@ function tourShot($page, string $name): void
         mkdir($dir, 0755, true);
     }
 
-    // Let transitions and fonts settle so before/after pairs are comparable.
+    // Let fonts, images and transitions settle so before/after pairs are
+    // comparable. An avatar can come from another host, and a shot taken
+    // before it arrives differs from the next run's. Lazy images load too,
+    // as a full-page shot shows the ones below the fold. Capped well inside
+    // the 5s Pest allows a script.
+    $page->script(<<<'JS'
+        Promise.race([
+            Promise.all([
+                document.fonts.ready,
+                ...Array.from(document.images, (image) => {
+                    image.loading = 'eager';
+
+                    return image.complete ? null : new Promise((resolve) => {
+                        image.addEventListener('load', resolve, { once: true });
+                        image.addEventListener('error', resolve, { once: true });
+                    });
+                }),
+            ]),
+            new Promise((resolve) => setTimeout(resolve, 3000)),
+        ]).then(() => true)
+        JS);
     $page->wait(0.6);
     $page->screenshot(fullPage: true, filename: tourDir().'/'.$name);
 
@@ -58,8 +78,6 @@ function tourShot($page, string $name): void
  */
 function seedTourData(): array
 {
-    fake()->seed(20261014);
-
     $data = seedDemoData();
 
     $emails = [
@@ -119,6 +137,9 @@ beforeEach(function () {
         $this->markTestSkipped('Set THEME_TOUR=before|after to capture the theme tour.');
     }
 
+    // The same data and clock on every run, so two runs of the same code take
+    // the same screenshots.
+    fake()->seed(20261014);
     $this->travelTo(Carbon::parse('2026-10-14 10:00:00'));
 });
 
@@ -277,7 +298,17 @@ it('tours organizations and settings', function () {
     }
 
     tourShot(tourVisit('/settings'), '44-settings');
-    tourShot(tourVisit('/settings/ai-connection'), '45-ai-connection');
+    // The endpoint shown is the test server's own address, on a random port.
+    $page = tourVisit('/settings/ai-connection');
+    $page->script(<<<'JS'
+        (() => {
+            const text = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            while (text.nextNode()) {
+                text.currentNode.nodeValue = text.currentNode.nodeValue.replace(/127\.0\.0\.1:\d+/g, '127.0.0.1:8000');
+            }
+        })()
+        JS);
+    tourShot($page, '45-ai-connection');
     tourShot(tourVisit('/email-templates'), '46-email-templates');
     tourShot(tourVisit('/email-templates/invoice_initial'), '47-email-template-edit');
     tourShot(tourVisit('/user/profile'), '48-profile');
