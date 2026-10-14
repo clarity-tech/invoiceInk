@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/clarity-tech/invoicing/compare/v1.13.0...v1.14.0) (2026-10-14)
+
+
+### Features
+
+* **invoices:** rework the document detail page ([0810dff](https://github.com/clarity-tech/invoicing/commit/0810dfff5f8d07970224132cf7237882b0670c07))
+
 ## [1.13.0](https://github.com/clarity-tech/invoicing/compare/v1.12.2...v1.13.0) (2026-10-13)
 
 
