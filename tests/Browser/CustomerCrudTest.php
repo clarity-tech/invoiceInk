@@ -117,7 +117,7 @@ it('shows delete confirmation for a customer', function () {
     $page = $this->visit('/customers');
 
     $page->assertSee('Customer To Delete')
-        ->click('button.text-red-600:has-text("Delete")')
+        ->click('button.text-destructive:has-text("Delete")')
         ->waitForText('Delete Customer')
         ->assertSee('Delete this customer');
 });

@@ -190,23 +190,23 @@ function send() {
 <template>
     <div
         v-if="show"
-        class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-gray-900"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-overlay"
         @keydown.escape="emit('close')"
     >
         <div
-            class="mx-4 flex max-h-[95vh] w-full max-w-lg flex-col overflow-hidden rounded-lg bg-white shadow-2xl sm:max-w-xl md:max-w-2xl lg:max-w-3xl"
+            class="mx-4 flex max-h-[95vh] w-full max-w-lg flex-col overflow-hidden rounded-lg bg-card shadow-2xl sm:max-w-xl md:max-w-2xl lg:max-w-3xl"
             role="dialog"
             aria-modal="true"
         >
             <!-- Header -->
             <div
-                class="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4"
+                class="flex items-center justify-between border-b border-border bg-card px-6 py-4"
             >
-                <h2 class="text-xl font-semibold text-gray-900">
+                <h2 class="text-xl font-semibold text-foreground">
                     Email to {{ customer?.name ?? 'Customer' }}
                 </h2>
                 <button
-                    class="text-gray-400 hover:text-gray-600"
+                    class="text-faint-foreground hover:text-soft-foreground"
                     aria-label="Close"
                     @click="emit('close')"
                 >
@@ -231,13 +231,14 @@ function send() {
                 <!-- Template Type Selector -->
                 <div class="mb-4">
                     <div class="flex items-center">
-                        <label class="w-20 text-sm font-medium text-gray-600"
+                        <label
+                            class="w-20 text-sm font-medium text-soft-foreground"
                             >Template</label
                         >
                         <div class="flex flex-1 items-center gap-2">
                             <select
                                 v-model="selectedTemplateType"
-                                class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                                class="flex-1 rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
                             >
                                 <option
                                     v-for="(label, value) in templateTypes"
@@ -249,13 +250,13 @@ function send() {
                             </select>
                             <span
                                 v-if="loadingTemplate"
-                                class="text-xs text-gray-400"
+                                class="text-xs text-faint-foreground"
                                 >Loading...</span
                             >
                             <a
                                 href="/email-templates"
                                 target="_blank"
-                                class="text-xs text-brand-600 hover:text-brand-800"
+                                class="text-xs text-primary hover:text-primary-soft-foreground"
                                 title="Customize templates"
                             >
                                 Customize
@@ -268,7 +269,7 @@ function send() {
                 <div class="mb-4">
                     <div class="flex items-start">
                         <label
-                            class="w-20 pt-2 text-sm font-medium text-gray-600"
+                            class="w-20 pt-2 text-sm font-medium text-soft-foreground"
                             >Send To</label
                         >
                         <div class="flex-1">
@@ -278,7 +279,7 @@ function send() {
                             />
                             <p
                                 v-if="form.errors.recipients"
-                                class="mt-1 text-xs text-red-600"
+                                class="mt-1 text-xs text-destructive"
                             >
                                 {{ form.errors.recipients }}
                             </p>
@@ -290,7 +291,7 @@ function send() {
                 <div class="mb-4">
                     <div class="flex items-start">
                         <label
-                            class="w-20 pt-2 text-sm font-medium text-gray-600"
+                            class="w-20 pt-2 text-sm font-medium text-soft-foreground"
                             >Cc</label
                         >
                         <div class="flex-1">
@@ -305,18 +306,19 @@ function send() {
                 <!-- Subject -->
                 <div class="mb-4">
                     <div class="flex items-center">
-                        <label class="w-20 text-sm font-medium text-gray-600"
+                        <label
+                            class="w-20 text-sm font-medium text-soft-foreground"
                             >Subject</label
                         >
                         <input
                             v-model="form.subject"
                             type="text"
-                            class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                            class="flex-1 rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
                         />
                     </div>
                     <p
                         v-if="form.errors.subject"
-                        class="mt-1 ml-20 text-xs text-red-600"
+                        class="mt-1 ml-20 text-xs text-destructive"
                     >
                         {{ form.errors.subject }}
                     </p>
@@ -330,27 +332,27 @@ function send() {
                     />
                     <p
                         v-if="form.errors.body"
-                        class="mt-1 text-xs text-red-600"
+                        class="mt-1 text-xs text-destructive"
                     >
                         {{ form.errors.body }}
                     </p>
                 </div>
 
                 <!-- Options -->
-                <div class="mb-4 border-t pt-4">
-                    <h3 class="mb-3 text-sm font-semibold text-gray-700">
+                <div class="mb-4 border-t border-border pt-4">
+                    <h3 class="mb-3 text-sm font-semibold text-soft-foreground">
                         Options
                     </h3>
                     <label
-                        class="flex cursor-pointer items-center rounded-md p-3 hover:bg-gray-50"
+                        class="flex cursor-pointer items-center rounded-md p-3 hover:bg-muted"
                     >
                         <input
                             v-model="form.include_view_online_button"
                             type="checkbox"
-                            class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                            class="h-4 w-4 rounded border-input text-primary focus:ring-ring"
                         />
                         <div class="ml-3">
-                            <div class="text-sm font-medium text-gray-900">
+                            <div class="text-sm font-medium text-foreground">
                                 Include "View
                                 {{
                                     invoice.type === 'estimate'
@@ -359,7 +361,7 @@ function send() {
                                 }}
                                 Online" button
                             </div>
-                            <div class="text-xs text-gray-500">
+                            <div class="text-xs text-muted-foreground">
                                 Adds a CTA linking to the public document page
                             </div>
                         </div>
@@ -367,24 +369,24 @@ function send() {
                 </div>
 
                 <!-- Attachments -->
-                <div class="mb-4 border-t pt-4">
-                    <h3 class="mb-3 text-sm font-semibold text-gray-700">
+                <div class="mb-4 border-t border-border pt-4">
+                    <h3 class="mb-3 text-sm font-semibold text-soft-foreground">
                         Attachments
                     </h3>
 
                     <label
-                        class="flex cursor-pointer items-center rounded-md p-3 hover:bg-gray-50"
+                        class="flex cursor-pointer items-center rounded-md p-3 hover:bg-muted"
                     >
                         <input
                             v-model="form.attach_pdf"
                             type="checkbox"
-                            class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                            class="h-4 w-4 rounded border-input text-primary focus:ring-ring"
                         />
                         <div class="ml-3">
-                            <div class="text-sm font-medium text-gray-900">
+                            <div class="text-sm font-medium text-foreground">
                                 {{ invoice.invoice_number }}.pdf
                             </div>
-                            <div class="text-xs text-gray-500">
+                            <div class="text-xs text-muted-foreground">
                                 {{
                                     invoice.type === 'estimate'
                                         ? 'Estimate'
@@ -404,24 +406,24 @@ function send() {
                         <li
                             v-for="attachment in includedAttachments"
                             :key="attachment.id"
-                            class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2"
+                            class="flex items-center justify-between rounded-md border border-border bg-muted px-3 py-2"
                         >
                             <div class="min-w-0 flex-1">
                                 <a
                                     :href="attachment.url"
                                     target="_blank"
                                     rel="noopener"
-                                    class="truncate text-sm font-medium text-brand-600 hover:underline"
+                                    class="truncate text-sm font-medium text-primary hover:underline"
                                 >
                                     {{ attachment.name }}
                                 </a>
-                                <div class="text-xs text-gray-500">
+                                <div class="text-xs text-muted-foreground">
                                     {{ formatBytes(attachment.size) }}
                                 </div>
                             </div>
                             <button
                                 type="button"
-                                class="ml-2 text-gray-400 hover:text-red-600"
+                                class="ml-2 text-faint-foreground hover:text-destructive"
                                 aria-label="Exclude attachment from this email"
                                 @click="removeInvoiceAttachment(attachment.id)"
                             >
@@ -447,7 +449,7 @@ function send() {
 
                     <p
                         v-if="form.errors.attachments"
-                        class="mt-1 text-xs text-red-600"
+                        class="mt-1 text-xs text-destructive"
                     >
                         {{ form.errors.attachments }}
                     </p>
@@ -455,12 +457,10 @@ function send() {
             </div>
 
             <!-- Footer -->
-            <div
-                class="flex gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4"
-            >
+            <div class="flex gap-3 border-t border-border bg-muted px-6 py-4">
                 <button
                     type="button"
-                    class="rounded-md border border-gray-300 px-6 py-2 font-medium text-gray-700 hover:bg-gray-100"
+                    class="rounded-md border border-input px-6 py-2 font-medium text-soft-foreground hover:bg-secondary"
                     @click="emit('close')"
                 >
                     Cancel
@@ -468,7 +468,7 @@ function send() {
                 <button
                     type="button"
                     :disabled="form.processing || !hasRecipients"
-                    class="rounded-md bg-brand-600 px-6 py-2 font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="rounded-md bg-primary px-6 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                     @click="send"
                 >
                     {{ form.processing ? 'Sending...' : 'Send' }}

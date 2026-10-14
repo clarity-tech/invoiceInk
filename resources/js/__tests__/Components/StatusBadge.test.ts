@@ -29,6 +29,6 @@ describe('StatusBadge', () => {
 
     it('applies green classes for paid status', () => {
         const wrapper = mount(StatusBadge, { props: { status: 'paid' } });
-        expect(wrapper.find('span').classes()).toContain('bg-green-100');
+        expect(wrapper.find('span').classes()).toContain('bg-success-soft');
     });
 });

@@ -84,18 +84,24 @@ const showPolite = computed(
             :class="showPolite ? 'mb-4 px-4 sm:px-0' : ''"
         >
             <template v-if="showPolite">
-                <div v-if="flash.success" class="rounded-md bg-green-50 p-4">
-                    <p class="text-sm font-medium text-green-800">
+                <div
+                    v-if="flash.success"
+                    class="rounded-md bg-success-soft/50 p-4"
+                >
+                    <p class="text-sm font-medium text-success-soft-foreground">
                         {{ flash.success }}
                     </p>
                 </div>
-                <div v-if="flash.info" class="rounded-md bg-blue-50 p-4">
-                    <p class="text-sm font-medium text-blue-800">
+                <div v-if="flash.info" class="rounded-md bg-info-soft/50 p-4">
+                    <p class="text-sm font-medium text-info-soft-foreground">
                         {{ flash.info }}
                     </p>
                 </div>
-                <div v-if="flash.message" class="rounded-md bg-blue-50 p-4">
-                    <p class="text-sm font-medium text-blue-800">
+                <div
+                    v-if="flash.message"
+                    class="rounded-md bg-info-soft/50 p-4"
+                >
+                    <p class="text-sm font-medium text-info-soft-foreground">
                         {{ flash.message }}
                     </p>
                 </div>
@@ -108,8 +114,8 @@ const showPolite = computed(
             aria-atomic="true"
             :class="showError ? 'mb-4 px-4 sm:px-0' : ''"
         >
-            <div v-if="showError" class="rounded-md bg-red-50 p-4">
-                <p class="text-sm font-medium text-red-800">
+            <div v-if="showError" class="rounded-md bg-destructive-soft/50 p-4">
+                <p class="text-sm font-medium text-destructive-soft-foreground">
                     {{ flash.error }}
                 </p>
             </div>

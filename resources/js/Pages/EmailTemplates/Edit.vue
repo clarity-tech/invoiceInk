@@ -132,13 +132,13 @@ async function preview() {
                 </Breadcrumb>
                 <span
                     v-if="template.is_customized"
-                    class="rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-medium text-brand-800"
+                    class="rounded-full bg-primary-soft px-2.5 py-0.5 text-xs font-medium text-primary-soft-foreground"
                 >
                     Customized
                 </span>
                 <span
                     v-else
-                    class="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600"
+                    class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-soft-foreground"
                 >
                     Default
                 </span>
@@ -146,7 +146,7 @@ async function preview() {
         </template>
 
         <div class="py-4">
-            <p class="mb-6 text-sm text-gray-500">
+            <p class="mb-6 text-sm text-muted-foreground">
                 {{ description }}
             </p>
 
@@ -156,18 +156,18 @@ async function preview() {
                     <!-- Subject -->
                     <div class="mb-4">
                         <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
+                            class="mb-1 block text-sm font-medium text-soft-foreground"
                             >Subject</label
                         >
                         <input
                             v-model="form.subject"
                             type="text"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                            class="w-full rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
                             placeholder="Email subject with {{variables}}"
                         />
                         <p
                             v-if="form.errors.subject"
-                            class="mt-1 text-xs text-red-600"
+                            class="mt-1 text-xs text-destructive"
                         >
                             {{ form.errors.subject }}
                         </p>
@@ -176,7 +176,7 @@ async function preview() {
                     <!-- Body -->
                     <div class="mb-4">
                         <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
+                            class="mb-1 block text-sm font-medium text-soft-foreground"
                             >Body</label
                         >
                         <TipTapEditor
@@ -186,7 +186,7 @@ async function preview() {
                         />
                         <p
                             v-if="form.errors.body"
-                            class="mt-1 text-xs text-red-600"
+                            class="mt-1 text-xs text-destructive"
                         >
                             {{ form.errors.body }}
                         </p>
@@ -197,7 +197,7 @@ async function preview() {
                         <button
                             type="button"
                             :disabled="form.processing || !isModified"
-                            class="rounded-md bg-brand-600 px-6 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                             @click="save"
                         >
                             {{
@@ -206,7 +206,7 @@ async function preview() {
                         </button>
                         <button
                             type="button"
-                            class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            class="rounded-md border border-input px-4 py-2 text-sm font-medium text-soft-foreground hover:bg-muted"
                             :disabled="loadingPreview"
                             @click="preview"
                         >
@@ -219,7 +219,7 @@ async function preview() {
                         <button
                             v-if="isDifferentFromDefault"
                             type="button"
-                            class="text-sm text-gray-500 hover:text-gray-700"
+                            class="text-sm text-muted-foreground hover:text-soft-foreground"
                             @click="restoreDefault"
                         >
                             Restore Default Text
@@ -227,7 +227,7 @@ async function preview() {
                         <button
                             v-if="template.is_customized"
                             type="button"
-                            class="ml-auto text-sm text-red-600 hover:text-red-800"
+                            class="ml-auto text-sm text-destructive hover:text-destructive-soft-foreground"
                             @click="resetToDefault"
                         >
                             Reset to Default
@@ -238,12 +238,14 @@ async function preview() {
                 <!-- Variables Sidebar (1 col) -->
                 <div class="lg:col-span-1">
                     <div
-                        class="sticky top-6 rounded-lg border border-gray-200 bg-gray-50 p-4"
+                        class="sticky top-6 rounded-lg border border-border bg-muted p-4"
                     >
-                        <h3 class="mb-3 text-sm font-semibold text-gray-700">
+                        <h3
+                            class="mb-3 text-sm font-semibold text-soft-foreground"
+                        >
                             Insert Variable
                         </h3>
-                        <p class="mb-3 text-xs text-gray-500">
+                        <p class="mb-3 text-xs text-muted-foreground">
                             Click to insert at cursor position
                         </p>
                         <div class="flex flex-col gap-1.5">
@@ -251,18 +253,19 @@ async function preview() {
                                 v-for="(desc, variable) in variables"
                                 :key="variable"
                                 type="button"
-                                class="flex items-start gap-2 rounded-md px-2 py-1.5 text-left hover:bg-white"
+                                class="flex items-start gap-2 rounded-md px-2 py-1.5 text-left hover:bg-card"
                                 :title="desc"
                                 @click="insertVariable(variable as string)"
                             >
                                 <code
-                                    class="shrink-0 rounded bg-white px-1.5 py-0.5 text-xs text-brand-700 ring-1 ring-gray-200"
+                                    class="shrink-0 rounded bg-card px-1.5 py-0.5 text-xs text-primary ring-1 ring-border"
                                 >
                                     {{ variable }}
                                 </code>
-                                <span class="truncate text-xs text-gray-500">{{
-                                    desc
-                                }}</span>
+                                <span
+                                    class="truncate text-xs text-muted-foreground"
+                                    >{{ desc }}</span
+                                >
                             </button>
                         </div>
                     </div>
@@ -272,26 +275,26 @@ async function preview() {
             <!-- Preview Modal -->
             <div
                 v-if="showPreview"
-                class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-gray-900"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-overlay"
                 @click.self="showPreview = false"
                 @keydown.escape="showPreview = false"
             >
                 <div
-                    class="mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl"
+                    class="mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-card shadow-2xl"
                 >
                     <div
-                        class="flex items-center justify-between border-b px-6 py-4"
+                        class="flex items-center justify-between border-b border-border px-6 py-4"
                     >
                         <div>
-                            <h3 class="font-semibold text-gray-900">
+                            <h3 class="font-semibold text-foreground">
                                 Email Preview
                             </h3>
-                            <p class="mt-1 text-sm text-gray-500">
+                            <p class="mt-1 text-sm text-muted-foreground">
                                 Subject: {{ previewSubject }}
                             </p>
                         </div>
                         <button
-                            class="text-gray-400 hover:text-gray-600"
+                            class="text-faint-foreground hover:text-soft-foreground"
                             @click="showPreview = false"
                         >
                             <svg

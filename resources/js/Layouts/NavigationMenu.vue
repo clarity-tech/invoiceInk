@@ -10,6 +10,8 @@ import { create as teamsCreate } from '@/routes/teams';
 import { update as switchTeam } from '@/routes/current-team';
 import { show as profileShow } from '@/routes/profile';
 import { usePermissions } from '@/composables/usePermissions';
+import AppearanceSwitch from '@/Components/AppearanceSwitch.vue';
+import AppearanceToggle from '@/Components/AppearanceToggle.vue';
 import AppLogo from '@/Components/AppLogo.vue';
 
 interface TeamSummary {
@@ -86,7 +88,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 </script>
 
 <template>
-    <nav class="border-b border-gray-100 bg-white">
+    <nav class="border-b border-border bg-card">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="flex h-16 justify-between">
                 <!-- Left side -->
@@ -97,18 +99,20 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                             class="flex items-center"
                             aria-label="InvoiceInk home"
                         >
-                            <AppLogo class="h-8 w-auto text-gray-900" />
+                            <AppLogo class="h-8 w-auto text-foreground" />
                         </Link>
                     </div>
 
-                    <div class="hidden space-x-6 md:-my-px md:ml-6 md:flex">
+                    <div
+                        class="hidden space-x-4 md:-my-px md:ml-4 md:flex lg:ml-6 lg:space-x-6"
+                    >
                         <Link
                             :href="dashboard.url()"
                             class="inline-flex items-center border-b-2 px-1 pt-1 text-sm leading-5 font-medium transition"
                             :class="
                                 isCurrentPath('/dashboard')
-                                    ? 'border-brand-400 text-gray-900'
-                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    ? 'border-primary/60 text-foreground'
+                                    : 'border-transparent text-muted-foreground hover:border-input hover:text-soft-foreground'
                             "
                         >
                             Dashboard
@@ -119,8 +123,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                             :class="
                                 isCurrentPath('/invoices') ||
                                 isCurrentPath('/estimates')
-                                    ? 'border-brand-400 text-gray-900'
-                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    ? 'border-primary/60 text-foreground'
+                                    : 'border-transparent text-muted-foreground hover:border-input hover:text-soft-foreground'
                             "
                         >
                             Invoices
@@ -130,8 +134,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                             class="inline-flex items-center border-b-2 px-1 pt-1 text-sm leading-5 font-medium transition"
                             :class="
                                 isCurrentPath('/customers')
-                                    ? 'border-brand-400 text-gray-900'
-                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    ? 'border-primary/60 text-foreground'
+                                    : 'border-transparent text-muted-foreground hover:border-input hover:text-soft-foreground'
                             "
                         >
                             Customers
@@ -141,8 +145,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                             class="inline-flex items-center border-b-2 px-1 pt-1 text-sm leading-5 font-medium transition"
                             :class="
                                 isCurrentPath('/organizations')
-                                    ? 'border-brand-400 text-gray-900'
-                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    ? 'border-primary/60 text-foreground'
+                                    : 'border-transparent text-muted-foreground hover:border-input hover:text-soft-foreground'
                             "
                         >
                             Organizations
@@ -154,8 +158,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                             :class="
                                 isCurrentPath('/settings') ||
                                 isCurrentPath('/email-templates')
-                                    ? 'border-brand-400 text-gray-900'
-                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    ? 'border-primary/60 text-foreground'
+                                    : 'border-transparent text-muted-foreground hover:border-input hover:text-soft-foreground'
                             "
                         >
                             Settings
@@ -164,24 +168,28 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                 </div>
 
                 <!-- Right side -->
-                <div class="hidden md:ml-6 md:flex md:items-center">
-                    <div class="relative ml-3" data-user-dropdown>
+                <div class="hidden md:ml-4 md:flex md:items-center lg:ml-6">
+                    <AppearanceSwitch />
+                    <div
+                        class="relative ml-2 shrink-0 lg:ml-3"
+                        data-user-dropdown
+                    >
                         <button
-                            class="flex items-center gap-2 rounded-full bg-white text-sm focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none"
+                            class="flex items-center gap-2 rounded-full bg-card text-sm focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none"
                             @click.stop="showUserDropdown = !showUserDropdown"
                         >
                             <img
                                 v-if="auth.user?.profile_photo_url"
-                                class="h-8 w-8 rounded-full object-cover ring-2 ring-gray-100"
+                                class="h-8 w-8 rounded-full object-cover ring-2 ring-border"
                                 :src="auth.user.profile_photo_url"
                                 :alt="auth.user.name"
                             />
                             <span
                                 v-else
-                                class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 ring-2 ring-brand-50"
+                                class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft ring-2 ring-primary-soft"
                             >
                                 <span
-                                    class="text-sm font-semibold text-brand-600"
+                                    class="text-sm font-semibold text-primary"
                                 >
                                     {{
                                         auth.user?.name
@@ -191,7 +199,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                 </span>
                             </span>
                             <svg
-                                class="h-3.5 w-3.5 text-gray-400 transition-transform duration-150"
+                                class="h-3.5 w-3.5 text-faint-foreground transition-transform duration-150"
                                 :class="{ 'rotate-180': showUserDropdown }"
                                 fill="none"
                                 viewBox="0 0 24 24"
@@ -208,17 +216,17 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 
                         <div
                             v-show="showUserDropdown"
-                            class="absolute right-0 z-50 mt-2 w-64 origin-top-right rounded-xl border border-gray-100 bg-white shadow-lg"
+                            class="absolute right-0 z-50 mt-2 w-64 origin-top-right rounded-xl border border-border bg-popover text-popover-foreground shadow-lg"
                         >
                             <!-- User info header -->
-                            <div class="border-b border-gray-100 px-4 py-3">
+                            <div class="border-b border-border px-4 py-3">
                                 <p
-                                    class="truncate text-sm font-medium text-gray-900"
+                                    class="truncate text-sm font-medium text-foreground"
                                 >
                                     {{ auth.user?.name }}
                                 </p>
                                 <p
-                                    class="mt-0.5 truncate text-xs text-gray-500"
+                                    class="mt-0.5 truncate text-xs text-muted-foreground"
                                 >
                                     {{ auth.user?.email }}
                                 </p>
@@ -234,11 +242,11 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                             -->
                             <div
                                 v-if="auth.currentTeam"
-                                class="border-b border-gray-100"
+                                class="border-b border-border"
                                 data-team-dropdown
                             >
                                 <div
-                                    class="px-4 py-2 text-xs font-semibold tracking-wide text-gray-500 uppercase"
+                                    class="px-4 py-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                                 >
                                     Organization
                                 </div>
@@ -247,10 +255,10 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                         v-for="team in teams"
                                         :key="team.id"
                                         type="button"
-                                        class="flex w-full items-center justify-between gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                        class="flex w-full items-center justify-between gap-2 px-4 py-2 text-left text-sm text-soft-foreground hover:bg-muted"
                                         :class="
                                             auth.currentTeam?.id === team.id
-                                                ? 'font-medium text-gray-900'
+                                                ? 'font-medium text-foreground'
                                                 : ''
                                         "
                                         @click="selectTeam(team.id)"
@@ -262,7 +270,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                             v-if="
                                                 auth.currentTeam?.id === team.id
                                             "
-                                            class="h-4 w-4 shrink-0 text-brand-600"
+                                            class="h-4 w-4 shrink-0 text-primary"
                                             fill="none"
                                             viewBox="0 0 24 24"
                                             stroke="currentColor"
@@ -279,7 +287,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                 <div class="pb-1">
                                     <Link
                                         :href="teamsCreate.url()"
-                                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-gray-50"
+                                        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary hover:bg-muted"
                                     >
                                         <svg
                                             class="h-4 w-4"
@@ -298,19 +306,22 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                     </Link>
                                     <Link
                                         :href="organizationsIndex.url()"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                        class="block px-4 py-2 text-sm text-soft-foreground hover:bg-muted"
                                     >
                                         Manage organizations
                                     </Link>
                                 </div>
                             </div>
+                            <div class="border-b border-border px-4 py-3">
+                                <AppearanceToggle />
+                            </div>
                             <div class="py-1">
                                 <Link
                                     :href="profileShow.url()"
-                                    class="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                    class="flex items-center gap-2.5 px-4 py-2 text-sm text-soft-foreground hover:bg-muted"
                                 >
                                     <svg
-                                        class="h-4 w-4 text-gray-400"
+                                        class="h-4 w-4 text-faint-foreground"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
@@ -325,11 +336,11 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                                     Profile
                                 </Link>
                                 <button
-                                    class="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                    class="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-soft-foreground hover:bg-muted"
                                     @click="handleLogout"
                                 >
                                     <svg
-                                        class="h-4 w-4 text-gray-400"
+                                        class="h-4 w-4 text-faint-foreground"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
@@ -349,10 +360,11 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                 </div>
 
                 <!-- Mobile menu button -->
-                <div class="-mr-2 flex items-center md:hidden">
+                <div class="-mr-2 flex items-center gap-1 md:hidden">
+                    <AppearanceSwitch />
                     <button
                         type="button"
-                        class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none"
+                        class="inline-flex items-center justify-center rounded-md p-2 text-faint-foreground transition hover:bg-secondary hover:text-muted-foreground focus:bg-secondary focus:text-muted-foreground focus:outline-none"
                         aria-label="Toggle navigation menu"
                         aria-controls="mobile-nav-panel"
                         :aria-expanded="showMobileMenu"
@@ -398,8 +410,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                     class="block border-l-4 py-2 pr-4 pl-3 text-base font-medium"
                     :class="
                         isCurrentPath('/dashboard')
-                            ? 'border-brand-400 bg-brand-50 text-brand-700'
-                            : 'border-transparent text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800'
+                            ? 'border-primary/60 bg-primary-soft/50 text-primary-soft-foreground'
+                            : 'border-transparent text-soft-foreground hover:border-input hover:bg-muted hover:text-foreground'
                     "
                     >Dashboard</Link
                 >
@@ -409,8 +421,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                     :class="
                         isCurrentPath('/invoices') ||
                         isCurrentPath('/estimates')
-                            ? 'border-brand-400 bg-brand-50 text-brand-700'
-                            : 'border-transparent text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800'
+                            ? 'border-primary/60 bg-primary-soft/50 text-primary-soft-foreground'
+                            : 'border-transparent text-soft-foreground hover:border-input hover:bg-muted hover:text-foreground'
                     "
                     >Invoices</Link
                 >
@@ -419,8 +431,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                     class="block border-l-4 py-2 pr-4 pl-3 text-base font-medium"
                     :class="
                         isCurrentPath('/customers')
-                            ? 'border-brand-400 bg-brand-50 text-brand-700'
-                            : 'border-transparent text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800'
+                            ? 'border-primary/60 bg-primary-soft/50 text-primary-soft-foreground'
+                            : 'border-transparent text-soft-foreground hover:border-input hover:bg-muted hover:text-foreground'
                     "
                     >Customers</Link
                 >
@@ -429,8 +441,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                     class="block border-l-4 py-2 pr-4 pl-3 text-base font-medium"
                     :class="
                         isCurrentPath('/organizations')
-                            ? 'border-brand-400 bg-brand-50 text-brand-700'
-                            : 'border-transparent text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800'
+                            ? 'border-primary/60 bg-primary-soft/50 text-primary-soft-foreground'
+                            : 'border-transparent text-soft-foreground hover:border-input hover:bg-muted hover:text-foreground'
                     "
                     >Organizations</Link
                 >
@@ -441,18 +453,18 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                     :class="
                         isCurrentPath('/settings') ||
                         isCurrentPath('/email-templates')
-                            ? 'border-brand-400 bg-brand-50 text-brand-700'
-                            : 'border-transparent text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800'
+                            ? 'border-primary/60 bg-primary-soft/50 text-primary-soft-foreground'
+                            : 'border-transparent text-soft-foreground hover:border-input hover:bg-muted hover:text-foreground'
                     "
                     >Settings</Link
                 >
             </div>
             <div
                 v-if="auth.currentTeam"
-                class="border-t border-gray-200 pt-4 pb-1"
+                class="border-t border-border pt-4 pb-1"
             >
                 <div
-                    class="px-4 text-xs font-semibold tracking-wide text-gray-500 uppercase"
+                    class="px-4 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                 >
                     {{
                         hasMultipleTeams
@@ -465,13 +477,13 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                         v-for="team in teams"
                         :key="team.id"
                         type="button"
-                        class="flex w-full items-center justify-between gap-2 px-4 py-2 text-left text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+                        class="flex w-full items-center justify-between gap-2 px-4 py-2 text-left text-base font-medium text-soft-foreground hover:bg-muted hover:text-foreground"
                         @click="selectTeam(team.id)"
                     >
                         <span class="truncate">{{ team.name }}</span>
                         <svg
                             v-if="auth.currentTeam?.id === team.id"
-                            class="h-4 w-4 text-brand-600"
+                            class="h-4 w-4 text-primary"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -486,35 +498,38 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                     </button>
                     <Link
                         :href="teamsCreate.url()"
-                        class="block px-4 py-2 text-base font-medium text-brand-700 hover:bg-gray-50"
+                        class="block px-4 py-2 text-base font-medium text-primary hover:bg-muted"
                     >
                         + Create organization
                     </Link>
                     <Link
                         :href="organizationsIndex.url()"
-                        class="block px-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+                        class="block px-4 py-2 text-base font-medium text-soft-foreground hover:bg-muted hover:text-foreground"
                     >
                         Manage organizations
                     </Link>
                 </div>
             </div>
-            <div class="border-t border-gray-200 pt-4 pb-1">
+            <div class="border-t border-border px-4 pt-4 pb-3">
+                <AppearanceToggle />
+            </div>
+            <div class="border-t border-border pt-4 pb-1">
                 <div class="px-4">
-                    <div class="text-base font-medium text-gray-800">
+                    <div class="text-base font-medium text-foreground">
                         {{ auth.user?.name }}
                     </div>
-                    <div class="text-sm font-medium text-gray-500">
+                    <div class="text-sm font-medium text-muted-foreground">
                         {{ auth.user?.email }}
                     </div>
                 </div>
                 <div class="mt-3 space-y-1">
                     <Link
                         :href="profileShow.url()"
-                        class="block px-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+                        class="block px-4 py-2 text-base font-medium text-soft-foreground hover:bg-muted hover:text-foreground"
                         >Profile</Link
                     >
                     <button
-                        class="block w-full px-4 py-2 text-left text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+                        class="block w-full px-4 py-2 text-left text-base font-medium text-soft-foreground hover:bg-muted hover:text-foreground"
                         @click="handleLogout"
                     >
                         Log Out

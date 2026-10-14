@@ -23,7 +23,7 @@ const editor = useEditor({
         }),
         Link.configure({
             openOnClick: false,
-            HTMLAttributes: { class: 'text-brand-600 underline' },
+            HTMLAttributes: { class: 'text-primary underline' },
         }),
         Underline,
         Placeholder.configure({
@@ -157,16 +157,16 @@ defineExpose({ insertText, editor });
 </script>
 
 <template>
-    <div class="rounded-md border border-gray-300 bg-white">
+    <div class="rounded-md border border-input bg-card">
         <!-- Toolbar -->
         <div
             v-if="editor"
-            class="flex flex-wrap items-center gap-1 border-b border-gray-200 px-2 py-1.5"
+            class="flex flex-wrap items-center gap-1 border-b border-border px-2 py-1.5"
         >
             <button
                 type="button"
-                class="rounded p-1.5 hover:bg-gray-100"
-                :class="{ 'bg-gray-200': editor.isActive('bold') }"
+                class="rounded p-1.5 hover:bg-secondary"
+                :class="{ 'bg-border': editor.isActive('bold') }"
                 title="Bold"
                 @click="editor.chain().focus().toggleBold().run()"
             >
@@ -192,8 +192,8 @@ defineExpose({ insertText, editor });
             </button>
             <button
                 type="button"
-                class="rounded p-1.5 hover:bg-gray-100"
-                :class="{ 'bg-gray-200': editor.isActive('italic') }"
+                class="rounded p-1.5 hover:bg-secondary"
+                :class="{ 'bg-border': editor.isActive('italic') }"
                 title="Italic"
                 @click="editor.chain().focus().toggleItalic().run()"
             >
@@ -213,8 +213,8 @@ defineExpose({ insertText, editor });
             </button>
             <button
                 type="button"
-                class="rounded p-1.5 hover:bg-gray-100"
-                :class="{ 'bg-gray-200': editor.isActive('underline') }"
+                class="rounded p-1.5 hover:bg-secondary"
+                :class="{ 'bg-border': editor.isActive('underline') }"
                 title="Underline"
                 @click="editor.chain().focus().toggleUnderline().run()"
             >
@@ -233,13 +233,13 @@ defineExpose({ insertText, editor });
                 </svg>
             </button>
 
-            <div class="mx-1 h-5 w-px bg-gray-300" />
+            <div class="mx-1 h-5 w-px bg-input" />
 
             <button
                 type="button"
-                class="rounded p-1.5 hover:bg-gray-100"
+                class="rounded p-1.5 hover:bg-secondary"
                 :class="{
-                    'bg-gray-200': editor.isActive('heading', { level: 2 }),
+                    'bg-border': editor.isActive('heading', { level: 2 }),
                 }"
                 title="Heading"
                 @click="
@@ -250,9 +250,9 @@ defineExpose({ insertText, editor });
             </button>
             <button
                 type="button"
-                class="rounded p-1.5 hover:bg-gray-100"
+                class="rounded p-1.5 hover:bg-secondary"
                 :class="{
-                    'bg-gray-200': editor.isActive('heading', { level: 3 }),
+                    'bg-border': editor.isActive('heading', { level: 3 }),
                 }"
                 title="Subheading"
                 @click="
@@ -262,12 +262,12 @@ defineExpose({ insertText, editor });
                 <span class="text-xs font-bold">H3</span>
             </button>
 
-            <div class="mx-1 h-5 w-px bg-gray-300" />
+            <div class="mx-1 h-5 w-px bg-input" />
 
             <button
                 type="button"
-                class="rounded p-1.5 hover:bg-gray-100"
-                :class="{ 'bg-gray-200': editor.isActive('bulletList') }"
+                class="rounded p-1.5 hover:bg-secondary"
+                :class="{ 'bg-border': editor.isActive('bulletList') }"
                 title="Bullet list"
                 @click="editor.chain().focus().toggleBulletList().run()"
             >
@@ -287,8 +287,8 @@ defineExpose({ insertText, editor });
             </button>
             <button
                 type="button"
-                class="rounded p-1.5 hover:bg-gray-100"
-                :class="{ 'bg-gray-200': editor.isActive('orderedList') }"
+                class="rounded p-1.5 hover:bg-secondary"
+                :class="{ 'bg-border': editor.isActive('orderedList') }"
                 title="Numbered list"
                 @click="editor.chain().focus().toggleOrderedList().run()"
             >
@@ -308,8 +308,8 @@ defineExpose({ insertText, editor });
             </button>
             <button
                 type="button"
-                class="rounded p-1.5 hover:bg-gray-100"
-                :class="{ 'bg-gray-200': editor.isActive('blockquote') }"
+                class="rounded p-1.5 hover:bg-secondary"
+                :class="{ 'bg-border': editor.isActive('blockquote') }"
                 title="Quote"
                 @click="editor.chain().focus().toggleBlockquote().run()"
             >
@@ -328,15 +328,15 @@ defineExpose({ insertText, editor });
                 </svg>
             </button>
 
-            <div class="mx-1 h-5 w-px bg-gray-300" />
+            <div class="mx-1 h-5 w-px bg-input" />
 
             <div class="relative">
                 <button
                     ref="linkButtonRef"
                     type="button"
-                    class="rounded p-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50"
+                    class="rounded p-1.5 text-xs font-medium text-primary hover:bg-primary-soft/50"
                     :class="{
-                        'bg-brand-50':
+                        'bg-primary-soft/50':
                             editor.isActive('link') || linkPopoverOpen,
                     }"
                     title="Insert link"
@@ -350,7 +350,7 @@ defineExpose({ insertText, editor });
                 <div
                     v-if="linkPopoverOpen"
                     ref="linkPopoverRef"
-                    class="absolute top-full left-0 z-10 mt-1 flex items-center gap-2 rounded-md border border-gray-200 bg-white p-2 shadow-lg"
+                    class="absolute top-full left-0 z-10 mt-1 flex items-center gap-2 rounded-md border border-border bg-popover p-2 text-popover-foreground shadow-lg"
                     @keydown.escape.stop="closeLinkPopover"
                 >
                     <input
@@ -358,12 +358,12 @@ defineExpose({ insertText, editor });
                         v-model="linkUrl"
                         type="url"
                         placeholder="https://example.com"
-                        class="w-64 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none"
+                        class="w-64 rounded-md border border-input px-2 py-1 text-sm focus:border-ring focus:ring-1 focus:ring-ring focus:outline-none"
                         @keydown.enter.prevent="applyLink"
                     />
                     <button
                         type="button"
-                        class="rounded-md bg-brand-600 px-3 py-1 text-xs font-medium text-white hover:bg-brand-700"
+                        class="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
                         @click="applyLink"
                     >
                         Apply
@@ -371,7 +371,7 @@ defineExpose({ insertText, editor });
                     <button
                         v-if="editor.isActive('link')"
                         type="button"
-                        class="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                        class="rounded-md border border-input px-3 py-1 text-xs font-medium text-soft-foreground hover:bg-muted"
                         @click="removeLink"
                     >
                         Remove
@@ -389,18 +389,20 @@ defineExpose({ insertText, editor });
 .tiptap p.is-editor-empty:first-child::before {
     content: attr(data-placeholder);
     float: left;
-    color: #9ca3af;
+    color: var(--faint-foreground);
     pointer-events: none;
     height: 0;
 }
 
 .tiptap.prose {
-    --tw-prose-body: #1f2937;
-    --tw-prose-headings: #1f2937;
-    --tw-prose-bold: #1f2937;
-    --tw-prose-bullets: #1f2937;
-    --tw-prose-counters: #1f2937;
-    --tw-prose-links: #7c3aed;
+    --tw-prose-body: var(--foreground);
+    --tw-prose-headings: var(--foreground);
+    --tw-prose-bold: var(--foreground);
+    --tw-prose-bullets: var(--foreground);
+    --tw-prose-counters: var(--foreground);
+    --tw-prose-links: var(--primary);
+    --tw-prose-quotes: var(--foreground);
+    --tw-prose-quote-borders: var(--border);
 }
 
 /* Lists: prose spaces items "loosely" — TipTap wraps each item's text in a <p>,
@@ -424,6 +426,6 @@ defineExpose({ insertText, editor });
 }
 
 .tiptap.prose li::marker {
-    color: #1f2937;
+    color: var(--foreground);
 }
 </style>

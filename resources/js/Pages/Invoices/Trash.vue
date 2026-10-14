@@ -107,12 +107,12 @@ const tabs = [
     <AppLayout title="Trash">
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="text-xl leading-tight font-semibold text-gray-800">
+                <h2 class="text-xl leading-tight font-semibold text-foreground">
                     Trash
                 </h2>
                 <a
                     href="/invoices"
-                    class="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50"
+                    class="rounded-md bg-card px-4 py-2 text-sm font-medium text-soft-foreground shadow-sm ring-1 ring-input hover:bg-muted"
                 >
                     Back to Invoices
                 </a>
@@ -121,7 +121,7 @@ const tabs = [
 
         <div class="px-4 sm:px-0">
             <div class="mb-4 flex items-center justify-between">
-                <div class="flex gap-1 rounded-lg bg-gray-100 p-1">
+                <div class="flex gap-1 rounded-lg bg-secondary p-1">
                     <button
                         v-for="tab in tabs"
                         :key="tab.key"
@@ -129,8 +129,8 @@ const tabs = [
                         class="cursor-pointer rounded-md px-4 py-2 text-sm font-medium transition-colors"
                         :class="
                             activeTab === tab.key
-                                ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700'
+                                ? 'bg-card text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-soft-foreground'
                         "
                         @click="setTab(tab.key)"
                     >
@@ -143,7 +143,7 @@ const tabs = [
                 ref="listRegion"
                 tabindex="-1"
                 aria-label="Trashed invoices list"
-                class="overflow-x-auto rounded-xl border border-border bg-card shadow-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                class="overflow-x-auto rounded-xl border border-border bg-card shadow-sm focus:ring-2 focus:ring-ring focus:outline-none"
             >
                 <table class="min-w-full divide-y divide-border">
                     <thead class="bg-muted/60">
@@ -196,25 +196,29 @@ const tabs = [
                                     class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
                                     :class="
                                         invoice.type === 'invoice'
-                                            ? 'bg-brand-100 text-brand-800'
-                                            : 'bg-green-100 text-green-800'
+                                            ? 'bg-primary-soft text-primary-soft-foreground'
+                                            : 'bg-success-soft text-success-soft-foreground'
                                     "
                                 >
                                     {{ invoice.type.toUpperCase() }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">
+                                <div
+                                    class="text-sm font-medium text-foreground"
+                                >
                                     {{ invoice.invoice_number }}
                                 </div>
                             </td>
                             <td
-                                class="px-6 py-4 text-sm whitespace-nowrap text-gray-500"
+                                class="px-6 py-4 text-sm whitespace-nowrap text-muted-foreground"
                             >
                                 {{ invoice.customer?.name ?? 'N/A' }}
                             </td>
                             <td class="px-6 py-4 text-right whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">
+                                <div
+                                    class="text-sm font-medium text-foreground"
+                                >
                                     <MoneyDisplay
                                         :amount="invoice.total"
                                         :currency="invoice.currency"
@@ -225,7 +229,7 @@ const tabs = [
                                 <StatusBadge :status="invoice.status" />
                             </td>
                             <td
-                                class="px-6 py-4 text-sm whitespace-nowrap text-gray-500"
+                                class="px-6 py-4 text-sm whitespace-nowrap text-muted-foreground"
                             >
                                 {{
                                     invoice.deleted_at
@@ -242,7 +246,7 @@ const tabs = [
                                     <button
                                         v-if="can('update')"
                                         type="button"
-                                        class="cursor-pointer text-brand-600 hover:text-brand-900 disabled:cursor-not-allowed disabled:opacity-50"
+                                        class="cursor-pointer text-primary hover:text-primary-soft-foreground disabled:cursor-not-allowed disabled:opacity-50"
                                         :disabled="restoring === invoice.id"
                                         @click="restoreInvoice(invoice)"
                                     >
@@ -255,7 +259,7 @@ const tabs = [
                                     <button
                                         v-if="can('delete')"
                                         type="button"
-                                        class="cursor-pointer text-red-600 hover:text-red-900"
+                                        class="cursor-pointer text-destructive hover:text-destructive-soft-foreground"
                                         @click="confirmForceDelete(invoice)"
                                     >
                                         Delete Forever
@@ -265,10 +269,12 @@ const tabs = [
                         </tr>
                         <tr v-if="invoices.data.length === 0">
                             <td colspan="7" class="px-6 py-12 text-center">
-                                <h3 class="text-sm font-semibold text-gray-900">
+                                <h3
+                                    class="text-sm font-semibold text-foreground"
+                                >
                                     Trash is empty
                                 </h3>
-                                <p class="mt-1 text-sm text-gray-500">
+                                <p class="mt-1 text-sm text-muted-foreground">
                                     Deleted invoices and estimates will appear
                                     here.
                                 </p>
@@ -279,10 +285,10 @@ const tabs = [
 
                 <nav
                     v-if="invoices.last_page > 1"
-                    class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6"
+                    class="flex items-center justify-between border-t border-border bg-card px-4 py-3 sm:px-6"
                 >
                     <div class="hidden sm:block">
-                        <p class="text-sm text-gray-700">
+                        <p class="text-sm text-soft-foreground">
                             Showing page
                             <span class="font-medium">{{
                                 invoices.current_page
@@ -307,15 +313,15 @@ const tabs = [
                                 class="relative inline-flex cursor-pointer items-center rounded-md border px-4 py-2 text-sm font-medium"
                                 :class="
                                     link.active
-                                        ? 'border-brand-500 bg-brand-50 text-brand-600'
-                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                        ? 'border-primary bg-primary-soft/50 text-primary'
+                                        : 'border-input bg-card text-soft-foreground hover:bg-muted'
                                 "
                                 @click="router.get(link.url!)"
                                 v-html="link.label"
                             />
                             <span
                                 v-else
-                                class="relative inline-flex items-center rounded-md border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400"
+                                class="relative inline-flex items-center rounded-md border border-border bg-secondary px-4 py-2 text-sm font-medium text-faint-foreground"
                                 v-html="link.label"
                             />
                         </template>

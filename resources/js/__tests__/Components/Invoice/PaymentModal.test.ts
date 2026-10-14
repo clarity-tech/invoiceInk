@@ -141,7 +141,7 @@ describe('PaymentModal', () => {
             props: { show: true, invoice: defaultInvoice },
         });
         // X button is the first button with an SVG
-        const closeBtn = wrapper.find('.text-gray-400');
+        const closeBtn = wrapper.find('.text-faint-foreground');
         await closeBtn.trigger('click');
         expect(wrapper.emitted('close')).toHaveLength(1);
     });

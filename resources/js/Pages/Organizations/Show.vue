@@ -132,7 +132,7 @@ function previewNumber(series: NumberingSeries): string {
 <template>
     <AppLayout :title="org.name">
         <template #header>
-            <h2 class="text-xl leading-tight font-semibold text-gray-800">
+            <h2 class="text-xl leading-tight font-semibold text-foreground">
                 {{ org.name }}
             </h2>
         </template>
@@ -143,7 +143,7 @@ function previewNumber(series: NumberingSeries): string {
                 <div class="flex items-center gap-5">
                     <div
                         v-if="org.logo_url"
-                        class="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
+                        class="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-paper shadow-sm"
                     >
                         <img
                             :src="org.logo_url"
@@ -161,7 +161,7 @@ function previewNumber(series: NumberingSeries): string {
                     </div>
                     <div>
                         <h1
-                            class="text-2xl font-bold tracking-tight text-gray-900"
+                            class="text-2xl font-bold tracking-tight text-foreground"
                         >
                             {{ org.name }}
                         </h1>
@@ -170,21 +170,21 @@ function previewNumber(series: NumberingSeries): string {
                                 org.company_name &&
                                 org.company_name !== org.name
                             "
-                            class="text-sm text-gray-500"
+                            class="text-sm text-muted-foreground"
                         >
                             {{ org.company_name }}
                         </p>
                         <div
-                            class="mt-1 flex items-center gap-3 text-sm text-gray-500"
+                            class="mt-1 flex items-center gap-3 text-sm text-muted-foreground"
                         >
                             <span
                                 v-if="org.currency"
-                                class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700"
+                                class="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-soft-foreground"
                                 >{{ org.currency }}</span
                             >
                             <span
                                 v-if="org.country_code"
-                                class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700"
+                                class="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-soft-foreground"
                                 >{{ org.country_code }}</span
                             >
                         </div>
@@ -193,7 +193,7 @@ function previewNumber(series: NumberingSeries): string {
                 <Link
                     v-if="canManage"
                     :href="`/organizations/${org.id}/edit`"
-                    class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none"
+                    class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none"
                 >
                     <Pencil class="size-4" />
                     Edit Settings
@@ -203,59 +203,69 @@ function previewNumber(series: NumberingSeries): string {
             <!-- Info Grid -->
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <!-- Contact Info -->
-                <section class="rounded-xl border border-gray-200 bg-white p-6">
+                <section class="rounded-xl border border-border bg-card p-6">
                     <h2
-                        class="mb-4 text-sm font-semibold tracking-wider text-gray-400 uppercase"
+                        class="mb-4 text-sm font-semibold tracking-wider text-faint-foreground uppercase"
                     >
                         Contact
                     </h2>
                     <dl class="space-y-4">
                         <div v-if="org.emails?.length">
-                            <dt class="text-xs font-medium text-gray-500">
+                            <dt
+                                class="text-xs font-medium text-muted-foreground"
+                            >
                                 Email
                             </dt>
                             <dd
                                 v-for="(contact, i) in org.emails"
                                 :key="i"
-                                class="text-sm text-gray-900"
+                                class="text-sm text-foreground"
                             >
                                 {{ contact.email }}
                             </dd>
                         </div>
                         <div v-if="org.formatted_phone">
-                            <dt class="text-xs font-medium text-gray-500">
+                            <dt
+                                class="text-xs font-medium text-muted-foreground"
+                            >
                                 Phone
                             </dt>
-                            <dd class="text-sm text-gray-900">
+                            <dd class="text-sm text-foreground">
                                 {{ org.formatted_phone }}
                             </dd>
                         </div>
                         <div v-if="org.website">
-                            <dt class="text-xs font-medium text-gray-500">
+                            <dt
+                                class="text-xs font-medium text-muted-foreground"
+                            >
                                 Website
                             </dt>
                             <dd class="text-sm">
                                 <a
                                     :href="org.website"
                                     target="_blank"
-                                    class="text-brand-600 hover:underline"
+                                    class="text-primary hover:underline"
                                     >{{ org.website }}</a
                                 >
                             </dd>
                         </div>
                         <div v-if="org.tax_number">
-                            <dt class="text-xs font-medium text-gray-500">
+                            <dt
+                                class="text-xs font-medium text-muted-foreground"
+                            >
                                 Tax Number
                             </dt>
-                            <dd class="font-mono text-sm text-gray-900">
+                            <dd class="font-mono text-sm text-foreground">
                                 {{ org.tax_number }}
                             </dd>
                         </div>
                         <div v-if="org.registration_number">
-                            <dt class="text-xs font-medium text-gray-500">
+                            <dt
+                                class="text-xs font-medium text-muted-foreground"
+                            >
                                 Registration Number
                             </dt>
-                            <dd class="font-mono text-sm text-gray-900">
+                            <dd class="font-mono text-sm text-foreground">
                                 {{ org.registration_number }}
                             </dd>
                         </div>
@@ -263,15 +273,15 @@ function previewNumber(series: NumberingSeries): string {
                 </section>
 
                 <!-- Primary Location -->
-                <section class="rounded-xl border border-gray-200 bg-white p-6">
+                <section class="rounded-xl border border-border bg-card p-6">
                     <h2
-                        class="mb-4 text-sm font-semibold tracking-wider text-gray-400 uppercase"
+                        class="mb-4 text-sm font-semibold tracking-wider text-faint-foreground uppercase"
                     >
                         Primary Location
                     </h2>
                     <div
                         v-if="org.primary_location"
-                        class="space-y-1 text-sm text-gray-900"
+                        class="space-y-1 text-sm text-foreground"
                     >
                         <p v-if="org.primary_location.name" class="font-medium">
                             {{ org.primary_location.name }}
@@ -287,79 +297,85 @@ function previewNumber(series: NumberingSeries): string {
                         </p>
                         <p
                             v-if="org.primary_location.tax_id"
-                            class="mt-2 font-mono text-xs text-gray-500"
+                            class="mt-2 font-mono text-xs text-muted-foreground"
                         >
                             {{ taxLabel }}: {{ org.primary_location.tax_id }}
                         </p>
                     </div>
-                    <p v-else class="text-sm text-gray-400 italic">
+                    <p v-else class="text-sm text-faint-foreground italic">
                         No location configured.
                         <Link
                             v-if="canManage"
                             :href="`/organizations/${org.id}/edit?tab=location`"
-                            class="text-brand-600 not-italic hover:underline"
+                            class="text-primary not-italic hover:underline"
                             >Add one</Link
                         >
                     </p>
                 </section>
 
                 <!-- Bank Details -->
-                <section class="rounded-xl border border-gray-200 bg-white p-6">
+                <section class="rounded-xl border border-border bg-card p-6">
                     <h2
-                        class="mb-4 text-sm font-semibold tracking-wider text-gray-400 uppercase"
+                        class="mb-4 text-sm font-semibold tracking-wider text-faint-foreground uppercase"
                     >
                         Bank Details
                     </h2>
                     <div v-if="hasBank" class="space-y-3 text-sm">
                         <div v-if="org.bank_details?.bank_name">
-                            <dt class="text-xs font-medium text-gray-500">
+                            <dt
+                                class="text-xs font-medium text-muted-foreground"
+                            >
                                 Bank
                             </dt>
-                            <dd class="text-gray-900">
+                            <dd class="text-foreground">
                                 {{ org.bank_details.bank_name }}
                             </dd>
                         </div>
                         <div v-if="org.bank_details?.account_number">
-                            <dt class="text-xs font-medium text-gray-500">
+                            <dt
+                                class="text-xs font-medium text-muted-foreground"
+                            >
                                 Account
                             </dt>
-                            <dd class="font-mono text-gray-900">
+                            <dd class="font-mono text-foreground">
                                 {{ org.bank_details.account_name }} &mdash;
                                 {{ org.bank_details.account_number }}
                             </dd>
                         </div>
                         <div v-if="org.bank_details?.ifsc">
-                            <dt class="text-xs font-medium text-gray-500">
+                            <dt
+                                class="text-xs font-medium text-muted-foreground"
+                            >
                                 IFSC
                             </dt>
-                            <dd class="font-mono text-gray-900">
+                            <dd class="font-mono text-foreground">
                                 {{ org.bank_details.ifsc }}
                             </dd>
                         </div>
                     </div>
-                    <p v-else class="text-sm text-gray-400 italic">
+                    <p v-else class="text-sm text-faint-foreground italic">
                         No bank details configured.
                         <Link
                             v-if="canManage"
                             :href="`/organizations/${org.id}/edit?tab=bank`"
-                            class="text-brand-600 not-italic hover:underline"
+                            class="text-primary not-italic hover:underline"
                             >Add details</Link
                         >
                     </p>
                 </section>
 
                 <!-- Numbering Series -->
-                <section class="rounded-xl border border-gray-200 bg-white p-6">
+                <section class="rounded-xl border border-border bg-card p-6">
                     <div class="mb-4 flex items-center justify-between">
                         <h2
-                            class="text-sm font-semibold tracking-wider text-gray-400 uppercase"
+                            class="text-sm font-semibold tracking-wider text-faint-foreground uppercase"
                         >
                             Numbering Series
                         </h2>
                         <Link
                             v-if="canManage"
                             :href="`/organizations/${org.id}/edit?tab=numbering`"
-                            class="text-xs font-medium text-brand-600 hover:text-brand-900"
+                            class="text-xs font-medium text-primary hover:text-primary-soft-foreground"
                         >
                             Manage
                         </Link>
@@ -368,36 +384,34 @@ function previewNumber(series: NumberingSeries): string {
                         <div
                             v-for="series in numberingSeries"
                             :key="series.id"
-                            class="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3"
+                            class="flex items-center justify-between rounded-lg bg-muted px-4 py-3"
                         >
                             <div>
                                 <div class="flex items-center gap-2">
                                     <span
-                                        class="text-sm font-medium text-gray-900"
+                                        class="text-sm font-medium text-foreground"
                                     >
                                         {{ series.name }}
                                     </span>
                                     <span
                                         v-if="series.is_default"
-                                        class="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700"
+                                        class="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary-soft-foreground"
                                     >
                                         Default
                                     </span>
                                     <span
                                         v-if="!series.is_active"
-                                        class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700"
+                                        class="rounded-full bg-destructive-soft px-2 py-0.5 text-xs font-medium text-destructive-soft-foreground"
                                     >
                                         Inactive
                                     </span>
                                 </div>
-                                <p
-                                    class="mt-1 font-mono text-xs text-brand-600"
-                                >
+                                <p class="mt-1 font-mono text-xs text-primary">
                                     Next: {{ previewNumber(series) }}
                                 </p>
                             </div>
                             <div class="text-right">
-                                <p class="text-xs text-gray-400">
+                                <p class="text-xs text-faint-foreground">
                                     Resets:
                                     {{
                                         series.reset_frequency.replace('_', ' ')
@@ -406,7 +420,7 @@ function previewNumber(series: NumberingSeries): string {
                             </div>
                         </div>
                     </div>
-                    <p v-else class="text-sm text-gray-400 italic">
+                    <p v-else class="text-sm text-faint-foreground italic">
                         No numbering series configured. One will be created
                         automatically with your first invoice.
                     </p>
@@ -415,14 +429,14 @@ function previewNumber(series: NumberingSeries): string {
                 <!-- Notes -->
                 <section
                     v-if="org.notes"
-                    class="rounded-xl border border-gray-200 bg-white p-6"
+                    class="rounded-xl border border-border bg-card p-6"
                 >
                     <h2
-                        class="mb-4 text-sm font-semibold tracking-wider text-gray-400 uppercase"
+                        class="mb-4 text-sm font-semibold tracking-wider text-faint-foreground uppercase"
                     >
                         Notes
                     </h2>
-                    <p class="text-sm whitespace-pre-wrap text-gray-700">
+                    <p class="text-sm whitespace-pre-wrap text-soft-foreground">
                         {{ org.notes }}
                     </p>
                 </section>

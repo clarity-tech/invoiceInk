@@ -187,23 +187,23 @@ const formatTokens = [
 </script>
 
 <template>
-    <div class="rounded-xl border border-gray-200 bg-white">
+    <div class="rounded-xl border border-border bg-card">
         <!-- Header -->
         <div
-            class="flex items-center justify-between border-b border-gray-200 px-6 py-4"
+            class="flex items-center justify-between border-b border-border px-6 py-4"
         >
             <div>
-                <h3 class="text-base font-semibold text-gray-900">
+                <h3 class="text-base font-semibold text-foreground">
                     Numbering Series
                 </h3>
-                <p class="mt-0.5 text-sm text-gray-500">
+                <p class="mt-0.5 text-sm text-muted-foreground">
                     Configure how invoice and estimate numbers are generated.
                 </p>
             </div>
             <button
                 v-if="!showForm"
                 type="button"
-                class="rounded-md bg-brand-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
+                class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
                 @click="openCreate"
             >
                 Add Series
@@ -214,79 +214,79 @@ const formatTokens = [
             <!-- Create/Edit Form -->
             <div
                 v-if="showForm"
-                class="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-5"
+                class="mb-6 rounded-lg border border-border bg-muted p-5"
             >
-                <h4 class="mb-4 text-sm font-semibold text-gray-900">
+                <h4 class="mb-4 text-sm font-semibold text-foreground">
                     {{ editingSeries ? 'Edit Series' : 'New Series' }}
                 </h4>
                 <form class="space-y-4" @submit.prevent="submitForm">
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label
-                                class="block text-sm font-medium text-gray-700"
+                                class="block text-sm font-medium text-soft-foreground"
                                 >Name *</label
                             >
                             <input
                                 id="ns-name"
                                 v-model="form.name"
                                 type="text"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                class="mt-1 block w-full rounded-md border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                 placeholder="e.g. Default Invoice Series"
                             />
                             <p
                                 v-if="form.errors.name"
-                                class="mt-1 text-xs text-red-600"
+                                class="mt-1 text-xs text-destructive"
                             >
                                 {{ form.errors.name }}
                             </p>
                         </div>
                         <div>
                             <label
-                                class="block text-sm font-medium text-gray-700"
+                                class="block text-sm font-medium text-soft-foreground"
                                 >Prefix *</label
                             >
                             <input
                                 id="ns-prefix"
                                 v-model="form.prefix"
                                 type="text"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                class="mt-1 block w-full rounded-md border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                 placeholder="INV"
                             />
                             <p
                                 v-if="form.errors.prefix"
-                                class="mt-1 text-xs text-red-600"
+                                class="mt-1 text-xs text-destructive"
                             >
                                 {{ form.errors.prefix }}
                             </p>
                         </div>
                         <div>
                             <label
-                                class="block text-sm font-medium text-gray-700"
+                                class="block text-sm font-medium text-soft-foreground"
                                 >Format Pattern *</label
                             >
                             <input
                                 id="ns-format_pattern"
                                 v-model="form.format_pattern"
                                 type="text"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                class="mt-1 block w-full rounded-md border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                 placeholder="{PREFIX}-{FY}-{SEQUENCE:4}"
                             />
                             <p
                                 v-if="form.errors.format_pattern"
-                                class="mt-1 text-xs text-red-600"
+                                class="mt-1 text-xs text-destructive"
                             >
                                 {{ form.errors.format_pattern }}
                             </p>
                         </div>
                         <div>
                             <label
-                                class="block text-sm font-medium text-gray-700"
+                                class="block text-sm font-medium text-soft-foreground"
                                 >Reset Frequency *</label
                             >
                             <select
                                 id="ns-reset_frequency"
                                 v-model="form.reset_frequency"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                class="mt-1 block w-full rounded-md border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                             >
                                 <option
                                     v-for="(
@@ -301,14 +301,14 @@ const formatTokens = [
                         </div>
                         <div>
                             <label
-                                class="block text-sm font-medium text-gray-700"
+                                class="block text-sm font-medium text-soft-foreground"
                                 >Current Number</label
                             >
                             <input
                                 v-model.number="form.current_number"
                                 type="number"
                                 min="0"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                class="mt-1 block w-full rounded-md border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                             />
                         </div>
                         <div class="flex items-end gap-4">
@@ -316,9 +316,9 @@ const formatTokens = [
                                 <input
                                     v-model="form.is_active"
                                     type="checkbox"
-                                    class="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                    class="rounded border-input text-primary shadow-sm focus:border-ring focus:ring-ring"
                                 />
-                                <span class="ml-2 text-sm text-gray-600"
+                                <span class="ml-2 text-sm text-soft-foreground"
                                     >Active</span
                                 >
                             </label>
@@ -326,9 +326,9 @@ const formatTokens = [
                                 <input
                                     v-model="form.is_default"
                                     type="checkbox"
-                                    class="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                    class="rounded border-input text-primary shadow-sm focus:border-ring focus:ring-ring"
                                 />
-                                <span class="ml-2 text-sm text-gray-600"
+                                <span class="ml-2 text-sm text-soft-foreground"
                                     >Default</span
                                 >
                             </label>
@@ -338,20 +338,20 @@ const formatTokens = [
                     <!-- Preview -->
                     <div
                         v-if="previewNumber"
-                        class="rounded-md bg-white p-3 ring-1 ring-gray-200"
+                        class="rounded-md bg-card p-3 ring-1 ring-border"
                     >
-                        <span class="text-xs font-medium text-gray-500"
+                        <span class="text-xs font-medium text-muted-foreground"
                             >Next number preview:</span
                         >
-                        <span class="ml-2 font-mono text-sm text-brand-600">{{
+                        <span class="ml-2 font-mono text-sm text-primary">{{
                             previewNumber
                         }}</span>
                     </div>
 
                     <!-- Token Reference -->
-                    <details class="rounded-md border border-gray-200 text-sm">
+                    <details class="rounded-md border border-border text-sm">
                         <summary
-                            class="cursor-pointer px-3 py-2 font-medium text-gray-700"
+                            class="cursor-pointer px-3 py-2 font-medium text-soft-foreground"
                         >
                             Format Tokens
                         </summary>
@@ -362,7 +362,7 @@ const formatTokens = [
                                 class="text-xs"
                                 :title="t.description"
                             >
-                                <code class="rounded bg-gray-100 px-1">{{
+                                <code class="rounded bg-secondary px-1">{{
                                     t.token
                                 }}</code>
                             </span>
@@ -372,14 +372,14 @@ const formatTokens = [
                     <div class="flex justify-end gap-2">
                         <button
                             type="button"
-                            class="rounded-md bg-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-300"
+                            class="rounded-md bg-border px-3 py-1.5 text-sm text-soft-foreground hover:bg-input"
                             @click="cancelForm"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            class="rounded-md bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700"
+                            class="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90"
                             :disabled="form.processing"
                         >
                             {{ editingSeries ? 'Update' : 'Create' }}
@@ -393,41 +393,43 @@ const formatTokens = [
                 <div
                     v-for="s in series"
                     :key="s.id"
-                    class="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3"
+                    class="flex items-center justify-between rounded-lg bg-muted px-4 py-3"
                 >
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="text-sm font-medium text-gray-900">{{
+                            <span class="text-sm font-medium text-foreground">{{
                                 s.name
                             }}</span>
                             <span
                                 v-if="s.is_default"
-                                class="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700"
+                                class="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary-soft-foreground"
                             >
                                 Default
                             </span>
                             <span
                                 v-if="!s.is_active"
-                                class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700"
+                                class="rounded-full bg-destructive-soft px-2 py-0.5 text-xs font-medium text-destructive-soft-foreground"
                             >
                                 Inactive
                             </span>
                         </div>
-                        <p class="mt-0.5 font-mono text-xs text-gray-500">
+                        <p
+                            class="mt-0.5 font-mono text-xs text-muted-foreground"
+                        >
                             {{ s.format_pattern }}
                         </p>
                     </div>
                     <div class="flex items-center gap-2">
                         <button
                             type="button"
-                            class="text-sm text-brand-600 hover:text-brand-900"
+                            class="text-sm text-primary hover:text-primary-soft-foreground"
                             @click="openEdit(s)"
                         >
                             Edit
                         </button>
                         <button
                             type="button"
-                            class="text-sm text-yellow-600 hover:text-yellow-900"
+                            class="text-sm text-caution hover:text-caution-soft-foreground"
                             @click="confirmToggle(s)"
                         >
                             {{ s.is_active ? 'Deactivate' : 'Activate' }}
@@ -435,14 +437,14 @@ const formatTokens = [
                         <button
                             v-if="!s.is_default"
                             type="button"
-                            class="text-sm text-brand-600 hover:text-brand-900"
+                            class="text-sm text-primary hover:text-primary-soft-foreground"
                             @click="setAsDefault(s)"
                         >
                             Set Default
                         </button>
                         <button
                             type="button"
-                            class="text-sm text-red-600 hover:text-red-900"
+                            class="text-sm text-destructive hover:text-destructive-soft-foreground"
                             @click="confirmDelete(s)"
                         >
                             Delete
@@ -450,7 +452,7 @@ const formatTokens = [
                     </div>
                 </div>
             </div>
-            <p v-else class="text-sm text-gray-400 italic">
+            <p v-else class="text-sm text-faint-foreground italic">
                 No numbering series configured. A default will be created with
                 your first invoice.
             </p>

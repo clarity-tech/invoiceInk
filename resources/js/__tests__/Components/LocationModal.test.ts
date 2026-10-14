@@ -197,7 +197,7 @@ describe('LocationModal', () => {
             customerId: 1,
             ...baseProps,
         });
-        await wrapper.find('.bg-opacity-75').trigger('click');
+        await wrapper.find('.bg-overlay').trigger('click');
         expect(wrapper.emitted('close')).toHaveLength(1);
     });
 

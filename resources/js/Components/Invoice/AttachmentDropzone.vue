@@ -49,19 +49,19 @@ function onDrop(event: DragEvent) {
             <li
                 v-for="(file, index) in model"
                 :key="`${file.name}-${index}`"
-                class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2"
+                class="flex items-center justify-between rounded-md border border-border bg-muted px-3 py-2"
             >
                 <div class="min-w-0 flex-1">
-                    <div class="truncate text-sm font-medium text-gray-900">
+                    <div class="truncate text-sm font-medium text-foreground">
                         {{ file.name }}
                     </div>
-                    <div class="text-xs text-gray-500">
+                    <div class="text-xs text-muted-foreground">
                         {{ formatBytes(file.size) }}
                     </div>
                 </div>
                 <button
                     type="button"
-                    class="ml-2 text-gray-400 hover:text-red-600"
+                    class="ml-2 text-faint-foreground hover:text-destructive"
                     aria-label="Remove attachment"
                     @click="removeFile(index)"
                 >
@@ -84,8 +84,8 @@ function onDrop(event: DragEvent) {
             class="cursor-pointer rounded-md border border-dashed px-3 py-4 text-center transition"
             :class="
                 isDragging
-                    ? 'border-brand-500 bg-brand-50'
-                    : 'border-gray-300 hover:bg-gray-50'
+                    ? 'border-primary bg-primary-soft/50'
+                    : 'border-input hover:bg-muted'
             "
             role="button"
             tabindex="0"
@@ -96,13 +96,13 @@ function onDrop(event: DragEvent) {
             @dragleave.prevent="isDragging = false"
             @drop.prevent="onDrop"
         >
-            <p class="text-sm text-gray-600">
-                <span class="font-medium text-brand-600"
+            <p class="text-sm text-soft-foreground">
+                <span class="font-medium text-primary"
                     >Click to attach files</span
                 >
                 or drag and drop
             </p>
-            <p class="mt-0.5 text-xs text-gray-500">
+            <p class="mt-0.5 text-xs text-muted-foreground">
                 Up to 10 files, 10MB each, 25MB total
             </p>
             <input
@@ -115,7 +115,7 @@ function onDrop(event: DragEvent) {
             />
         </div>
 
-        <p v-if="error" class="mt-2 text-xs text-red-600">
+        <p v-if="error" class="mt-2 text-xs text-destructive">
             {{ error }}
         </p>
     </div>

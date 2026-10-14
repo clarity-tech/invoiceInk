@@ -45,13 +45,13 @@ function submit() {
 <template>
     <form
         @submit.prevent="submit"
-        class="rounded-xl border border-gray-200 bg-white"
+        class="rounded-xl border border-border bg-card"
     >
-        <div class="border-b border-gray-100 px-6 py-4">
-            <h2 class="text-lg font-semibold text-gray-900">
+        <div class="border-b border-border px-6 py-4">
+            <h2 class="text-lg font-semibold text-foreground">
                 Primary Location
             </h2>
-            <p class="mt-1 text-sm text-gray-500">
+            <p class="mt-1 text-sm text-muted-foreground">
                 Your main business address used on invoices.
             </p>
         </div>
@@ -61,7 +61,7 @@ function submit() {
                 <div>
                     <label
                         for="loc-name"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                         >Location Name</label
                     >
                     <input
@@ -69,19 +69,19 @@ function submit() {
                         v-model="form.location_name"
                         type="text"
                         placeholder="e.g., Head Office"
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                     />
                 </div>
                 <div>
                     <label
                         for="loc-country"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                         >Country *</label
                     >
                     <select
                         id="loc-country"
                         v-model="form.country"
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                     >
                         <option value="">Select country</option>
                         <option
@@ -94,7 +94,7 @@ function submit() {
                     </select>
                     <p
                         v-if="form.errors.country"
-                        class="mt-1 text-sm text-red-600"
+                        class="mt-1 text-sm text-destructive"
                     >
                         {{ form.errors.country }}
                     </p>
@@ -104,16 +104,19 @@ function submit() {
             <div>
                 <label
                     for="loc-tax_id"
-                    class="block text-sm font-medium text-gray-700"
+                    class="block text-sm font-medium text-soft-foreground"
                     >{{ taxLabel }}</label
                 >
                 <input
                     id="loc-tax_id"
                     v-model="form.tax_id"
                     type="text"
-                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                    class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                 />
-                <p v-if="form.errors.tax_id" class="mt-1 text-sm text-red-600">
+                <p
+                    v-if="form.errors.tax_id"
+                    class="mt-1 text-sm text-destructive"
+                >
                     {{ form.errors.tax_id }}
                 </p>
             </div>
@@ -121,18 +124,18 @@ function submit() {
             <div>
                 <label
                     for="loc-addr1"
-                    class="block text-sm font-medium text-gray-700"
+                    class="block text-sm font-medium text-soft-foreground"
                     >Address Line 1 *</label
                 >
                 <input
                     id="loc-addr1"
                     v-model="form.address_line_1"
                     type="text"
-                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                    class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                 />
                 <p
                     v-if="form.errors.address_line_1"
-                    class="mt-1 text-sm text-red-600"
+                    class="mt-1 text-sm text-destructive"
                 >
                     {{ form.errors.address_line_1 }}
                 </p>
@@ -141,14 +144,14 @@ function submit() {
             <div>
                 <label
                     for="loc-addr2"
-                    class="block text-sm font-medium text-gray-700"
+                    class="block text-sm font-medium text-soft-foreground"
                     >Address Line 2</label
                 >
                 <input
                     id="loc-addr2"
                     v-model="form.address_line_2"
                     type="text"
-                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                    class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                 />
             </div>
 
@@ -156,18 +159,18 @@ function submit() {
                 <div>
                     <label
                         for="loc-city"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                         >City *</label
                     >
                     <input
                         id="loc-city"
                         v-model="form.city"
                         type="text"
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                     />
                     <p
                         v-if="form.errors.city"
-                        class="mt-1 text-sm text-red-600"
+                        class="mt-1 text-sm text-destructive"
                     >
                         {{ form.errors.city }}
                     </p>
@@ -175,18 +178,18 @@ function submit() {
                 <div>
                     <label
                         for="loc-state"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                         >State *</label
                     >
                     <input
                         id="loc-state"
                         v-model="form.state"
                         type="text"
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                     />
                     <p
                         v-if="form.errors.state"
-                        class="mt-1 text-sm text-red-600"
+                        class="mt-1 text-sm text-destructive"
                     >
                         {{ form.errors.state }}
                     </p>
@@ -194,18 +197,18 @@ function submit() {
                 <div>
                     <label
                         for="loc-postal"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                         >Postal Code *</label
                     >
                     <input
                         id="loc-postal"
                         v-model="form.postal_code"
                         type="text"
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                     />
                     <p
                         v-if="form.errors.postal_code"
-                        class="mt-1 text-sm text-red-600"
+                        class="mt-1 text-sm text-destructive"
                     >
                         {{ form.errors.postal_code }}
                     </p>
@@ -214,15 +217,15 @@ function submit() {
         </div>
 
         <div
-            class="flex items-center justify-end gap-3 border-t border-gray-100 bg-gray-50/50 px-6 py-4"
+            class="flex items-center justify-end gap-3 border-t border-border bg-muted/50 px-6 py-4"
         >
-            <span v-show="recentlySuccessful" class="text-sm text-green-600"
+            <span v-show="recentlySuccessful" class="text-sm text-success"
                 >Saved.</span
             >
             <button
                 type="submit"
                 :disabled="form.processing"
-                class="inline-flex items-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                class="inline-flex items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:opacity-50"
             >
                 {{ form.processing ? 'Saving...' : 'Save Location' }}
             </button>

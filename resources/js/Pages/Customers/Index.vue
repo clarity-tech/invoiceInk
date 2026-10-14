@@ -202,20 +202,20 @@ function locationSummary(customer: Customer): string {
     <AppLayout title="Customers">
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="text-xl leading-tight font-semibold text-gray-800">
+                <h2 class="text-xl leading-tight font-semibold text-foreground">
                     Customers
                 </h2>
                 <div class="flex gap-2">
                     <a
                         href="/customers/trash"
-                        class="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50"
+                        class="rounded-md bg-card px-4 py-2 text-sm font-medium text-soft-foreground shadow-sm ring-1 ring-input hover:bg-muted"
                     >
                         Trash
                     </a>
                     <button
                         v-if="can('create')"
                         type="button"
-                        class="cursor-pointer rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
+                        class="cursor-pointer rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
                         @click="openCreate"
                     >
                         Add Customer
@@ -229,7 +229,7 @@ function locationSummary(customer: Customer): string {
             <div class="mb-4">
                 <div class="relative max-w-sm">
                     <svg
-                        class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
+                        class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-faint-foreground"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke-width="1.5"
@@ -245,7 +245,7 @@ function locationSummary(customer: Customer): string {
                         v-model="searchQuery"
                         type="text"
                         placeholder="Search by name, email, or phone..."
-                        class="block w-full rounded-md border-gray-300 pl-10 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                        class="block w-full rounded-md border-input pl-10 text-sm shadow-sm focus:border-ring focus:ring-ring"
                     />
                 </div>
             </div>
@@ -257,7 +257,7 @@ function locationSummary(customer: Customer): string {
                         class="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0"
                     >
                         <div
-                            class="bg-opacity-75 fixed inset-0 bg-gray-500 transition-opacity"
+                            class="fixed inset-0 bg-overlay transition-opacity"
                             @click="cancelForm"
                         />
                         <span
@@ -266,7 +266,7 @@ function locationSummary(customer: Customer): string {
                             >&#8203;</span
                         >
                         <div
-                            class="relative inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl sm:align-middle"
+                            class="relative inline-block transform overflow-hidden rounded-lg bg-card text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl sm:align-middle"
                             role="dialog"
                             aria-modal="true"
                             :aria-label="
@@ -275,9 +275,9 @@ function locationSummary(customer: Customer): string {
                                     : 'Add Customer'
                             "
                         >
-                            <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
+                            <div class="bg-card px-4 pt-5 pb-4 sm:p-6">
                                 <h3
-                                    class="mb-4 text-lg leading-6 font-medium text-gray-900"
+                                    class="mb-4 text-lg leading-6 font-medium text-foreground"
                                 >
                                     {{
                                         editingCustomer
@@ -309,7 +309,7 @@ function locationSummary(customer: Customer): string {
                 ref="listRegion"
                 tabindex="-1"
                 aria-label="Customers list"
-                class="overflow-x-auto rounded-xl border border-border bg-card shadow-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                class="overflow-x-auto rounded-xl border border-border bg-card shadow-sm focus:ring-2 focus:ring-ring focus:outline-none"
             >
                 <table class="min-w-full divide-y divide-border">
                     <thead class="bg-muted/60">
@@ -353,17 +353,19 @@ function locationSummary(customer: Customer): string {
                         >
                             <tr class="hover:bg-muted/40">
                                 <td
-                                    class="px-4 py-4 text-sm font-medium text-gray-900"
+                                    class="px-4 py-4 text-sm font-medium text-foreground"
                                 >
                                     <Link
                                         :href="`/customers/${customer.id}`"
-                                        class="block max-w-[260px] truncate text-brand-600 hover:text-brand-900"
+                                        class="block max-w-[260px] truncate text-primary hover:text-primary-soft-foreground"
                                         :title="customer.name"
                                     >
                                         {{ customer.name }}
                                     </Link>
                                 </td>
-                                <td class="px-4 py-4 text-sm text-gray-500">
+                                <td
+                                    class="px-4 py-4 text-sm text-muted-foreground"
+                                >
                                     <div
                                         class="max-w-[260px] truncate"
                                         :title="primaryEmail(customer)"
@@ -372,23 +374,27 @@ function locationSummary(customer: Customer): string {
                                     </div>
                                 </td>
                                 <td
-                                    class="px-4 py-4 text-sm whitespace-nowrap text-gray-500"
+                                    class="px-4 py-4 text-sm whitespace-nowrap text-muted-foreground"
                                 >
                                     {{ customer.formatted_phone ?? '-' }}
                                 </td>
                                 <td
-                                    class="px-4 py-4 text-sm whitespace-nowrap text-gray-500"
+                                    class="px-4 py-4 text-sm whitespace-nowrap text-muted-foreground"
                                 >
                                     {{ customer.currency ?? '-' }}
                                 </td>
-                                <td class="px-4 py-4 text-sm text-gray-500">
+                                <td
+                                    class="px-4 py-4 text-sm text-muted-foreground"
+                                >
                                     <div
                                         class="max-w-[200px] truncate"
                                         :title="locationSummary(customer)"
                                     >
                                         {{ locationSummary(customer) }}
                                     </div>
-                                    <div class="mt-1 text-xs text-gray-400">
+                                    <div
+                                        class="mt-1 text-xs text-faint-foreground"
+                                    >
                                         {{ customer.locations_count }}
                                         {{
                                             customer.locations_count === 1
@@ -403,7 +409,7 @@ function locationSummary(customer: Customer): string {
                                     <button
                                         v-if="can('update')"
                                         type="button"
-                                        class="mr-3 cursor-pointer text-brand-600 hover:text-brand-900"
+                                        class="mr-3 cursor-pointer text-primary hover:text-primary-soft-foreground"
                                         @click="openEdit(customer)"
                                     >
                                         Edit
@@ -411,7 +417,7 @@ function locationSummary(customer: Customer): string {
                                     <button
                                         v-if="can('delete')"
                                         type="button"
-                                        class="cursor-pointer text-red-600 hover:text-red-900"
+                                        class="cursor-pointer text-destructive hover:text-destructive-soft-foreground"
                                         @click="confirmDelete(customer)"
                                     >
                                         Delete
@@ -423,7 +429,7 @@ function locationSummary(customer: Customer): string {
                             <td colspan="6" class="px-4 py-12 text-center">
                                 <template v-if="searchQuery">
                                     <svg
-                                        class="mx-auto h-12 w-12 text-gray-300"
+                                        class="mx-auto h-12 w-12 text-faint-foreground"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke-width="1"
@@ -436,18 +442,20 @@ function locationSummary(customer: Customer): string {
                                         />
                                     </svg>
                                     <h3
-                                        class="mt-2 text-sm font-semibold text-gray-900"
+                                        class="mt-2 text-sm font-semibold text-foreground"
                                     >
                                         No results found
                                     </h3>
-                                    <p class="mt-1 text-sm text-gray-500">
+                                    <p
+                                        class="mt-1 text-sm text-muted-foreground"
+                                    >
                                         No customers match "{{ searchQuery }}".
                                         Try a different search term.
                                     </p>
                                 </template>
                                 <template v-else>
                                     <svg
-                                        class="mx-auto h-12 w-12 text-gray-300"
+                                        class="mx-auto h-12 w-12 text-faint-foreground"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke-width="1"
@@ -460,18 +468,20 @@ function locationSummary(customer: Customer): string {
                                         />
                                     </svg>
                                     <h3
-                                        class="mt-2 text-sm font-semibold text-gray-900"
+                                        class="mt-2 text-sm font-semibold text-foreground"
                                     >
                                         No customers yet
                                     </h3>
-                                    <p class="mt-1 text-sm text-gray-500">
+                                    <p
+                                        class="mt-1 text-sm text-muted-foreground"
+                                    >
                                         Add your first customer to start
                                         creating invoices.
                                     </p>
                                     <div v-if="can('create')" class="mt-4">
                                         <button
                                             type="button"
-                                            class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
+                                            class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
                                             @click="openCreate"
                                         >
                                             Add Customer
@@ -486,10 +496,10 @@ function locationSummary(customer: Customer): string {
                 <!-- Pagination -->
                 <nav
                     v-if="customers.last_page > 1"
-                    class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6"
+                    class="flex items-center justify-between border-t border-border bg-card px-4 py-3 sm:px-6"
                 >
                     <div class="hidden sm:block">
-                        <p class="text-sm text-gray-700">
+                        <p class="text-sm text-soft-foreground">
                             Showing page
                             <span class="font-medium">{{
                                 customers.current_page
@@ -514,15 +524,15 @@ function locationSummary(customer: Customer): string {
                                 class="relative inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium"
                                 :class="
                                     link.active
-                                        ? 'border-brand-500 bg-brand-50 text-brand-600'
-                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                        ? 'border-primary bg-primary-soft/50 text-primary'
+                                        : 'border-input bg-card text-soft-foreground hover:bg-muted'
                                 "
                                 @click="router.get(link.url!)"
                                 v-html="link.label"
                             />
                             <span
                                 v-else
-                                class="relative inline-flex items-center rounded-md border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400"
+                                class="relative inline-flex items-center rounded-md border border-border bg-secondary px-4 py-2 text-sm font-medium text-faint-foreground"
                                 v-html="link.label"
                             />
                         </template>

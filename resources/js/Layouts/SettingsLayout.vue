@@ -16,7 +16,7 @@ function isActive(path: string): boolean {
 <template>
     <AppLayout :title="title ?? 'Settings'">
         <template #header>
-            <h2 class="text-xl leading-tight font-semibold text-gray-800">
+            <h2 class="text-xl leading-tight font-semibold text-foreground">
                 Settings
             </h2>
         </template>
@@ -24,14 +24,14 @@ function isActive(path: string): boolean {
         <div class="py-4">
             <!-- Settings sub-nav -->
             <div
-                class="mb-6 flex gap-4 border-b border-gray-200 px-4 pb-3 sm:px-0"
+                class="mb-6 flex gap-4 border-b border-border px-4 pb-3 sm:px-0"
             >
                 <Link
                     href="/settings"
                     :class="
                         isActive('/settings') && !isActive('/email-templates')
-                            ? 'border-b-2 border-brand-500 text-sm font-medium text-brand-600'
-                            : 'text-sm font-medium text-gray-500 hover:text-gray-700'
+                            ? 'border-b-2 border-primary text-sm font-medium text-primary'
+                            : 'text-sm font-medium text-muted-foreground hover:text-soft-foreground'
                     "
                 >
                     Overview
@@ -40,8 +40,8 @@ function isActive(path: string): boolean {
                     href="/email-templates"
                     :class="
                         isActive('/email-templates')
-                            ? 'border-b-2 border-brand-500 text-sm font-medium text-brand-600'
-                            : 'text-sm font-medium text-gray-500 hover:text-gray-700'
+                            ? 'border-b-2 border-primary text-sm font-medium text-primary'
+                            : 'text-sm font-medium text-muted-foreground hover:text-soft-foreground'
                     "
                 >
                     Email Templates

@@ -363,7 +363,7 @@ describe('Dashboard', () => {
     });
 
     describe('KPI colour follows the value', () => {
-        // A flat text-green-600 meant a collected total of zero, next to
+        // A flat success green meant a collected total of zero, next to
         // overdue invoices and a 0% collection rate, was styled exactly like a
         // healthy figure. Amber on zero outstanding is the same error in
         // reverse: it warns about good news.
@@ -384,12 +384,8 @@ describe('Dashboard', () => {
                 }),
             );
 
-            expect(classes.some((c) => c.includes('text-green-600'))).toBe(
-                true,
-            );
-            expect(classes.some((c) => c.includes('text-amber-600'))).toBe(
-                true,
-            );
+            expect(classes.some((c) => c.includes('text-success'))).toBe(true);
+            expect(classes.some((c) => c.includes('text-warning'))).toBe(true);
         });
 
         it('leaves a zero collected total neutral rather than success green', () => {
@@ -403,12 +399,8 @@ describe('Dashboard', () => {
                 }),
             );
 
-            expect(classes.some((c) => c.includes('text-green-600'))).toBe(
-                false,
-            );
-            expect(classes.some((c) => c.includes('text-amber-600'))).toBe(
-                false,
-            );
+            expect(classes.some((c) => c.includes('text-success'))).toBe(false);
+            expect(classes.some((c) => c.includes('text-warning'))).toBe(false);
         });
     });
 

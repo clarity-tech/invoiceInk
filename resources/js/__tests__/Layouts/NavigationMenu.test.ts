@@ -201,4 +201,33 @@ describe('NavigationMenu', () => {
         await logoutBtn.trigger('click');
         expect(mockRouterPost).toHaveBeenCalledWith('/logout');
     });
+
+    it('puts the one-click theme switch in the bar, on desktop and on a phone', () => {
+        const wrapper = mount(NavigationMenu);
+
+        // One beside the user menu, one beside the menu button; neither
+        // needs a menu opened first.
+        expect(wrapper.findAll('[data-appearance-switch]')).toHaveLength(2);
+        expect(
+            wrapper.find('#mobile-nav-panel [data-appearance-switch]').exists(),
+        ).toBe(false);
+        expect(
+            wrapper
+                .find('[data-user-dropdown] [data-appearance-switch]')
+                .exists(),
+        ).toBe(false);
+    });
+
+    it('offers the theme toggle in both the user menu and the mobile panel', () => {
+        const wrapper = mount(NavigationMenu);
+
+        expect(
+            wrapper
+                .find('[data-user-dropdown] [data-appearance-toggle]')
+                .exists(),
+        ).toBe(true);
+        expect(
+            wrapper.find('#mobile-nav-panel [data-appearance-toggle]').exists(),
+        ).toBe(true);
+    });
 });

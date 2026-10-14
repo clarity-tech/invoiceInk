@@ -162,17 +162,17 @@ function findRoleName(roleKey: string): string {
     <div v-if="permissions.canAddTeamMembers">
         <div class="hidden sm:block">
             <div class="py-8">
-                <div class="border-t border-gray-200" />
+                <div class="border-t border-border" />
             </div>
         </div>
 
         <div class="md:grid md:grid-cols-3 md:gap-6">
             <div class="md:col-span-1">
                 <div class="px-4 sm:px-0">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    <h3 class="text-lg leading-6 font-medium text-foreground">
                         Add Team Member
                     </h3>
-                    <p class="mt-1 text-sm text-gray-600">
+                    <p class="mt-1 text-sm text-soft-foreground">
                         Add a new team member to your team, allowing them to
                         collaborate with you.
                     </p>
@@ -181,11 +181,13 @@ function findRoleName(roleKey: string): string {
 
             <div class="mt-5 md:col-span-2 md:mt-0">
                 <form @submit.prevent="addTeamMember">
-                    <div class="overflow-hidden bg-white shadow sm:rounded-md">
+                    <div class="overflow-hidden bg-card shadow sm:rounded-md">
                         <div class="px-4 py-5 sm:p-6">
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="col-span-6">
-                                    <div class="max-w-xl text-sm text-gray-600">
+                                    <div
+                                        class="max-w-xl text-sm text-soft-foreground"
+                                    >
                                         Please provide the email address of the
                                         person you would like to add to this
                                         team.
@@ -196,18 +198,18 @@ function findRoleName(roleKey: string): string {
                                 <div class="col-span-6 sm:col-span-4">
                                     <label
                                         for="member-email"
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Email</label
                                     >
                                     <input
                                         id="member-email"
                                         v-model="addMemberForm.email"
                                         type="email"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-md border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                     <div
                                         v-if="addMemberForm.errors.email"
-                                        class="mt-2 text-sm text-red-600"
+                                        class="mt-2 text-sm text-destructive"
                                     >
                                         {{ addMemberForm.errors.email }}
                                     </div>
@@ -219,18 +221,18 @@ function findRoleName(roleKey: string): string {
                                     class="col-span-6 lg:col-span-4"
                                 >
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Role</label
                                     >
                                     <div
                                         v-if="addMemberForm.errors.role"
-                                        class="mt-2 text-sm text-red-600"
+                                        class="mt-2 text-sm text-destructive"
                                     >
                                         {{ addMemberForm.errors.role }}
                                     </div>
 
                                     <div
-                                        class="relative z-0 mt-1 cursor-pointer rounded-lg border border-gray-200"
+                                        class="relative z-0 mt-1 cursor-pointer rounded-lg border border-border"
                                     >
                                         <button
                                             v-for="(
@@ -238,9 +240,9 @@ function findRoleName(roleKey: string): string {
                                             ) in availableRoles"
                                             :key="role.key"
                                             type="button"
-                                            class="relative inline-flex w-full rounded-lg px-4 py-3 focus:z-10 focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                                            class="relative inline-flex w-full rounded-lg px-4 py-3 focus:z-10 focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
                                             :class="{
-                                                'rounded-t-none border-t border-gray-200':
+                                                'rounded-t-none border-t border-border':
                                                     index > 0,
                                                 'rounded-b-none':
                                                     index <
@@ -260,7 +262,7 @@ function findRoleName(roleKey: string): string {
                                             >
                                                 <div class="flex items-center">
                                                     <div
-                                                        class="text-sm text-gray-600"
+                                                        class="text-sm text-soft-foreground"
                                                         :class="{
                                                             'font-semibold':
                                                                 addMemberForm.role ===
@@ -274,7 +276,7 @@ function findRoleName(roleKey: string): string {
                                                             addMemberForm.role ===
                                                             role.key
                                                         "
-                                                        class="ms-2 size-5 text-green-400"
+                                                        class="ms-2 size-5 text-success"
                                                         xmlns="http://www.w3.org/2000/svg"
                                                         fill="none"
                                                         viewBox="0 0 24 24"
@@ -289,7 +291,7 @@ function findRoleName(roleKey: string): string {
                                                     </svg>
                                                 </div>
                                                 <div
-                                                    class="mt-2 text-start text-xs text-gray-600"
+                                                    class="mt-2 text-start text-xs text-soft-foreground"
                                                 >
                                                     {{ role.description }}
                                                 </div>
@@ -301,18 +303,18 @@ function findRoleName(roleKey: string): string {
                         </div>
 
                         <div
-                            class="flex items-center justify-end bg-gray-50 px-4 py-3 text-end sm:px-6"
+                            class="flex items-center justify-end bg-muted px-4 py-3 text-end sm:px-6"
                         >
                             <span
                                 v-show="recentlyAdded"
-                                class="me-3 text-sm text-gray-600"
+                                class="me-3 text-sm text-soft-foreground"
                             >
                                 Added.
                             </span>
 
                             <button
                                 type="submit"
-                                class="inline-flex items-center rounded-md border border-transparent bg-gray-800 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase hover:bg-gray-700 focus:bg-gray-700 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none active:bg-gray-900"
+                                class="inline-flex items-center rounded-md border border-transparent bg-foreground px-4 py-2 text-xs font-semibold tracking-widest text-background uppercase hover:bg-foreground/90 focus:bg-foreground/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none active:bg-foreground"
                                 :disabled="addMemberForm.processing"
                             >
                                 Add
@@ -330,17 +332,17 @@ function findRoleName(roleKey: string): string {
     >
         <div class="hidden sm:block">
             <div class="py-8">
-                <div class="border-t border-gray-200" />
+                <div class="border-t border-border" />
             </div>
         </div>
 
         <div class="md:grid md:grid-cols-3 md:gap-6">
             <div class="md:col-span-1">
                 <div class="px-4 sm:px-0">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    <h3 class="text-lg leading-6 font-medium text-foreground">
                         Pending Team Invitations
                     </h3>
-                    <p class="mt-1 text-sm text-gray-600">
+                    <p class="mt-1 text-sm text-soft-foreground">
                         These people have been invited to your team and have
                         been sent an invitation email. They may join the team by
                         accepting the email invitation.
@@ -349,7 +351,7 @@ function findRoleName(roleKey: string): string {
             </div>
 
             <div class="mt-5 md:col-span-2 md:mt-0">
-                <div class="overflow-hidden bg-white shadow sm:rounded-md">
+                <div class="overflow-hidden bg-card shadow sm:rounded-md">
                     <div class="px-4 py-5 sm:p-6">
                         <div class="space-y-6">
                             <div
@@ -357,13 +359,13 @@ function findRoleName(roleKey: string): string {
                                 :key="invitation.id"
                                 class="flex items-center justify-between"
                             >
-                                <div class="text-gray-600">
+                                <div class="text-soft-foreground">
                                     {{ invitation.email }}
                                 </div>
                                 <div class="flex items-center">
                                     <button
                                         v-if="permissions.canRemoveTeamMembers"
-                                        class="ms-6 cursor-pointer text-sm text-red-500 focus:outline-none"
+                                        class="ms-6 cursor-pointer text-sm text-destructive focus:outline-none"
                                         @click="cancelInvitation(invitation.id)"
                                     >
                                         Cancel
@@ -381,24 +383,24 @@ function findRoleName(roleKey: string): string {
     <div v-if="team.users.length > 0">
         <div class="hidden sm:block">
             <div class="py-8">
-                <div class="border-t border-gray-200" />
+                <div class="border-t border-border" />
             </div>
         </div>
 
         <div class="md:grid md:grid-cols-3 md:gap-6">
             <div class="md:col-span-1">
                 <div class="px-4 sm:px-0">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    <h3 class="text-lg leading-6 font-medium text-foreground">
                         Team Members
                     </h3>
-                    <p class="mt-1 text-sm text-gray-600">
+                    <p class="mt-1 text-sm text-soft-foreground">
                         All of the people that are part of this team.
                     </p>
                 </div>
             </div>
 
             <div class="mt-5 md:col-span-2 md:mt-0">
-                <div class="overflow-hidden bg-white shadow sm:rounded-md">
+                <div class="overflow-hidden bg-card shadow sm:rounded-md">
                     <div class="px-4 py-5 sm:p-6">
                         <div class="space-y-6">
                             <div
@@ -422,7 +424,7 @@ function findRoleName(roleKey: string): string {
                                             permissions.canUpdateTeamMembers &&
                                             hasRoles
                                         "
-                                        class="ms-2 text-sm text-gray-400 underline"
+                                        class="ms-2 text-sm text-faint-foreground underline"
                                         @click="manageRole(member)"
                                     >
                                         {{
@@ -431,7 +433,7 @@ function findRoleName(roleKey: string): string {
                                     </button>
                                     <div
                                         v-else-if="hasRoles"
-                                        class="ms-2 text-sm text-gray-400"
+                                        class="ms-2 text-sm text-faint-foreground"
                                     >
                                         {{
                                             findRoleName(member.membership.role)
@@ -441,7 +443,7 @@ function findRoleName(roleKey: string): string {
                                     <!-- Leave -->
                                     <button
                                         v-if="currentUserId === member.id"
-                                        class="ms-6 cursor-pointer text-sm text-red-500"
+                                        class="ms-6 cursor-pointer text-sm text-destructive"
                                         @click="confirmLeavingTeam"
                                     >
                                         Leave
@@ -452,7 +454,7 @@ function findRoleName(roleKey: string): string {
                                         v-else-if="
                                             permissions.canRemoveTeamMembers
                                         "
-                                        class="ms-6 cursor-pointer text-sm text-red-500"
+                                        class="ms-6 cursor-pointer text-sm text-destructive"
                                         @click="
                                             confirmTeamMemberRemoval(member.id)
                                         "
@@ -475,7 +477,7 @@ function findRoleName(roleKey: string): string {
                 class="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0"
             >
                 <div
-                    class="bg-opacity-75 fixed inset-0 bg-gray-500 transition-opacity"
+                    class="fixed inset-0 bg-overlay transition-opacity"
                     @click="managingRoleFor = null"
                 />
                 <span
@@ -484,22 +486,24 @@ function findRoleName(roleKey: string): string {
                     >&#8203;</span
                 >
                 <div
-                    class="relative inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle"
+                    class="relative inline-block transform overflow-hidden rounded-lg bg-card text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle"
                 >
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    <div class="bg-card px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <h3
+                            class="text-lg leading-6 font-medium text-foreground"
+                        >
                             Manage Role
                         </h3>
                         <div
-                            class="relative z-0 mt-4 cursor-pointer rounded-lg border border-gray-200"
+                            class="relative z-0 mt-4 cursor-pointer rounded-lg border border-border"
                         >
                             <button
                                 v-for="(role, index) in availableRoles"
                                 :key="role.key"
                                 type="button"
-                                class="relative inline-flex w-full rounded-lg px-4 py-3 focus:z-10 focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                                class="relative inline-flex w-full rounded-lg px-4 py-3 focus:z-10 focus:border-ring focus:ring-2 focus:ring-ring focus:outline-none"
                                 :class="{
-                                    'rounded-t-none border-t border-gray-200':
+                                    'rounded-t-none border-t border-border':
                                         index > 0,
                                     'rounded-b-none':
                                         index < availableRoles.length - 1,
@@ -513,7 +517,7 @@ function findRoleName(roleKey: string): string {
                                 >
                                     <div class="flex items-center">
                                         <div
-                                            class="text-sm text-gray-600"
+                                            class="text-sm text-soft-foreground"
                                             :class="{
                                                 'font-semibold':
                                                     currentRole === role.key,
@@ -523,7 +527,7 @@ function findRoleName(roleKey: string): string {
                                         </div>
                                         <svg
                                             v-if="currentRole === role.key"
-                                            class="ms-2 size-5 text-green-400"
+                                            class="ms-2 size-5 text-success"
                                             xmlns="http://www.w3.org/2000/svg"
                                             fill="none"
                                             viewBox="0 0 24 24"
@@ -538,7 +542,7 @@ function findRoleName(roleKey: string): string {
                                         </svg>
                                     </div>
                                     <div
-                                        class="mt-2 text-start text-xs text-gray-600"
+                                        class="mt-2 text-start text-xs text-soft-foreground"
                                     >
                                         {{ role.description }}
                                     </div>
@@ -547,18 +551,18 @@ function findRoleName(roleKey: string): string {
                         </div>
                     </div>
                     <div
-                        class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6"
+                        class="bg-muted px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6"
                     >
                         <button
                             type="button"
-                            class="inline-flex w-full justify-center rounded-md border border-transparent bg-gray-800 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-gray-700 sm:ml-3 sm:w-auto sm:text-sm"
+                            class="inline-flex w-full justify-center rounded-md border border-transparent bg-foreground px-4 py-2 text-base font-medium text-background shadow-sm hover:bg-foreground/90 sm:ml-3 sm:w-auto sm:text-sm"
                             @click="updateRole"
                         >
                             Save
                         </button>
                         <button
                             type="button"
-                            class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                            class="mt-3 inline-flex w-full justify-center rounded-md border border-input bg-card px-4 py-2 text-base font-medium text-soft-foreground shadow-sm hover:bg-muted sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                             @click="managingRoleFor = null"
                         >
                             Cancel

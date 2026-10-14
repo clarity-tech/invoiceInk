@@ -154,7 +154,7 @@ describe('Invoice/EmailRecipientInput', () => {
     it('removes an email when its chip cross is clicked', async () => {
         const wrapper = mountInput(['alice@acme.test', 'bob@acme.test']);
 
-        await wrapper.find('.bg-gray-100 button').trigger('click');
+        await wrapper.find('.bg-secondary button').trigger('click');
 
         const emitted = wrapper.emitted('update:modelValue');
         expect(emitted![0][0]).toEqual(['bob@acme.test']);

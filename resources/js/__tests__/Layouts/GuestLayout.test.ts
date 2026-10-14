@@ -38,6 +38,11 @@ describe('GuestLayout', () => {
         expect(link.attributes('href')).toBe('/');
     });
 
+    it('offers the theme switch on the signed-out pages', () => {
+        const wrapper = mount(GuestLayout);
+        expect(wrapper.find('[data-appearance-switch]').exists()).toBe(true);
+    });
+
     it('accepts title prop', () => {
         const wrapper = mount(GuestLayout, {
             props: { title: 'Login' },

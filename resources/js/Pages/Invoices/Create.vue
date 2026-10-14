@@ -55,7 +55,7 @@ defineProps<{
                 teleport would have nowhere to land.
             -->
             <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <h2 class="text-lg font-semibold text-gray-900">
+                <h2 class="text-lg font-semibold text-foreground">
                     New {{ type === 'estimate' ? 'Estimate' : 'Invoice' }}
                 </h2>
                 <div id="document-status-control" />

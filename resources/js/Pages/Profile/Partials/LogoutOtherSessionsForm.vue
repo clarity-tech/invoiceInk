@@ -44,18 +44,18 @@ function logoutOtherBrowserSessions(): void {
 </script>
 
 <template>
-    <section class="rounded-xl border border-gray-200 bg-white p-6">
+    <section class="rounded-xl border border-border bg-card p-6">
         <h2
-            class="mb-1 text-sm font-semibold tracking-wider text-gray-400 uppercase"
+            class="mb-1 text-sm font-semibold tracking-wider text-faint-foreground uppercase"
         >
             Browser Sessions
         </h2>
-        <p class="mb-6 text-sm text-gray-500">
+        <p class="mb-6 text-sm text-muted-foreground">
             Manage and log out your active sessions on other browsers and
             devices.
         </p>
 
-        <p class="mb-5 text-sm text-gray-600">
+        <p class="mb-5 text-sm text-soft-foreground">
             If necessary, you may log out of all of your other browser sessions
             across all of your devices. Some of your recent sessions are listed
             below; however, this list may not be exhaustive. If you feel your
@@ -67,9 +67,9 @@ function logoutOtherBrowserSessions(): void {
             <div
                 v-for="(session, index) in sessions"
                 :key="index"
-                class="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3"
+                class="flex items-center gap-3 rounded-lg border border-border bg-muted px-4 py-3"
             >
-                <div class="shrink-0 text-gray-400">
+                <div class="shrink-0 text-faint-foreground">
                     <svg
                         v-if="session.is_desktop"
                         xmlns="http://www.w3.org/2000/svg"
@@ -102,15 +102,15 @@ function logoutOtherBrowserSessions(): void {
                     </svg>
                 </div>
                 <div>
-                    <div class="text-sm font-medium text-gray-700">
+                    <div class="text-sm font-medium text-soft-foreground">
                         {{ session.platform || 'Unknown' }} &mdash;
                         {{ session.browser || 'Unknown' }}
                     </div>
-                    <div class="mt-0.5 text-xs text-gray-500">
+                    <div class="mt-0.5 text-xs text-muted-foreground">
                         {{ session.ip_address }} &middot;
                         <span
                             v-if="session.is_current_device"
-                            class="font-semibold text-green-600"
+                            class="font-semibold text-success"
                         >
                             This device
                         </span>
@@ -125,12 +125,14 @@ function logoutOtherBrowserSessions(): void {
         <div class="flex items-center gap-3">
             <button
                 type="button"
-                class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none"
+                class="inline-flex items-center rounded-lg border border-input bg-card px-4 py-2 text-sm font-semibold text-soft-foreground shadow-sm transition hover:bg-muted focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none"
                 @click="confirmLogout"
             >
                 Log Out Other Sessions
             </button>
-            <span v-show="recentlySuccessful" class="text-sm text-gray-500"
+            <span
+                v-show="recentlySuccessful"
+                class="text-sm text-muted-foreground"
                 >Done.</span
             >
         </div>
@@ -143,7 +145,7 @@ function logoutOtherBrowserSessions(): void {
                 class="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0"
             >
                 <div
-                    class="fixed inset-0 bg-gray-500/75 transition-opacity"
+                    class="fixed inset-0 bg-overlay transition-opacity"
                     @click="confirmingLogout = false"
                 />
                 <span
@@ -152,13 +154,13 @@ function logoutOtherBrowserSessions(): void {
                     >&#8203;</span
                 >
                 <div
-                    class="relative inline-block transform overflow-hidden rounded-xl bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle"
+                    class="relative inline-block transform overflow-hidden rounded-xl bg-card text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle"
                 >
-                    <div class="bg-white px-6 pt-6 pb-4">
-                        <h3 class="text-base font-semibold text-gray-900">
+                    <div class="bg-card px-6 pt-6 pb-4">
+                        <h3 class="text-base font-semibold text-foreground">
                             Log Out Other Browser Sessions
                         </h3>
-                        <p class="mt-2 text-sm text-gray-500">
+                        <p class="mt-2 text-sm text-muted-foreground">
                             Please enter your password to confirm you would like
                             to log out of your other browser sessions across all
                             of your devices.
@@ -168,25 +170,25 @@ function logoutOtherBrowserSessions(): void {
                                 ref="passwordInput"
                                 v-model="form.password"
                                 type="password"
-                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                class="block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                 placeholder="Password"
                                 autocomplete="current-password"
                                 @keydown.enter="logoutOtherBrowserSessions"
                             />
                             <div
                                 v-if="form.errors.password"
-                                class="mt-2 text-sm text-red-600"
+                                class="mt-2 text-sm text-destructive"
                             >
                                 {{ form.errors.password }}
                             </div>
                         </div>
                     </div>
                     <div
-                        class="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse sm:gap-2"
+                        class="bg-muted px-6 py-4 sm:flex sm:flex-row-reverse sm:gap-2"
                     >
                         <button
                             type="button"
-                            class="inline-flex w-full justify-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 disabled:opacity-60 sm:w-auto"
+                            class="inline-flex w-full justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-60 sm:w-auto"
                             :disabled="form.processing"
                             @click="logoutOtherBrowserSessions"
                         >
@@ -194,7 +196,7 @@ function logoutOtherBrowserSessions(): void {
                         </button>
                         <button
                             type="button"
-                            class="mt-3 inline-flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                            class="mt-3 inline-flex w-full justify-center rounded-lg border border-input bg-card px-4 py-2 text-sm font-semibold text-soft-foreground shadow-sm transition hover:bg-muted sm:mt-0 sm:w-auto"
                             @click="confirmingLogout = false"
                         >
                             Cancel

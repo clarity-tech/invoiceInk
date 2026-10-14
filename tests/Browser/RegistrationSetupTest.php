@@ -84,7 +84,7 @@ it('completes Indian company setup with all fields', function () {
         ->fill('#website', 'https://claritytech.io')
         ->fill('#notes', 'Indian IT services company specializing in web development')
         ->fill('input[aria-describedby="error-emails-0"]', 'accounts@claritytech.io')
-        ->click('button.text-brand-600')
+        ->click('button.text-primary')
         ->fill('input[aria-describedby="error-emails-1"]', 'maya@example.test')
         ->fill('#phone', '+91-9876543210')
         ->screenshot(fullPage: true, filename: 'demo/17-setup-step1-filled')

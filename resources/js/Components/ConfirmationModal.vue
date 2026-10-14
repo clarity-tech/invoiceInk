@@ -157,7 +157,7 @@ onBeforeUnmount(() => {
             >
                 <!-- Backdrop -->
                 <div
-                    class="fixed inset-0 bg-gray-500/75 transition-opacity"
+                    class="fixed inset-0 bg-overlay transition-opacity"
                     @click="emit('cancel')"
                 />
 
@@ -169,17 +169,19 @@ onBeforeUnmount(() => {
 
                 <div
                     ref="panel"
-                    class="relative inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle"
+                    class="relative inline-block transform overflow-hidden rounded-lg bg-card text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle"
                     role="dialog"
                     aria-modal="true"
                     :aria-label="title || 'Confirm Action'"
                 >
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    <div class="bg-card px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <h3
+                            class="text-lg leading-6 font-medium text-foreground"
+                        >
                             {{ title || 'Confirm Action' }}
                         </h3>
                         <div class="mt-2">
-                            <p class="text-sm text-gray-500">
+                            <p class="text-sm text-muted-foreground">
                                 {{
                                     message ||
                                     'Are you sure you want to proceed?'
@@ -188,15 +190,15 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
                     <div
-                        class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6"
+                        class="bg-muted px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6"
                     >
                         <button
                             type="button"
-                            class="inline-flex w-full justify-center rounded-md border border-transparent px-4 py-2 text-base font-medium text-white shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                            class="inline-flex w-full justify-center rounded-md border border-transparent px-4 py-2 text-base font-medium shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
                             :class="
                                 destructive
-                                    ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
-                                    : 'bg-brand-600 hover:bg-brand-700 focus:ring-brand-500'
+                                    ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-destructive'
+                                    : 'bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring'
                             "
                             @click="onConfirm"
                         >
@@ -205,7 +207,7 @@ onBeforeUnmount(() => {
                         <button
                             ref="cancelButton"
                             type="button"
-                            class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                            class="mt-3 inline-flex w-full justify-center rounded-md border border-input bg-card px-4 py-2 text-base font-medium text-soft-foreground shadow-sm hover:bg-muted focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                             @click="emit('cancel')"
                         >
                             {{ cancelLabel || 'Cancel' }}

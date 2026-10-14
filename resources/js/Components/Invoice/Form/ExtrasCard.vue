@@ -136,7 +136,7 @@ function removeExistingAttachment(id: number) {
                                     :href="attachment.url"
                                     target="_blank"
                                     rel="noopener"
-                                    class="truncate text-sm font-medium text-brand-600 hover:text-brand-800 hover:underline"
+                                    class="truncate text-sm font-medium text-primary hover:text-primary-soft-foreground hover:underline"
                                 >
                                     {{ attachment.name }}
                                 </a>

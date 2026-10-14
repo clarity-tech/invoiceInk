@@ -681,15 +681,15 @@ const orgContacts = computed<Contact[]>(
              otherwise leave the save button doing nothing at all. -->
         <div
             v-if="form.hasErrors"
-            class="rounded-xl border border-red-300 bg-red-50 p-4"
+            class="rounded-xl border border-destructive/40 bg-destructive-soft/50 p-4"
             role="alert"
         >
-            <p class="text-sm font-medium text-red-800">
+            <p class="text-sm font-medium text-destructive-soft-foreground">
                 This {{ type === 'estimate' ? 'estimate' : 'invoice' }} could
                 not be saved.
             </p>
             <ul
-                class="mt-2 list-inside list-disc space-y-1 text-sm text-red-700"
+                class="mt-2 list-inside list-disc space-y-1 text-sm text-destructive"
             >
                 <li v-for="(message, field) in form.errors" :key="field">
                     {{ message }}
@@ -787,7 +787,7 @@ const orgContacts = computed<Contact[]>(
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200 bg-white">
+                            <tbody class="divide-y divide-border bg-card">
                                 <ItemRow
                                     v-for="(item, index) in items"
                                     :key="itemKeys[index]"
@@ -826,8 +826,10 @@ const orgContacts = computed<Contact[]>(
 
                         <div class="w-full space-y-2 md:w-1/3">
                             <div class="flex justify-between text-sm">
-                                <span class="text-gray-600">Subtotal:</span>
-                                <span class="font-medium text-gray-900">{{
+                                <span class="text-soft-foreground"
+                                    >Subtotal:</span
+                                >
+                                <span class="font-medium text-foreground">{{
                                     formatAmount(
                                         totals.subtotal,
                                         currentCurrency,
@@ -840,10 +842,10 @@ const orgContacts = computed<Contact[]>(
                                     :key="row.label"
                                     class="flex justify-between text-sm"
                                 >
-                                    <span class="text-gray-600"
+                                    <span class="text-soft-foreground"
                                         >{{ row.label }}:</span
                                     >
-                                    <span class="font-medium text-gray-900">{{
+                                    <span class="font-medium text-foreground">{{
                                         formatAmount(
                                             row.amount,
                                             currentCurrency,
@@ -852,8 +854,8 @@ const orgContacts = computed<Contact[]>(
                                 </div>
                             </template>
                             <div v-else class="flex justify-between text-sm">
-                                <span class="text-gray-600">Tax:</span>
-                                <span class="font-medium text-gray-900">{{
+                                <span class="text-soft-foreground">Tax:</span>
+                                <span class="font-medium text-foreground">{{
                                     formatAmount(totals.tax, currentCurrency)
                                 }}</span>
                             </div>
@@ -861,10 +863,10 @@ const orgContacts = computed<Contact[]>(
                                 v-if="tcsAmount > 0"
                                 class="flex justify-between text-sm"
                             >
-                                <span class="text-gray-600"
+                                <span class="text-soft-foreground"
                                     >{{ tcsLabel }}:</span
                                 >
-                                <span class="font-medium text-gray-900"
+                                <span class="font-medium text-foreground"
                                     >+
                                     {{
                                         formatAmount(tcsAmount, currentCurrency)
@@ -875,10 +877,10 @@ const orgContacts = computed<Contact[]>(
                                 v-if="tdsAmount > 0"
                                 class="flex justify-between text-sm"
                             >
-                                <span class="text-gray-600"
+                                <span class="text-soft-foreground"
                                     >{{ tdsLabel }}:</span
                                 >
-                                <span class="font-medium text-gray-900"
+                                <span class="font-medium text-foreground"
                                     >&minus;
                                     {{
                                         formatAmount(tdsAmount, currentCurrency)
@@ -886,7 +888,7 @@ const orgContacts = computed<Contact[]>(
                                 >
                             </div>
                             <div
-                                class="flex justify-between border-t border-gray-300 pt-2"
+                                class="flex justify-between border-t border-input pt-2"
                             >
                                 <!--
                                     The one place the currency is named. Every
@@ -894,17 +896,14 @@ const orgContacts = computed<Contact[]>(
                                     each line stops a column of numbers lining
                                     up on its decimal point.
                                 -->
-                                <span class="text-lg font-bold text-gray-900">
+                                <span class="text-lg font-bold text-foreground">
                                     Total ({{
                                         currencySymbol(currentCurrency)
                                     }})
                                 </span>
-                                <span
-                                    class="text-lg font-bold text-brand-600"
-                                    >{{
-                                        formatAmount(netTotal, currentCurrency)
-                                    }}</span
-                                >
+                                <span class="text-lg font-bold text-primary">{{
+                                    formatAmount(netTotal, currentCurrency)
+                                }}</span>
                             </div>
                         </div>
                     </div>

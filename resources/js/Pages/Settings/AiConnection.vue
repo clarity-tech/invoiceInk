@@ -69,22 +69,20 @@ const claudeCodeCommand = computed(
 <template>
     <AppLayout title="Connect AI tools">
         <template #header>
-            <h2 class="text-xl leading-tight font-semibold text-gray-800">
+            <h2 class="text-xl leading-tight font-semibold text-foreground">
                 Connect AI tools
             </h2>
         </template>
 
         <div class="max-w-3xl space-y-6 px-4 py-4 sm:px-0">
-            <div
-                class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
-            >
+            <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
                 <div class="flex items-start gap-4">
                     <div
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50"
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft/50"
                     >
-                        <Sparkles class="h-5 w-5 text-brand-600" />
+                        <Sparkles class="h-5 w-5 text-primary" />
                     </div>
-                    <div class="text-sm text-gray-600">
+                    <div class="text-sm text-soft-foreground">
                         <p>
                             Let an AI assistant read your invoicing data, so you
                             can ask things like
@@ -107,7 +105,7 @@ const claudeCodeCommand = computed(
 
             <div
                 v-if="!enabled"
-                class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"
+                class="flex items-start gap-3 rounded-lg border border-warning/25 bg-warning-soft/50 p-4 text-sm text-warning-soft-foreground"
             >
                 <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0" />
                 <p>
@@ -120,23 +118,23 @@ const claudeCodeCommand = computed(
 
             <div
                 v-if="token"
-                class="rounded-lg border border-green-300 bg-green-50 p-6"
+                class="rounded-lg border border-success/40 bg-success-soft/50 p-6"
             >
-                <h3 class="text-sm font-semibold text-green-900">
+                <h3 class="text-sm font-semibold text-success-soft-foreground">
                     Copy your token now
                 </h3>
-                <p class="mt-1 text-sm text-green-800">
+                <p class="mt-1 text-sm text-success-soft-foreground">
                     This is the only time it is shown. If you lose it, revoke
                     the connection and create another.
                 </p>
                 <div class="mt-3 flex items-center gap-2">
                     <code
-                        class="flex-1 overflow-x-auto rounded border border-green-300 bg-white px-3 py-2 font-mono text-xs text-gray-800"
+                        class="flex-1 overflow-x-auto rounded border border-success/40 bg-card px-3 py-2 font-mono text-xs text-foreground"
                         >{{ token }}</code
                     >
                     <button
                         type="button"
-                        class="inline-flex shrink-0 items-center gap-1 rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700"
+                        class="inline-flex shrink-0 items-center gap-1 rounded-md bg-success px-3 py-2 text-sm font-medium text-success-foreground hover:bg-success/90"
                         @click="copy(token, 'token')"
                     >
                         <Check v-if="copied === 'token'" class="h-4 w-4" />
@@ -146,10 +144,10 @@ const claudeCodeCommand = computed(
                 </div>
             </div>
 
-            <div
-                class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
-            >
-                <h3 class="text-sm font-semibold text-gray-900">Connections</h3>
+            <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+                <h3 class="text-sm font-semibold text-foreground">
+                    Connections
+                </h3>
 
                 <form
                     class="mt-4 flex items-end gap-3"
@@ -158,7 +156,7 @@ const claudeCodeCommand = computed(
                     <div class="flex-1">
                         <label
                             for="name"
-                            class="block text-sm font-medium text-gray-700"
+                            class="block text-sm font-medium text-soft-foreground"
                             >Name</label
                         >
                         <input
@@ -166,11 +164,11 @@ const claudeCodeCommand = computed(
                             v-model="form.name"
                             type="text"
                             placeholder="e.g. Claude on my laptop"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                            class="mt-1 block w-full rounded-md border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                         />
                         <p
                             v-if="form.errors.name"
-                            class="mt-1 text-sm text-red-600"
+                            class="mt-1 text-sm text-destructive"
                         >
                             {{ form.errors.name }}
                         </p>
@@ -178,23 +176,23 @@ const claudeCodeCommand = computed(
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                        class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                     >
                         Create connection
                     </button>
                 </form>
 
-                <ul v-if="tokens.length" class="mt-6 divide-y divide-gray-200">
+                <ul v-if="tokens.length" class="mt-6 divide-y divide-border">
                     <li
                         v-for="connection in tokens"
                         :key="connection.id"
                         class="flex items-center justify-between py-3"
                     >
                         <div>
-                            <p class="text-sm font-medium text-gray-900">
+                            <p class="text-sm font-medium text-foreground">
                                 {{ connection.name }}
                             </p>
-                            <p class="text-xs text-gray-500">
+                            <p class="text-xs text-muted-foreground">
                                 Created {{ connection.created_at }} ·
                                 {{
                                     connection.last_used_at
@@ -205,7 +203,7 @@ const claudeCodeCommand = computed(
                         </div>
                         <button
                             type="button"
-                            class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-red-600 hover:bg-red-50"
+                            class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-destructive hover:bg-destructive-soft/50"
                             @click="revoke(connection.id)"
                         >
                             <Trash2 class="h-4 w-4" />
@@ -213,26 +211,26 @@ const claudeCodeCommand = computed(
                         </button>
                     </li>
                 </ul>
-                <p v-else class="mt-4 text-sm text-gray-500">
+                <p v-else class="mt-4 text-sm text-muted-foreground">
                     No connections yet.
                 </p>
             </div>
 
-            <div
-                class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
-            >
-                <h3 class="text-sm font-semibold text-gray-900">Setup</h3>
+            <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+                <h3 class="text-sm font-semibold text-foreground">Setup</h3>
 
                 <div class="mt-4">
-                    <p class="text-sm font-medium text-gray-700">Endpoint</p>
+                    <p class="text-sm font-medium text-soft-foreground">
+                        Endpoint
+                    </p>
                     <div class="mt-1 flex items-center gap-2">
                         <code
-                            class="flex-1 overflow-x-auto rounded border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-xs"
+                            class="flex-1 overflow-x-auto rounded border border-border bg-muted px-3 py-2 font-mono text-xs"
                             >{{ endpoint }}</code
                         >
                         <button
                             type="button"
-                            class="shrink-0 rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+                            class="shrink-0 rounded-md border border-input px-3 py-2 text-sm hover:bg-muted"
                             @click="copy(endpoint, 'endpoint')"
                         >
                             {{ copied === 'endpoint' ? 'Copied' : 'Copy' }}
@@ -241,19 +239,19 @@ const claudeCodeCommand = computed(
                 </div>
 
                 <div class="mt-6">
-                    <p class="text-sm font-medium text-gray-700">
+                    <p class="text-sm font-medium text-soft-foreground">
                         Claude Desktop
                     </p>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <p class="mt-1 text-sm text-muted-foreground">
                         Settings → Connectors → Add custom connector, or paste
                         this into your config file.
                     </p>
                     <pre
-                        class="mt-2 overflow-x-auto rounded border border-gray-200 bg-gray-50 p-3 font-mono text-xs"
+                        class="mt-2 overflow-x-auto rounded border border-border bg-muted p-3 font-mono text-xs"
                         >{{ claudeDesktopConfig }}</pre>
                     <button
                         type="button"
-                        class="mt-2 rounded-md border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"
+                        class="mt-2 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted"
                         @click="copy(claudeDesktopConfig, 'desktop')"
                     >
                         {{ copied === 'desktop' ? 'Copied' : 'Copy config' }}
@@ -261,13 +259,15 @@ const claudeCodeCommand = computed(
                 </div>
 
                 <div class="mt-6">
-                    <p class="text-sm font-medium text-gray-700">Claude Code</p>
+                    <p class="text-sm font-medium text-soft-foreground">
+                        Claude Code
+                    </p>
                     <pre
-                        class="mt-2 overflow-x-auto rounded border border-gray-200 bg-gray-50 p-3 font-mono text-xs"
+                        class="mt-2 overflow-x-auto rounded border border-border bg-muted p-3 font-mono text-xs"
                         >{{ claudeCodeCommand }}</pre>
                     <button
                         type="button"
-                        class="mt-2 rounded-md border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"
+                        class="mt-2 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted"
                         @click="copy(claudeCodeCommand, 'code')"
                     >
                         {{ copied === 'code' ? 'Copied' : 'Copy command' }}
@@ -275,14 +275,16 @@ const claudeCodeCommand = computed(
                 </div>
 
                 <div class="mt-6">
-                    <p class="text-sm font-medium text-gray-700">Other tools</p>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <p class="text-sm font-medium text-soft-foreground">
+                        Other tools
+                    </p>
+                    <p class="mt-1 text-sm text-muted-foreground">
                         Any client that speaks MCP over HTTP works: point it at
                         the endpoint above and send your token as an
                         <code class="font-mono">Authorization: Bearer</code>
                         header.
                     </p>
-                    <p class="mt-2 text-sm text-gray-500">
+                    <p class="mt-2 text-sm text-muted-foreground">
                         <strong>ChatGPT is not supported yet.</strong> It only
                         connects to MCP servers that offer OAuth sign-in, and
                         cannot use a token like the one above.

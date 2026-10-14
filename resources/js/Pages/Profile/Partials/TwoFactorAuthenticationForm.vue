@@ -173,37 +173,37 @@ async function fetchRecoveryCodes(): Promise<void> {
 </script>
 
 <template>
-    <section class="rounded-xl border border-gray-200 bg-white p-6">
+    <section class="rounded-xl border border-border bg-card p-6">
         <div class="mb-4 flex items-start justify-between">
             <div>
                 <h2
-                    class="mb-1 text-sm font-semibold tracking-wider text-gray-400 uppercase"
+                    class="mb-1 text-sm font-semibold tracking-wider text-faint-foreground uppercase"
                 >
                     Two-Factor Authentication
                 </h2>
-                <p class="text-sm text-gray-500">
+                <p class="text-sm text-muted-foreground">
                     Add additional security to your account using two-factor
                     authentication.
                 </p>
             </div>
             <span
                 v-if="twoFactorEnabled"
-                class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700"
+                class="inline-flex items-center rounded-full bg-success-soft px-2.5 py-0.5 text-xs font-medium text-success-soft-foreground"
             >
                 Enabled
             </span>
             <span
                 v-else
-                class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600"
+                class="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-soft-foreground"
             >
                 Disabled
             </span>
         </div>
 
-        <div class="text-sm text-gray-600">
+        <div class="text-sm text-soft-foreground">
             <template v-if="twoFactorEnabled">
                 <template v-if="showingConfirmation">
-                    <p class="font-medium text-gray-900">
+                    <p class="font-medium text-foreground">
                         Finish enabling two-factor authentication.
                     </p>
                 </template>
@@ -223,7 +223,7 @@ async function fetchRecoveryCodes(): Promise<void> {
 
         <div v-if="twoFactorEnabled || showingQrCode" class="mt-5">
             <div v-if="showingQrCode">
-                <p class="mb-3 text-sm font-medium text-gray-700">
+                <p class="mb-3 text-sm font-medium text-soft-foreground">
                     <template v-if="showingConfirmation">
                         Scan the QR code using your authenticator app or enter
                         the setup key, then provide the generated OTP code
@@ -236,15 +236,15 @@ async function fetchRecoveryCodes(): Promise<void> {
                 </p>
 
                 <div
-                    class="inline-block rounded-lg border border-gray-200 bg-white p-2"
+                    class="inline-block rounded-lg border border-border bg-card p-2"
                     v-html="qrCodeSvg"
                 />
 
-                <div v-if="setupKey" class="mt-3 text-sm text-gray-600">
+                <div v-if="setupKey" class="mt-3 text-sm text-soft-foreground">
                     <p>
                         Setup Key:
                         <span
-                            class="font-mono font-semibold text-gray-800"
+                            class="font-mono font-semibold text-foreground"
                             v-text="setupKey"
                         />
                     </p>
@@ -253,7 +253,7 @@ async function fetchRecoveryCodes(): Promise<void> {
                 <div v-if="showingConfirmation" class="mt-4">
                     <label
                         for="code"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                     >
                         Authentication Code
                     </label>
@@ -264,12 +264,12 @@ async function fetchRecoveryCodes(): Promise<void> {
                         inputmode="numeric"
                         autofocus
                         autocomplete="one-time-code"
-                        class="mt-1 block w-48 rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-48 rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                         @keydown.enter="confirmTwoFactorAuthentication"
                     />
                     <div
                         v-if="confirmationError"
-                        class="mt-2 text-sm text-red-600"
+                        class="mt-2 text-sm text-destructive"
                     >
                         {{ confirmationError }}
                     </div>
@@ -280,13 +280,13 @@ async function fetchRecoveryCodes(): Promise<void> {
                 v-if="showingRecoveryCodes && recoveryCodesData.length > 0"
                 class="mt-5"
             >
-                <p class="mb-3 text-sm font-medium text-gray-700">
+                <p class="mb-3 text-sm font-medium text-soft-foreground">
                     Store these recovery codes in a secure password manager.
                     They can be used to recover access to your account if your
                     two-factor authentication device is lost.
                 </p>
                 <div
-                    class="grid max-w-sm gap-1 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700"
+                    class="grid max-w-sm gap-1 rounded-lg border border-border bg-muted px-4 py-3 font-mono text-sm text-soft-foreground"
                 >
                     <div v-for="code in recoveryCodesData" :key="code">
                         {{ code }}
@@ -299,7 +299,7 @@ async function fetchRecoveryCodes(): Promise<void> {
             <template v-if="!twoFactorEnabled && !showingQrCode">
                 <button
                     type="button"
-                    class="inline-flex items-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none disabled:opacity-60"
+                    class="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:opacity-60"
                     :disabled="enabling"
                     @click="enableTwoFactorAuthentication"
                 >
@@ -311,7 +311,7 @@ async function fetchRecoveryCodes(): Promise<void> {
                 <template v-if="showingConfirmation">
                     <button
                         type="button"
-                        class="inline-flex items-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none disabled:opacity-60"
+                        class="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:opacity-60"
                         :disabled="confirming"
                         @click="confirmTwoFactorAuthentication"
                     >
@@ -319,7 +319,7 @@ async function fetchRecoveryCodes(): Promise<void> {
                     </button>
                     <button
                         type="button"
-                        class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
+                        class="inline-flex items-center rounded-lg border border-input bg-card px-4 py-2 text-sm font-semibold text-soft-foreground shadow-sm transition hover:bg-muted disabled:opacity-60"
                         :disabled="disabling"
                         @click="disableTwoFactorAuthentication"
                     >
@@ -330,7 +330,7 @@ async function fetchRecoveryCodes(): Promise<void> {
                 <template v-else-if="showingRecoveryCodes">
                     <button
                         type="button"
-                        class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
+                        class="inline-flex items-center rounded-lg border border-input bg-card px-4 py-2 text-sm font-semibold text-soft-foreground shadow-sm transition hover:bg-muted"
                         @click="regenerateRecoveryCodesAction"
                     >
                         Regenerate Recovery Codes
@@ -340,7 +340,7 @@ async function fetchRecoveryCodes(): Promise<void> {
                 <template v-else>
                     <button
                         type="button"
-                        class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
+                        class="inline-flex items-center rounded-lg border border-input bg-card px-4 py-2 text-sm font-semibold text-soft-foreground shadow-sm transition hover:bg-muted"
                         @click="showRecoveryCodesAction"
                     >
                         Show Recovery Codes
@@ -350,7 +350,7 @@ async function fetchRecoveryCodes(): Promise<void> {
                 <button
                     v-if="!showingConfirmation"
                     type="button"
-                    class="inline-flex items-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-500 disabled:opacity-60"
+                    class="inline-flex items-center rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground shadow-sm transition hover:bg-destructive/90 disabled:opacity-60"
                     :disabled="disabling"
                     @click="disableTwoFactorAuthentication"
                 >

@@ -66,7 +66,7 @@ const describedBy = computed(() =>
         <p
             v-else-if="warning"
             :id="`${id}-description`"
-            class="text-xs text-amber-700"
+            class="text-xs text-warning"
         >
             {{ warning }}
         </p>

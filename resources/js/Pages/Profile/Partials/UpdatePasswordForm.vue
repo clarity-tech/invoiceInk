@@ -34,13 +34,13 @@ function updatePassword(): void {
 </script>
 
 <template>
-    <section class="rounded-xl border border-gray-200 bg-white p-6">
+    <section class="rounded-xl border border-border bg-card p-6">
         <h2
-            class="mb-1 text-sm font-semibold tracking-wider text-gray-400 uppercase"
+            class="mb-1 text-sm font-semibold tracking-wider text-faint-foreground uppercase"
         >
             Update Password
         </h2>
-        <p class="mb-6 text-sm text-gray-500">
+        <p class="mb-6 text-sm text-muted-foreground">
             Ensure your account is using a long, random password to stay secure.
         </p>
 
@@ -49,7 +49,7 @@ function updatePassword(): void {
                 <div>
                     <label
                         for="current_password"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                     >
                         Current Password
                     </label>
@@ -57,12 +57,12 @@ function updatePassword(): void {
                         id="current_password"
                         v-model="form.current_password"
                         type="password"
-                        class="mt-1 block w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full max-w-md rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                         autocomplete="current-password"
                     />
                     <div
                         v-if="form.errors.current_password"
-                        class="mt-2 text-sm text-red-600"
+                        class="mt-2 text-sm text-destructive"
                     >
                         {{ form.errors.current_password }}
                     </div>
@@ -71,7 +71,7 @@ function updatePassword(): void {
                 <div>
                     <label
                         for="password"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                     >
                         New Password
                     </label>
@@ -79,12 +79,12 @@ function updatePassword(): void {
                         id="password"
                         v-model="form.password"
                         type="password"
-                        class="mt-1 block w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full max-w-md rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                         autocomplete="new-password"
                     />
                     <div
                         v-if="form.errors.password"
-                        class="mt-2 text-sm text-red-600"
+                        class="mt-2 text-sm text-destructive"
                     >
                         {{ form.errors.password }}
                     </div>
@@ -93,7 +93,7 @@ function updatePassword(): void {
                 <div>
                     <label
                         for="password_confirmation"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                     >
                         Confirm Password
                     </label>
@@ -101,12 +101,12 @@ function updatePassword(): void {
                         id="password_confirmation"
                         v-model="form.password_confirmation"
                         type="password"
-                        class="mt-1 block w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full max-w-md rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                         autocomplete="new-password"
                     />
                     <div
                         v-if="form.errors.password_confirmation"
-                        class="mt-2 text-sm text-red-600"
+                        class="mt-2 text-sm text-destructive"
                     >
                         {{ form.errors.password_confirmation }}
                     </div>
@@ -116,12 +116,14 @@ function updatePassword(): void {
             <div class="mt-6 flex items-center gap-3">
                 <button
                     type="submit"
-                    class="inline-flex items-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none disabled:opacity-60"
+                    class="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:opacity-60"
                     :disabled="form.processing"
                 >
                     Update Password
                 </button>
-                <span v-show="recentlySuccessful" class="text-sm text-gray-500"
+                <span
+                    v-show="recentlySuccessful"
+                    class="text-sm text-muted-foreground"
                     >Saved.</span
                 >
             </div>

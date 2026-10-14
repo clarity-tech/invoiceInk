@@ -42,7 +42,7 @@ describe('FlashMessages', () => {
         });
         const wrapper = mount(FlashMessages);
         expect(wrapper.text()).toContain('Saved!');
-        expect(wrapper.find('.bg-green-50').exists()).toBe(true);
+        expect(wrapper.find('.bg-success-soft\\/50').exists()).toBe(true);
     });
 
     it('renders error flash with red styling', () => {
@@ -53,7 +53,7 @@ describe('FlashMessages', () => {
         });
         const wrapper = mount(FlashMessages);
         expect(wrapper.text()).toContain('Failed!');
-        expect(wrapper.find('.bg-red-50').exists()).toBe(true);
+        expect(wrapper.find('.bg-destructive-soft\\/50').exists()).toBe(true);
     });
 
     it('renders info message with blue styling', () => {
@@ -62,7 +62,7 @@ describe('FlashMessages', () => {
         });
         const wrapper = mount(FlashMessages);
         expect(wrapper.text()).toContain('FYI');
-        expect(wrapper.find('.bg-blue-50').exists()).toBe(true);
+        expect(wrapper.find('.bg-info-soft\\/50').exists()).toBe(true);
     });
 
     it('auto-hides after 4 seconds', async () => {
@@ -70,12 +70,12 @@ describe('FlashMessages', () => {
             props: { flash: { success: 'Done', error: null, message: null } },
         });
         const wrapper = mount(FlashMessages);
-        expect(wrapper.find('.bg-green-50').exists()).toBe(true);
+        expect(wrapper.find('.bg-success-soft\\/50').exists()).toBe(true);
 
         vi.advanceTimersByTime(4000);
         await wrapper.vm.$nextTick();
 
-        expect(wrapper.find('.bg-green-50').exists()).toBe(false);
+        expect(wrapper.find('.bg-success-soft\\/50').exists()).toBe(false);
     });
 
     /**
@@ -91,11 +91,11 @@ describe('FlashMessages', () => {
             },
         });
         const wrapper = mount(FlashMessages);
-        expect(wrapper.find('.bg-green-50').exists()).toBe(true);
+        expect(wrapper.find('.bg-success-soft\\/50').exists()).toBe(true);
 
         vi.advanceTimersByTime(4000);
         await wrapper.vm.$nextTick();
-        expect(wrapper.find('.bg-green-50').exists()).toBe(false);
+        expect(wrapper.find('.bg-success-soft\\/50').exists()).toBe(false);
 
         const [event, announce] = mockRouterOn.mock.calls[0];
         expect(event).toBe('success');
@@ -103,6 +103,6 @@ describe('FlashMessages', () => {
         announce();
         await wrapper.vm.$nextTick();
 
-        expect(wrapper.find('.bg-green-50').exists()).toBe(true);
+        expect(wrapper.find('.bg-success-soft\\/50').exists()).toBe(true);
     });
 });

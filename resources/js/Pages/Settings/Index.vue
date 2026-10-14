@@ -7,7 +7,7 @@ import { Mail, Sparkles } from 'lucide-vue-next';
 <template>
     <AppLayout title="Settings">
         <template #header>
-            <h2 class="text-xl leading-tight font-semibold text-gray-800">
+            <h2 class="text-xl leading-tight font-semibold text-foreground">
                 Settings
             </h2>
         </template>
@@ -16,18 +16,18 @@ import { Mail, Sparkles } from 'lucide-vue-next';
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <Link
                     href="/email-templates"
-                    class="flex items-start gap-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition hover:border-brand-300 hover:shadow-md"
+                    class="flex items-start gap-4 rounded-lg border border-border bg-card p-6 shadow-sm transition hover:border-primary/40 hover:shadow-md"
                 >
                     <div
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50"
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft/50"
                     >
-                        <Mail class="h-5 w-5 text-brand-600" />
+                        <Mail class="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                        <h3 class="text-sm font-semibold text-gray-900">
+                        <h3 class="text-sm font-semibold text-foreground">
                             Email Templates
                         </h3>
-                        <p class="mt-1 text-sm text-gray-500">
+                        <p class="mt-1 text-sm text-muted-foreground">
                             Customize emails sent with invoices and estimates
                         </p>
                     </div>
@@ -35,18 +35,18 @@ import { Mail, Sparkles } from 'lucide-vue-next';
 
                 <Link
                     href="/settings/ai-connection"
-                    class="flex items-start gap-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition hover:border-brand-300 hover:shadow-md"
+                    class="flex items-start gap-4 rounded-lg border border-border bg-card p-6 shadow-sm transition hover:border-primary/40 hover:shadow-md"
                 >
                     <div
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50"
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft/50"
                     >
-                        <Sparkles class="h-5 w-5 text-brand-600" />
+                        <Sparkles class="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                        <h3 class="text-sm font-semibold text-gray-900">
+                        <h3 class="text-sm font-semibold text-foreground">
                             Connect AI tools
                         </h3>
-                        <p class="mt-1 text-sm text-gray-500">
+                        <p class="mt-1 text-sm text-muted-foreground">
                             Ask Claude about your invoices, customers and
                             outstanding payments
                         </p>

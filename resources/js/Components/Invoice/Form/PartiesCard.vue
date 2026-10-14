@@ -126,7 +126,7 @@ function locationLabel(loc: Location): string {
                 <div v-else class="space-y-1.5">
                     <Label>Organization Location</Label>
                     <div
-                        class="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+                        class="rounded-md border border-warning/25 bg-warning-soft/50 p-3 text-sm text-warning-soft-foreground"
                     >
                         No locations found.
                         <a
@@ -304,7 +304,7 @@ function locationLabel(loc: Location): string {
 
             <div
                 v-if="customers.length === 0"
-                class="rounded-md border border-brand-200 bg-brand-50 p-3 text-sm text-brand-700"
+                class="rounded-md border border-primary/25 bg-primary-soft/50 p-3 text-sm text-primary-soft-foreground"
             >
                 No customers found.
                 <a
@@ -322,7 +322,7 @@ function locationLabel(loc: Location): string {
             -->
             <div
                 v-if="selectedCustomerId && customerLocations.length === 0"
-                class="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+                class="rounded-md border border-warning/25 bg-warning-soft/50 p-3 text-sm text-warning-soft-foreground"
             >
                 This customer has no billing address yet, so the invoice cannot
                 be saved.

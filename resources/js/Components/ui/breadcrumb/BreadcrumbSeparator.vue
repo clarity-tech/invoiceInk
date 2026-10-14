@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-vue-next';
 </script>
 
 <template>
-    <li role="presentation" aria-hidden="true" class="text-gray-400">
+    <li role="presentation" aria-hidden="true" class="text-faint-foreground">
         <slot>
             <ChevronRight class="size-3.5" />
         </slot>

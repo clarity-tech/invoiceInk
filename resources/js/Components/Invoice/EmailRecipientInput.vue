@@ -113,17 +113,17 @@ function removeEmail(email: string) {
 <template>
     <div class="relative">
         <div
-            class="flex min-h-[44px] flex-wrap items-center gap-2 rounded-md border border-gray-300 p-2 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500"
+            class="flex min-h-[44px] flex-wrap items-center gap-2 rounded-md border border-input p-2 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring"
         >
             <div
                 v-for="email in model"
                 :key="email"
-                class="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1"
+                class="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1"
             >
-                <span class="text-sm text-gray-700">{{ email }}</span>
+                <span class="text-sm text-soft-foreground">{{ email }}</span>
                 <button
                     type="button"
-                    class="text-gray-500 hover:text-gray-700"
+                    class="text-muted-foreground hover:text-soft-foreground"
                     @click="removeEmail(email)"
                 >
                     <svg
@@ -152,26 +152,26 @@ function removeEmail(email: string) {
             />
         </div>
 
-        <p v-if="error" class="mt-1 text-xs text-red-600">{{ error }}</p>
+        <p v-if="error" class="mt-1 text-xs text-destructive">{{ error }}</p>
 
         <!-- Suggestions from the contact list (click to add). -->
         <ul
             v-if="open && availableSuggestions.length > 0"
-            class="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg"
+            class="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border border-border bg-popover py-1 text-popover-foreground shadow-lg"
         >
             <li v-for="contact in availableSuggestions" :key="contact.email">
                 <!-- mousedown.prevent keeps the input focused so @blur doesn't
                      close the list before the click registers. -->
                 <button
                     type="button"
-                    class="flex w-full flex-col items-start px-3 py-1.5 text-left hover:bg-gray-50"
+                    class="flex w-full flex-col items-start px-3 py-1.5 text-left hover:bg-muted"
                     @mousedown.prevent
                     @click="selectSuggestion(contact)"
                 >
-                    <span v-if="contact.name" class="text-sm text-gray-900">{{
+                    <span v-if="contact.name" class="text-sm text-foreground">{{
                         contact.name
                     }}</span>
-                    <span class="text-xs text-gray-500">{{
+                    <span class="text-xs text-muted-foreground">{{
                         contact.email
                     }}</span>
                 </button>

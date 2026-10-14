@@ -59,7 +59,7 @@ defineProps<{
 <template>
     <AppLayout title="Organization Settings">
         <template #header>
-            <h2 class="text-xl leading-tight font-semibold text-gray-800">
+            <h2 class="text-xl leading-tight font-semibold text-foreground">
                 Organization Settings
             </h2>
         </template>
@@ -83,7 +83,7 @@ defineProps<{
                 <template v-if="permissions.canDeleteTeam">
                     <div class="hidden sm:block">
                         <div class="py-8">
-                            <div class="border-t border-gray-200" />
+                            <div class="border-t border-border" />
                         </div>
                     </div>
 

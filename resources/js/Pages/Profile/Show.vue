@@ -40,7 +40,7 @@ defineProps<{
 <template>
     <AppLayout title="Profile">
         <template #header>
-            <h2 class="text-xl leading-tight font-semibold text-gray-800">
+            <h2 class="text-xl leading-tight font-semibold text-foreground">
                 Profile
             </h2>
         </template>

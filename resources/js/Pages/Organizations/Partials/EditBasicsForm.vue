@@ -79,13 +79,13 @@ function submit() {
 <template>
     <form
         @submit.prevent="submit"
-        class="rounded-xl border border-gray-200 bg-white"
+        class="rounded-xl border border-border bg-card"
     >
-        <div class="border-b border-gray-100 px-6 py-4">
-            <h2 class="text-lg font-semibold text-gray-900">
+        <div class="border-b border-border px-6 py-4">
+            <h2 class="text-lg font-semibold text-foreground">
                 General Information
             </h2>
-            <p class="mt-1 text-sm text-gray-500">
+            <p class="mt-1 text-sm text-muted-foreground">
                 Basic details about your organization.
             </p>
         </div>
@@ -95,19 +95,22 @@ function submit() {
             <div>
                 <label
                     for="org-name"
-                    class="block text-sm font-medium text-gray-700"
+                    class="block text-sm font-medium text-soft-foreground"
                     >Organization name *</label
                 >
                 <input
                     id="org-name"
                     v-model="form.name"
                     type="text"
-                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                    class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                 />
-                <p class="mt-1 text-xs text-gray-500">
+                <p class="mt-1 text-xs text-muted-foreground">
                     Shown in the organization switcher. Internal label only.
                 </p>
-                <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">
+                <p
+                    v-if="form.errors.name"
+                    class="mt-1 text-sm text-destructive"
+                >
                     {{ form.errors.name }}
                 </p>
             </div>
@@ -116,21 +119,21 @@ function submit() {
             <div>
                 <label
                     for="org-company-name"
-                    class="block text-sm font-medium text-gray-700"
+                    class="block text-sm font-medium text-soft-foreground"
                     >Company name</label
                 >
                 <input
                     id="org-company-name"
                     v-model="form.company_name"
                     type="text"
-                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                    class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                 />
-                <p class="mt-1 text-xs text-gray-500">
+                <p class="mt-1 text-xs text-muted-foreground">
                     Your legal/business name shown on invoices and documents.
                 </p>
                 <p
                     v-if="form.errors.company_name"
-                    class="mt-1 text-sm text-red-600"
+                    class="mt-1 text-sm text-destructive"
                 >
                     {{ form.errors.company_name }}
                 </p>
@@ -141,7 +144,7 @@ function submit() {
                 <div>
                     <label
                         for="org-phone"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                         >Phone</label
                     >
                     <PhoneInput
@@ -156,14 +159,14 @@ function submit() {
                 <div>
                     <label
                         for="org-tax"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                         >Tax Number</label
                     >
                     <input
                         id="org-tax"
                         v-model="form.tax_number"
                         type="text"
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                     />
                 </div>
             </div>
@@ -173,20 +176,20 @@ function submit() {
                 <div>
                     <label
                         for="org-reg"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                         >Registration Number</label
                     >
                     <input
                         id="org-reg"
                         v-model="form.registration_number"
                         type="text"
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                     />
                 </div>
                 <div>
                     <label
                         for="org-web"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                         >Website</label
                     >
                     <input
@@ -194,11 +197,11 @@ function submit() {
                         v-model="form.website"
                         type="text"
                         placeholder="example.com"
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                     />
                     <p
                         v-if="form.errors.website"
-                        class="mt-1 text-sm text-red-600"
+                        class="mt-1 text-sm text-destructive"
                     >
                         {{ form.errors.website }}
                     </p>
@@ -210,13 +213,13 @@ function submit() {
                 <div>
                     <label
                         for="org-country"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                         >Country *</label
                     >
                     <select
                         id="org-country"
                         v-model="form.country_code"
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                     >
                         <option value="">Select country</option>
                         <option
@@ -229,7 +232,7 @@ function submit() {
                     </select>
                     <p
                         v-if="form.errors.country_code"
-                        class="mt-1 text-sm text-red-600"
+                        class="mt-1 text-sm text-destructive"
                     >
                         {{ form.errors.country_code }}
                     </p>
@@ -237,13 +240,13 @@ function submit() {
                 <div>
                     <label
                         for="org-currency"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                         >Currency *</label
                     >
                     <select
                         id="org-currency"
                         v-model="form.currency"
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                     >
                         <option value="">Select currency</option>
                         <option
@@ -256,7 +259,7 @@ function submit() {
                     </select>
                     <p
                         v-if="form.errors.currency"
-                        class="mt-1 text-sm text-red-600"
+                        class="mt-1 text-sm text-destructive"
                     >
                         {{ form.errors.currency }}
                     </p>
@@ -271,13 +274,13 @@ function submit() {
                 <div>
                     <label
                         for="org-fy"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                         >Financial Year</label
                     >
                     <select
                         id="org-fy"
                         v-model="form.financial_year_type"
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                     >
                         <option
                             v-for="(
@@ -292,11 +295,11 @@ function submit() {
                 </div>
                 <div class="flex items-end">
                     <div
-                        class="rounded-lg bg-blue-50 p-3 text-sm text-blue-800"
+                        class="rounded-lg bg-info-soft/50 p-3 text-sm text-info-soft-foreground"
                     >
                         <strong>Tax:</strong>
                         {{ selectedCountry.tax_system.name }}
-                        <span class="ml-2 text-blue-600"
+                        <span class="ml-2 text-info"
                             >({{
                                 selectedCountry.tax_system.rates.join(', ')
                             }})</span
@@ -307,7 +310,7 @@ function submit() {
 
             <!-- Emails -->
             <div>
-                <label class="block text-sm font-medium text-gray-700"
+                <label class="block text-sm font-medium text-soft-foreground"
                     >Email Addresses *</label
                 >
                 <div
@@ -319,12 +322,12 @@ function submit() {
                         v-model="form.emails[index]"
                         type="email"
                         placeholder="email@company.com"
-                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                     />
                     <button
                         v-if="index > 0"
                         type="button"
-                        class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+                        class="shrink-0 rounded-lg p-2 text-faint-foreground transition hover:bg-destructive-soft/50 hover:text-destructive"
                         @click="removeEmail(index)"
                     >
                         <svg
@@ -344,18 +347,21 @@ function submit() {
                 </div>
                 <button
                     type="button"
-                    class="mt-2 text-sm font-medium text-brand-600 hover:text-brand-500"
+                    class="mt-2 text-sm font-medium text-primary hover:text-primary/80"
                     @click="addEmail"
                 >
                     + Add email
                 </button>
                 <p
                     v-if="form.errors['emails.0']"
-                    class="mt-1 text-sm text-red-600"
+                    class="mt-1 text-sm text-destructive"
                 >
                     {{ form.errors['emails.0'] }}
                 </p>
-                <p v-if="form.errors.emails" class="mt-1 text-sm text-red-600">
+                <p
+                    v-if="form.errors.emails"
+                    class="mt-1 text-sm text-destructive"
+                >
                     {{ form.errors.emails }}
                 </p>
             </div>
@@ -364,29 +370,29 @@ function submit() {
             <div>
                 <label
                     for="org-notes"
-                    class="block text-sm font-medium text-gray-700"
+                    class="block text-sm font-medium text-soft-foreground"
                     >Notes</label
                 >
                 <textarea
                     id="org-notes"
                     v-model="form.notes"
                     rows="3"
-                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                    class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                 />
             </div>
         </div>
 
         <!-- Footer -->
         <div
-            class="flex items-center justify-end gap-3 border-t border-gray-100 bg-gray-50/50 px-6 py-4"
+            class="flex items-center justify-end gap-3 border-t border-border bg-muted/50 px-6 py-4"
         >
-            <span v-show="recentlySuccessful" class="text-sm text-green-600"
+            <span v-show="recentlySuccessful" class="text-sm text-success"
                 >Saved.</span
             >
             <button
                 type="submit"
                 :disabled="form.processing"
-                class="inline-flex items-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                class="inline-flex items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:opacity-50"
             >
                 {{ form.processing ? 'Saving...' : 'Save Changes' }}
             </button>

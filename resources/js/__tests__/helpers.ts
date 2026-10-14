@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import type {
     User,
     Organization,
@@ -236,4 +237,19 @@ export function makeMockForm<T extends Record<string, unknown>>(data: T) {
         clearErrors: vi.fn(),
         transform: vi.fn().mockReturnThis(),
     };
+}
+
+/** Emulates the operating system's light/dark setting. */
+export function stubSystemTheme(prefersDark: boolean): void {
+    vi.stubGlobal(
+        'matchMedia',
+        vi.fn().mockReturnValue({ matches: prefersDark }),
+    );
+}
+
+/** A page with no stored theme, on a light system. */
+export function resetAppearance(): void {
+    document.cookie = 'appearance=; max-age=0; path=/';
+    document.documentElement.classList.remove('dark');
+    stubSystemTheme(false);
 }

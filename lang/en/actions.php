@@ -30,6 +30,7 @@ return [
         'print_estimate' => 'Print Estimate',
         'download' => 'Download',
         'download_pdf' => 'Download PDF',
+        'dark_theme' => 'Dark theme',
         'send' => 'Send',
         'send_email' => 'Send Email',
         'duplicate' => 'Duplicate',
@@ -165,6 +166,8 @@ return [
         'help' => 'Get help',
         'info' => 'More information',
         'settings' => 'Open settings',
+        'switch_to_dark_theme' => 'Switch to dark theme',
+        'switch_to_light_theme' => 'Switch to light theme',
     ],
 
     'shortcuts' => [

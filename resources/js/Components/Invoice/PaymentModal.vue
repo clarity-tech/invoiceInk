@@ -57,28 +57,28 @@ function fmt(amount: number): string {
 <template>
     <div
         v-if="show"
-        class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-gray-900"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-overlay"
         @keydown.escape="emit('close')"
     >
         <div
-            class="mx-4 w-full max-w-md overflow-hidden rounded-lg bg-white shadow-2xl"
+            class="mx-4 w-full max-w-md overflow-hidden rounded-lg bg-card shadow-2xl"
             role="dialog"
             aria-modal="true"
         >
             <!-- Header -->
             <div
-                class="flex items-center justify-between border-b border-gray-200 px-6 py-4"
+                class="flex items-center justify-between border-b border-border px-6 py-4"
             >
                 <div>
-                    <h2 class="text-lg font-semibold text-gray-900">
+                    <h2 class="text-lg font-semibold text-foreground">
                         Record Payment
                     </h2>
-                    <p class="text-sm text-gray-500">
+                    <p class="text-sm text-muted-foreground">
                         {{ invoice.invoice_number }}
                     </p>
                 </div>
                 <button
-                    class="text-gray-400 hover:text-gray-600"
+                    class="text-faint-foreground hover:text-soft-foreground"
                     @click="emit('close')"
                 >
                     <svg
@@ -98,24 +98,24 @@ function fmt(amount: number): string {
             </div>
 
             <!-- Balance summary -->
-            <div class="border-b border-gray-100 bg-gray-50 px-6 py-3">
+            <div class="border-b border-border bg-muted px-6 py-3">
                 <div class="flex justify-between text-sm">
-                    <span class="text-gray-500">Total</span>
+                    <span class="text-muted-foreground">Total</span>
                     <span class="font-medium">{{
                         fmt(invoice.total ?? 0)
                     }}</span>
                 </div>
                 <div class="flex justify-between text-sm">
-                    <span class="text-gray-500">Paid</span>
-                    <span class="font-medium text-green-600">{{
+                    <span class="text-muted-foreground">Paid</span>
+                    <span class="font-medium text-success">{{
                         fmt(invoice.amount_paid ?? 0)
                     }}</span>
                 </div>
                 <div
-                    class="mt-1 flex justify-between border-t border-gray-200 pt-1 text-sm font-semibold"
+                    class="mt-1 flex justify-between border-t border-border pt-1 text-sm font-semibold"
                 >
                     <span>Balance Due</span>
-                    <span class="text-brand-600">{{ fmt(balanceDue) }}</span>
+                    <span class="text-primary">{{ fmt(balanceDue) }}</span>
                 </div>
             </div>
 
@@ -123,12 +123,13 @@ function fmt(amount: number): string {
             <form class="px-6 py-4" @submit.prevent="submit">
                 <!-- Amount (in cents, displayed as currency) -->
                 <div class="mb-4">
-                    <label class="mb-1 block text-sm font-medium text-gray-700"
+                    <label
+                        class="mb-1 block text-sm font-medium text-soft-foreground"
                         >Amount *</label
                     >
                     <div class="relative">
                         <span
-                            class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-gray-400"
+                            class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-faint-foreground"
                             >{{ invoice.currency }}</span
                         >
                         <input
@@ -136,7 +137,7 @@ function fmt(amount: number): string {
                             type="number"
                             min="0.01"
                             step="0.01"
-                            class="w-full rounded-md border border-gray-300 py-2 pr-3 pl-14 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                            class="w-full rounded-md border border-input py-2 pr-3 pl-14 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
                             @input="
                                 form.amount = Math.round(
                                     Number(
@@ -149,7 +150,7 @@ function fmt(amount: number): string {
                     </div>
                     <p
                         v-if="form.errors.amount"
-                        class="mt-1 text-xs text-red-600"
+                        class="mt-1 text-xs text-destructive"
                     >
                         {{ form.errors.amount }}
                     </p>
@@ -157,17 +158,18 @@ function fmt(amount: number): string {
 
                 <!-- Payment Date -->
                 <div class="mb-4">
-                    <label class="mb-1 block text-sm font-medium text-gray-700"
+                    <label
+                        class="mb-1 block text-sm font-medium text-soft-foreground"
                         >Payment Date *</label
                     >
                     <input
                         v-model="form.payment_date"
                         type="date"
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        class="w-full rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
                     />
                     <p
                         v-if="form.errors.payment_date"
-                        class="mt-1 text-xs text-red-600"
+                        class="mt-1 text-xs text-destructive"
                     >
                         {{ form.errors.payment_date }}
                     </p>
@@ -175,12 +177,13 @@ function fmt(amount: number): string {
 
                 <!-- Payment Method -->
                 <div class="mb-4">
-                    <label class="mb-1 block text-sm font-medium text-gray-700"
+                    <label
+                        class="mb-1 block text-sm font-medium text-soft-foreground"
                         >Payment Method</label
                     >
                     <select
                         v-model="form.payment_method"
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        class="w-full rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
                     >
                         <option value="">Select method</option>
                         <option value="bank_transfer">Bank Transfer</option>
@@ -195,27 +198,29 @@ function fmt(amount: number): string {
 
                 <!-- Reference -->
                 <div class="mb-4">
-                    <label class="mb-1 block text-sm font-medium text-gray-700"
+                    <label
+                        class="mb-1 block text-sm font-medium text-soft-foreground"
                         >Reference / Transaction ID</label
                     >
                     <input
                         v-model="form.reference"
                         type="text"
                         placeholder="e.g. TXN-12345"
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        class="w-full rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
                     />
                 </div>
 
                 <!-- Notes -->
                 <div class="mb-4">
-                    <label class="mb-1 block text-sm font-medium text-gray-700"
+                    <label
+                        class="mb-1 block text-sm font-medium text-soft-foreground"
                         >Notes</label
                     >
                     <textarea
                         v-model="form.notes"
                         rows="2"
                         placeholder="Optional notes..."
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                        class="w-full rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
                     />
                 </div>
 
@@ -223,7 +228,7 @@ function fmt(amount: number): string {
                 <div class="flex gap-3">
                     <button
                         type="button"
-                        class="flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        class="flex-1 rounded-md border border-input px-4 py-2 text-sm font-medium text-soft-foreground hover:bg-muted"
                         @click="emit('close')"
                     >
                         Cancel
@@ -231,7 +236,7 @@ function fmt(amount: number): string {
                     <button
                         type="submit"
                         :disabled="form.processing || form.amount <= 0"
-                        class="flex-1 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        class="flex-1 rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {{
                             form.processing ? 'Recording...' : 'Record Payment'

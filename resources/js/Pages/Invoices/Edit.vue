@@ -143,7 +143,7 @@ function deletePayment() {
                 class="mt-1 flex min-h-10 flex-wrap items-center justify-between gap-x-4 gap-y-2"
             >
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <h2 class="text-lg font-semibold text-gray-900">
+                    <h2 class="text-lg font-semibold text-foreground">
                         {{ invoice.invoice_number }}
                     </h2>
                     <!--

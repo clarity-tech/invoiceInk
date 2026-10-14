@@ -45,12 +45,12 @@ function removeLogo() {
 </script>
 
 <template>
-    <div class="rounded-xl border border-gray-200 bg-white">
-        <div class="border-b border-gray-100 px-6 py-4">
-            <h2 class="text-lg font-semibold text-gray-900">
+    <div class="rounded-xl border border-border bg-card">
+        <div class="border-b border-border px-6 py-4">
+            <h2 class="text-lg font-semibold text-foreground">
                 Organization Logo
             </h2>
-            <p class="mt-1 text-sm text-gray-500">
+            <p class="mt-1 text-sm text-muted-foreground">
                 Your logo appears on invoices, estimates, and emails.
             </p>
         </div>
@@ -58,12 +58,12 @@ function removeLogo() {
         <div class="p-6">
             <!-- Current Logo -->
             <div v-if="organization.logo_url && !previewUrl" class="mb-6">
-                <p class="mb-3 text-sm font-medium text-gray-700">
+                <p class="mb-3 text-sm font-medium text-soft-foreground">
                     Current Logo
                 </p>
                 <div class="flex items-center gap-4">
                     <div
-                        class="flex size-24 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+                        class="flex size-24 items-center justify-center overflow-hidden rounded-xl border border-border bg-paper shadow-sm"
                     >
                         <img
                             :src="organization.logo_url"
@@ -73,7 +73,7 @@ function removeLogo() {
                     </div>
                     <button
                         type="button"
-                        class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-destructive/25 bg-destructive-soft/50 px-3 py-2 text-sm font-medium text-destructive-soft-foreground transition hover:bg-destructive-soft"
                         @click="removeLogo"
                     >
                         <svg
@@ -99,7 +99,8 @@ function removeLogo() {
                 <div class="flex items-center gap-6">
                     <!-- Preview -->
                     <div
-                        class="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-50"
+                        class="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-input"
+                        :class="previewUrl ? 'bg-paper' : 'bg-muted'"
                     >
                         <img
                             v-if="previewUrl"
@@ -109,7 +110,7 @@ function removeLogo() {
                         />
                         <svg
                             v-else
-                            class="size-8 text-gray-300"
+                            class="size-8 text-faint-foreground"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke-width="1"
@@ -126,7 +127,7 @@ function removeLogo() {
                     <div class="flex-1">
                         <label
                             for="logo-upload"
-                            class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+                            class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-4 py-2.5 text-sm font-medium text-soft-foreground shadow-sm transition hover:bg-muted"
                         >
                             <svg
                                 class="size-4"
@@ -150,12 +151,12 @@ function removeLogo() {
                             class="hidden"
                             @change="onFileChange"
                         />
-                        <p class="mt-2 text-xs text-gray-500">
+                        <p class="mt-2 text-xs text-muted-foreground">
                             JPG, PNG, GIF, or SVG. Max 2MB.
                         </p>
                         <p
                             v-if="form.errors.logo"
-                            class="mt-1 text-sm text-red-600"
+                            class="mt-1 text-sm text-destructive"
                         >
                             {{ form.errors.logo }}
                         </p>
@@ -165,19 +166,19 @@ function removeLogo() {
                 <div v-if="form.logo" class="mt-4 flex items-center gap-3">
                     <span
                         v-show="recentlySuccessful"
-                        class="text-sm text-green-600"
+                        class="text-sm text-success"
                         >Uploaded!</span
                     >
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="inline-flex items-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                        class="inline-flex items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:opacity-50"
                     >
                         {{ form.processing ? 'Uploading...' : 'Upload Logo' }}
                     </button>
                     <button
                         type="button"
-                        class="text-sm text-gray-500 hover:text-gray-700"
+                        class="text-sm text-muted-foreground hover:text-soft-foreground"
                         @click="
                             form.reset();
                             previewUrl = null;

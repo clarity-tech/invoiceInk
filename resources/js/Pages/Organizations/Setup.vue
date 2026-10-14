@@ -187,10 +187,10 @@ function goToStep(step: number): void {
             <div class="mx-auto max-w-3xl">
                 <!-- Header -->
                 <div class="mb-8 text-center">
-                    <h1 class="text-2xl font-bold text-gray-900">
+                    <h1 class="text-2xl font-bold text-foreground">
                         Organization Setup
                     </h1>
-                    <p class="mt-1 text-sm text-gray-600">
+                    <p class="mt-1 text-sm text-soft-foreground">
                         Let's configure your business
                     </p>
                 </div>
@@ -199,9 +199,7 @@ function goToStep(step: number): void {
                 <div class="mb-8">
                     <!-- Mobile -->
                     <div class="mb-4 sm:hidden">
-                        <p
-                            class="text-center text-sm font-medium text-brand-600"
-                        >
+                        <p class="text-center text-sm font-medium text-primary">
                             Step {{ currentStep }} of {{ totalSteps }}:
                             {{ steps[currentStep - 1].title }}
                         </p>
@@ -212,8 +210,8 @@ function goToStep(step: number): void {
                                 class="h-2 flex-1 rounded-full"
                                 :class="
                                     i + 1 <= currentStep
-                                        ? 'bg-brand-600'
-                                        : 'bg-gray-300'
+                                        ? 'bg-primary'
+                                        : 'bg-input'
                                 "
                             />
                         </div>
@@ -235,8 +233,8 @@ function goToStep(step: number): void {
                                     class="flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-semibold transition"
                                     :class="
                                         i + 1 <= currentStep
-                                            ? 'border-brand-600 bg-brand-600 text-white'
-                                            : 'border-gray-300 bg-white text-gray-500'
+                                            ? 'border-primary bg-primary text-primary-foreground'
+                                            : 'border-input bg-card text-muted-foreground'
                                     "
                                     @click="goToStep(i + 1)"
                                 >
@@ -249,13 +247,13 @@ function goToStep(step: number): void {
                                         class="text-sm font-medium"
                                         :class="
                                             i + 1 <= currentStep
-                                                ? 'text-brand-600'
-                                                : 'text-gray-500'
+                                                ? 'text-primary'
+                                                : 'text-muted-foreground'
                                         "
                                     >
                                         {{ step.title }}
                                     </p>
-                                    <p class="text-xs text-gray-400">
+                                    <p class="text-xs text-faint-foreground">
                                         {{ step.description }}
                                     </p>
                                 </div>
@@ -265,8 +263,8 @@ function goToStep(step: number): void {
                                 class="mx-4 h-0.5 flex-1"
                                 :class="
                                     i + 1 < currentStep
-                                        ? 'bg-brand-600'
-                                        : 'bg-gray-300'
+                                        ? 'bg-primary'
+                                        : 'bg-input'
                                 "
                             />
                         </div>
@@ -274,22 +272,24 @@ function goToStep(step: number): void {
                 </div>
 
                 <!-- Main Content -->
-                <div class="rounded-xl border border-gray-200 bg-white">
+                <div class="rounded-xl border border-border bg-card">
                     <div class="px-6 py-6">
                         <!-- Step 1: Company Information -->
                         <div v-if="currentStep === 1" class="space-y-6">
                             <div>
-                                <h2 class="text-lg font-semibold text-gray-900">
+                                <h2
+                                    class="text-lg font-semibold text-foreground"
+                                >
                                     Company Information
                                 </h2>
-                                <p class="mt-1 text-sm text-gray-500">
+                                <p class="mt-1 text-sm text-muted-foreground">
                                     Tell us about your company
                                 </p>
                             </div>
                             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div class="md:col-span-2">
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Company Name *</label
                                     >
                                     <input
@@ -297,18 +297,18 @@ function goToStep(step: number): void {
                                         v-model="form.company_name"
                                         type="text"
                                         placeholder="Your company name"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                     <p
                                         v-if="form.errors.company_name"
-                                        class="mt-1 text-sm text-red-600"
+                                        class="mt-1 text-sm text-destructive"
                                     >
                                         {{ form.errors.company_name }}
                                     </p>
                                 </div>
                                 <div class="md:col-span-2">
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Email Addresses *</label
                                     >
                                     <div
@@ -322,13 +322,13 @@ function goToStep(step: number): void {
                                                 :aria-describedby="`error-emails-${index}`"
                                                 type="email"
                                                 placeholder="email@company.com"
-                                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                                class="block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                             />
                                             <button
                                                 v-if="index > 0"
                                                 type="button"
                                                 aria-label="Remove email"
-                                                class="shrink-0 rounded-lg p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+                                                class="shrink-0 rounded-lg p-2 text-faint-foreground transition hover:bg-destructive-soft/50 hover:text-destructive"
                                                 @click="removeEmail(index)"
                                             >
                                                 <svg
@@ -351,28 +351,28 @@ function goToStep(step: number): void {
                                                 form.errors[`emails.${index}`]
                                             "
                                             :id="`error-emails-${index}`"
-                                            class="mt-1 text-sm text-red-600"
+                                            class="mt-1 text-sm text-destructive"
                                         >
                                             {{ form.errors[`emails.${index}`] }}
                                         </p>
                                     </div>
                                     <button
                                         type="button"
-                                        class="mt-2 text-sm font-medium text-brand-600 hover:text-brand-500"
+                                        class="mt-2 text-sm font-medium text-primary hover:text-primary/80"
                                         @click="addEmail"
                                     >
                                         + Add email
                                     </button>
                                     <p
                                         v-if="form.errors.emails"
-                                        class="mt-1 text-sm text-red-600"
+                                        class="mt-1 text-sm text-destructive"
                                     >
                                         {{ form.errors.emails }}
                                     </p>
                                 </div>
                                 <div class="md:col-span-2">
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Phone Number</label
                                     >
                                     <PhoneInput
@@ -388,31 +388,31 @@ function goToStep(step: number): void {
                                 </div>
                                 <div>
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Tax Number</label
                                     >
                                     <input
                                         id="tax_number"
                                         v-model="form.tax_number"
                                         type="text"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                 </div>
                                 <div>
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Registration Number</label
                                     >
                                     <input
                                         id="registration_number"
                                         v-model="form.registration_number"
                                         type="text"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                 </div>
                                 <div class="md:col-span-2">
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Website</label
                                     >
                                     <input
@@ -420,25 +420,25 @@ function goToStep(step: number): void {
                                         v-model="form.website"
                                         type="text"
                                         placeholder="example.com"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                     <p
                                         v-if="form.errors.website"
-                                        class="mt-1 text-sm text-red-600"
+                                        class="mt-1 text-sm text-destructive"
                                     >
                                         {{ form.errors.website }}
                                     </p>
                                 </div>
                                 <div class="md:col-span-2">
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Notes</label
                                     >
                                     <textarea
                                         id="notes"
                                         v-model="form.notes"
                                         rows="3"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                 </div>
                             </div>
@@ -447,17 +447,19 @@ function goToStep(step: number): void {
                         <!-- Step 2: Primary Location -->
                         <div v-if="currentStep === 2" class="space-y-6">
                             <div>
-                                <h2 class="text-lg font-semibold text-gray-900">
+                                <h2
+                                    class="text-lg font-semibold text-foreground"
+                                >
                                     Primary Location
                                 </h2>
-                                <p class="mt-1 text-sm text-gray-500">
+                                <p class="mt-1 text-sm text-muted-foreground">
                                     Your main business address
                                 </p>
                             </div>
                             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div>
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Location Name</label
                                     >
                                     <input
@@ -465,18 +467,18 @@ function goToStep(step: number): void {
                                         v-model="form.location_name"
                                         type="text"
                                         placeholder="e.g. Head Office, Main Office"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                 </div>
                                 <div>
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Country *</label
                                     >
                                     <select
                                         id="country_code"
                                         v-model="form.country_code"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     >
                                         <option value="">
                                             Select your country
@@ -491,103 +493,103 @@ function goToStep(step: number): void {
                                     </select>
                                     <p
                                         v-if="form.errors.country_code"
-                                        class="mt-1 text-sm text-red-600"
+                                        class="mt-1 text-sm text-destructive"
                                     >
                                         {{ form.errors.country_code }}
                                     </p>
                                 </div>
                                 <div class="md:col-span-2">
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >{{ taxLabel }}</label
                                     >
                                     <input
                                         id="tax_id"
                                         v-model="form.tax_id"
                                         type="text"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                 </div>
                                 <div class="md:col-span-2">
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Address Line 1 *</label
                                     >
                                     <input
                                         id="address_line_1"
                                         v-model="form.address_line_1"
                                         type="text"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                     <p
                                         v-if="form.errors.address_line_1"
-                                        class="mt-1 text-sm text-red-600"
+                                        class="mt-1 text-sm text-destructive"
                                     >
                                         {{ form.errors.address_line_1 }}
                                     </p>
                                 </div>
                                 <div class="md:col-span-2">
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Address Line 2</label
                                     >
                                     <input
                                         id="address_line_2"
                                         v-model="form.address_line_2"
                                         type="text"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                 </div>
                                 <div>
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >City *</label
                                     >
                                     <input
                                         id="city"
                                         v-model="form.city"
                                         type="text"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                     <p
                                         v-if="form.errors.city"
-                                        class="mt-1 text-sm text-red-600"
+                                        class="mt-1 text-sm text-destructive"
                                     >
                                         {{ form.errors.city }}
                                     </p>
                                 </div>
                                 <div>
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >State / Province *</label
                                     >
                                     <input
                                         id="state"
                                         v-model="form.state"
                                         type="text"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                     <p
                                         v-if="form.errors.state"
-                                        class="mt-1 text-sm text-red-600"
+                                        class="mt-1 text-sm text-destructive"
                                     >
                                         {{ form.errors.state }}
                                     </p>
                                 </div>
                                 <div>
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Postal Code *</label
                                     >
                                     <input
                                         id="postal_code"
                                         v-model="form.postal_code"
                                         type="text"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                     <p
                                         v-if="form.errors.postal_code"
-                                        class="mt-1 text-sm text-red-600"
+                                        class="mt-1 text-sm text-destructive"
                                     >
                                         {{ form.errors.postal_code }}
                                     </p>
@@ -598,23 +600,25 @@ function goToStep(step: number): void {
                         <!-- Step 3: Financial Settings -->
                         <div v-if="currentStep === 3" class="space-y-6">
                             <div>
-                                <h2 class="text-lg font-semibold text-gray-900">
+                                <h2
+                                    class="text-lg font-semibold text-foreground"
+                                >
                                     Financial Settings
                                 </h2>
-                                <p class="mt-1 text-sm text-gray-500">
+                                <p class="mt-1 text-sm text-muted-foreground">
                                     Set your currency and financial year
                                 </p>
                             </div>
                             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div>
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Currency *</label
                                     >
                                     <select
                                         id="currency"
                                         v-model="form.currency"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     >
                                         <option value="">
                                             Select currency
@@ -631,19 +635,19 @@ function goToStep(step: number): void {
                                     </select>
                                     <p
                                         v-if="form.errors.currency"
-                                        class="mt-1 text-sm text-red-600"
+                                        class="mt-1 text-sm text-destructive"
                                     >
                                         {{ form.errors.currency }}
                                     </p>
                                 </div>
                                 <div v-if="selectedCountry">
                                     <label
-                                        class="block text-sm font-medium text-gray-700"
+                                        class="block text-sm font-medium text-soft-foreground"
                                         >Financial Year</label
                                     >
                                     <select
                                         v-model="form.financial_year_type"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                                        class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     >
                                         <option
                                             v-for="(
@@ -658,15 +662,15 @@ function goToStep(step: number): void {
                                 </div>
                                 <div
                                     v-if="selectedCountry"
-                                    class="rounded-lg bg-blue-50 p-4 md:col-span-2"
+                                    class="rounded-lg bg-info-soft/50 p-4 md:col-span-2"
                                 >
                                     <h4
-                                        class="mb-2 text-sm font-medium text-blue-900"
+                                        class="mb-2 text-sm font-medium text-info-soft-foreground"
                                     >
                                         Country Info
                                     </h4>
                                     <div
-                                        class="space-y-1 text-sm text-blue-800"
+                                        class="space-y-1 text-sm text-info-soft-foreground"
                                     >
                                         <p>
                                             <strong>Tax System:</strong>
@@ -696,12 +700,12 @@ function goToStep(step: number): void {
 
                     <!-- Navigation Buttons -->
                     <div
-                        class="flex items-center justify-between border-t border-gray-100 bg-gray-50/50 px-6 py-4"
+                        class="flex items-center justify-between border-t border-border bg-muted/50 px-6 py-4"
                     >
                         <button
                             v-if="currentStep > 1"
                             type="button"
-                            class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none"
+                            class="rounded-lg border border-input bg-card px-4 py-2.5 text-sm font-semibold text-soft-foreground shadow-sm transition hover:bg-muted focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none"
                             @click="previousStep"
                         >
                             Previous
@@ -711,7 +715,7 @@ function goToStep(step: number): void {
                         <button
                             type="button"
                             :disabled="form.processing"
-                            class="inline-flex items-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                            class="inline-flex items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                             @click="submitStep"
                         >
                             {{

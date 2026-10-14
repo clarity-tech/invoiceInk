@@ -178,8 +178,8 @@ onMounted(hydrate);
                 :value="currentCountry()"
                 :disabled="disabled"
                 aria-label="Country code"
-                class="w-40 shrink-0 rounded-l-md border-gray-300 bg-gray-50 text-sm focus:z-10 focus:border-brand-500 focus:ring-brand-500"
-                :class="error ? 'border-red-300' : 'border-gray-300'"
+                class="w-40 shrink-0 rounded-l-md border-input bg-muted text-sm focus:z-10 focus:border-ring focus:ring-ring"
+                :class="error ? 'border-destructive/40' : 'border-input'"
                 @change="onCountryChange"
             >
                 <option
@@ -197,11 +197,11 @@ onMounted(hydrate);
                 type="tel"
                 autocomplete="tel-national"
                 :placeholder="placeholder"
-                class="-ml-px block w-full flex-1 rounded-r-md shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
-                :class="error ? 'border-red-300' : 'border-gray-300'"
+                class="-ml-px block w-full flex-1 rounded-r-md shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
+                :class="error ? 'border-destructive/40' : 'border-input'"
                 @input="onNationalInput"
             />
         </div>
-        <p v-if="error" class="mt-1 text-sm text-red-600">{{ error }}</p>
+        <p v-if="error" class="mt-1 text-sm text-destructive">{{ error }}</p>
     </div>
 </template>

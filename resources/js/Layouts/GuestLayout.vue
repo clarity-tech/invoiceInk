@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
+import AppearanceSwitch from '@/Components/AppearanceSwitch.vue';
 import AppLogo from '@/Components/AppLogo.vue';
 
 defineProps<{
@@ -9,18 +10,22 @@ defineProps<{
 
 <template>
     <div
-        class="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0"
+        class="relative flex min-h-screen flex-col items-center bg-canvas pt-6 sm:justify-center sm:pt-0"
     >
         <Head :title="title" />
 
+        <div class="absolute top-3 right-3 sm:top-4 sm:right-4">
+            <AppearanceSwitch />
+        </div>
+
         <div>
             <a href="/" aria-label="InvoiceInk home">
-                <AppLogo class="h-10 w-auto text-gray-900" />
+                <AppLogo class="h-10 w-auto text-foreground" />
             </a>
         </div>
 
         <div
-            class="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg"
+            class="mt-6 w-full overflow-hidden bg-card px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg"
         >
             <slot />
         </div>

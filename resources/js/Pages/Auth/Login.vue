@@ -17,7 +17,7 @@ defineProps<{
     <GuestLayout title="Log in">
         <Head title="Log in" />
 
-        <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
+        <div v-if="status" class="mb-4 text-sm font-medium text-success">
             {{ status }}
         </div>
 
@@ -28,7 +28,7 @@ defineProps<{
         >
             <div
                 v-if="Object.keys(errors).length"
-                class="mb-4 text-sm text-red-600"
+                class="mb-4 text-sm text-destructive"
             >
                 <ul>
                     <li v-for="(error, key) in errors" :key="key">
@@ -40,19 +40,19 @@ defineProps<{
             <div>
                 <label
                     for="email"
-                    class="block text-sm font-medium text-gray-700"
+                    class="block text-sm font-medium text-soft-foreground"
                     >Email</label
                 >
                 <input
                     id="email"
                     name="email"
                     type="email"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                    class="mt-1 block w-full rounded-md border-input shadow-sm focus:border-ring focus:ring-ring"
                     required
                     autofocus
                     autocomplete="username"
                 />
-                <p v-if="errors.email" class="mt-1 text-xs text-red-600">
+                <p v-if="errors.email" class="mt-1 text-xs text-destructive">
                     {{ errors.email }}
                 </p>
             </div>
@@ -60,7 +60,7 @@ defineProps<{
             <div class="mt-4">
                 <label
                     for="password"
-                    class="block text-sm font-medium text-gray-700"
+                    class="block text-sm font-medium text-soft-foreground"
                     >Password</label
                 >
                 <div class="relative">
@@ -68,7 +68,7 @@ defineProps<{
                         id="password"
                         name="password"
                         :type="showPassword ? 'text' : 'password'"
-                        class="mt-1 block w-full rounded-md border-gray-300 pr-10 shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                        class="mt-1 block w-full rounded-md border-input pr-10 shadow-sm focus:border-ring focus:ring-ring"
                         required
                         autocomplete="current-password"
                     />
@@ -82,7 +82,7 @@ defineProps<{
                     >
                         <svg
                             v-if="!showPassword"
-                            class="h-5 w-5 text-gray-400"
+                            class="h-5 w-5 text-faint-foreground"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke-width="1.5"
@@ -101,7 +101,7 @@ defineProps<{
                         </svg>
                         <svg
                             v-else
-                            class="h-5 w-5 text-gray-400"
+                            class="h-5 w-5 text-faint-foreground"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke-width="1.5"
@@ -115,7 +115,7 @@ defineProps<{
                         </svg>
                     </button>
                 </div>
-                <p v-if="errors.password" class="mt-1 text-xs text-red-600">
+                <p v-if="errors.password" class="mt-1 text-xs text-destructive">
                     {{ errors.password }}
                 </p>
             </div>
@@ -126,23 +126,25 @@ defineProps<{
                         id="remember_me"
                         name="remember"
                         type="checkbox"
-                        class="rounded border-gray-300 text-brand-600 shadow-sm focus:ring-brand-500"
+                        class="rounded border-input text-primary shadow-sm focus:ring-ring"
                     />
-                    <span class="ms-2 text-sm text-gray-600">Remember me</span>
+                    <span class="ms-2 text-sm text-soft-foreground"
+                        >Remember me</span
+                    >
                 </label>
             </div>
 
             <div class="mt-4 flex items-center justify-end">
                 <Link
                     :href="forgotPasswordRequest.url()"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none"
+                    class="rounded-md text-sm text-soft-foreground underline hover:text-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none"
                 >
                     Forgot your password?
                 </Link>
 
                 <button
                     type="submit"
-                    class="ms-4 inline-flex items-center rounded-md border border-transparent bg-brand-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition hover:bg-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                    class="ms-4 inline-flex items-center rounded-md border border-transparent bg-primary px-4 py-2 text-xs font-semibold tracking-widest text-primary-foreground uppercase transition hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:opacity-50"
                     :disabled="processing"
                 >
                     Log in
@@ -150,11 +152,11 @@ defineProps<{
             </div>
         </Form>
 
-        <p class="mt-6 text-center text-sm text-gray-600">
+        <p class="mt-6 text-center text-sm text-soft-foreground">
             Don't have an account?
             <Link
                 :href="register.url()"
-                class="rounded-md font-medium text-brand-600 underline hover:text-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none"
+                class="rounded-md font-medium text-primary underline hover:text-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none"
             >
                 Register
             </Link>

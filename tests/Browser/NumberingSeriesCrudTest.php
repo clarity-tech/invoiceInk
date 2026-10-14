@@ -111,7 +111,7 @@ it('cannot delete series with invoices', function () {
     $page->assertSee('Has Invoices Series')
         ->click('button:has-text("Delete")')
         ->waitForText('Delete Numbering Series')
-        ->click('.bg-red-600')
+        ->click('.bg-destructive')
         ->waitForText('Has Invoices Series')
         ->assertSee('Has Invoices Series');
 });

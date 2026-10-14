@@ -8,18 +8,27 @@ const props = defineProps<{
 
 const config = computed(() => {
     const map: Record<InvoiceStatus, { label: string; classes: string }> = {
-        draft: { label: 'Draft', classes: 'bg-gray-100 text-gray-800' },
-        sent: { label: 'Sent', classes: 'bg-brand-100 text-brand-800' },
+        draft: { label: 'Draft', classes: 'bg-secondary text-foreground' },
+        sent: {
+            label: 'Sent',
+            classes: 'bg-primary-soft text-primary-soft-foreground',
+        },
         accepted: {
             label: 'Accepted',
-            classes: 'bg-yellow-100 text-yellow-800',
+            classes: 'bg-caution-soft text-caution-soft-foreground',
         },
         partially_paid: {
             label: 'Partially Paid',
-            classes: 'bg-amber-100 text-amber-800',
+            classes: 'bg-warning-soft text-warning-soft-foreground',
         },
-        paid: { label: 'Paid', classes: 'bg-green-100 text-green-800' },
-        void: { label: 'Void', classes: 'bg-red-100 text-red-800' },
+        paid: {
+            label: 'Paid',
+            classes: 'bg-success-soft text-success-soft-foreground',
+        },
+        void: {
+            label: 'Void',
+            classes: 'bg-destructive-soft text-destructive-soft-foreground',
+        },
     };
 
     return map[props.status];

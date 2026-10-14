@@ -133,8 +133,8 @@ function switchTab(key: string) {
                                 class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition"
                                 :class="
                                     currentTab === tab.key
-                                        ? 'bg-brand-50 text-brand-700'
-                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                        ? 'bg-primary-soft/50 text-primary-soft-foreground'
+                                        : 'text-soft-foreground hover:bg-muted hover:text-foreground'
                                 "
                                 @click="switchTab(tab.key)"
                             >

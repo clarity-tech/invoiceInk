@@ -56,11 +56,11 @@ function sendState(invoice: Invoice): { label: string; class: string } | null {
     }
 
     if (delivery.status === 'queued' || delivery.status === 'sending') {
-        return { label: 'Sending…', class: 'text-gray-400' };
+        return { label: 'Sending…', class: 'text-faint-foreground' };
     }
 
     if (delivery.status === 'failed') {
-        return { label: 'Send failed', class: 'text-red-600' };
+        return { label: 'Send failed', class: 'text-destructive' };
     }
 
     return null;
@@ -132,27 +132,27 @@ const tabs = [
     <AppLayout title="Invoices & Estimates">
         <template #header>
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <h2 class="text-xl leading-tight font-semibold text-gray-800">
+                <h2 class="text-xl leading-tight font-semibold text-foreground">
                     Invoices & Estimates
                 </h2>
                 <div class="flex flex-wrap gap-2">
                     <a
                         href="/invoices/trash"
-                        class="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50"
+                        class="rounded-md bg-card px-4 py-2 text-sm font-medium text-soft-foreground shadow-sm ring-1 ring-input hover:bg-muted"
                     >
                         Trash
                     </a>
                     <a
                         v-if="can('create')"
                         href="/estimates/create"
-                        class="rounded-md bg-green-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-800"
+                        class="rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground shadow-sm hover:bg-success/90"
                     >
                         Create Estimate
                     </a>
                     <a
                         v-if="can('create')"
                         href="/invoices/create"
-                        class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
+                        class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
                     >
                         Create Invoice
                     </a>
@@ -166,7 +166,7 @@ const tabs = [
                 <div
                     role="group"
                     aria-label="Filter by document type"
-                    class="flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1"
+                    class="flex flex-wrap gap-1 rounded-lg bg-secondary p-1"
                 >
                     <button
                         v-for="tab in tabs"
@@ -176,8 +176,8 @@ const tabs = [
                         class="cursor-pointer rounded-md px-4 py-2 text-sm font-medium transition-colors"
                         :class="
                             activeTab === tab.key
-                                ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
+                                ? 'bg-card text-foreground shadow-sm'
+                                : 'text-soft-foreground hover:text-foreground'
                         "
                         @click="setTab(tab.key)"
                     >
@@ -191,7 +191,7 @@ const tabs = [
                 <select
                     id="status-filter"
                     v-model="statusFilter"
-                    class="w-full max-w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:w-auto"
+                    class="w-full max-w-full rounded-md border-input text-sm shadow-sm focus:border-ring focus:ring-ring sm:w-auto"
                     @change="onStatusChange"
                 >
                     <option value="">All Statuses</option>
@@ -209,7 +209,7 @@ const tabs = [
             <div
                 tabindex="-1"
                 aria-label="Invoices and estimates list"
-                class="overflow-x-auto rounded-xl border border-border bg-card shadow-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                class="overflow-x-auto rounded-xl border border-border bg-card shadow-sm focus:ring-2 focus:ring-ring focus:outline-none"
             >
                 <table class="min-w-full divide-y divide-border">
                     <caption class="sr-only">
@@ -219,37 +219,37 @@ const tabs = [
                         <tr>
                             <th
                                 scope="col"
-                                class="px-4 py-2.5 text-left text-xs font-medium text-gray-500"
+                                class="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground"
                             >
                                 Number
                             </th>
                             <th
                                 scope="col"
-                                class="px-4 py-2.5 text-left text-xs font-medium text-gray-500"
+                                class="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground"
                             >
                                 Customer
                             </th>
                             <th
                                 scope="col"
-                                class="px-4 py-2.5 text-right text-xs font-medium text-gray-500"
+                                class="px-4 py-2.5 text-right text-xs font-medium text-muted-foreground"
                             >
                                 Total
                             </th>
                             <th
                                 scope="col"
-                                class="px-4 py-2.5 text-left text-xs font-medium text-gray-500"
+                                class="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground"
                             >
                                 Status
                             </th>
                             <th
                                 scope="col"
-                                class="px-4 py-2.5 text-left text-xs font-medium text-gray-500"
+                                class="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground"
                             >
                                 Date
                             </th>
                             <th
                                 scope="col"
-                                class="px-4 py-2.5 text-right text-xs font-medium text-gray-500"
+                                class="px-4 py-2.5 text-right text-xs font-medium text-muted-foreground"
                             >
                                 Actions
                             </th>
@@ -271,7 +271,7 @@ const tabs = [
                                 -->
                                 <Link
                                     :href="`/invoices/${invoice.id}`"
-                                    class="text-sm font-medium text-gray-900 hover:text-brand-700 hover:underline"
+                                    class="text-sm font-medium text-foreground hover:text-primary-soft-foreground hover:underline"
                                     :aria-label="actionLabel('Open', invoice)"
                                 >
                                     {{ invoice.invoice_number }}
@@ -297,7 +297,7 @@ const tabs = [
                                     </Badge>
                                 </div>
                             </td>
-                            <td class="px-4 py-4 text-sm text-gray-500">
+                            <td class="px-4 py-4 text-sm text-muted-foreground">
                                 <!--
                                     The second way into the document, and the
                                     one people actually aim at: the number is
@@ -309,7 +309,7 @@ const tabs = [
                                 -->
                                 <Link
                                     :href="`/invoices/${invoice.id}`"
-                                    class="block hover:text-brand-700"
+                                    class="block hover:text-primary-soft-foreground"
                                 >
                                     <div
                                         class="max-w-[220px] truncate"
@@ -326,7 +326,7 @@ const tabs = [
                                          assistive tech. -->
                                     <div
                                         v-if="invoice.subject"
-                                        class="mt-0.5 max-w-[220px] truncate text-xs text-gray-400"
+                                        class="mt-0.5 max-w-[220px] truncate text-xs text-faint-foreground"
                                         :title="invoice.subject"
                                     >
                                         {{ invoice.subject }}
@@ -334,7 +334,9 @@ const tabs = [
                                 </Link>
                             </td>
                             <td class="px-4 py-4 text-right whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">
+                                <div
+                                    class="text-sm font-medium text-foreground"
+                                >
                                     <MoneyDisplay
                                         :amount="invoice.total"
                                         :currency="invoice.currency"
@@ -342,7 +344,7 @@ const tabs = [
                                 </div>
                                 <div
                                     v-if="invoice.tax > 0"
-                                    class="text-xs text-gray-500"
+                                    class="text-xs text-muted-foreground"
                                 >
                                     Tax:
                                     <MoneyDisplay
@@ -358,7 +360,7 @@ const tabs = [
                                 -->
                                 <div
                                     v-if="showsBalance(invoice)"
-                                    class="text-xs font-medium text-amber-700"
+                                    class="text-xs font-medium text-warning"
                                 >
                                     Due:
                                     <MoneyDisplay
@@ -382,7 +384,7 @@ const tabs = [
                                 -->
                                 <div
                                     v-if="invoice.is_overdue"
-                                    class="mt-1 text-xs font-medium text-red-600"
+                                    class="mt-1 text-xs font-medium text-destructive"
                                 >
                                     {{ overdueLabel(invoice) }}
                                 </div>
@@ -395,7 +397,7 @@ const tabs = [
                                 </div>
                             </td>
                             <td
-                                class="px-4 py-4 text-sm whitespace-nowrap text-gray-500"
+                                class="px-4 py-4 text-sm whitespace-nowrap text-muted-foreground"
                             >
                                 {{ formatDate(invoice.issued_at) }}
                                 <!--
@@ -405,7 +407,7 @@ const tabs = [
                                 -->
                                 <div
                                     v-if="invoice.due_at"
-                                    class="text-xs text-gray-400"
+                                    class="text-xs text-faint-foreground"
                                 >
                                     Due {{ formatDate(invoice.due_at) }}
                                 </div>
@@ -461,7 +463,7 @@ const tabs = [
                         <tr v-if="invoices.data.length === 0">
                             <td colspan="6" class="px-6 py-12 text-center">
                                 <svg
-                                    class="mx-auto h-12 w-12 text-gray-300"
+                                    class="mx-auto h-12 w-12 text-faint-foreground"
                                     aria-hidden="true"
                                     fill="none"
                                     viewBox="0 0 24 24"
@@ -475,11 +477,11 @@ const tabs = [
                                     />
                                 </svg>
                                 <h3
-                                    class="mt-2 text-sm font-semibold text-gray-900"
+                                    class="mt-2 text-sm font-semibold text-foreground"
                                 >
                                     No documents yet
                                 </h3>
-                                <p class="mt-1 text-sm text-gray-500">
+                                <p class="mt-1 text-sm text-muted-foreground">
                                     Get started by creating your first invoice
                                     or estimate.
                                 </p>
@@ -489,12 +491,12 @@ const tabs = [
                                 >
                                     <a
                                         href="/invoices/create"
-                                        class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
+                                        class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
                                         >Create Invoice</a
                                     >
                                     <a
                                         href="/estimates/create"
-                                        class="rounded-md bg-green-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-800"
+                                        class="rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground shadow-sm hover:bg-success/90"
                                         >Create Estimate</a
                                     >
                                 </div>
@@ -507,10 +509,10 @@ const tabs = [
                 <nav
                     v-if="invoices.last_page > 1"
                     aria-label="Pagination"
-                    class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6"
+                    class="flex items-center justify-between border-t border-border bg-card px-4 py-3 sm:px-6"
                 >
                     <div class="hidden sm:block">
-                        <p class="text-sm text-gray-700">
+                        <p class="text-sm text-soft-foreground">
                             Showing page
                             <span class="font-medium">{{
                                 invoices.current_page
@@ -537,14 +539,14 @@ const tabs = [
                                 class="relative inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium"
                                 :class="
                                     link.active
-                                        ? 'border-brand-500 bg-brand-50 text-brand-600'
-                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                        ? 'border-primary bg-primary-soft/50 text-primary'
+                                        : 'border-input bg-card text-soft-foreground hover:bg-muted'
                                 "
                                 v-html="link.label"
                             />
                             <span
                                 v-else
-                                class="relative inline-flex items-center rounded-md border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400"
+                                class="relative inline-flex items-center rounded-md border border-border bg-secondary px-4 py-2 text-sm font-medium text-faint-foreground"
                                 v-html="link.label"
                             />
                         </template>

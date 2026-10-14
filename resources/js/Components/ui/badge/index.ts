@@ -24,8 +24,10 @@ export const badgeVariants = cva(
                  * a green pill one column from a green "Paid" pill reads as a
                  * status. Sky is the nearest hue none of them uses.
                  */
-                brandSoft: 'border-transparent bg-brand-100 text-brand-800',
-                infoSoft: 'border-transparent bg-sky-100 text-sky-800',
+                brandSoft:
+                    'border-transparent bg-primary-soft text-primary-soft-foreground',
+                infoSoft:
+                    'border-transparent bg-info-soft text-info-soft-foreground',
                 success:
                     'border-transparent bg-success text-success-foreground',
                 destructive:

@@ -84,13 +84,13 @@ function sendEmailVerification(): void {
 </script>
 
 <template>
-    <section class="rounded-xl border border-gray-200 bg-white p-6">
+    <section class="rounded-xl border border-border bg-card p-6">
         <h2
-            class="mb-1 text-sm font-semibold tracking-wider text-gray-400 uppercase"
+            class="mb-1 text-sm font-semibold tracking-wider text-faint-foreground uppercase"
         >
             Profile Information
         </h2>
-        <p class="mb-6 text-sm text-gray-500">
+        <p class="mb-6 text-sm text-muted-foreground">
             Update your account's profile information and email address.
         </p>
 
@@ -106,7 +106,8 @@ function sendEmailVerification(): void {
                         @change="updatePhotoPreview"
                     />
 
-                    <label class="mb-2 block text-sm font-medium text-gray-700"
+                    <label
+                        class="mb-2 block text-sm font-medium text-soft-foreground"
                         >Photo</label
                     >
 
@@ -115,11 +116,11 @@ function sendEmailVerification(): void {
                             v-show="!photoPreview"
                             :src="user.profile_photo_url"
                             :alt="user.name"
-                            class="size-16 rounded-full object-cover ring-2 ring-gray-100"
+                            class="size-16 rounded-full object-cover ring-2 ring-border"
                         />
                         <span
                             v-show="photoPreview"
-                            class="block size-16 rounded-full bg-cover bg-center bg-no-repeat ring-2 ring-gray-100"
+                            class="block size-16 rounded-full bg-cover bg-center bg-no-repeat ring-2 ring-border"
                             :style="
                                 'background-image: url(\'' +
                                 photoPreview +
@@ -129,7 +130,7 @@ function sendEmailVerification(): void {
                         <div class="flex gap-2">
                             <button
                                 type="button"
-                                class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+                                class="rounded-lg border border-input bg-card px-3 py-1.5 text-xs font-medium text-soft-foreground shadow-sm transition hover:bg-muted"
                                 @click.prevent="selectNewPhoto"
                             >
                                 Change Photo
@@ -137,7 +138,7 @@ function sendEmailVerification(): void {
                             <button
                                 v-if="user.profile_photo_path"
                                 type="button"
-                                class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+                                class="rounded-lg border border-input bg-card px-3 py-1.5 text-xs font-medium text-soft-foreground shadow-sm transition hover:bg-muted"
                                 @click.prevent="deleteProfilePhoto"
                             >
                                 Remove
@@ -147,7 +148,7 @@ function sendEmailVerification(): void {
 
                     <div
                         v-if="form.errors.photo"
-                        class="mt-2 text-sm text-red-600"
+                        class="mt-2 text-sm text-destructive"
                     >
                         {{ form.errors.photo }}
                     </div>
@@ -157,20 +158,20 @@ function sendEmailVerification(): void {
                 <div>
                     <label
                         for="name"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                         >Name</label
                     >
                     <input
                         id="name"
                         v-model="form.name"
                         type="text"
-                        class="mt-1 block w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full max-w-md rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                         required
                         autocomplete="name"
                     />
                     <div
                         v-if="form.errors.name"
-                        class="mt-2 text-sm text-red-600"
+                        class="mt-2 text-sm text-destructive"
                     >
                         {{ form.errors.name }}
                     </div>
@@ -180,30 +181,30 @@ function sendEmailVerification(): void {
                 <div>
                     <label
                         for="email"
-                        class="block text-sm font-medium text-gray-700"
+                        class="block text-sm font-medium text-soft-foreground"
                         >Email</label
                     >
                     <input
                         id="email"
                         v-model="form.email"
                         type="email"
-                        class="mt-1 block w-full max-w-md rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="mt-1 block w-full max-w-md rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                         required
                         autocomplete="username"
                     />
                     <div
                         v-if="form.errors.email"
-                        class="mt-2 text-sm text-red-600"
+                        class="mt-2 text-sm text-destructive"
                     >
                         {{ form.errors.email }}
                     </div>
 
                     <div v-if="!user.email_verified_at" class="mt-2">
-                        <p class="text-sm text-gray-600">
+                        <p class="text-sm text-soft-foreground">
                             Your email address is unverified.
                             <button
                                 type="button"
-                                class="rounded text-sm text-brand-600 underline hover:text-brand-800 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none"
+                                class="rounded text-sm text-primary underline hover:text-primary-soft-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none"
                                 @click.prevent="sendEmailVerification"
                             >
                                 Re-send verification email.
@@ -211,7 +212,7 @@ function sendEmailVerification(): void {
                         </p>
                         <p
                             v-if="verificationLinkSent"
-                            class="mt-2 text-sm font-medium text-green-600"
+                            class="mt-2 text-sm font-medium text-success"
                         >
                             A new verification link has been sent to your email
                             address.
@@ -223,12 +224,14 @@ function sendEmailVerification(): void {
             <div class="mt-6 flex items-center gap-3">
                 <button
                     type="submit"
-                    class="inline-flex items-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none disabled:opacity-60"
+                    class="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:opacity-60"
                     :disabled="form.processing"
                 >
                     Save Changes
                 </button>
-                <span v-show="recentlySuccessful" class="text-sm text-gray-500"
+                <span
+                    v-show="recentlySuccessful"
+                    class="text-sm text-muted-foreground"
                     >Saved.</span
                 >
             </div>

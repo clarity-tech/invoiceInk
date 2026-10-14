@@ -172,12 +172,12 @@ const availableSuggestions = computed(() => {
             v-if="model.length > 0"
             class="mb-2 flex items-center justify-between"
         >
-            <span class="text-xs text-gray-500">
+            <span class="text-xs text-muted-foreground">
                 {{ checkedCount }} of {{ model.length }} selected
             </span>
             <button
                 type="button"
-                class="text-xs font-medium text-brand-600 hover:text-brand-700"
+                class="text-xs font-medium text-primary hover:text-primary-soft-foreground"
                 @click="toggleAll"
             >
                 {{ allChecked ? 'Deselect all' : 'Select all' }}
@@ -190,7 +190,7 @@ const availableSuggestions = computed(() => {
                     v-model="query"
                     type="email"
                     placeholder="Add email"
-                    class="w-48 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                    class="w-48 rounded-md border border-input px-3 py-1.5 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
                     @focus="open = true"
                     @blur="onBlur"
                     @keydown.enter.prevent="addTyped"
@@ -201,7 +201,7 @@ const availableSuggestions = computed(() => {
                 <!-- Known contacts/org addresses not already in the list. -->
                 <ul
                     v-if="open && availableSuggestions.length > 0"
-                    class="absolute z-10 mt-1 max-h-48 w-56 overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg"
+                    class="absolute z-10 mt-1 max-h-48 w-56 overflow-y-auto rounded-md border border-border bg-popover py-1 text-popover-foreground shadow-lg"
                 >
                     <li
                         v-for="contact in availableSuggestions"
@@ -211,16 +211,16 @@ const availableSuggestions = computed(() => {
                              the list before the click registers. -->
                         <button
                             type="button"
-                            class="flex w-full flex-col items-start px-3 py-1.5 text-left hover:bg-gray-50"
+                            class="flex w-full flex-col items-start px-3 py-1.5 text-left hover:bg-muted"
                             @mousedown.prevent
                             @click="addEmail(contact.email)"
                         >
                             <span
                                 v-if="contact.name"
-                                class="text-sm text-gray-900"
+                                class="text-sm text-foreground"
                                 >{{ contact.name }}</span
                             >
-                            <span class="text-xs text-gray-500">{{
+                            <span class="text-xs text-muted-foreground">{{
                                 contact.email
                             }}</span>
                         </button>
@@ -234,18 +234,18 @@ const availableSuggestions = computed(() => {
                 class="inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-md border py-1 pr-2 pl-2.5 text-sm transition-colors"
                 :class="
                     recipient.checked
-                        ? 'border-brand-300 bg-brand-50'
-                        : 'border-gray-300 bg-white'
+                        ? 'border-primary/40 bg-primary-soft/50'
+                        : 'border-input bg-card'
                 "
             >
                 <input
                     type="checkbox"
                     :checked="recipient.checked"
-                    class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                    class="h-4 w-4 rounded border-input text-primary focus:ring-ring"
                     @change="toggle(recipient.email)"
                 />
                 <span
-                    class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-medium text-gray-600"
+                    class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-border text-[10px] font-medium text-soft-foreground"
                     aria-hidden="true"
                 >
                     {{ initialFor(recipient.email) }}
@@ -259,11 +259,11 @@ const availableSuggestions = computed(() => {
                 <span class="min-w-0 truncate" :title="recipient.email">
                     <span
                         v-if="displayName(recipient.email)"
-                        class="font-medium text-gray-900"
+                        class="font-medium text-foreground"
                         >{{ displayName(recipient.email) }}</span
                     >
                     <span
-                        class="text-gray-500"
+                        class="text-muted-foreground"
                         :class="{ 'ml-1.5': displayName(recipient.email) }"
                         >{{
                             displayName(recipient.email)
@@ -275,7 +275,7 @@ const availableSuggestions = computed(() => {
                 <button
                     v-if="!isContact(recipient.email)"
                     type="button"
-                    class="ml-0.5 rounded-full p-0.5 text-gray-400 hover:bg-gray-200 hover:text-red-600"
+                    class="ml-0.5 rounded-full p-0.5 text-faint-foreground hover:bg-border hover:text-destructive"
                     :aria-label="`Remove ${recipient.email}`"
                     @click.stop.prevent="remove(recipient.email)"
                 >
@@ -294,6 +294,6 @@ const availableSuggestions = computed(() => {
             </label>
         </div>
 
-        <p v-if="error" class="mt-1 text-xs text-red-600">{{ error }}</p>
+        <p v-if="error" class="mt-1 text-xs text-destructive">{{ error }}</p>
     </div>
 </template>

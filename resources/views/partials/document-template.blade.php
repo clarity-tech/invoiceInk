@@ -5,6 +5,10 @@
         $document       - Invoice model instance
         $isInvoice      - bool (true = invoice, false = estimate)
         $isPdf          - bool (true = PDF render, false = public web view)
+
+    In dark mode the web view darkens the page around the document, never the
+    document itself; the PDF and a printed web view are the same light sheet.
+    See the colour tokens below.
 --}}
 @php
     // Number of pages to stretch the PDF card across so the footer can be
@@ -87,10 +91,13 @@
     $formattedBalance = $amt($isInvoice ? $document->formatted_remaining_balance : $document->formatted_total);
 @endphp
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" @class(['dark' => ! $isPdf && ($appearance ?? null) === \App\Enums\Appearance::DARK])>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @unless($isPdf)
+        @include('partials.appearance')
+    @endunless
     <title>{{ $headerTitle }} {{ $document->invoice_number }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -99,6 +106,75 @@
         /* ── Reset & Base ─────────────────────────────────── */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+        /* ── Colour tokens ────────────────────────────────────
+           Named after the app's tokens in resources/css/app.css, but defined
+           here: the PDF is rendered from this one file, with no stylesheet to
+           fetch. The light values are the document's own colours, so the PDF
+           is unchanged by them; the `document-*` roles are the ones only a
+           document has.
+
+           In dark mode only the page around the document goes dark. The card
+           takes these light values back, so the sheet is the one that prints
+           in both themes. */
+        :root,
+        .dark .document-card {
+            color-scheme: light;
+
+            --canvas: #f3f4f6;
+            --card: #fff;
+            --foreground: #111827;
+            --soft-foreground: #374151;
+            --muted-foreground: #6b7280;
+            --faint-foreground: #9ca3af;
+            --muted: #f9fafb;
+            --border: #e5e7eb;
+            --input: #d1d5db;
+
+            /* The sender's violet: the brand bar, the table head, the title. */
+            --brand: #7A5A9E;
+            --brand-foreground: #fff;
+            --warning: #b45309;
+            --success: #059669;
+
+            --document-ink: #000;           /* figures */
+            --document-text: #333333;       /* everything else on the sheet */
+            --document-label: #333319;      /* field labels */
+            --document-rule: #f3f4f6;       /* between line items */
+            --document-stripe: #fafafa;     /* every other line item */
+            --document-total: #f3f4f6;      /* the balance due box */
+        }
+
+@if(! $isPdf)
+        /* The dark theme for the page around the document: the same Tailwind
+           gray steps as the app's, so the shared page reads as the same
+           product. Screen only, so printing from the browser is unaffected. */
+        @media screen {
+            .dark {
+                color-scheme: dark;
+
+                --canvas: oklch(13% 0.028 261.692);                 /* gray-950 */
+                --card: oklch(21% 0.034 264.665);                   /* gray-900 */
+                --foreground: oklch(96.7% 0.003 264.542);           /* gray-100 */
+                --soft-foreground: oklch(87.2% 0.01 258.338);       /* gray-300 */
+                --muted-foreground: oklch(70.7% 0.022 261.325);     /* gray-400 */
+                --faint-foreground: color-mix(in oklab, var(--muted-foreground), oklch(55.1% 0.027 264.364));
+                --muted: color-mix(in oklab, var(--card) 55%, var(--border));
+                --border: oklch(27.8% 0.033 256.848);               /* gray-800 */
+                --input: oklch(37.3% 0.034 259.733);                /* gray-700 */
+                --warning: oklch(82.8% 0.189 84.429);               /* amber-400 */
+            }
+
+            /* The InvoiceInk lockup in the bar along the bottom of the window
+               is drawn in dark navy for a white page. Inverting it and turning
+               the hue back round keeps the violet and lightens the navy,
+               without a second image to keep in step. The one printed inside
+               the document is left alone. */
+            .dark .doc-pagefoot img {
+                filter: invert(1) hue-rotate(180deg);
+            }
+        }
+@endif
+
         @page {
             size: A4;
             margin: {{ $pageMargin }};
@@ -106,7 +182,7 @@
 
         @media print {
             .no-print { display: none !important; }
-            body { background: #fff !important; }
+            body { background: var(--card) !important; }
             /* Printing the preview from the browser goes through @page like the
                PDF does, so the card drops the inset it draws on screen rather
                than adding a second one on top of the page margin. */
@@ -118,15 +194,15 @@
             font-size: 13px;
             line-height: 1.55;
             -webkit-font-smoothing: antialiased;
-            background: {{ $isPdf ? '#fff' : '#f3f4f6' }};
+            background: {{ $isPdf ? 'var(--card)' : 'var(--canvas)' }};
         }
 
         /* ── Utility ──────────────────────────────────────── */
-        .nums { font-variant-numeric: tabular-nums; color: #000000; }
-        .text-inv-gray { color: #333333; }
-        .text-inv-label { color: #333319; }
-        .text-brand-theme { color: #7A5A9E; }
-        .bg-brand-theme { background-color: #7A5A9E; }
+        .nums { font-variant-numeric: tabular-nums; color: var(--document-ink); }
+        .text-inv-gray { color: var(--document-text); }
+        .text-inv-label { color: var(--document-label); }
+        .text-brand-theme { color: var(--brand); }
+        .bg-brand-theme { background-color: var(--brand); }
 
         /* ── Page Wrapper ─────────────────────────────────── */
         .page-wrapper {
@@ -157,8 +233,8 @@
             padding: 0 16px;
         }
         .doc-brandbar {
-            background: #7A5A9E;
-            color: #fff;
+            background: var(--brand);
+            color: var(--brand-foreground);
         }
         .doc-brandbar .doc-chrome-inner {
             display: flex;
@@ -168,8 +244,8 @@
             font-weight: 700;
         }
         .doc-summary {
-            background: #fff;
-            border-bottom: 1px solid #e5e7eb;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
         }
         .doc-summary .doc-chrome-inner {
             /* One row: the figure, what it refers to, and what you can do
@@ -184,26 +260,26 @@
             font-size: 27px;
             font-weight: 700;
             line-height: 1.15;
-            color: #111827;
+            color: var(--foreground);
         }
         .doc-summary-label {
             margin-top: 2px;
             font-size: 13px;
             font-weight: 600;
-            color: #b45309;
+            color: var(--warning);
         }
         .doc-summary-meta { display: flex; }
         .doc-summary-meta > div + div {
             margin-left: 24px;
             padding-left: 24px;
-            border-left: 1px solid #e5e7eb;
+            border-left: 1px solid var(--border);
         }
-        .doc-summary-meta dt { font-size: 12px; color: #6b7280; }
+        .doc-summary-meta dt { font-size: 12px; color: var(--muted-foreground); }
         .doc-summary-meta dd {
             margin-top: 2px;
             font-size: 14px;
             font-weight: 600;
-            color: #111827;
+            color: var(--foreground);
         }
         .doc-summary-actions {
             display: flex;
@@ -216,14 +292,19 @@
             justify-content: center;
             width: 40px;
             height: 36px;
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--input);
             border-radius: 6px;
-            background: #fff;
-            color: #374151;
+            background: var(--card);
+            color: var(--soft-foreground);
             cursor: pointer;
             transition: background 0.15s, box-shadow 0.15s;
         }
-        .icon-btn:hover { background: #f9fafb; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .icon-btn:hover { background: var(--muted); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        /* The theme switch shows what it gives you: a moon on the light page,
+           a sun on the dark one. */
+        .theme-switch-sun { display: none; }
+        .dark .theme-switch-sun { display: block; }
+        .dark .theme-switch-moon { display: none; }
 
         /* The platform lockup, along the bottom of the window. The document
            prints its own in the footer; this one belongs to the page, so it
@@ -232,8 +313,8 @@
             position: sticky;
             bottom: 0;
             z-index: 18;
-            background: #fff;
-            border-top: 1px solid #e5e7eb;
+            background: var(--card);
+            border-top: 1px solid var(--border);
         }
         .doc-pagefoot .doc-chrome-inner {
             display: flex;
@@ -242,11 +323,11 @@
             gap: 7px;
             min-height: 36px;
             font-size: 11px;
-            color: #6b7280;
+            color: var(--muted-foreground);
         }
         .doc-pagefoot a { display: inline-flex; align-items: center; }
         .doc-pagefoot img { display: block; height: 15px; width: auto; }
-        .doc-pagefoot .powered-tagline { color: #9ca3af; }
+        .doc-pagefoot .powered-tagline { color: var(--faint-foreground); }
 @endif
 
         /* ── Document Card ────────────────────────────────── */
@@ -264,7 +345,7 @@
            is resolved by PdfService via a first measuring render.
         */
         .document-card {
-            background: #fff;
+            background: var(--card);
 @if($isPdf)
             {{ $fillPages ? 'position: relative; min-height: '.((int) $fillPages * 100).'vh;' : '' }}
             padding: 0;
@@ -387,7 +468,7 @@
         /* Keyed to InvoiceStatus::color() rather than to each status, so the
            enum stays the one place that decides what a status means and this
            only decides what that looks like on a dark band. */
-        .doc-ribbon-brand span { background: #7A5A9E; }
+        .doc-ribbon-brand span { background: var(--brand); }
         .doc-ribbon-yellow span { background: #a16207; }
         .doc-ribbon-amber span { background: #d97706; }
         .doc-ribbon-green span { background: #059669; }
@@ -409,7 +490,7 @@
 
         .section-label {
             font-size: 10px;
-            color: #333319;
+            color: var(--document-label);
         }
         .customer-name {
             font-size: 14px;
@@ -435,7 +516,7 @@
             vertical-align: top;
         }
         .detail-table .dt-label {
-            color: #333319;
+            color: var(--document-label);
             padding-right: 60px;
             white-space: nowrap;
         }
@@ -454,7 +535,7 @@
             padding: 6px 10px;
             font-size: 14px;
             font-weight: 500;
-            color: #fff;
+            color: var(--brand-foreground);
             border-top: none;
             border-bottom: none;
         }
@@ -465,11 +546,11 @@
         .items-table tbody td {
             padding: 7px 10px;
             font-size: 13px;
-            border-bottom: 1px solid #f3f4f6;
+            border-bottom: 1px solid var(--document-rule);
             vertical-align: top;
         }
         .items-table tbody tr:nth-child(even) td {
-            background: #fafafa;
+            background: var(--document-stripe);
         }
         .items-table .item-sac {
             font-size: 11px;
@@ -498,7 +579,7 @@
             font-size: 12px;
             padding: 0 10px;
         }
-        .totals-row .t-label { color: #333319; text-align: right; flex: 1; }
+        .totals-row .t-label { color: var(--document-label); text-align: right; flex: 1; }
         .totals-row .t-value { text-align: right; white-space: nowrap; width: 120px; flex-shrink: 0; }
         .totals-row.total-line {
         }
@@ -506,12 +587,12 @@
         .totals-row.total-line .t-value {
             font-weight: 700;
         }
-        .totals-row.payment-row .t-label { color: #059669; }
-        .totals-row.payment-row .t-value { color: #059669; }
+        .totals-row.payment-row .t-label { color: var(--success); }
+        .totals-row.payment-row .t-value { color: var(--success); }
 
         .balance-due-box {
             padding: 5px 10px;
-            background: #f3f4f6;
+            background: var(--document-total);
             border-radius: 2px;
         }
         .balance-due-box .t-label,
@@ -522,12 +603,12 @@
         .words-row {
             margin-top: 6px;
             font-size: 12px;
-            color: #6b7280;
+            color: var(--muted-foreground);
         }
         .words-row .words-value {
             font-style: italic;
             font-weight: 600;
-            color: #333319;
+            color: var(--document-label);
         }
 
         /* ── Notes / Terms / Bank ─────────────────────────── */
@@ -548,7 +629,7 @@
         .doc-footer {
             margin-top: 10px;
             padding-top: 8px;
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid var(--border);
             text-align: center;
         }
         .doc-footer .brand-logo {
@@ -559,7 +640,7 @@
         }
         .doc-footer .powered-by {
             margin-top: 4px;
-            color: #9ca3af;
+            color: var(--faint-foreground);
         }
         .doc-footer .powered-tagline {
             margin-top: 5px;
@@ -571,7 +652,7 @@
             letter-spacing: 0.08em;
         }
         .doc-footer .powered-brand {
-            color: #7A5A9E;
+            color: var(--brand);
             font-weight: 700;
             text-decoration: none;
         }
@@ -647,6 +728,13 @@
                     @endif
                 </dl>
                 <div class="doc-summary-actions">
+                    {{-- The reader's own choice of theme, which the page now
+                         follows; aria-pressed and the title are kept current by
+                         the script at the end of the page. --}}
+                    <button type="button" class="icon-btn" data-appearance-switch aria-label="{{ __('actions.buttons.dark_theme') }}" aria-pressed="false" title="{{ __('actions.tooltips.switch_to_dark_theme') }}">
+                        <svg class="theme-switch-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                        <svg class="theme-switch-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                    </button>
                     <button type="button" onclick="window.print()" class="icon-btn" title="{{ $printLabel }}" aria-label="{{ $printLabel }}">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                     </button>
@@ -692,7 +780,7 @@
                     <div class="doc-number"># {{ $document->invoice_number }}</div>
 
                     <div style="margin-top: 12px;">
-                        <div style="font-size: 11px; font-weight: 700; color: #374151; letter-spacing: 0.04em;">{{ $balanceLabel }}</div>
+                        <div style="font-size: 11px; font-weight: 700; color: var(--soft-foreground); letter-spacing: 0.04em;">{{ $balanceLabel }}</div>
                         <div style="font-weight: 700;" class="nums">{{ $formattedBalance }}</div>
                     </div>
                 </div>
@@ -961,6 +1049,32 @@
             <span class="powered-tagline">{{ config('branding.tagline') }}</span>
         </div>
     </div>
+    <script>
+        // The theme switch in the chrome. It stores the choice in the same
+        // cookie as the app's switch, so the head script stops following the
+        // operating system, and it flips what the page shows now.
+        (function () {
+            var root = document.documentElement;
+            var button = document.querySelector('[data-appearance-switch]');
+            var titles = { dark: @json(__('actions.tooltips.switch_to_light_theme')), light: @json(__('actions.tooltips.switch_to_dark_theme')) };
+
+            function sync() {
+                var isDark = root.classList.contains('dark');
+                button.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+                button.title = isDark ? titles.dark : titles.light;
+            }
+
+            button.addEventListener('click', function () {
+                var choice = root.classList.contains('dark') ? 'light' : 'dark';
+                var secure = location.protocol === 'https:' ? '; Secure' : '';
+                document.cookie = '{{ \App\Enums\Appearance::COOKIE }}=' + choice + '; path=/; max-age=31536000; SameSite=Lax' + secure;
+                root.classList.toggle('dark', choice === 'dark');
+            });
+
+            new MutationObserver(sync).observe(root, { attributes: true, attributeFilter: ['class'] });
+            sync();
+        })();
+    </script>
 @endif
 </body>
 </html>

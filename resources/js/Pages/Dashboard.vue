@@ -243,7 +243,7 @@ const totalStatusCount = computed(() =>
 <template>
     <AppLayout title="Dashboard">
         <template #header>
-            <h2 class="text-xl leading-tight font-semibold text-gray-800">
+            <h2 class="text-xl leading-tight font-semibold text-foreground">
                 Dashboard
             </h2>
         </template>
@@ -251,18 +251,18 @@ const totalStatusCount = computed(() =>
         <!-- No active organization (e.g. a member removed from every org) -->
         <div v-if="!hasOrganization" class="px-4 py-16 sm:px-0">
             <div
-                class="mx-auto max-w-md rounded-xl border-2 border-dashed border-gray-300 px-6 py-12 text-center"
+                class="mx-auto max-w-md rounded-xl border-2 border-dashed border-input px-6 py-12 text-center"
             >
-                <h3 class="text-base font-semibold text-gray-900">
+                <h3 class="text-base font-semibold text-foreground">
                     You're not part of any organization yet
                 </h3>
-                <p class="mt-1 text-sm text-gray-500">
+                <p class="mt-1 text-sm text-muted-foreground">
                     Ask an organization owner to invite you, or create your own
                     to get started.
                 </p>
                 <Link
                     :href="teamsCreate.url()"
-                    class="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
+                    class="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
                 >
                     Create organization
                 </Link>
@@ -275,16 +275,16 @@ const totalStatusCount = computed(() =>
                 class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
             >
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">
+                    <h1 class="text-2xl font-bold text-foreground">
                         {{ organizationName }}
                     </h1>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <p class="mt-1 text-sm text-muted-foreground">
                         Business overview and analytics
                     </p>
                 </div>
                 <select
                     :value="period"
-                    class="rounded-md border-gray-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                    class="rounded-md border-input text-sm shadow-sm focus:border-ring focus:ring-ring"
                     @change="onPeriodChange"
                 >
                     <option
@@ -302,13 +302,13 @@ const totalStatusCount = computed(() =>
                 class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
             >
                 <!-- Total Invoiced -->
-                <div class="rounded-lg bg-white p-5 shadow">
+                <div class="rounded-lg bg-card p-5 shadow">
                     <div class="flex items-center justify-between">
-                        <div class="text-sm font-medium text-gray-500">
+                        <div class="text-sm font-medium text-muted-foreground">
                             Total Invoiced
                         </div>
                         <svg
-                            class="size-5 text-brand-500"
+                            class="size-5 text-primary"
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
                             viewBox="0 0 24 24"
@@ -322,23 +322,23 @@ const totalStatusCount = computed(() =>
                             />
                         </svg>
                     </div>
-                    <div class="mt-2 text-2xl font-bold text-gray-900">
+                    <div class="mt-2 text-2xl font-bold text-foreground">
                         {{ fmt(stats.total_revenue) }}
                     </div>
-                    <div class="mt-1 text-sm text-gray-500">
+                    <div class="mt-1 text-sm text-muted-foreground">
                         {{ stats.invoice_count }}
                         {{ stats.invoice_count === 1 ? 'invoice' : 'invoices' }}
                     </div>
                 </div>
 
                 <!-- Collected -->
-                <div class="rounded-lg bg-white p-5 shadow">
+                <div class="rounded-lg bg-card p-5 shadow">
                     <div class="flex items-center justify-between">
-                        <div class="text-sm font-medium text-gray-500">
+                        <div class="text-sm font-medium text-muted-foreground">
                             Collected
                         </div>
                         <svg
-                            class="size-5 text-green-500"
+                            class="size-5 text-success"
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
                             viewBox="0 0 24 24"
@@ -362,25 +362,25 @@ const totalStatusCount = computed(() =>
                         class="mt-2 text-2xl font-bold"
                         :class="
                             stats.total_collected > 0
-                                ? 'text-green-600'
-                                : 'text-gray-900'
+                                ? 'text-success'
+                                : 'text-foreground'
                         "
                     >
                         {{ fmt(stats.total_collected) }}
                     </div>
-                    <div class="mt-1 text-sm text-gray-500">
+                    <div class="mt-1 text-sm text-muted-foreground">
                         {{ stats.collection_rate }}% collection rate
                     </div>
                 </div>
 
                 <!-- Outstanding -->
-                <div class="rounded-lg bg-white p-5 shadow">
+                <div class="rounded-lg bg-card p-5 shadow">
                     <div class="flex items-center justify-between">
-                        <div class="text-sm font-medium text-gray-500">
+                        <div class="text-sm font-medium text-muted-foreground">
                             Outstanding
                         </div>
                         <svg
-                            class="size-5 text-amber-500"
+                            class="size-5 text-warning"
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
                             viewBox="0 0 24 24"
@@ -399,8 +399,8 @@ const totalStatusCount = computed(() =>
                         class="mt-2 text-2xl font-bold"
                         :class="
                             stats.total_outstanding > 0
-                                ? 'text-amber-600'
-                                : 'text-gray-900'
+                                ? 'text-warning'
+                                : 'text-foreground'
                         "
                     >
                         {{ fmt(stats.total_outstanding) }}
@@ -409,13 +409,13 @@ const totalStatusCount = computed(() =>
                         class="mt-1 text-sm"
                         :class="
                             stats.overdue_count > 0
-                                ? 'font-medium text-red-600'
-                                : 'text-gray-500'
+                                ? 'font-medium text-destructive'
+                                : 'text-muted-foreground'
                         "
                     >
                         {{ stats.overdue_count }} overdue<span
                             v-if="!isAllTime"
-                            class="font-normal text-gray-400"
+                            class="font-normal text-faint-foreground"
                         >
                             · all time</span
                         >
@@ -423,18 +423,18 @@ const totalStatusCount = computed(() =>
                 </div>
 
                 <!-- Customers & Estimates -->
-                <div class="rounded-lg bg-white p-5 shadow">
+                <div class="rounded-lg bg-card p-5 shadow">
                     <div class="flex items-center justify-between">
-                        <div class="text-sm font-medium text-gray-500">
+                        <div class="text-sm font-medium text-muted-foreground">
                             Customers<span
                                 v-if="!isAllTime"
-                                class="text-gray-400"
+                                class="text-faint-foreground"
                             >
                                 (all time)</span
                             >
                         </div>
                         <svg
-                            class="size-5 text-purple-500"
+                            class="size-5 text-primary"
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
                             viewBox="0 0 24 24"
@@ -448,10 +448,10 @@ const totalStatusCount = computed(() =>
                             />
                         </svg>
                     </div>
-                    <div class="mt-2 text-2xl font-bold text-gray-900">
+                    <div class="mt-2 text-2xl font-bold text-foreground">
                         {{ customerCount }}
                     </div>
-                    <div class="mt-1 text-sm text-gray-500">
+                    <div class="mt-1 text-sm text-muted-foreground">
                         {{ estimateStats.count }}
                         {{
                             estimateStats.count === 1 ? 'estimate' : 'estimates'
@@ -465,17 +465,17 @@ const totalStatusCount = computed(() =>
                  a conversion -- including a single, wholly foreign currency. -->
             <div
                 v-if="hasConvertedAmounts"
-                class="mb-8 rounded-lg bg-white p-5 shadow"
+                class="mb-8 rounded-lg bg-card p-5 shadow"
             >
                 <div class="mb-3 flex items-baseline justify-between gap-2">
-                    <h3 class="text-sm font-semibold text-gray-900">
+                    <h3 class="text-sm font-semibold text-foreground">
                         {{
                             currencyBreakdown.length === 1
                                 ? 'Original Currency'
                                 : 'Original Currencies'
                         }}
                     </h3>
-                    <span class="text-xs text-gray-500">
+                    <span class="text-xs text-muted-foreground">
                         KPI totals above are converted to
                         {{ currency }} using the rate at invoice date.
                     </span>
@@ -484,18 +484,18 @@ const totalStatusCount = computed(() =>
                     <div
                         v-for="row in currencyBreakdown"
                         :key="row.currency"
-                        class="rounded-md border border-gray-200 bg-gray-50 px-3 py-2"
+                        class="rounded-md border border-border bg-muted px-3 py-2"
                     >
                         <div
-                            class="text-xs font-medium tracking-wide text-gray-500 uppercase"
+                            class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
                         >
                             {{ row.currency }} · {{ row.invoice_count }}
                             {{ row.invoice_count === 1 ? 'inv' : 'invs' }}
                         </div>
-                        <div class="text-sm font-semibold text-gray-900">
+                        <div class="text-sm font-semibold text-foreground">
                             {{ formatMoney(row.total, row.currency) }}
                         </div>
-                        <div class="text-xs text-gray-500">
+                        <div class="text-xs text-muted-foreground">
                             {{ formatMoney(row.collected, row.currency) }}
                             collected
                         </div>
@@ -514,8 +514,8 @@ const totalStatusCount = computed(() =>
                 class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start"
             >
                 <!-- Status Breakdown -->
-                <div class="rounded-lg bg-white p-5 shadow">
-                    <h3 class="mb-4 text-sm font-semibold text-gray-900">
+                <div class="rounded-lg bg-card p-5 shadow">
+                    <h3 class="mb-4 text-sm font-semibold text-foreground">
                         Invoice Status Breakdown
                     </h3>
                     <div class="space-y-3">
@@ -529,19 +529,20 @@ const totalStatusCount = computed(() =>
                             >
                                 <div class="flex items-center gap-2">
                                     <StatusBadge :status="item.status" />
-                                    <span class="text-sm text-gray-500">{{
-                                        item.count
-                                    }}</span>
+                                    <span
+                                        class="text-sm text-muted-foreground"
+                                        >{{ item.count }}</span
+                                    >
                                 </div>
                                 <span
-                                    class="text-sm font-medium text-gray-900"
+                                    class="text-sm font-medium text-foreground"
                                     >{{ fmt(item.total) }}</span
                                 >
                             </div>
                         </template>
                         <p
                             v-if="totalStatusCount === 0"
-                            class="py-4 text-center text-sm text-gray-400"
+                            class="py-4 text-center text-sm text-faint-foreground"
                         >
                             No invoices in this period
                         </p>
@@ -549,8 +550,8 @@ const totalStatusCount = computed(() =>
                 </div>
 
                 <!-- 6-Month Trend -->
-                <div class="rounded-lg bg-white p-5 shadow lg:col-span-2">
-                    <h3 class="mb-4 text-sm font-semibold text-gray-900">
+                <div class="rounded-lg bg-card p-5 shadow lg:col-span-2">
+                    <h3 class="mb-4 text-sm font-semibold text-foreground">
                         6-Month Trend
                     </h3>
                     <!--
@@ -561,10 +562,10 @@ const totalStatusCount = computed(() =>
                         amounts written next to it.
                     -->
                     <div v-if="trendIsEmpty" class="py-10 text-center">
-                        <p class="text-sm text-gray-500">
+                        <p class="text-sm text-muted-foreground">
                             Nothing invoiced in the last six months
                         </p>
-                        <p class="mt-1 text-xs text-gray-400">
+                        <p class="mt-1 text-xs text-faint-foreground">
                             The chart appears once there is activity to plot.
                         </p>
                     </div>
@@ -572,7 +573,7 @@ const totalStatusCount = computed(() =>
                     <div v-else class="flex gap-3">
                         <!-- Y axis -->
                         <div
-                            class="flex h-40 flex-col justify-between py-0.5 text-right text-[11px] text-gray-400 tabular-nums"
+                            class="flex h-40 flex-col justify-between py-0.5 text-right text-[11px] text-faint-foreground tabular-nums"
                             aria-hidden="true"
                         >
                             <span v-for="tick in trendTicks" :key="tick">{{
@@ -589,7 +590,7 @@ const totalStatusCount = computed(() =>
                                 <div
                                     v-for="tick in trendTicks"
                                     :key="tick"
-                                    class="border-t border-dashed border-gray-200"
+                                    class="border-t border-dashed border-border"
                                 />
                             </div>
 
@@ -605,7 +606,7 @@ const totalStatusCount = computed(() =>
                                         different from one with no data.
                                     -->
                                     <div
-                                        class="w-1/2 max-w-[1.5rem] rounded-t bg-brand-300 transition-all"
+                                        class="w-1/2 max-w-[1.5rem] rounded-t bg-chart-1 transition-all"
                                         :style="{
                                             height: trendBarHeight(
                                                 month.invoiced,
@@ -614,7 +615,7 @@ const totalStatusCount = computed(() =>
                                         :title="`${month.label} invoiced: ${fmt(month.invoiced)}`"
                                     />
                                     <div
-                                        class="w-1/2 max-w-[1.5rem] rounded-t bg-green-400 transition-all"
+                                        class="w-1/2 max-w-[1.5rem] rounded-t bg-chart-2 transition-all"
                                         :style="{
                                             height: trendBarHeight(
                                                 month.collected,
@@ -631,7 +632,7 @@ const totalStatusCount = computed(() =>
                                     :key="month.label"
                                     class="flex-1 text-center"
                                 >
-                                    <div class="text-xs text-gray-500">
+                                    <div class="text-xs text-muted-foreground">
                                         {{ month.short }}
                                     </div>
                                     <!--
@@ -640,7 +641,7 @@ const totalStatusCount = computed(() =>
                                         screen and invisible to a screen reader.
                                     -->
                                     <div
-                                        class="text-[11px] text-gray-400 tabular-nums"
+                                        class="text-[11px] text-faint-foreground tabular-nums"
                                     >
                                         {{ fmtCompact(month.invoiced) }}
                                     </div>
@@ -649,17 +650,17 @@ const totalStatusCount = computed(() =>
                         </div>
                     </div>
                     <div
-                        class="mt-3 flex items-center gap-4 text-xs text-gray-500"
+                        class="mt-3 flex items-center gap-4 text-xs text-muted-foreground"
                     >
                         <span class="flex items-center gap-1"
                             ><span
-                                class="inline-block h-3 w-3 rounded bg-brand-200"
+                                class="inline-block h-3 w-3 rounded bg-chart-1"
                             />
                             Invoiced</span
                         >
                         <span class="flex items-center gap-1"
                             ><span
-                                class="inline-block h-3 w-3 rounded bg-green-400"
+                                class="inline-block h-3 w-3 rounded bg-chart-2"
                             />
                             Collected</span
                         >
@@ -672,8 +673,8 @@ const totalStatusCount = computed(() =>
                 class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start"
             >
                 <!-- Top Customers -->
-                <div class="rounded-lg bg-white p-5 shadow">
-                    <h3 class="mb-4 text-sm font-semibold text-gray-900">
+                <div class="rounded-lg bg-card p-5 shadow">
+                    <h3 class="mb-4 text-sm font-semibold text-foreground">
                         Top Customers
                     </h3>
                     <div v-if="topCustomers.length > 0" class="space-y-3">
@@ -683,10 +684,12 @@ const totalStatusCount = computed(() =>
                             class="flex items-center justify-between"
                         >
                             <div>
-                                <div class="text-sm font-medium text-gray-900">
+                                <div
+                                    class="text-sm font-medium text-foreground"
+                                >
                                     {{ cust.name }}
                                 </div>
-                                <div class="text-xs text-gray-500">
+                                <div class="text-xs text-muted-foreground">
                                     {{ cust.invoice_count }}
                                     {{
                                         cust.invoice_count === 1
@@ -696,32 +699,37 @@ const totalStatusCount = computed(() =>
                                 </div>
                             </div>
                             <div class="text-right">
-                                <div class="text-sm font-medium text-gray-900">
+                                <div
+                                    class="text-sm font-medium text-foreground"
+                                >
                                     {{ fmt(cust.total) }}
                                 </div>
                                 <div
                                     v-if="cust.outstanding > 0"
-                                    class="text-xs text-amber-600"
+                                    class="text-xs text-warning"
                                 >
                                     {{ fmt(cust.outstanding) }} due
                                 </div>
-                                <div v-else class="text-xs text-green-600">
+                                <div v-else class="text-xs text-success">
                                     Fully paid
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <p v-else class="py-4 text-center text-sm text-gray-400">
+                    <p
+                        v-else
+                        class="py-4 text-center text-sm text-faint-foreground"
+                    >
                         No customer data in this period
                     </p>
                 </div>
 
                 <!-- Overdue Invoices -->
-                <div class="rounded-lg bg-white p-5 shadow">
-                    <h3 class="mb-4 text-sm font-semibold text-gray-900">
+                <div class="rounded-lg bg-card p-5 shadow">
+                    <h3 class="mb-4 text-sm font-semibold text-foreground">
                         Overdue Invoices<span
                             v-if="!isAllTime"
-                            class="font-normal text-gray-400"
+                            class="font-normal text-faint-foreground"
                         >
                             (all time)</span
                         >
@@ -733,7 +741,7 @@ const totalStatusCount = computed(() =>
                         -->
                         <span
                             v-if="stats.overdue_count > 0"
-                            class="ml-2 inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700"
+                            class="ml-2 inline-flex items-center rounded-full bg-destructive-soft px-2 py-0.5 text-xs font-medium text-destructive-soft-foreground"
                         >
                             {{ stats.overdue_count }}
                         </span>
@@ -742,18 +750,22 @@ const totalStatusCount = computed(() =>
                         <div
                             v-for="inv in overdueInvoices"
                             :key="inv.id"
-                            class="-mx-2 flex items-center justify-between rounded px-2 py-1 hover:bg-gray-50"
+                            class="-mx-2 flex items-center justify-between rounded px-2 py-1 hover:bg-muted"
                         >
                             <div>
-                                <div class="text-sm font-medium text-gray-900">
+                                <div
+                                    class="text-sm font-medium text-foreground"
+                                >
                                     {{ inv.invoice_number }}
                                 </div>
-                                <div class="text-xs text-gray-500">
+                                <div class="text-xs text-muted-foreground">
                                     {{ inv.customer_name }}
                                 </div>
                             </div>
                             <div class="text-right">
-                                <div class="text-sm font-medium text-red-600">
+                                <div
+                                    class="text-sm font-medium text-destructive"
+                                >
                                     {{
                                         formatMoney(
                                             inv.remaining_balance,
@@ -761,7 +773,7 @@ const totalStatusCount = computed(() =>
                                         )
                                     }}
                                 </div>
-                                <div class="text-xs text-red-500">
+                                <div class="text-xs text-destructive">
                                     Due {{ inv.due_at_human }}
                                 </div>
                             </div>
@@ -776,7 +788,7 @@ const totalStatusCount = computed(() =>
                         -->
                         <p
                             v-if="stats.overdue_count > overdueInvoices.length"
-                            class="pt-1 text-xs text-gray-500"
+                            class="pt-1 text-xs text-muted-foreground"
                         >
                             Showing the {{ overdueInvoices.length }} most
                             overdue of {{ stats.overdue_count }}
@@ -784,7 +796,7 @@ const totalStatusCount = computed(() =>
                     </div>
                     <div v-else class="py-4 text-center">
                         <svg
-                            class="mx-auto size-8 text-green-300"
+                            class="mx-auto size-8 text-success"
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
                             viewBox="0 0 24 24"
@@ -797,7 +809,7 @@ const totalStatusCount = computed(() =>
                                 d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
                             />
                         </svg>
-                        <p class="mt-1 text-sm text-gray-400">
+                        <p class="mt-1 text-sm text-faint-foreground">
                             No overdue invoices
                         </p>
                     </div>
@@ -809,12 +821,12 @@ const totalStatusCount = computed(() =>
                 class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start"
             >
                 <!-- Recent Invoices -->
-                <div class="rounded-lg bg-white p-5 shadow">
+                <div class="rounded-lg bg-card p-5 shadow">
                     <div class="mb-4 flex items-center justify-between">
-                        <h3 class="text-sm font-semibold text-gray-900">
+                        <h3 class="text-sm font-semibold text-foreground">
                             Recent Invoices<span
                                 v-if="!isAllTime"
-                                class="font-normal text-gray-400"
+                                class="font-normal text-faint-foreground"
                             >
                                 (all time)</span
                             >
@@ -824,36 +836,43 @@ const totalStatusCount = computed(() =>
                         <div
                             v-for="inv in recentInvoices"
                             :key="inv.id"
-                            class="-mx-2 flex items-center justify-between rounded px-2 py-1 hover:bg-gray-50"
+                            class="-mx-2 flex items-center justify-between rounded px-2 py-1 hover:bg-muted"
                         >
                             <div>
-                                <div class="text-sm font-medium text-gray-900">
+                                <div
+                                    class="text-sm font-medium text-foreground"
+                                >
                                     {{ inv.invoice_number }}
                                 </div>
-                                <div class="text-xs text-gray-500">
+                                <div class="text-xs text-muted-foreground">
                                     {{ inv.customer_name }} &middot;
                                     {{ inv.issued_at }}
                                 </div>
                             </div>
                             <div class="text-right">
-                                <div class="text-sm font-medium text-gray-900">
+                                <div
+                                    class="text-sm font-medium text-foreground"
+                                >
                                     {{ formatMoney(inv.total, inv.currency) }}
                                 </div>
                                 <StatusBadge :status="inv.status" />
                             </div>
                         </div>
                     </div>
-                    <p v-else class="py-4 text-center text-sm text-gray-400">
+                    <p
+                        v-else
+                        class="py-4 text-center text-sm text-faint-foreground"
+                    >
                         No invoices yet
                     </p>
                 </div>
 
                 <!-- Recent Payments -->
-                <div class="rounded-lg bg-white p-5 shadow">
-                    <h3 class="mb-4 text-sm font-semibold text-gray-900">
+                <div class="rounded-lg bg-card p-5 shadow">
+                    <h3 class="mb-4 text-sm font-semibold text-foreground">
                         Recent Payments<span
                             v-if="!isAllTime"
-                            class="font-normal text-gray-400"
+                            class="font-normal text-faint-foreground"
                         >
                             (all time)</span
                         >
@@ -865,10 +884,12 @@ const totalStatusCount = computed(() =>
                             class="flex items-center justify-between"
                         >
                             <div>
-                                <div class="text-sm font-medium text-gray-900">
+                                <div
+                                    class="text-sm font-medium text-foreground"
+                                >
                                     {{ payment.invoice_number }}
                                 </div>
-                                <div class="text-xs text-gray-500">
+                                <div class="text-xs text-muted-foreground">
                                     {{ payment.customer_name }}
                                     <template v-if="payment.payment_method">
                                         &middot;
@@ -882,7 +903,7 @@ const totalStatusCount = computed(() =>
                                 </div>
                             </div>
                             <div class="text-right">
-                                <div class="text-sm font-medium text-green-600">
+                                <div class="text-sm font-medium text-success">
                                     +{{
                                         formatMoney(
                                             payment.amount,
@@ -890,13 +911,16 @@ const totalStatusCount = computed(() =>
                                         )
                                     }}
                                 </div>
-                                <div class="text-xs text-gray-500">
+                                <div class="text-xs text-muted-foreground">
                                     {{ payment.payment_date }}
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <p v-else class="py-4 text-center text-sm text-gray-400">
+                    <p
+                        v-else
+                        class="py-4 text-center text-sm text-faint-foreground"
+                    >
                         No payments recorded yet
                     </p>
                 </div>
@@ -906,10 +930,10 @@ const totalStatusCount = computed(() =>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <a
                     href="/invoices/create"
-                    class="flex items-center gap-3 rounded-lg bg-white p-4 shadow transition-colors hover:bg-brand-50"
+                    class="flex items-center gap-3 rounded-lg bg-card p-4 shadow transition-colors hover:bg-primary-soft/50"
                 >
                     <svg
-                        class="size-5 text-brand-600"
+                        class="size-5 text-primary"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -922,16 +946,16 @@ const totalStatusCount = computed(() =>
                             d="M12 4.5v15m7.5-7.5h-15"
                         />
                     </svg>
-                    <span class="text-sm font-medium text-gray-700"
+                    <span class="text-sm font-medium text-soft-foreground"
                         >New Invoice</span
                     >
                 </a>
                 <a
                     href="/estimates/create"
-                    class="flex items-center gap-3 rounded-lg bg-white p-4 shadow transition-colors hover:bg-green-50"
+                    class="flex items-center gap-3 rounded-lg bg-card p-4 shadow transition-colors hover:bg-success-soft/50"
                 >
                     <svg
-                        class="size-5 text-green-600"
+                        class="size-5 text-success"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -944,16 +968,16 @@ const totalStatusCount = computed(() =>
                             d="M12 4.5v15m7.5-7.5h-15"
                         />
                     </svg>
-                    <span class="text-sm font-medium text-gray-700"
+                    <span class="text-sm font-medium text-soft-foreground"
                         >New Estimate</span
                     >
                 </a>
                 <a
                     href="/customers"
-                    class="flex items-center gap-3 rounded-lg bg-white p-4 shadow transition-colors hover:bg-purple-50"
+                    class="flex items-center gap-3 rounded-lg bg-card p-4 shadow transition-colors hover:bg-primary-soft/50"
                 >
                     <svg
-                        class="size-5 text-purple-600"
+                        class="size-5 text-primary"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -966,16 +990,16 @@ const totalStatusCount = computed(() =>
                             d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"
                         />
                     </svg>
-                    <span class="text-sm font-medium text-gray-700"
+                    <span class="text-sm font-medium text-soft-foreground"
                         >Customers</span
                     >
                 </a>
                 <a
                     href="/settings"
-                    class="flex items-center gap-3 rounded-lg bg-white p-4 shadow transition-colors hover:bg-gray-50"
+                    class="flex items-center gap-3 rounded-lg bg-card p-4 shadow transition-colors hover:bg-muted"
                 >
                     <svg
-                        class="size-5 text-gray-600"
+                        class="size-5 text-soft-foreground"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -993,7 +1017,7 @@ const totalStatusCount = computed(() =>
                             d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                         />
                     </svg>
-                    <span class="text-sm font-medium text-gray-700"
+                    <span class="text-sm font-medium text-soft-foreground"
                         >Settings</span
                     >
                 </a>

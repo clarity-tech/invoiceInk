@@ -177,12 +177,12 @@ const showArchived = ref(false);
                 <div>
                     <Link
                         href="/customers"
-                        class="text-sm text-gray-500 hover:text-gray-700"
+                        class="text-sm text-muted-foreground hover:text-soft-foreground"
                     >
                         &larr; Customers
                     </Link>
                     <h2
-                        class="text-xl leading-tight font-semibold text-gray-800"
+                        class="text-xl leading-tight font-semibold text-foreground"
                     >
                         {{ customer.name }}
                     </h2>
@@ -190,7 +190,7 @@ const showArchived = ref(false);
                 <button
                     v-if="can('update')"
                     type="button"
-                    class="cursor-pointer rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
+                    class="cursor-pointer rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
                     @click="openEdit"
                 >
                     Edit Customer
@@ -200,28 +200,32 @@ const showArchived = ref(false);
 
         <div class="space-y-6 py-4">
             <!-- Details -->
-            <div class="bg-white p-6 shadow-sm sm:rounded-lg">
-                <h3 class="mb-4 text-sm font-medium text-gray-900">Details</h3>
+            <div class="bg-card p-6 shadow-sm sm:rounded-lg">
+                <h3 class="mb-4 text-sm font-medium text-foreground">
+                    Details
+                </h3>
                 <dl class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div>
-                        <dt class="text-xs text-gray-500 uppercase">Phone</dt>
-                        <dd class="mt-1 text-sm text-gray-900">
+                        <dt class="text-xs text-muted-foreground uppercase">
+                            Phone
+                        </dt>
+                        <dd class="mt-1 text-sm text-foreground">
                             {{ customer.formatted_phone ?? '-' }}
                         </dd>
                     </div>
                     <div>
-                        <dt class="text-xs text-gray-500 uppercase">
+                        <dt class="text-xs text-muted-foreground uppercase">
                             Currency
                         </dt>
-                        <dd class="mt-1 text-sm text-gray-900">
+                        <dd class="mt-1 text-sm text-foreground">
                             {{ customer.currency ?? '-' }}
                         </dd>
                     </div>
                     <div>
-                        <dt class="text-xs text-gray-500 uppercase">
+                        <dt class="text-xs text-muted-foreground uppercase">
                             Billing address
                         </dt>
-                        <dd class="mt-1 text-sm text-gray-900">
+                        <dd class="mt-1 text-sm text-foreground">
                             {{
                                 formatLocationSummary(
                                     customer.primary_location ?? null,
@@ -233,20 +237,24 @@ const showArchived = ref(false);
                 </dl>
 
                 <div class="mt-6">
-                    <dt class="text-xs text-gray-500 uppercase">Contacts</dt>
+                    <dt class="text-xs text-muted-foreground uppercase">
+                        Contacts
+                    </dt>
                     <dd class="mt-2 space-y-1">
                         <div
                             v-for="(contact, index) in customer.emails ?? []"
                             :key="index"
-                            class="text-sm text-gray-900"
+                            class="text-sm text-foreground"
                         >
-                            <span v-if="contact.name" class="text-gray-500"
+                            <span
+                                v-if="contact.name"
+                                class="text-muted-foreground"
                                 >{{ contact.name }} &middot; </span
                             >{{ contact.email }}
                         </div>
                         <div
                             v-if="!customer.emails?.length"
-                            class="text-sm text-gray-500"
+                            class="text-sm text-muted-foreground"
                         >
                             No contacts
                         </div>
@@ -255,17 +263,17 @@ const showArchived = ref(false);
             </div>
 
             <!-- Locations -->
-            <div class="bg-white shadow-sm sm:rounded-lg">
+            <div class="bg-card shadow-sm sm:rounded-lg">
                 <div
-                    class="flex items-center justify-between border-b border-gray-200 px-6 py-4"
+                    class="flex items-center justify-between border-b border-border px-6 py-4"
                 >
-                    <h3 class="text-sm font-medium text-gray-900">
+                    <h3 class="text-sm font-medium text-foreground">
                         Locations ({{ customer.locations?.length ?? 0 }})
                     </h3>
                     <button
                         v-if="can('update')"
                         type="button"
-                        class="cursor-pointer text-sm font-medium text-brand-600 hover:text-brand-900"
+                        class="cursor-pointer text-sm font-medium text-primary hover:text-primary-soft-foreground"
                         @click="openAddLocation"
                     >
                         + Add location
@@ -274,7 +282,7 @@ const showArchived = ref(false);
 
                 <div
                     v-if="customer.locations?.length"
-                    class="divide-y divide-gray-100"
+                    class="divide-y divide-border"
                 >
                     <div
                         v-for="loc in customer.locations"
@@ -283,21 +291,24 @@ const showArchived = ref(false);
                     >
                         <div class="text-sm">
                             <div class="flex items-center gap-2">
-                                <span class="font-medium text-gray-900">{{
+                                <span class="font-medium text-foreground">{{
                                     loc.name
                                 }}</span>
                                 <span
                                     v-if="
                                         customer.primary_location_id === loc.id
                                     "
-                                    class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800"
+                                    class="inline-flex items-center rounded-full bg-success-soft px-2 py-0.5 text-xs font-medium text-success-soft-foreground"
                                     >Primary</span
                                 >
                             </div>
-                            <div class="mt-1 text-gray-500">
+                            <div class="mt-1 text-muted-foreground">
                                 {{ formatLocationLine(loc, countryNames) }}
                             </div>
-                            <div v-if="loc.tax_id" class="mt-1 text-gray-400">
+                            <div
+                                v-if="loc.tax_id"
+                                class="mt-1 text-faint-foreground"
+                            >
                                 {{ taxLabelFor(loc.country, taxLabels) }}:
                                 {{ loc.tax_id }}
                             </div>
@@ -309,7 +320,7 @@ const showArchived = ref(false);
                                     customer.primary_location_id !== loc.id
                                 "
                                 type="button"
-                                class="cursor-pointer text-xs text-brand-600 hover:text-brand-900"
+                                class="cursor-pointer text-xs text-primary hover:text-primary-soft-foreground"
                                 @click="setPrimary(loc.id)"
                             >
                                 Set Primary
@@ -317,7 +328,7 @@ const showArchived = ref(false);
                             <button
                                 v-if="can('update')"
                                 type="button"
-                                class="cursor-pointer text-xs text-brand-600 hover:text-brand-900"
+                                class="cursor-pointer text-xs text-primary hover:text-primary-soft-foreground"
                                 @click="openEditLocation(loc)"
                             >
                                 Edit
@@ -325,7 +336,7 @@ const showArchived = ref(false);
                             <button
                                 v-if="can('delete')"
                                 type="button"
-                                class="cursor-pointer text-xs text-red-600 hover:text-red-900"
+                                class="cursor-pointer text-xs text-destructive hover:text-destructive-soft-foreground"
                                 @click="confirmDeleteLocation(loc.id)"
                             >
                                 Delete
@@ -333,7 +344,10 @@ const showArchived = ref(false);
                         </div>
                     </div>
                 </div>
-                <p v-else class="px-6 py-8 text-center text-sm text-gray-500">
+                <p
+                    v-else
+                    class="px-6 py-8 text-center text-sm text-muted-foreground"
+                >
                     No locations yet. An invoice needs a billing address, so add
                     one here.
                 </p>
@@ -342,7 +356,7 @@ const showArchived = ref(false);
             <!-- Archived locations -->
             <div
                 v-if="customer.archived_locations?.length"
-                class="bg-white shadow-sm sm:rounded-lg"
+                class="bg-card shadow-sm sm:rounded-lg"
             >
                 <button
                     type="button"
@@ -351,7 +365,7 @@ const showArchived = ref(false);
                     @click="showArchived = !showArchived"
                 >
                     <svg
-                        class="h-3 w-3 text-gray-400 transition-transform"
+                        class="h-3 w-3 text-faint-foreground transition-transform"
                         :class="{ 'rotate-90': showArchived }"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -364,7 +378,7 @@ const showArchived = ref(false);
                             d="M9 5l7 7-7 7"
                         />
                     </svg>
-                    <span class="text-sm font-medium text-gray-500"
+                    <span class="text-sm font-medium text-muted-foreground"
                         >Archived ({{
                             customer.archived_locations.length
                         }})</span
@@ -373,12 +387,12 @@ const showArchived = ref(false);
 
                 <div
                     v-if="showArchived"
-                    class="divide-y divide-gray-100 border-t border-gray-200"
+                    class="divide-y divide-border border-t border-border"
                 >
                     <div
                         v-for="loc in customer.archived_locations"
                         :key="loc.id"
-                        class="flex items-start justify-between px-6 py-4 text-gray-400"
+                        class="flex items-start justify-between px-6 py-4 text-faint-foreground"
                     >
                         <div class="text-sm">
                             <div class="font-medium">{{ loc.name }}</div>
@@ -390,7 +404,7 @@ const showArchived = ref(false);
                             <button
                                 v-if="can('update')"
                                 type="button"
-                                class="cursor-pointer text-xs text-brand-600 hover:text-brand-900 disabled:cursor-not-allowed disabled:opacity-50"
+                                class="cursor-pointer text-xs text-primary hover:text-primary-soft-foreground disabled:cursor-not-allowed disabled:opacity-50"
                                 :disabled="restoringLocation === loc.id"
                                 @click="restoreLocation(loc.id)"
                             >
@@ -403,7 +417,7 @@ const showArchived = ref(false);
                             <button
                                 v-if="can('delete')"
                                 type="button"
-                                class="cursor-pointer text-xs text-red-600 hover:text-red-900"
+                                class="cursor-pointer text-xs text-destructive hover:text-destructive-soft-foreground"
                                 @click="confirmForceDeleteLocation(loc.id)"
                             >
                                 Delete Forever
@@ -421,7 +435,7 @@ const showArchived = ref(false);
                     class="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0"
                 >
                     <div
-                        class="bg-opacity-75 fixed inset-0 bg-gray-500 transition-opacity"
+                        class="fixed inset-0 bg-overlay transition-opacity"
                         @click="showForm = false"
                     />
                     <span
@@ -430,14 +444,14 @@ const showArchived = ref(false);
                         >&#8203;</span
                     >
                     <div
-                        class="relative inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl sm:align-middle"
+                        class="relative inline-block transform overflow-hidden rounded-lg bg-card text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl sm:align-middle"
                         role="dialog"
                         aria-modal="true"
                         aria-label="Edit Customer"
                     >
-                        <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
+                        <div class="bg-card px-4 pt-5 pb-4 sm:p-6">
                             <h3
-                                class="mb-4 text-lg leading-6 font-medium text-gray-900"
+                                class="mb-4 text-lg leading-6 font-medium text-foreground"
                             >
                                 Edit Customer
                             </h3>

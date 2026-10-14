@@ -103,21 +103,24 @@ function removeContact(index: number) {
         <div>
             <label
                 for="customer-name"
-                class="block text-sm font-medium text-gray-700"
+                class="block text-sm font-medium text-soft-foreground"
                 >Name *</label
             >
             <input
                 id="customer-name"
                 v-model="form.name"
                 type="text"
-                class="mt-1 block w-full rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
-                :class="nameError ? 'border-red-300' : 'border-gray-300'"
+                class="mt-1 block w-full rounded-md shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
+                :class="nameError ? 'border-destructive/40' : 'border-input'"
                 @blur="validateCustomerName"
             />
-            <p v-if="nameError" class="mt-1 text-sm text-red-600">
+            <p v-if="nameError" class="mt-1 text-sm text-destructive">
                 {{ nameError }}
             </p>
-            <p v-else-if="form.errors.name" class="mt-1 text-sm text-red-600">
+            <p
+                v-else-if="form.errors.name"
+                class="mt-1 text-sm text-destructive"
+            >
                 {{ form.errors.name }}
             </p>
         </div>
@@ -126,7 +129,7 @@ function removeContact(index: number) {
         <div>
             <label
                 for="customer-phone"
-                class="block text-sm font-medium text-gray-700"
+                class="block text-sm font-medium text-soft-foreground"
                 >Phone</label
             >
             <PhoneInput
@@ -143,13 +146,13 @@ function removeContact(index: number) {
         <div>
             <label
                 for="customer-currency"
-                class="block text-sm font-medium text-gray-700"
+                class="block text-sm font-medium text-soft-foreground"
                 >Currency *</label
             >
             <select
                 id="customer-currency"
                 v-model="form.currency"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                class="mt-1 block w-full rounded-md border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
             >
                 <option
                     v-for="(label, value) in currencies"
@@ -159,7 +162,10 @@ function removeContact(index: number) {
                     {{ label }}
                 </option>
             </select>
-            <p v-if="form.errors.currency" class="mt-1 text-sm text-red-600">
+            <p
+                v-if="form.errors.currency"
+                class="mt-1 text-sm text-destructive"
+            >
                 {{ form.errors.currency }}
             </p>
         </div>
@@ -168,13 +174,13 @@ function removeContact(index: number) {
         <div v-if="showGstTreatment">
             <label
                 for="customer-gst-treatment"
-                class="block text-sm font-medium text-gray-700"
+                class="block text-sm font-medium text-soft-foreground"
                 >GST Treatment</label
             >
             <select
                 id="customer-gst-treatment"
                 v-model="form.gst_treatment"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                class="mt-1 block w-full rounded-md border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
             >
                 <option
                     v-for="(label, value) in gstTreatments"
@@ -184,12 +190,12 @@ function removeContact(index: number) {
                     {{ label }}
                 </option>
             </select>
-            <p class="mt-1 text-xs text-gray-500">
+            <p class="mt-1 text-xs text-muted-foreground">
                 Overseas customers are treated as exports (no place of supply).
             </p>
             <p
                 v-if="form.errors.gst_treatment"
-                class="mt-1 text-sm text-red-600"
+                class="mt-1 text-sm text-destructive"
             >
                 {{ form.errors.gst_treatment }}
             </p>
@@ -199,13 +205,13 @@ function removeContact(index: number) {
         <div v-if="showPlaceOfSupply">
             <label
                 for="customer-place-of-supply"
-                class="block text-sm font-medium text-gray-700"
+                class="block text-sm font-medium text-soft-foreground"
                 >Place of Supply</label
             >
             <select
                 id="customer-place-of-supply"
                 v-model="form.place_of_supply"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                class="mt-1 block w-full rounded-md border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
             >
                 <option value="">Select a state…</option>
                 <option
@@ -216,12 +222,12 @@ function removeContact(index: number) {
                     {{ label }}
                 </option>
             </select>
-            <p class="mt-1 text-xs text-gray-500">
+            <p class="mt-1 text-xs text-muted-foreground">
                 Used as the default place of supply on this customer's invoices.
             </p>
             <p
                 v-if="form.errors.place_of_supply"
-                class="mt-1 text-sm text-red-600"
+                class="mt-1 text-sm text-destructive"
             >
                 {{ form.errors.place_of_supply }}
             </p>
@@ -230,12 +236,12 @@ function removeContact(index: number) {
         <!-- Contacts -->
         <div>
             <div class="flex items-center justify-between">
-                <label class="block text-sm font-medium text-gray-700"
+                <label class="block text-sm font-medium text-soft-foreground"
                     >Contacts</label
                 >
                 <button
                     type="button"
-                    class="text-sm text-brand-600 hover:text-brand-700"
+                    class="text-sm text-primary hover:text-primary-soft-foreground"
                     @click="addContact"
                 >
                     + Add Contact
@@ -251,17 +257,17 @@ function removeContact(index: number) {
                         v-model="contact.name"
                         type="text"
                         placeholder="Contact name"
-                        class="block w-full rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="block w-full rounded-md shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                         :class="
                             contactErrors[`contact_${index}_name`]
-                                ? 'border-red-300'
-                                : 'border-gray-300'
+                                ? 'border-destructive/40'
+                                : 'border-input'
                         "
                         @blur="validateName(index)"
                     />
                     <p
                         v-if="contactErrors[`contact_${index}_name`]"
-                        class="mt-1 text-xs text-red-600"
+                        class="mt-1 text-xs text-destructive"
                     >
                         {{ contactErrors[`contact_${index}_name`] }}
                     </p>
@@ -271,23 +277,23 @@ function removeContact(index: number) {
                         v-model="contact.email"
                         type="email"
                         placeholder="Email *"
-                        class="block w-full rounded-md shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm"
+                        class="block w-full rounded-md shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                         :class="
                             contactErrors[`contact_${index}_email`]
-                                ? 'border-red-300'
-                                : 'border-gray-300'
+                                ? 'border-destructive/40'
+                                : 'border-input'
                         "
                         @blur="validateEmail(contact.email, index)"
                     />
                     <p
                         v-if="contactErrors[`contact_${index}_email`]"
-                        class="mt-1 text-xs text-red-600"
+                        class="mt-1 text-xs text-destructive"
                     >
                         {{ contactErrors[`contact_${index}_email`] }}
                     </p>
                     <p
                         v-if="(form.errors as any)[`contacts.${index}.email`]"
-                        class="mt-1 text-sm text-red-600"
+                        class="mt-1 text-sm text-destructive"
                     >
                         {{ (form.errors as any)[`contacts.${index}.email`] }}
                     </p>
@@ -295,7 +301,7 @@ function removeContact(index: number) {
                 <button
                     v-if="form.contacts.length > 1"
                     type="button"
-                    class="mt-1 text-red-500 hover:text-red-700"
+                    class="mt-1 text-destructive hover:text-destructive-soft-foreground"
                     @click="removeContact(index)"
                 >
                     <svg
@@ -319,14 +325,14 @@ function removeContact(index: number) {
         <div class="flex justify-end gap-3">
             <button
                 type="button"
-                class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                class="rounded-md border border-input bg-card px-4 py-2 text-sm font-medium text-soft-foreground shadow-sm hover:bg-muted"
                 @click="emit('cancel')"
             >
                 Cancel
             </button>
             <button
                 type="submit"
-                class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700 disabled:opacity-50"
+                class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50"
                 :disabled="form.processing"
             >
                 {{

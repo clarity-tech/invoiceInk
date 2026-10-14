@@ -34,12 +34,12 @@ defineProps<{
     <AppLayout title="Organizations">
         <template #header>
             <div class="flex items-center justify-between gap-4">
-                <h2 class="text-xl leading-tight font-semibold text-gray-800">
+                <h2 class="text-xl leading-tight font-semibold text-foreground">
                     Organizations
                 </h2>
                 <Link
                     :href="teamsCreate.url()"
-                    class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:outline-none"
+                    class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none"
                 >
                     <svg
                         class="h-4 w-4"
@@ -60,7 +60,7 @@ defineProps<{
         </template>
 
         <div class="px-4 py-4 sm:px-0">
-            <p class="mb-6 text-sm text-gray-500">
+            <p class="mb-6 text-sm text-muted-foreground">
                 Select an organization to view or manage its settings.
             </p>
 
@@ -69,12 +69,12 @@ defineProps<{
                     v-for="org in organizations.data"
                     :key="org.id"
                     :href="`/organizations/${org.id}`"
-                    class="group relative rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition hover:border-brand-300 hover:shadow-md"
+                    class="group relative rounded-xl border border-border bg-card p-6 shadow-sm transition hover:border-primary/40 hover:shadow-md"
                 >
                     <div class="flex items-start gap-4">
                         <div
                             v-if="org.logo_url"
-                            class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-100 bg-white"
+                            class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-paper"
                         >
                             <img
                                 :src="org.logo_url"
@@ -93,7 +93,7 @@ defineProps<{
 
                         <div class="min-w-0 flex-1">
                             <h3
-                                class="truncate text-base font-semibold text-gray-900 group-hover:text-brand-700"
+                                class="truncate text-base font-semibold text-foreground group-hover:text-primary-soft-foreground"
                             >
                                 {{ org.name }}
                             </h3>
@@ -102,7 +102,7 @@ defineProps<{
                                     org.company_name &&
                                     org.company_name !== org.name
                                 "
-                                class="truncate text-sm text-gray-500"
+                                class="truncate text-sm text-muted-foreground"
                             >
                                 {{ org.company_name }}
                             </p>
@@ -110,25 +110,25 @@ defineProps<{
                     </div>
 
                     <div
-                        class="mt-4 flex items-center gap-3 text-xs text-gray-500"
+                        class="mt-4 flex items-center gap-3 text-xs text-muted-foreground"
                     >
                         <span
                             v-if="org.currency"
-                            class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 font-medium text-gray-600"
+                            class="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 font-medium text-soft-foreground"
                             >{{ org.currency }}</span
                         >
                         <span v-if="org.primary_location">
                             {{ org.primary_location.city }},
                             {{ org.primary_location.state }}
                         </span>
-                        <span v-else class="text-gray-400 italic"
+                        <span v-else class="text-faint-foreground italic"
                             >No location</span
                         >
                     </div>
 
                     <!-- Arrow indicator -->
                     <div
-                        class="absolute top-6 right-6 text-gray-300 transition group-hover:text-brand-500"
+                        class="absolute top-6 right-6 text-faint-foreground transition group-hover:text-primary"
                     >
                         <svg
                             class="size-5"
@@ -150,12 +150,14 @@ defineProps<{
             <!-- Empty state -->
             <div
                 v-if="organizations.data.length === 0"
-                class="rounded-xl border-2 border-dashed border-gray-300 py-16 text-center"
+                class="rounded-xl border-2 border-dashed border-input py-16 text-center"
             >
-                <p class="text-sm text-gray-500">No organizations found.</p>
+                <p class="text-sm text-muted-foreground">
+                    No organizations found.
+                </p>
                 <Link
                     :href="teamsCreate.url()"
-                    class="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
+                    class="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
                 >
                     Create your first organization
                 </Link>

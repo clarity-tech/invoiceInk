@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\Appearance;
 use App\Http\Middleware\EnsureOrganizationSetup;
+use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -17,7 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
 
+        // Written by the browser, so it cannot carry Laravel's encryption.
+        $middleware->encryptCookies(except: [Appearance::COOKIE]);
+
         $middleware->web(append: [
+            HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
