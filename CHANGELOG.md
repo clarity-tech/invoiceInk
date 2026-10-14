@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.0](https://github.com/clarity-tech/invoicing/compare/v1.14.0...v1.15.0) (2026-10-14)
+
+
+### Features
+
+* **theme:** add dark mode with a System / Light / Dark choice ([69dadc9](https://github.com/clarity-tech/invoicing/commit/69dadc9df6a316e86d0c72ca2b3751a83573289f))
+
 ## [1.14.0](https://github.com/clarity-tech/invoicing/compare/v1.13.0...v1.14.0) (2026-10-14)
 
 
