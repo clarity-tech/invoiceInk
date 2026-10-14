@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.1](https://github.com/clarity-tech/invoicing/compare/v1.15.0...v1.15.1) (2026-10-14)
+
+
+### Build & CI
+
+* add a dispatchable workflow that screenshots every page to a branch ([e26bf26](https://github.com/clarity-tech/invoicing/commit/e26bf268520b5bd372f665db85473fc5e9d92354))
+
 ## [1.15.0](https://github.com/clarity-tech/invoicing/compare/v1.14.0...v1.15.0) (2026-10-14)
 
 
