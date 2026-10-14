@@ -1,0 +1,293 @@
+name: Screenshots
+
+# Runs the theme tour (tests/Browser/ThemeTourScreenshotTest.php) against a
+# ref and commits every screen, plus a gallery, to a review branch. GitHub
+# renders the gallery's README.md on the branch page; index.html is the same
+# gallery for a local checkout.
+#
+# Given a base too, both are captured in the same job, so the comparison is
+# not thrown off by fonts or rendering that differ between machines, and the
+# gallery lists the screens that changed. Each run is a new commit on the
+# branch, so a commit's diff also shows what changed since the previous run.
+#
+# Capturing runs the ref's own code -- its dependencies, its build, its tests
+# -- so that job can only read. Publishing is a separate job that can write,
+# and runs nothing but this workflow's own script and git.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag or commit to capture
+        required: true
+        default: main
+      base_ref:
+        description: Optional branch, tag or commit to compare it with, e.g. main
+        required: false
+        default: ''
+      schemes:
+        description: Colour schemes to capture
+        type: choice
+        options: [both, light, dark]
+        default: both
+      branch:
+        description: Branch to commit the screenshots to (screenshots, screenshots/... or screenshots-...)
+        required: true
+        default: screenshots
+
+permissions:
+  contents: read
+
+# Two runs committing to one branch would race; queue them instead.
+concurrency:
+  group: screenshots-${{ inputs.branch || 'screenshots' }}
+  cancel-in-progress: false
+
+env:
+  CAPTURE_REF: ${{ inputs.ref || github.ref_name }}
+  BASE_REF: ${{ inputs.base_ref }}
+  SCHEMES: ${{ inputs.schemes || 'both' }}
+  OUTPUT_BRANCH: ${{ inputs.branch || 'screenshots' }}
+
+jobs:
+  capture:
+    name: Capture
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    outputs:
+      capture_sha: ${{ steps.inputs.outputs.capture_sha }}
+      base_sha: ${{ steps.inputs.outputs.base_sha }}
+      failed: ${{ steps.capture.outputs.failed }}
+
+    steps:
+      - name: Check the inputs
+        id: inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The publish job pushes to this branch, so it must never be able
+          # to name a real one. It only runs once this job has succeeded.
+          if [[ ! "$OUTPUT_BRANCH" =~ ^screenshots([/-][A-Za-z0-9._-]+)*$ || "$OUTPUT_BRANCH" == *..* ]]; then
+            echo "::error::The branch must be 'screenshots', or start with 'screenshots/' or 'screenshots-'."
+            exit 1
+          fi
+          case "$SCHEMES" in
+            both) echo "TOUR_SCHEMES=light dark" >> "$GITHUB_ENV" ;;
+            light | dark) echo "TOUR_SCHEMES=$SCHEMES" >> "$GITHUB_ENV" ;;
+            *) echo "::error::Unknown colour scheme '$SCHEMES'."; exit 1 ;;
+          esac
+
+          # actions/checkout takes a branch, a tag or a full commit hash, but
+          # not a short hash, so every ref is resolved to its full hash here.
+          resolve() {
+            if ! sha=$(gh api "repos/$GITHUB_REPOSITORY/commits/$2" --jq .sha); then
+              echo "::error::There is no branch, tag or commit named '$2'."
+              exit 1
+            fi
+            echo "$1=$sha" >> "$GITHUB_OUTPUT"
+          }
+          resolve capture_sha "$CAPTURE_REF"
+          if [ -n "$BASE_REF" ]; then
+            resolve base_sha "$BASE_REF"
+          fi
+
+      # A tour for refs from before the tour existed. No checkout here keeps
+      # its token: the code under test runs in this job.
+      - name: Check out this workflow's tour
+        uses: actions/checkout@v7
+        with:
+          path: workflow
+          persist-credentials: false
+          sparse-checkout: |
+            tests/Browser/ThemeTourScreenshotTest.php
+            tests/Browser/DemoScreenshotTest.php
+          sparse-checkout-cone-mode: false
+
+      - name: Check out ${{ env.CAPTURE_REF }}
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.inputs.outputs.capture_sha }}
+          path: after
+          persist-credentials: false
+
+      - name: Check out ${{ env.BASE_REF }}
+        if: env.BASE_REF != ''
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.inputs.outputs.base_sha }}
+          path: before
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo_sqlite
+          coverage: none
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install and build
+        run: |
+          for side in after before; do
+            [ -d "$side" ] || continue
+            echo "::group::$side"
+            # Each ref runs its own tour, so its steps match its pages. One
+            # from before the tour existed borrows this workflow's copy.
+            for test in ThemeTourScreenshotTest DemoScreenshotTest; do
+              if [ ! -f "$side/tests/Browser/$test.php" ]; then
+                cp "workflow/tests/Browser/$test.php" "$side/tests/Browser/"
+              fi
+            done
+            (
+              cd "$side"
+              composer install --no-interaction --prefer-dist --no-progress
+              cp .env.example .env
+              php artisan key:generate
+              sed -i 's/APP_ENV=local/APP_ENV=testing/' .env
+              sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=sqlite/' .env
+              sed -i 's|DB_DATABASE=.*|DB_DATABASE=:memory:|' .env
+              sed -i 's|FILESYSTEM_DISK=.*|FILESYSTEM_DISK=local|' .env
+              echo "TELESCOPE_ENABLED=false" >> .env
+              bun install --frozen-lockfile
+              bun run build
+              npx playwright install chromium --with-deps
+            )
+            echo "::endgroup::"
+          done
+
+      - name: Capture
+        id: capture
+        run: |
+          mkdir -p gallery/logs
+          failed=0
+          for side in after before; do
+            [ -d "$side" ] || continue
+            for scheme in $TOUR_SCHEMES; do
+              log="gallery/logs/$side-$scheme.txt"
+              echo "::group::$side, $scheme"
+              if (cd "$side" && THEME_TOUR=$side THEME_TOUR_SCHEME=$scheme php artisan test tests/Browser/ThemeTourScreenshotTest.php --colors=never) > "$log" 2>&1; then
+                rm "$log"
+              else
+                failed=1
+                echo "::warning::The $side tour failed in $scheme mode; its log is logs/$side-$scheme.txt on $OUTPUT_BRANCH."
+              fi
+              echo "::endgroup::"
+              # Publish whatever was captured, even if part of the tour failed.
+              shots="$side/tests/Browser/Screenshots/theme-tour/$side-$scheme"
+              if [ -d "$shots" ]; then
+                cp -R "$shots" gallery/
+              fi
+            done
+          done
+          rmdir gallery/logs 2> /dev/null || true
+          echo "failed=$failed" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the screenshots
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots
+          path: gallery/
+          retention-days: 1
+          if-no-files-found: error
+
+  publish:
+    name: Publish to ${{ inputs.branch || 'screenshots' }}
+    needs: capture
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # commit to the review branch
+
+    steps:
+      - name: Check out the gallery script
+        uses: actions/checkout@v7
+        with:
+          path: workflow
+          persist-credentials: false
+          sparse-checkout: .github/scripts/screenshot-gallery.php
+          sparse-checkout-cone-mode: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: gd
+          coverage: none
+
+      - name: Download the screenshots
+        uses: actions/download-artifact@v8
+        with:
+          name: screenshots
+          path: gallery
+
+      # The code that ran in the capture job could have left anything in the
+      # artifact. Only its screenshots and logs are published.
+      - name: Keep only screenshots and logs
+        run: |
+          find gallery ! -type d ! -type f -print -delete
+          find gallery -type f \
+            ! -regex 'gallery/\(before\|after\)-\(light\|dark\)/[0-9a-z-]*\.png' \
+            ! -regex 'gallery/logs/\(before\|after\)-\(light\|dark\)\.txt' \
+            -print -delete
+
+      - name: Fetch ${{ env.OUTPUT_BRANCH }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "$remote" "$OUTPUT_BRANCH" > /dev/null; then
+            git clone --quiet --depth 1 --branch "$OUTPUT_BRANCH" "$remote" publish
+          else
+            git init --quiet --initial-branch "$OUTPUT_BRANCH" publish
+          fi
+
+      - name: Build the gallery
+        id: gallery
+        env:
+          GALLERY_SHA: ${{ needs.capture.outputs.capture_sha }}
+          GALLERY_BASE_SHA: ${{ needs.capture.outputs.base_sha }}
+          GALLERY_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          export GALLERY_REF="$CAPTURE_REF" GALLERY_BASE_REF="$BASE_REF"
+          headline=$(php -d memory_limit=1G workflow/.github/scripts/screenshot-gallery.php gallery --previous=publish)
+          echo "headline=$headline" >> "$GITHUB_OUTPUT"
+
+      - name: Commit to ${{ env.OUTPUT_BRANCH }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ needs.capture.outputs.capture_sha }}
+        run: |
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          find publish -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -R gallery/. publish/
+
+          message="screenshots: $CAPTURE_REF at ${SHA:0:8}"
+          if [ -n "$BASE_REF" ]; then
+            message="$message, compared with $BASE_REF"
+          fi
+
+          cd publish
+          git add --all
+          git -c user.name='github-actions[bot]' \
+            -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit --quiet --message "$message"
+          git push --quiet "$remote" "HEAD:refs/heads/$OUTPUT_BRANCH"
+
+      - name: Summary
+        env:
+          HEADLINE: ${{ steps.gallery.outputs.headline }}
+        run: |
+          {
+            echo "### $HEADLINE"
+            echo
+            echo "Review them on [\`$OUTPUT_BRANCH\`]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/tree/$OUTPUT_BRANCH)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail if part of the tour failed
+        if: needs.capture.outputs.failed == '1'
+        run: |
+          echo "::error::Part of the tour failed. What was captured is on $OUTPUT_BRANCH, with the failing logs in logs/."
+          exit 1
