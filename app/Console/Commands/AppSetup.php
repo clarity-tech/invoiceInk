@@ -51,6 +51,11 @@ class AppSetup extends Command
         // 4. Storage
         $this->components->task('Creating storage link', fn () => $this->callSilently('storage:link', ['--force' => true]) === 0);
 
+        // The MCP endpoint builds Passport's guard on every unauthenticated
+        // request, and that guard cannot be built without the public key.
+        $this->components->task('Generating OAuth keys', fn () => file_exists(storage_path('oauth-public.key'))
+            || $this->callSilently('passport:keys') === 0);
+
         $this->components->task('Setting up S3 bucket', fn () => $this->callSilently('app:setup-storage') === 0);
 
         // 5. Caches

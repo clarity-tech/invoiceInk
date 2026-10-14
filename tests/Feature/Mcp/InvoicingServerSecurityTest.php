@@ -305,7 +305,7 @@ test('the web MCP endpoint is not wrapped in session or CSRF middleware', functi
         ->first(fn ($route) => $route->uri() === 'mcp' && in_array('POST', $route->methods(), true))
         ->gatherMiddleware();
 
-    expect($middleware)->toContain('auth:sanctum')
+    expect($middleware)->toContain('auth:sanctum,api')
         ->and($middleware)->not->toContain('web')
         ->and($middleware)->not->toContain(VerifyCsrfToken::class)
         ->and($middleware)->not->toContain(StartSession::class);

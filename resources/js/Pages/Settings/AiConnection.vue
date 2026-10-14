@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { router, useForm } from '@inertiajs/vue3';
-import { AlertTriangle, Check, Copy, Sparkles, Trash2 } from 'lucide-vue-next';
+import {
+    AlertTriangle,
+    Check,
+    Copy,
+    Link2Off,
+    Sparkles,
+    Trash2,
+} from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 interface Connection {
@@ -11,11 +18,18 @@ interface Connection {
     last_used_at: string | null;
 }
 
+interface SignedInApp {
+    id: string;
+    name: string;
+    connected_at: string | null;
+}
+
 const props = defineProps<{
     endpoint: string;
     enabled: boolean;
     organization: string | null;
     newToken: string | null;
+    apps: SignedInApp[];
     tokens: Connection[];
 }>();
 
@@ -39,28 +53,21 @@ function revoke(id: number): void {
     router.delete(`/settings/ai-connection/${id}`, { preserveScroll: true });
 }
 
+function disconnect(id: string): void {
+    router.delete(`/settings/ai-connection/apps/${id}`, {
+        preserveScroll: true,
+    });
+}
+
 // Shown only on the render immediately after creation — the plaintext value is
 // never stored, so this is the one chance to copy it.
 const token = computed(() => props.newToken ?? '');
 
-const claudeDesktopConfig = computed(() =>
-    JSON.stringify(
-        {
-            mcpServers: {
-                invoicing: {
-                    url: props.endpoint,
-                    headers: {
-                        Authorization: `Bearer ${token.value || '<your-token>'}`,
-                    },
-                },
-            },
-        },
-        null,
-        2,
-    ),
+const claudeCodeCommand = computed(
+    () => `claude mcp add --transport http invoicing ${props.endpoint}`,
 );
 
-const claudeCodeCommand = computed(
+const claudeCodeTokenCommand = computed(
     () =>
         `claude mcp add --transport http invoicing ${props.endpoint} \\\n  --header "Authorization: Bearer ${token.value || '<your-token>'}"`,
 );
@@ -110,44 +117,181 @@ const claudeCodeCommand = computed(
                 <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0" />
                 <p>
                     This feature is not switched on for this environment yet, so
-                    connections created here will not work. Ask your
-                    administrator to enable
+                    connections made here will not work. Ask your administrator
+                    to enable
                     <code class="font-mono">MCP_WEB_ENABLED</code>.
                 </p>
             </div>
 
-            <div
-                v-if="token"
-                class="rounded-lg border border-success/40 bg-success-soft/50 p-6"
-            >
-                <h3 class="text-sm font-semibold text-success-soft-foreground">
-                    Copy your token now
+            <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+                <h3 class="text-sm font-semibold text-foreground">
+                    Connect Claude
                 </h3>
-                <p class="mt-1 text-sm text-success-soft-foreground">
-                    This is the only time it is shown. If you lose it, revoke
-                    the connection and create another.
-                </p>
-                <div class="mt-3 flex items-center gap-2">
-                    <code
-                        class="flex-1 overflow-x-auto rounded border border-success/40 bg-card px-3 py-2 font-mono text-xs text-foreground"
-                        >{{ token }}</code
+
+                <div class="mt-4">
+                    <p class="text-sm font-medium text-soft-foreground">
+                        Server URL
+                    </p>
+                    <div class="mt-1 flex items-center gap-2">
+                        <code
+                            class="flex-1 overflow-x-auto rounded border border-border bg-muted px-3 py-2 font-mono text-xs"
+                            >{{ endpoint }}</code
+                        >
+                        <button
+                            type="button"
+                            class="shrink-0 rounded-md border border-input px-3 py-2 text-sm hover:bg-muted"
+                            @click="copy(endpoint, 'endpoint')"
+                        >
+                            {{ copied === 'endpoint' ? 'Copied' : 'Copy' }}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <p class="text-sm font-medium text-soft-foreground">
+                        Claude on the web, desktop and mobile
+                    </p>
+                    <ol
+                        class="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground"
                     >
+                        <li>
+                            In Claude, open
+                            <strong>Customize → Connectors</strong> and choose
+                            <strong>Add custom connector</strong>.
+                        </li>
+                        <li>
+                            Paste the server URL above and add it. Leave the
+                            OAuth client fields empty.
+                        </li>
+                        <li>
+                            Click <strong>Connect</strong>, sign in to
+                            InvoiceInk if asked, and approve.
+                        </li>
+                    </ol>
+                    <p class="mt-2 text-sm text-muted-foreground">
+                        On a Team or Enterprise plan an Owner adds the connector
+                        once under
+                        <strong>Organization settings → Connectors</strong>;
+                        each person then clicks <strong>Connect</strong>.
+                    </p>
+                </div>
+
+                <div class="mt-6">
+                    <p class="text-sm font-medium text-soft-foreground">
+                        Claude Code
+                    </p>
+                    <pre
+                        class="mt-2 overflow-x-auto rounded border border-border bg-muted p-3 font-mono text-xs"
+                        >{{ claudeCodeCommand }}</pre>
                     <button
                         type="button"
-                        class="inline-flex shrink-0 items-center gap-1 rounded-md bg-success px-3 py-2 text-sm font-medium text-success-foreground hover:bg-success/90"
-                        @click="copy(token, 'token')"
+                        class="mt-2 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted"
+                        @click="copy(claudeCodeCommand, 'code')"
                     >
-                        <Check v-if="copied === 'token'" class="h-4 w-4" />
-                        <Copy v-else class="h-4 w-4" />
-                        {{ copied === 'token' ? 'Copied' : 'Copy' }}
+                        {{ copied === 'code' ? 'Copied' : 'Copy command' }}
                     </button>
+                    <p class="mt-2 text-sm text-muted-foreground">
+                        Then run <code class="font-mono">/mcp</code> in Claude
+                        Code, pick <strong>invoicing</strong> and choose
+                        <strong>Authenticate</strong>. If sign-in does not
+                        complete, create an API token below and add the server
+                        with it instead.
+                    </p>
+                </div>
+
+                <div class="mt-6">
+                    <p class="text-sm font-medium text-soft-foreground">
+                        Other tools
+                    </p>
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        Any MCP client that supports OAuth sign-in connects with
+                        the server URL alone. For one that can only send a
+                        header, create an API token below.
+                    </p>
                 </div>
             </div>
 
             <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
                 <h3 class="text-sm font-semibold text-foreground">
-                    Connections
+                    Connected apps
                 </h3>
+
+                <ul v-if="apps.length" class="mt-4 divide-y divide-border">
+                    <li
+                        v-for="app in apps"
+                        :key="app.id"
+                        class="flex items-center justify-between py-3"
+                    >
+                        <div>
+                            <p class="text-sm font-medium text-foreground">
+                                {{ app.name }}
+                            </p>
+                            <p class="text-xs text-muted-foreground">
+                                Connected {{ app.connected_at }}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-destructive hover:bg-destructive-soft/50"
+                            @click="disconnect(app.id)"
+                        >
+                            <Link2Off class="h-4 w-4" />
+                            Disconnect
+                        </button>
+                    </li>
+                </ul>
+                <p v-else class="mt-4 text-sm text-muted-foreground">
+                    No apps connected yet. Apps you approve from Claude appear
+                    here.
+                </p>
+            </div>
+
+            <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+                <h3 class="text-sm font-semibold text-foreground">
+                    API tokens
+                </h3>
+                <p class="mt-1 text-sm text-muted-foreground">
+                    For clients that cannot sign in, such as a script. Send the
+                    token as an
+                    <code class="font-mono">Authorization: Bearer</code>
+                    header.
+                </p>
+
+                <div
+                    v-if="token"
+                    class="mt-4 rounded-lg border border-success/40 bg-success-soft/50 p-4"
+                >
+                    <p
+                        class="text-sm font-semibold text-success-soft-foreground"
+                    >
+                        Copy your token now
+                    </p>
+                    <p class="mt-1 text-sm text-success-soft-foreground">
+                        This is the only time it is shown. If you lose it,
+                        revoke it and create another.
+                    </p>
+                    <div class="mt-3 flex items-center gap-2">
+                        <code
+                            class="flex-1 overflow-x-auto rounded border border-success/40 bg-card px-3 py-2 font-mono text-xs text-foreground"
+                            >{{ token }}</code
+                        >
+                        <button
+                            type="button"
+                            class="inline-flex shrink-0 items-center gap-1 rounded-md bg-success px-3 py-2 text-sm font-medium text-success-foreground hover:bg-success/90"
+                            @click="copy(token, 'token')"
+                        >
+                            <Check v-if="copied === 'token'" class="h-4 w-4" />
+                            <Copy v-else class="h-4 w-4" />
+                            {{ copied === 'token' ? 'Copied' : 'Copy' }}
+                        </button>
+                    </div>
+                    <p class="mt-3 text-sm text-success-soft-foreground">
+                        For example, in Claude Code:
+                    </p>
+                    <pre
+                        class="mt-1 overflow-x-auto rounded border border-success/40 bg-card p-3 font-mono text-xs text-foreground"
+                        >{{ claudeCodeTokenCommand }}</pre>
+                </div>
 
                 <form
                     class="mt-4 flex items-end gap-3"
@@ -163,7 +307,7 @@ const claudeCodeCommand = computed(
                             id="name"
                             v-model="form.name"
                             type="text"
-                            placeholder="e.g. Claude on my laptop"
+                            placeholder="e.g. Monthly report script"
                             class="mt-1 block w-full rounded-md border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                         />
                         <p
@@ -178,7 +322,7 @@ const claudeCodeCommand = computed(
                         :disabled="form.processing"
                         class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                     >
-                        Create connection
+                        Create token
                     </button>
                 </form>
 
@@ -212,84 +356,8 @@ const claudeCodeCommand = computed(
                     </li>
                 </ul>
                 <p v-else class="mt-4 text-sm text-muted-foreground">
-                    No connections yet.
+                    No API tokens yet.
                 </p>
-            </div>
-
-            <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
-                <h3 class="text-sm font-semibold text-foreground">Setup</h3>
-
-                <div class="mt-4">
-                    <p class="text-sm font-medium text-soft-foreground">
-                        Endpoint
-                    </p>
-                    <div class="mt-1 flex items-center gap-2">
-                        <code
-                            class="flex-1 overflow-x-auto rounded border border-border bg-muted px-3 py-2 font-mono text-xs"
-                            >{{ endpoint }}</code
-                        >
-                        <button
-                            type="button"
-                            class="shrink-0 rounded-md border border-input px-3 py-2 text-sm hover:bg-muted"
-                            @click="copy(endpoint, 'endpoint')"
-                        >
-                            {{ copied === 'endpoint' ? 'Copied' : 'Copy' }}
-                        </button>
-                    </div>
-                </div>
-
-                <div class="mt-6">
-                    <p class="text-sm font-medium text-soft-foreground">
-                        Claude Desktop
-                    </p>
-                    <p class="mt-1 text-sm text-muted-foreground">
-                        Settings → Connectors → Add custom connector, or paste
-                        this into your config file.
-                    </p>
-                    <pre
-                        class="mt-2 overflow-x-auto rounded border border-border bg-muted p-3 font-mono text-xs"
-                        >{{ claudeDesktopConfig }}</pre>
-                    <button
-                        type="button"
-                        class="mt-2 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted"
-                        @click="copy(claudeDesktopConfig, 'desktop')"
-                    >
-                        {{ copied === 'desktop' ? 'Copied' : 'Copy config' }}
-                    </button>
-                </div>
-
-                <div class="mt-6">
-                    <p class="text-sm font-medium text-soft-foreground">
-                        Claude Code
-                    </p>
-                    <pre
-                        class="mt-2 overflow-x-auto rounded border border-border bg-muted p-3 font-mono text-xs"
-                        >{{ claudeCodeCommand }}</pre>
-                    <button
-                        type="button"
-                        class="mt-2 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted"
-                        @click="copy(claudeCodeCommand, 'code')"
-                    >
-                        {{ copied === 'code' ? 'Copied' : 'Copy command' }}
-                    </button>
-                </div>
-
-                <div class="mt-6">
-                    <p class="text-sm font-medium text-soft-foreground">
-                        Other tools
-                    </p>
-                    <p class="mt-1 text-sm text-muted-foreground">
-                        Any client that speaks MCP over HTTP works: point it at
-                        the endpoint above and send your token as an
-                        <code class="font-mono">Authorization: Bearer</code>
-                        header.
-                    </p>
-                    <p class="mt-2 text-sm text-muted-foreground">
-                        <strong>ChatGPT is not supported yet.</strong> It only
-                        connects to MCP servers that offer OAuth sign-in, and
-                        cannot use a token like the one above.
-                    </p>
-                </div>
             </div>
         </div>
     </AppLayout>

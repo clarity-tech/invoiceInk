@@ -6,6 +6,7 @@ use App\Models\Organization;
 use App\Models\User;
 use App\ValueObjects\ContactCollection;
 use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
+use Laravel\Passport\ClientRepository;
 use Pest\Browser\Api\AwaitableWebpage;
 use Pest\Browser\Api\PendingAwaitablePage;
 use Pest\Browser\Api\Webpage;
@@ -333,6 +334,33 @@ it('keeps every signed-in page legible in dark mode', function (string $path) {
     'team' => '/teams/{organization}',
     'new organization' => '/teams/create',
 ]);
+
+it('keeps the OAuth consent screen legible in dark mode', function () {
+    // The page an AI client's sign-in lands on. It is outside the app layout,
+    // so the list above does not reach it.
+    $client = app(ClientRepository::class)->createAuthorizationCodeGrantClient(
+        name: 'Claude',
+        redirectUris: ['https://claude.ai/api/mcp/auth_callback'],
+        confidential: false,
+    );
+
+    $this->actingAs(darkModeUser());
+
+    $page = visit('/oauth/authorize?'.http_build_query([
+        'response_type' => 'code',
+        'client_id' => $client->getKey(),
+        'redirect_uri' => 'https://claude.ai/api/mcp/auth_callback',
+        'code_challenge' => str_repeat('a', 43),
+        'code_challenge_method' => 'S256',
+        'scope' => 'mcp:use',
+    ]))->inDarkMode();
+
+    $page->assertSee('Connect Claude')
+        ->assertSee('claude.ai')
+        ->assertScript(IS_DARK, true)
+        ->assertNoJavascriptErrors();
+    assertNoContrastFailures($page);
+});
 
 it('keeps the empty states legible in dark mode', function (string $path) {
     $this->actingAs(darkModeUser());

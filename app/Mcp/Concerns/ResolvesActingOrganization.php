@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
+use Laravel\Mcp\Server\Registrar;
 
 /**
  * Resolves the single organization an MCP tool is allowed to read.
@@ -57,9 +58,9 @@ trait ResolvesActingOrganization
 
         if (! $user instanceof User) {
             return Response::error(
-                'Not authenticated, so no invoicing data can be read. Connect over HTTP with an API '
-                .'token ("Authorization: Bearer <token>"), or set MCP_LOCAL_USER_EMAIL when using the '
-                .'local stdio server.'
+                'Not authenticated, so no invoicing data can be read. Connect over HTTP and sign in '
+                .'when prompted, or send an API token ("Authorization: Bearer <token>"), or set '
+                .'MCP_LOCAL_USER_EMAIL when using the local stdio server.'
             );
         }
 
@@ -68,9 +69,15 @@ trait ResolvesActingOrganization
         // purpose would unlock their whole invoicing history over MCP.
         // currentAccessToken() is null on the stdio path, which carries no
         // token at all and is gated by config instead.
+        //
+        // The two scopes come from the two ways in: a pasted Sanctum token
+        // carries the ability the settings page grants, while an OAuth token
+        // carries the single scope laravel/mcp's client registration grants.
         $token = $user->currentAccessToken();
 
-        if ($token !== null && ! $user->tokenCan(AiConnectionController::ABILITY)) {
+        if ($token !== null
+            && ! $user->tokenCan(AiConnectionController::ABILITY)
+            && ! $user->tokenCan(Registrar::OAUTH_SCOPE)) {
             return Response::error(
                 'This API token is not authorised for AI access. Create a connection under '
                 .'Settings > Connect AI tools and use the token it gives you.'

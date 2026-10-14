@@ -7,10 +7,17 @@ use App\Contracts\Services\PdfServiceInterface;
 use App\Listeners\EmbedBrandLogoInEmails;
 use App\Services\InvoiceNumberingService;
 use App\Services\PdfService;
+use Carbon\CarbonInterval;
+use Illuminate\Http\Request;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
+use Laravel\Mcp\Server\Registrar;
+use Laravel\Passport\Client;
+use Laravel\Passport\Passport;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,6 +28,11 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(PdfServiceInterface::class, PdfService::class);
         $this->app->bind(InvoiceNumberingServiceInterface::class, InvoiceNumberingService::class);
+
+        // MCP clients sign in with the authorization code flow only. Set here
+        // rather than in boot() because Passport reads it while registering its
+        // routes, and the device flow would add public pages nothing uses.
+        Passport::$deviceCodeGrantEnabled = false;
     }
 
     /**
@@ -29,8 +41,59 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->forcePublicRootUrl();
+        $this->configurePassport();
 
         Event::listen(MessageSending::class, EmbedBrandLogoInEmails::class);
+    }
+
+    /**
+     * Configure the OAuth server that MCP clients sign in through.
+     *
+     * Passport's defaults issue access tokens that live for a year. A public
+     * client such as Claude refreshes on a 401 and ahead of expiry, so a short
+     * access token costs nothing and bounds how long a leaked one stays
+     * useful. Refresh tokens rotate on every use, so a connection in regular
+     * use never reaches the 30 days; one left idle that long has to sign in
+     * again.
+     *
+     * OAuth exists here only for MCP, so a client that omits the scope
+     * parameter gets the MCP scope rather than a token every tool refuses.
+     */
+    private function configurePassport(): void
+    {
+        Passport::tokensExpireIn(CarbonInterval::hour());
+        Passport::refreshTokensExpireIn(CarbonInterval::days(30));
+        Passport::defaultScopes([Registrar::OAUTH_SCOPE]);
+
+        Passport::authorizationView(fn (array $parameters): InertiaResponse => $this->renderOAuthConsent(
+            $parameters['client'],
+            $parameters['request'],
+            $parameters['authToken'],
+        ));
+    }
+
+    /**
+     * Render the consent screen for an MCP client asking to read this account.
+     *
+     * The client name is whatever the client sent when it registered itself,
+     * so it proves nothing. The redirect host is the part a user can actually
+     * check, and the MCP authorization spec requires showing it.
+     */
+    private function renderOAuthConsent(Client $client, Request $request, string $authToken): InertiaResponse
+    {
+        $redirectUri = $request->query('redirect_uri') ?: ($client->redirect_uris[0] ?? '');
+        $redirectHost = (string) parse_url((string) $redirectUri, PHP_URL_HOST);
+
+        return Inertia::render('OAuth/Authorize', [
+            'clientId' => $client->getKey(),
+            'clientName' => $client->name,
+            'redirectHost' => $redirectHost,
+            'isLocalRedirect' => in_array($redirectHost, ['localhost', '127.0.0.1', '[::1]'], true),
+            'email' => $request->user()->email,
+            'organization' => $request->user()->currentTeam?->name,
+            'authToken' => $authToken,
+            'csrfToken' => csrf_token(),
+        ]);
     }
 
     /**
