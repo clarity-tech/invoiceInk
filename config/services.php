@@ -61,4 +61,11 @@ return [
         'per_hour' => (int) env('INVOICE_DRAFT_PER_HOUR', 20),
     ],
 
+    // Writing emails with AI, from the send and reminder dialogs.
+    'email_drafts' => [
+        'model' => env('EMAIL_DRAFT_MODEL', 'claude-haiku-5-5'),
+        'timeout' => (int) env('EMAIL_DRAFT_TIMEOUT', 30),
+        'per_hour' => (int) env('EMAIL_DRAFT_PER_HOUR', 60),
+    ],
+
 ];

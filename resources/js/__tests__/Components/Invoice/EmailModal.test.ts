@@ -2,9 +2,10 @@ import { mount } from '@vue/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { makeInvoice, makeCustomer, makeContact } from '../../helpers';
 
-const { mockPost, mockClearErrors } = vi.hoisted(() => ({
+const { mockPost, mockClearErrors, team } = vi.hoisted(() => ({
     mockPost: vi.fn(),
     mockClearErrors: vi.fn(),
+    team: { ai: false },
 }));
 
 vi.mock('@inertiajs/vue3', () => {
@@ -51,6 +52,7 @@ vi.mock('@inertiajs/vue3', () => {
                         two_factor_enabled: false,
                     },
                     currentTeam: {
+                        ...team,
                         id: 1,
                         name: 'Team',
                         company_name: 'Co',
@@ -102,12 +104,25 @@ function mountComponent(propsOverride = {}) {
                     props: ['modelValue', 'placeholder'],
                     emits: ['update:modelValue'],
                 },
+                AiEmailWriter: { template: '<div data-testid="ai-writer" />' },
             },
         },
     });
 }
 
 describe('Invoice/EmailModal', () => {
+    it('offers writing with AI only when it is on', () => {
+        expect(
+            mountComponent().find('[data-testid="ai-writer"]').exists(),
+        ).toBe(false);
+
+        team.ai = true;
+        expect(
+            mountComponent().find('[data-testid="ai-writer"]').exists(),
+        ).toBe(true);
+        team.ai = false;
+    });
+
     beforeEach(() => {
         vi.clearAllMocks();
     });

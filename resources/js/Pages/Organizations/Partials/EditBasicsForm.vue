@@ -392,12 +392,12 @@ function submit() {
                 />
                 <label for="org-ai-drafting" class="text-sm">
                     <span class="font-medium text-soft-foreground"
-                        >Draft invoices from documents with AI</span
+                        >Use AI to draft invoices, estimates and emails</span
                     >
                     <span class="mt-0.5 block text-muted-foreground">
-                        Text and files you draft from are sent to an AI service
-                        to read. Nothing is saved until someone reviews and
-                        saves the invoice.
+                        Text, files and invoice details you use it with are sent
+                        to an AI service. Nothing is saved or sent until someone
+                        reviews it.
                     </span>
                 </label>
             </div>

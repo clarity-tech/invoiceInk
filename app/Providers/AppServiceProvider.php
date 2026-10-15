@@ -50,6 +50,13 @@ class AppServiceProvider extends ServiceProvider
             ->by($request->user()?->id ?: $request->ip())
             ->response(fn () => back()->withErrors(['draft' => __('messages.invoice_draft.rate_limited')])));
 
+        RateLimiter::for('email-drafts', fn (Request $request) => Limit::perHour(config('services.email_drafts.per_hour'))
+            ->by($request->user()?->id ?: $request->ip())
+            ->response(fn () => response()->json([
+                'message' => __('messages.email_draft.rate_limited'),
+                'errors' => ['draft' => [__('messages.email_draft.rate_limited')]],
+            ], 422)));
+
         Event::listen(MessageSending::class, EmbedBrandLogoInEmails::class);
     }
 

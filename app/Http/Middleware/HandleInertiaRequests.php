@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\InvoiceDraftBuilder;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -44,6 +45,7 @@ class HandleInertiaRequests extends Middleware
                     'emails' => $request->user()->currentTeam->emails,
                     'role' => $request->user()->teamRole($request->user()->currentTeam)?->key,
                     'permissions' => $request->user()->teamPermissions($request->user()->currentTeam),
+                    'ai' => InvoiceDraftBuilder::isAvailableFor($request->user()->currentTeam),
                 ] : null,
             ],
             'flash' => fn () => [

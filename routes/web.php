@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceDraftController;
+use App\Http\Controllers\InvoiceEmailDraftController;
 use App\Http\Controllers\NumberingSeriesController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationSetupController;
@@ -134,6 +135,7 @@ Route::middleware([
         Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
         Route::get('/estimates/create', [InvoiceController::class, 'create'])->name('estimates.create');
         Route::post('/invoices/{invoice}/send-email', [InvoiceController::class, 'sendEmail'])->name('invoices.send-email');
+        Route::post('/invoices/{invoice}/email-draft', [InvoiceEmailDraftController::class, 'store'])->middleware('throttle:email-drafts')->name('invoices.email-draft');
         Route::post('/invoices/{invoice}/payments', [InvoiceController::class, 'recordPayment'])->name('invoices.payments.store');
         Route::delete('/invoices/{invoice}/payments/{payment}', [InvoiceController::class, 'deletePayment'])->name('invoices.payments.destroy');
 

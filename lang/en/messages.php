@@ -150,6 +150,11 @@ return [
         'past_due_date' => 'The document\'s due date, :date, has already passed, so it was not used.',
     ],
 
+    'email_draft' => [
+        'failed' => 'The email could not be written just now. Try again, or write it yourself.',
+        'rate_limited' => 'You have written a lot of emails with AI in the last hour. Try again later.',
+    ],
+
     'reminder' => [
         'title' => 'Payment reminder from :organization',
         'invoice' => 'Invoice',

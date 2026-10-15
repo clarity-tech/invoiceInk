@@ -12,6 +12,7 @@ import {
     X,
 } from 'lucide-vue-next';
 import { ref, computed, watch } from 'vue';
+import AiEmailWriter from './AiEmailWriter.vue';
 import AttachmentDropzone from './AttachmentDropzone.vue';
 import EmailRecipientInput from './EmailRecipientInput.vue';
 import TipTapEditor from '@/Components/TipTapEditor.vue';
@@ -49,6 +50,8 @@ const emit = defineEmits<{
 }>();
 
 const page = usePage();
+
+const aiAvailable = computed(() => page.props.auth?.currentTeam?.ai === true);
 const auth = computed(() => (page.props as any).auth);
 
 // Default checkbox state for the optional send-options, sourced from
@@ -371,7 +374,14 @@ function send() {
                 </p>
             </div>
 
-            <div>
+            <div class="space-y-2">
+                <AiEmailWriter
+                    v-if="aiAvailable"
+                    v-model:subject="form.subject"
+                    v-model:body="form.body"
+                    :url="`/invoices/${invoice.id}/email-draft`"
+                    :payload="{ template_type: selectedTemplateType }"
+                />
                 <TipTapEditor
                     v-model="form.body"
                     placeholder="Compose your email..."

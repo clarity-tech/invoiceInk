@@ -354,10 +354,15 @@ export interface SharedProps {
                   | 'two_factor_enabled'
               > & { all_teams: TeamSummary[] })
             | null;
-        currentTeam: Pick<
-            Organization,
-            'id' | 'name' | 'company_name' | 'currency'
-        > | null;
+        currentTeam:
+            | (Pick<
+                  Organization,
+                  'id' | 'name' | 'company_name' | 'currency'
+              > & {
+                  /** AI drafting is switched on and configured. */
+                  ai?: boolean;
+              })
+            | null;
     };
     flash: {
         success: string | null;
