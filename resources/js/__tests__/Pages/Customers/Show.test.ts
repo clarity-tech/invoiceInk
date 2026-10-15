@@ -70,6 +70,7 @@ function defaultProps() {
         taxLabels: { IN: 'GSTIN', US: 'EIN', AE: 'TRN' },
         indianStates: {},
         gstTreatments: {},
+        reminder: null,
     };
 }
 

@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\EmailDeliveryStatus;
+use App\Enums\EmailTemplateType;
 use App\Models\Scopes\OrganizationScope;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,11 +21,15 @@ class EmailDelivery extends Model
 {
     use HasFactory;
 
+    protected $appends = ['template_label'];
+
     protected $fillable = [
         'organization_id',
         'invoice_id',
+        'batch_id',
         'mailable_type',
         'mode',
+        'template_type',
         'status',
         'recipients',
         'error',
@@ -37,6 +43,7 @@ class EmailDelivery extends Model
     {
         return [
             'status' => EmailDeliveryStatus::class,
+            'template_type' => EmailTemplateType::class,
             'recipients' => 'array',
             'attempts' => 'integer',
             'queued_at' => 'datetime',
@@ -53,6 +60,14 @@ class EmailDelivery extends Model
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    /**
+     * @return Attribute<string, never>
+     */
+    protected function templateLabel(): Attribute
+    {
+        return Attribute::get(fn (): string => $this->template_type?->label() ?? 'Email');
     }
 
     public function markSending(int $attempt): void

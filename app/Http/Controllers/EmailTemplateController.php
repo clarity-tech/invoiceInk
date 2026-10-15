@@ -43,7 +43,7 @@ class EmailTemplateController extends Controller
             'documentType' => $templateType->documentType(),
             'template' => $resolved,
             'defaultTemplate' => $default,
-            'variables' => DefaultEmailTemplates::availableVariables(),
+            'variables' => DefaultEmailTemplates::availableVariables($templateType),
         ]);
     }
 
@@ -139,6 +139,7 @@ class EmailTemplateController extends Controller
             '{{customer_name}}' => 'Acme Industries',
             '{{invoice_number}}' => 'INV-2026-0042',
             '{{amount_due}}' => '₹1,50,000.00',
+            '{{balance_due}}' => '₹1,00,000.00',
             '{{subtotal}}' => '₹1,27,118.64',
             '{{tax_amount}}' => '₹22,881.36',
             '{{currency}}' => 'INR',

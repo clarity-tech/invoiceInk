@@ -1,10 +1,31 @@
 <script setup lang="ts">
 import { useForm, usePage } from '@inertiajs/vue3';
+import {
+    BellRing,
+    ExternalLink,
+    FileText,
+    Globe,
+    Loader2,
+    Mail,
+    Paperclip,
+    Send,
+    X,
+} from 'lucide-vue-next';
 import { ref, computed, watch } from 'vue';
 import AttachmentDropzone from './AttachmentDropzone.vue';
 import EmailRecipientInput from './EmailRecipientInput.vue';
 import TipTapEditor from '@/Components/TipTapEditor.vue';
+import { Button } from '@/Components/ui/button';
+import { Checkbox } from '@/Components/ui/checkbox';
+import {
+    Dialog,
+    DialogBody,
+    DialogFooter,
+    DialogHeader,
+} from '@/Components/ui/dialog';
+import { Select } from '@/Components/ui/select';
 import { formatBytes } from '@/composables/useFileAttachments';
+import { formatDate } from '@/composables/useFormatDate';
 import { mergeRecipients } from '@/composables/useRecipients';
 import type { Invoice, Customer, Contact, InvoiceAttachment } from '@/types';
 
@@ -14,9 +35,12 @@ const props = withDefaults(
         invoice: Invoice;
         customers: Customer[];
         invoiceAttachments?: InvoiceAttachment[];
+        // The template to open with; defaults to the initial send.
+        templateType?: string;
     }>(),
     {
         invoiceAttachments: () => [],
+        templateType: undefined,
     },
 );
 
@@ -142,7 +166,8 @@ watch(
         if (isOpen) {
             const docType =
                 props.invoice.type === 'estimate' ? 'estimate' : 'invoice';
-            selectedTemplateType.value = `${docType}_initial`;
+            selectedTemplateType.value =
+                props.templateType ?? `${docType}_initial`;
 
             // Pre-fill "Send To" with the recipients the invoice remembers as
             // selected (its checked entries), falling back to the customer's
@@ -179,8 +204,50 @@ watch(selectedTemplateType, (newType) => {
 // At least one recipient is required to send.
 const hasRecipients = computed(() => form.recipients.length > 0);
 
+const documentLabel = computed(() =>
+    props.invoice.type === 'estimate' ? 'Estimate' : 'Invoice',
+);
+
+const documentSummary = computed(() =>
+    [
+        `${documentLabel.value} ${props.invoice.invoice_number}`,
+        props.invoice.due_at ? `Due ${formatDate(props.invoice.due_at)}` : '',
+    ]
+        .filter(Boolean)
+        .join(' · '),
+);
+
+const isReminder = computed(() =>
+    /_(reminder|overdue)$/.test(selectedTemplateType.value),
+);
+
+function counted(count: number, noun: string): string {
+    return `${count} ${noun}${count === 1 ? '' : 's'}`;
+}
+
+const sendSummary = computed(() => {
+    const attachments =
+        (form.attach_pdf ? 1 : 0) +
+        includedAttachments.value.length +
+        form.attachments.length;
+
+    return [
+        counted(form.recipients.length, 'recipient'),
+        form.cc.length ? `${form.cc.length} cc` : '',
+        attachments ? counted(attachments, 'attachment') : '',
+    ]
+        .filter(Boolean)
+        .join(' · ');
+});
+
+const optionCard =
+    'flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-background p-3 transition-colors hover:bg-muted has-checked:border-primary/50 has-checked:bg-primary-soft/40';
+
 function send() {
-    form.post(`/invoices/${props.invoice.id}/send-email`, {
+    form.transform((data) => ({
+        ...data,
+        template_type: selectedTemplateType.value,
+    })).post(`/invoices/${props.invoice.id}/send-email`, {
         preserveScroll: true,
         onSuccess: () => emit('close'),
     });
@@ -188,292 +255,232 @@ function send() {
 </script>
 
 <template>
-    <div
-        v-if="show"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-overlay"
-        @keydown.escape="emit('close')"
+    <Dialog
+        :open="show"
+        size="xl"
+        aria-labelledby="email-dialog-title"
+        @close="emit('close')"
     >
-        <div
-            class="mx-4 flex max-h-[95vh] w-full max-w-lg flex-col overflow-hidden rounded-lg bg-card shadow-2xl sm:max-w-xl md:max-w-2xl lg:max-w-3xl"
-            role="dialog"
-            aria-modal="true"
+        <DialogHeader
+            title-id="email-dialog-title"
+            :title="`Email to ${customer?.name ?? 'Customer'}`"
+            :description="documentSummary"
+            @close="emit('close')"
         >
-            <!-- Header -->
+            <template #icon>
+                <BellRing v-if="isReminder" />
+                <Mail v-else />
+            </template>
+        </DialogHeader>
+
+        <DialogBody>
+            <slot name="notice" />
+
             <div
-                class="flex items-center justify-between border-b border-border bg-card px-6 py-4"
+                class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2"
             >
-                <h2 class="text-xl font-semibold text-foreground">
-                    Email to {{ customer?.name ?? 'Customer' }}
-                </h2>
-                <button
-                    class="text-faint-foreground hover:text-soft-foreground"
-                    aria-label="Close"
-                    @click="emit('close')"
-                >
-                    <svg
-                        class="h-6 w-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                <div class="flex items-center gap-3">
+                    <label
+                        for="email-template"
+                        class="text-sm font-medium text-soft-foreground"
+                        >Template</label
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
-                        />
-                    </svg>
-                </button>
+                    <Select
+                        id="email-template"
+                        v-model="selectedTemplateType"
+                        class="w-auto min-w-44"
+                    >
+                        <option
+                            v-for="(label, value) in templateTypes"
+                            :key="value"
+                            :value="value"
+                        >
+                            {{ label }}
+                        </option>
+                    </Select>
+                    <Loader2
+                        v-if="loadingTemplate"
+                        class="size-4 animate-spin text-muted-foreground"
+                        aria-label="Loading template"
+                    />
+                </div>
+                <a
+                    href="/email-templates"
+                    target="_blank"
+                    class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                    title="Customize templates"
+                >
+                    Customize templates
+                    <ExternalLink class="size-3" />
+                </a>
             </div>
 
-            <!-- Body -->
-            <div class="flex-1 overflow-y-auto px-6 py-4">
-                <!-- Template Type Selector -->
-                <div class="mb-4">
-                    <div class="flex items-center">
+            <div>
+                <div
+                    class="divide-y divide-border rounded-lg border border-border bg-background"
+                >
+                    <div class="flex items-start gap-3 px-3 py-1">
                         <label
-                            class="w-20 text-sm font-medium text-soft-foreground"
-                            >Template</label
+                            class="w-14 shrink-0 pt-2 text-sm text-muted-foreground"
+                            >To</label
                         >
-                        <div class="flex flex-1 items-center gap-2">
-                            <select
-                                v-model="selectedTemplateType"
-                                class="flex-1 rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none pointer-coarse:text-base"
-                            >
-                                <option
-                                    v-for="(label, value) in templateTypes"
-                                    :key="value"
-                                    :value="value"
-                                >
-                                    {{ label }}
-                                </option>
-                            </select>
-                            <span
-                                v-if="loadingTemplate"
-                                class="text-xs text-faint-foreground"
-                                >Loading...</span
-                            >
-                            <a
-                                href="/email-templates"
-                                target="_blank"
-                                class="text-xs text-primary hover:text-primary-soft-foreground"
-                                title="Customize templates"
-                            >
-                                Customize
-                            </a>
-                        </div>
+                        <EmailRecipientInput
+                            v-model="form.recipients"
+                            bare
+                            class="flex-1"
+                            :suggestions="contactSuggestions"
+                        />
                     </div>
-                </div>
-
-                <!-- To -->
-                <div class="mb-4">
-                    <div class="flex items-start">
+                    <div class="flex items-start gap-3 px-3 py-1">
                         <label
-                            class="w-20 pt-2 text-sm font-medium text-soft-foreground"
-                            >Send To</label
-                        >
-                        <div class="flex-1">
-                            <EmailRecipientInput
-                                v-model="form.recipients"
-                                :suggestions="contactSuggestions"
-                            />
-                            <p
-                                v-if="form.errors.recipients"
-                                class="mt-1 text-xs text-destructive"
-                            >
-                                {{ form.errors.recipients }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Cc -->
-                <div class="mb-4">
-                    <div class="flex items-start">
-                        <label
-                            class="w-20 pt-2 text-sm font-medium text-soft-foreground"
+                            class="w-14 shrink-0 pt-2 text-sm text-muted-foreground"
                             >Cc</label
                         >
-                        <div class="flex-1">
-                            <EmailRecipientInput
-                                v-model="form.cc"
-                                :suggestions="contactSuggestions"
-                            />
-                        </div>
+                        <EmailRecipientInput
+                            v-model="form.cc"
+                            bare
+                            class="flex-1"
+                            :suggestions="contactSuggestions"
+                        />
                     </div>
-                </div>
-
-                <!-- Subject -->
-                <div class="mb-4">
-                    <div class="flex items-center">
+                    <div class="flex items-center gap-3 px-3 py-1">
                         <label
-                            class="w-20 text-sm font-medium text-soft-foreground"
+                            for="email-subject"
+                            class="w-14 shrink-0 text-sm text-muted-foreground"
                             >Subject</label
                         >
                         <input
+                            id="email-subject"
                             v-model="form.subject"
                             type="text"
-                            class="flex-1 rounded-md border border-input px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none pointer-coarse:text-base"
+                            class="min-h-9 w-full border-0 bg-transparent p-1 text-sm font-medium text-foreground outline-none focus:ring-0 pointer-coarse:text-base"
                         />
                     </div>
-                    <p
-                        v-if="form.errors.subject"
-                        class="mt-1 ml-20 text-xs text-destructive"
-                    >
-                        {{ form.errors.subject }}
-                    </p>
                 </div>
+                <p
+                    v-if="form.errors.recipients"
+                    class="mt-1 text-xs text-destructive"
+                >
+                    {{ form.errors.recipients }}
+                </p>
+                <p
+                    v-if="form.errors.subject"
+                    class="mt-1 text-xs text-destructive"
+                >
+                    {{ form.errors.subject }}
+                </p>
+            </div>
 
-                <!-- Body (TipTap) -->
-                <div class="mb-4">
-                    <TipTapEditor
-                        v-model="form.body"
-                        placeholder="Compose your email..."
-                    />
-                    <p
-                        v-if="form.errors.body"
-                        class="mt-1 text-xs text-destructive"
-                    >
-                        {{ form.errors.body }}
-                    </p>
-                </div>
+            <div>
+                <TipTapEditor
+                    v-model="form.body"
+                    placeholder="Compose your email..."
+                />
+                <p
+                    v-if="form.errors.body"
+                    class="mt-1 text-xs text-destructive"
+                >
+                    {{ form.errors.body }}
+                </p>
+            </div>
 
-                <!-- Options -->
-                <div class="mb-4 border-t border-border pt-4">
-                    <h3 class="mb-3 text-sm font-semibold text-soft-foreground">
-                        Options
-                    </h3>
-                    <label
-                        class="flex cursor-pointer items-center rounded-md p-3 hover:bg-muted"
-                    >
-                        <input
-                            v-model="form.include_view_online_button"
-                            type="checkbox"
-                            class="h-4 w-4 rounded border-input text-primary focus:ring-ring"
+            <section class="space-y-3">
+                <h3
+                    class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                >
+                    Include
+                </h3>
+                <div class="grid gap-2 sm:grid-cols-2">
+                    <label :class="optionCard">
+                        <Checkbox v-model="form.attach_pdf" class="mt-0.5" />
+                        <FileText
+                            class="mt-0.5 size-4 shrink-0 text-muted-foreground"
                         />
-                        <div class="ml-3">
-                            <div class="text-sm font-medium text-foreground">
-                                Include "View
-                                {{
-                                    invoice.type === 'estimate'
-                                        ? 'Estimate'
-                                        : 'Invoice'
-                                }}
-                                Online" button
-                            </div>
-                            <div class="text-xs text-muted-foreground">
-                                Adds a CTA linking to the public document page
-                            </div>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- Attachments -->
-                <div class="mb-4 border-t border-border pt-4">
-                    <h3 class="mb-3 text-sm font-semibold text-soft-foreground">
-                        Attachments
-                    </h3>
-
-                    <label
-                        class="flex cursor-pointer items-center rounded-md p-3 hover:bg-muted"
-                    >
-                        <input
-                            v-model="form.attach_pdf"
-                            type="checkbox"
-                            class="h-4 w-4 rounded border-input text-primary focus:ring-ring"
-                        />
-                        <div class="ml-3">
-                            <div class="text-sm font-medium text-foreground">
-                                {{ invoice.invoice_number }}.pdf
-                            </div>
-                            <div class="text-xs text-muted-foreground">
-                                {{
-                                    invoice.type === 'estimate'
-                                        ? 'Estimate'
-                                        : 'Invoice'
-                                }}
-                                PDF document
-                            </div>
-                        </div>
-                    </label>
-
-                    <!-- Saved invoice attachments (excluding one only omits it
-                         from this send; it stays on the invoice). -->
-                    <ul
-                        v-if="includedAttachments.length > 0"
-                        class="mt-2 space-y-1"
-                    >
-                        <li
-                            v-for="attachment in includedAttachments"
-                            :key="attachment.id"
-                            class="flex items-center justify-between rounded-md border border-border bg-muted px-3 py-2"
-                        >
-                            <div class="min-w-0 flex-1">
-                                <a
-                                    :href="attachment.url"
-                                    target="_blank"
-                                    rel="noopener"
-                                    class="truncate text-sm font-medium text-primary hover:underline"
-                                >
-                                    {{ attachment.name }}
-                                </a>
-                                <div class="text-xs text-muted-foreground">
-                                    {{ formatBytes(attachment.size) }}
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                class="ml-2 text-faint-foreground hover:text-destructive"
-                                aria-label="Exclude attachment from this email"
-                                @click="removeInvoiceAttachment(attachment.id)"
+                        <span class="min-w-0">
+                            <span
+                                class="block truncate text-sm font-medium text-foreground"
+                                >{{ invoice.invoice_number }}.pdf</span
                             >
-                                <svg
-                                    class="h-4 w-4"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                >
-                                    <path
-                                        fill-rule="evenodd"
-                                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                        clip-rule="evenodd"
-                                    />
-                                </svg>
-                            </button>
-                        </li>
-                    </ul>
-
-                    <!-- New files: uploaded to the invoice and attached here. -->
-                    <div class="mt-2">
-                        <AttachmentDropzone v-model="form.attachments" />
-                    </div>
-
-                    <p
-                        v-if="form.errors.attachments"
-                        class="mt-1 text-xs text-destructive"
-                    >
-                        {{ form.errors.attachments }}
-                    </p>
+                            <span class="block text-xs text-muted-foreground"
+                                >{{ documentLabel }} PDF</span
+                            >
+                        </span>
+                    </label>
+                    <label :class="optionCard">
+                        <Checkbox
+                            v-model="form.include_view_online_button"
+                            class="mt-0.5"
+                        />
+                        <Globe
+                            class="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                        />
+                        <span class="min-w-0">
+                            <span
+                                class="block text-sm font-medium text-foreground"
+                                >"View {{ documentLabel }} Online" button</span
+                            >
+                            <span class="block text-xs text-muted-foreground"
+                                >Links to the public page</span
+                            >
+                        </span>
+                    </label>
                 </div>
-            </div>
 
-            <!-- Footer -->
-            <div class="flex gap-3 border-t border-border bg-muted px-6 py-4">
-                <button
-                    type="button"
-                    class="rounded-md border border-input px-6 py-2 font-medium text-soft-foreground hover:bg-secondary"
-                    @click="emit('close')"
+                <!-- Saved invoice attachments (excluding one only omits it
+                     from this send; it stays on the invoice). -->
+                <ul v-if="includedAttachments.length > 0" class="space-y-2">
+                    <li
+                        v-for="attachment in includedAttachments"
+                        :key="attachment.id"
+                        class="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2"
+                    >
+                        <Paperclip
+                            class="size-4 shrink-0 text-muted-foreground"
+                        />
+                        <div class="min-w-0 flex-1">
+                            <a
+                                :href="attachment.url"
+                                target="_blank"
+                                rel="noopener"
+                                class="block truncate text-sm font-medium text-primary hover:underline"
+                            >
+                                {{ attachment.name }}
+                            </a>
+                            <div class="text-xs text-muted-foreground">
+                                {{ formatBytes(attachment.size) }}
+                            </div>
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            class="size-7 text-muted-foreground hover:text-destructive"
+                            aria-label="Exclude attachment from this email"
+                            @click="removeInvoiceAttachment(attachment.id)"
+                        >
+                            <X />
+                        </Button>
+                    </li>
+                </ul>
+
+                <!-- New files: uploaded to the invoice and attached here. -->
+                <AttachmentDropzone v-model="form.attachments" />
+
+                <p
+                    v-if="form.errors.attachments"
+                    class="text-xs text-destructive"
                 >
-                    Cancel
-                </button>
-                <button
-                    type="button"
-                    :disabled="form.processing || !hasRecipients"
-                    class="rounded-md bg-primary px-6 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-                    @click="send"
-                >
-                    {{ form.processing ? 'Sending...' : 'Send' }}
-                </button>
-            </div>
-        </div>
-    </div>
+                    {{ form.errors.attachments }}
+                </p>
+            </section>
+        </DialogBody>
+
+        <DialogFooter>
+            <template #meta>{{ sendSummary }}</template>
+            <Button variant="outline" @click="emit('close')">Cancel</Button>
+            <Button :disabled="form.processing || !hasRecipients" @click="send">
+                <Send />
+                {{ form.processing ? 'Sending...' : 'Send' }}
+            </Button>
+        </DialogFooter>
+    </Dialog>
 </template>

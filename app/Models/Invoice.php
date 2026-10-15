@@ -223,6 +223,18 @@ class Invoice extends Model implements HasMedia
             ->whereColumn('amount_paid', '<', 'total');
     }
 
+    /**
+     * The query form of canBeReminded().
+     *
+     * @param  Builder<Invoice>  $query
+     */
+    public function scopeRemindable(Builder $query): Builder
+    {
+        return $query->where('type', 'invoice')
+            ->whereIn('status', [InvoiceStatus::SENT, InvoiceStatus::PARTIALLY_PAID])
+            ->whereColumn('amount_paid', '<', 'total');
+    }
+
     /** @param Builder<Invoice> $query */
     public function scopeUnpaid(Builder $query): Builder
     {
@@ -360,6 +372,17 @@ class Invoice extends Model implements HasMedia
         }
 
         return (int) $this->due_at->startOfDay()->diffInDays(now()->startOfDay());
+    }
+
+    /**
+     * A reminder only makes sense for an invoice that went out and is still owed.
+     * scopeRemindable() is the query form; keep the two in step.
+     */
+    public function canBeReminded(): bool
+    {
+        return $this->isInvoice()
+            && in_array($this->status, [InvoiceStatus::SENT, InvoiceStatus::PARTIALLY_PAID], true)
+            && $this->remaining_balance > 0;
     }
 
     public function isFullyPaid(): bool

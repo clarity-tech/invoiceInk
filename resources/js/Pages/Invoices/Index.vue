@@ -428,10 +428,29 @@ const tabs = [
                                     *without* opening anything: the PDF a row
                                     is often chased for, and the duplicate that
                                     starts the next document from this one.
+                                    An overdue row also offers a reminder, which
+                                    opens on the document's page.
                                 -->
                                 <div
                                     class="flex items-center justify-end gap-1"
                                 >
+                                    <Button
+                                        v-if="
+                                            invoice.is_overdue &&
+                                            invoice.can_remind &&
+                                            can('update')
+                                        "
+                                        :as="Link"
+                                        variant="ghost"
+                                        size="sm"
+                                        class="text-muted-foreground hover:text-foreground"
+                                        :href="`/invoices/${invoice.id}?remind=1`"
+                                        :aria-label="
+                                            actionLabel('Remind', invoice)
+                                        "
+                                    >
+                                        Remind
+                                    </Button>
                                     <Button
                                         as="a"
                                         variant="ghost"

@@ -59,7 +59,7 @@ test('save creates or updates override', function () {
     expect(EmailTemplate::first()->subject)->toBe('Subject v2');
 });
 
-test('listForOrganization shows all 8 types with customization status', function () {
+test('listForOrganization shows all 9 types with customization status', function () {
     $org = createOrganizationWithLocation();
     $service = new EmailTemplateService;
 
@@ -67,7 +67,7 @@ test('listForOrganization shows all 8 types with customization status', function
 
     $list = $service->listForOrganization($org);
 
-    expect($list)->toHaveCount(8);
+    expect($list)->toHaveCount(9);
 
     $initial = collect($list)->firstWhere('type', 'invoice_initial');
     expect($initial['is_customized'])->toBeTrue();
@@ -136,7 +136,7 @@ test('render method substitutes variables in resolved template', function () {
 
 // --- Default templates ---
 
-test('all 8 template types have defaults', function () {
+test('all 9 template types have defaults', function () {
     foreach (EmailTemplateType::cases() as $type) {
         $default = DefaultEmailTemplates::get($type);
 
@@ -166,7 +166,7 @@ test('index page renders with all templates', function () {
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('EmailTemplates/Index')
-            ->has('templates', 8)
+            ->has('templates', 9)
             ->has('variables')
         );
 });

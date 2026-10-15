@@ -3,15 +3,24 @@ import { Link, router, useForm } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import CustomerForm from '@/Components/CustomerForm.vue';
+import CustomerReminderModal from '@/Components/Invoice/CustomerReminderModal.vue';
 import LocationModal from '@/Components/LocationModal.vue';
+import MoneyDisplay from '@/Components/MoneyDisplay.vue';
+import { formatDate } from '@/composables/useFormatDate';
 import {
     formatLocationLine,
     formatLocationSummary,
 } from '@/composables/useLocationFormat';
+import { overdueLabel } from '@/composables/useOverdueLabel';
 import { usePermissions } from '@/composables/usePermissions';
 import { taxLabelFor } from '@/composables/useTaxLabel';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import type { Contact, Customer, Location } from '@/types';
+import type {
+    Contact,
+    Customer,
+    CustomerReminderDraft,
+    Location,
+} from '@/types';
 
 const { can } = usePermissions();
 
@@ -29,7 +38,11 @@ const props = defineProps<{
     gstTreatments: Record<string, string>;
     /** Set when arriving straight from creating the customer. */
     promptLocation?: boolean;
+    /** Null when nothing is owed. */
+    reminder: CustomerReminderDraft | null;
 }>();
+
+const showReminderModal = ref(false);
 
 const isMounted = ref(false);
 onMounted(() => {
@@ -262,6 +275,54 @@ const showArchived = ref(false);
                 </div>
             </div>
 
+            <div v-if="reminder" class="bg-card shadow-sm sm:rounded-lg">
+                <div
+                    class="flex items-center justify-between border-b border-border px-6 py-4"
+                >
+                    <h3 class="text-sm font-medium text-foreground">
+                        Unpaid invoices ({{ reminder.invoices.length }})
+                    </h3>
+                    <button
+                        v-if="can('update')"
+                        type="button"
+                        class="cursor-pointer text-sm font-medium text-primary hover:text-primary-soft-foreground"
+                        @click="showReminderModal = true"
+                    >
+                        Send reminder
+                    </button>
+                </div>
+                <ul class="divide-y divide-border">
+                    <li
+                        v-for="invoice in reminder.invoices"
+                        :key="invoice.id"
+                        class="flex items-center justify-between gap-3 px-6 py-3 text-sm"
+                    >
+                        <div>
+                            <Link
+                                :href="`/invoices/${invoice.id}`"
+                                class="font-medium text-foreground hover:underline"
+                            >
+                                {{ invoice.invoice_number }}
+                            </Link>
+                            <div class="text-xs text-muted-foreground">
+                                Due {{ formatDate(invoice.due_at) }}
+                                <span
+                                    v-if="invoice.days_overdue !== null"
+                                    class="text-destructive"
+                                >
+                                    · {{ overdueLabel(invoice) }}
+                                </span>
+                            </div>
+                        </div>
+                        <MoneyDisplay
+                            class="text-foreground tabular-nums"
+                            :amount="invoice.remaining_balance"
+                            :currency="invoice.currency"
+                        />
+                    </li>
+                </ul>
+            </div>
+
             <!-- Locations -->
             <div class="bg-card shadow-sm sm:rounded-lg">
                 <div
@@ -471,6 +532,14 @@ const showArchived = ref(false);
                 </div>
             </div>
         </Teleport>
+
+        <CustomerReminderModal
+            v-if="reminder"
+            :show="showReminderModal"
+            :customer="customer"
+            :reminder="reminder"
+            @close="showReminderModal = false"
+        />
 
         <LocationModal
             :show="showLocationModal"

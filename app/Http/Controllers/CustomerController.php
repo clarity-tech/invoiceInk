@@ -11,6 +11,7 @@ use App\Http\Requests\UpdateCustomerRequest;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Location;
+use App\Services\CustomerReminders;
 use App\Support\PhoneNumber;
 use App\ValueObjects\ContactCollection;
 use Illuminate\Http\RedirectResponse;
@@ -64,7 +65,7 @@ class CustomerController extends Controller
         ]);
     }
 
-    public function show(Request $request, Customer $customer): Response
+    public function show(Request $request, Customer $customer, CustomerReminders $reminders): Response
     {
         $this->authorize('view', $customer);
 
@@ -77,6 +78,7 @@ class CustomerController extends Controller
             // Set by store() so the detail page can open the location modal on
             // arrival. Flashed, not a query param, so a reload does not reopen it.
             'promptLocation' => (bool) $request->session()->get('prompt_location', false),
+            'reminder' => $reminders->draft($customer),
             'currencies' => Currency::options(),
             'countries' => Country::options(),
             'countryNames' => Country::names(),

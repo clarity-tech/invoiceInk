@@ -128,6 +128,16 @@ return [
         'expired_help' => 'Ask :organization to send it again, and the new email will carry a link that works.',
         'expired_contact' => 'Email :email',
         'works_until' => 'This link works until :date.',
+        'links_work_until' => 'These links work until :date.',
+    ],
+
+    'reminder' => [
+        'title' => 'Payment reminder from :organization',
+        'invoice' => 'Invoice',
+        'due' => 'Due',
+        'balance' => 'Balance due',
+        'days_overdue' => ':days days overdue',
+        'total_due' => 'Total due (:currency)',
     ],
 
     'footer' => [

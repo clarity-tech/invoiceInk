@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { isValidEmail } from '@/lib/utils';
+import { cn, isValidEmail } from '@/lib/utils';
 import type { Contact } from '@/types';
 
 const props = withDefaults(
@@ -8,10 +8,13 @@ const props = withDefaults(
         // Known contacts to offer as suggestions.
         suggestions?: Contact[];
         placeholder?: string;
+        // No box of its own, for a row inside a grouped block.
+        bare?: boolean;
     }>(),
     {
         suggestions: () => [],
         placeholder: 'Type email and press Enter',
+        bare: false,
     },
 );
 
@@ -113,17 +116,25 @@ function removeEmail(email: string) {
 <template>
     <div class="relative">
         <div
-            class="flex min-h-[44px] flex-wrap items-center gap-2 rounded-md border border-input p-2 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring"
+            :class="
+                cn(
+                    'flex flex-wrap items-center gap-1.5',
+                    bare
+                        ? 'min-h-9'
+                        : 'min-h-[44px] rounded-md border border-input p-2 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring',
+                )
+            "
         >
             <div
                 v-for="email in model"
                 :key="email"
-                class="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1"
+                class="inline-flex items-center gap-1 rounded-full bg-secondary py-0.5 pr-1 pl-2.5"
             >
                 <span class="text-sm text-soft-foreground">{{ email }}</span>
                 <button
                     type="button"
-                    class="text-muted-foreground hover:text-soft-foreground"
+                    class="rounded-full p-0.5 text-muted-foreground hover:bg-border hover:text-soft-foreground"
+                    :aria-label="`Remove ${email}`"
                     @click="removeEmail(email)"
                 >
                     <svg
@@ -143,7 +154,7 @@ function removeEmail(email: string) {
                 v-model="query"
                 type="email"
                 :placeholder="placeholder"
-                class="min-w-[200px] flex-1 border-none p-1 text-sm outline-none focus:ring-0 pointer-coarse:text-base"
+                class="min-w-[200px] flex-1 border-none bg-transparent p-1 text-sm outline-none placeholder:text-muted-foreground focus:ring-0 pointer-coarse:text-base"
                 @focus="open = true"
                 @blur="onBlur"
                 @keydown.enter.prevent="addTyped"

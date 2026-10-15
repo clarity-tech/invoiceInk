@@ -6,6 +6,7 @@ use App\Contracts\Services\InvoiceNumberingServiceInterface;
 use App\Contracts\Services\PdfServiceInterface;
 use App\Enums\Country;
 use App\Enums\EmailDeliveryStatus;
+use App\Enums\EmailTemplateType;
 use App\Enums\IndianState;
 use App\Enums\InvoiceStatus;
 use App\Exceptions\ExchangeRateUnavailable;
@@ -19,6 +20,7 @@ use App\Models\InvoiceNumberingSeries;
 use App\Models\Location;
 use App\Models\Organization;
 use App\Models\Payment;
+use App\Services\CustomerReminders;
 use App\Services\EstimateToInvoiceConverter;
 use App\Services\ExchangeRateService;
 use App\Services\GstBreakdownService;
@@ -79,6 +81,7 @@ class InvoiceController extends Controller
                 'remaining_balance' => $invoice->remaining_balance,
                 'is_overdue' => $invoice->isOverdue(),
                 'days_overdue' => $invoice->daysOverdue(),
+                'can_remind' => $invoice->canBeReminded(),
             ]));
 
         return Inertia::render('Invoices/Index', [
@@ -99,7 +102,7 @@ class InvoiceController extends Controller
      * only require looking at one: what is still owed, whether it ever
      * reached the customer, what was paid and when.
      */
-    public function show(Invoice $invoice): Response
+    public function show(Invoice $invoice, CustomerReminders $reminders): Response
     {
         $this->authorize('view', $invoice);
 
@@ -124,6 +127,7 @@ class InvoiceController extends Controller
                 'remaining_balance' => $invoice->remaining_balance,
                 'is_overdue' => $invoice->isOverdue(),
                 'days_overdue' => $invoice->daysOverdue(),
+                'can_remind' => $invoice->canBeReminded(),
                 // Both are methods, so neither survives toArray(), and the tax
                 // one rounds. Recomputing them in the browser would risk a line
                 // that disagrees by a paisa with the PDF of the same document.
@@ -140,6 +144,10 @@ class InvoiceController extends Controller
             // which says how long the links it sent last.
             'shareLink' => $invoice->shareLink()->toArray(),
             'shareLinkDays' => config('app.share_link_days'),
+            // Offered from the reminder dialog when the customer owes on others too.
+            'customerReminder' => $invoice->canBeReminded() && $invoice->customer
+                ? $reminders->draft($invoice->customer, minimum: 2)
+                : null,
             // Model methods rather than attributes, so they do not survive
             // toArray() and have to be passed explicitly.
             //
@@ -429,7 +437,7 @@ class InvoiceController extends Controller
         ))->with('success', "{$invoice->typeLabel()} created successfully.");
     }
 
-    public function edit(Request $request, Invoice $invoice): Response
+    public function edit(Request $request, Invoice $invoice, CustomerReminders $reminders): Response
     {
         $this->authorize('update', $invoice);
 
@@ -493,6 +501,11 @@ class InvoiceController extends Controller
             'invoice' => $invoice,
             'attachments' => $invoice->attachmentsForDisplay(),
             'shareLink' => $invoice->shareLink()->toArray(),
+            // Remind, as on the detail page. It emails the saved invoice.
+            'reminder' => $invoice->canBeReminded() ? [
+                'template_type' => ($invoice->isOverdue() ? EmailTemplateType::InvoiceOverdue : EmailTemplateType::InvoiceReminder)->value,
+                'customer' => $invoice->customer ? $reminders->draft($invoice->customer, minimum: 2) : null,
+            ] : null,
             'customers' => $customers,
             'organizationLocations' => $organizationLocations,
             'taxOptions' => $taxOptions,
@@ -617,6 +630,7 @@ class InvoiceController extends Controller
             'body' => ['required', 'string'],
             'attach_pdf' => ['boolean'],
             'include_view_online_button' => ['boolean'],
+            'template_type' => ['nullable', Rule::enum(EmailTemplateType::class)->only(EmailTemplateType::forDocumentType($invoice->type))],
             'attachment_ids' => ['nullable', 'array'],
             'attachment_ids.*' => ['integer'],
             'attachments' => ['nullable', 'array', 'max:10'],
@@ -658,6 +672,7 @@ class InvoiceController extends Controller
             'invoice_id' => $invoice->id,
             'mailable_type' => DocumentMailer::class,
             'mode' => 'platform',
+            'template_type' => $validated['template_type'] ?? null,
             'status' => EmailDeliveryStatus::QUEUED,
             'recipients' => $contactCollection->getEmails(),
             'queued_at' => now(),

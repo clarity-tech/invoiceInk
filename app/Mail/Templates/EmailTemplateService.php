@@ -3,6 +3,7 @@
 namespace App\Mail\Templates;
 
 use App\Enums\EmailTemplateType;
+use App\Models\Customer;
 use App\Models\EmailTemplate;
 use App\Models\Invoice;
 use App\Models\Organization;
@@ -48,6 +49,22 @@ class EmailTemplateService
         $invoice->loadMissing('organization');
         $template = $this->resolve($invoice->organization, $type);
         $variables = TemplateVariableResolver::resolve($invoice);
+
+        return [
+            'subject' => TemplateVariableResolver::render($template['subject'], $variables),
+            'body' => TemplateVariableResolver::render($template['body'], $variables),
+            'is_customized' => $template['is_customized'],
+        ];
+    }
+
+    /**
+     * @return array{subject: string, body: string, is_customized: bool}
+     */
+    public function renderForCustomer(Customer $customer, EmailTemplateType $type): array
+    {
+        $customer->loadMissing('organization');
+        $template = $this->resolve($customer->organization, $type);
+        $variables = TemplateVariableResolver::resolveForCustomer($customer);
 
         return [
             'subject' => TemplateVariableResolver::render($template['subject'], $variables),

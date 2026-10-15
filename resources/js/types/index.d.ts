@@ -157,6 +157,8 @@ export interface Invoice {
     /** Derived for the list; see InvoiceController::index(). */
     is_overdue?: boolean;
     days_overdue?: number | null;
+    /** Sent, still owed, and an invoice; see Invoice::canBeReminded(). */
+    can_remind?: boolean;
     formatted_remaining_balance?: string;
     payment_percentage?: number;
     payments?: Payment[];
@@ -166,6 +168,29 @@ export interface Invoice {
     created_at: string;
     updated_at: string;
     deleted_at?: string | null;
+}
+
+/** One unpaid invoice offered in a combined reminder; see CustomerReminders. */
+export interface CustomerReminderInvoice {
+    id: number;
+    invoice_number: string;
+    currency: Currency;
+    remaining_balance: number;
+    due_at: string | null;
+    days_overdue: number | null;
+}
+
+/** What the combined reminder dialog opens with. */
+export interface CustomerReminderDraft {
+    invoices: CustomerReminderInvoice[];
+    subject: string;
+    body: string;
+}
+
+/** What the edit page needs to offer Remind; see InvoiceController::edit(). */
+export interface InvoiceReminderOffer {
+    template_type: string;
+    customer: CustomerReminderDraft | null;
 }
 
 /** A signed link to a document's public page, and when it stops working. */
@@ -180,6 +205,8 @@ export interface EmailDelivery {
     id: number;
     status: EmailDeliveryStatus;
     mode: string;
+    template_type?: string | null;
+    template_label: string;
     recipients: string[];
     error?: string | null;
     attempts: number;

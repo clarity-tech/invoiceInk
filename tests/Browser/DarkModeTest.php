@@ -397,6 +397,8 @@ it('keeps the dialogs legible in dark mode', function (string $path, string $ope
     'delete confirmation' => ['/invoices/{invoice}', '[aria-label^="Delete invoice"]', 'moves to Trash'],
     'add customer' => ['/customers', 'Add Customer', 'Create Customer'],
     'add location' => ['/customers/{customer}', 'button:has-text("Add location")', 'Location Name'],
+    'reminder' => ['/invoices/{invoice}', 'button:has-text("Remind")', 'Email to Sandline Pharmacy LLC'],
+    'customer reminder' => ['/customers/{customer}', 'button:has-text("Send reminder")', 'Remind Sandline Pharmacy LLC'],
 ]);
 
 it('keeps the setup wizard legible in dark mode', function () {

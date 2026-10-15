@@ -12,6 +12,7 @@ enum EmailTemplateType: string
     case EstimateReminder = 'estimate_reminder';
     case EstimateExpired = 'estimate_expired';
     case EstimateThankYou = 'estimate_thank_you';
+    case CustomerReminder = 'customer_reminder';
 
     public function label(): string
     {
@@ -24,6 +25,7 @@ enum EmailTemplateType: string
             self::EstimateReminder => 'Estimate Reminder',
             self::EstimateExpired => 'Estimate Expired',
             self::EstimateThankYou => 'Estimate Accepted',
+            self::CustomerReminder => 'Combined Reminder',
         };
     }
 
@@ -32,6 +34,7 @@ enum EmailTemplateType: string
         return match ($this) {
             self::InvoiceInitial, self::InvoiceReminder, self::InvoiceOverdue, self::InvoiceThankYou => 'invoice',
             self::EstimateInitial, self::EstimateReminder, self::EstimateExpired, self::EstimateThankYou => 'estimate',
+            self::CustomerReminder => 'customer',
         };
     }
 
@@ -46,6 +49,7 @@ enum EmailTemplateType: string
             self::EstimateReminder => 'Reminder before the estimate expires',
             self::EstimateExpired => 'Sent when the estimate validity has passed',
             self::EstimateThankYou => 'Sent when the estimate is accepted',
+            self::CustomerReminder => 'One email listing all of a customer\'s unpaid invoices',
         };
     }
 

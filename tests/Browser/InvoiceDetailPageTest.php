@@ -337,7 +337,7 @@ it('sends from the edit page, and offers nothing of the sort on the detail page'
         ->waitForText('Save & Send')
         ->click('button:has-text("Save & Send")')
         ->waitForText('Email to Sandline Pharmacy LLC')
-        ->assertSee('Send To')
+        ->assertSee('Subject')
         ->assertNoJavaScriptErrors();
 });
 

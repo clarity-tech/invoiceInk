@@ -121,7 +121,6 @@ it('renders the edit form without running away vertically', function () {
         // The document has to identify itself: the page used to say only
         // "Edit Invoice", with the number nowhere on screen.
         ->assertSee('CT-INV-0042')
-        ->assertSee('Riverbend Institute of Medical Sciences Limited')
         // Both open the document rather than change it, so they live in the
         // header now rather than in a floating row above the first card.
         ->assertSee('View public')

@@ -131,6 +131,7 @@ function mountEdit(invoiceOverrides = {}, propsOverride = {}) {
                 expires_at: '2026-11-13T10:00:00+00:00',
             },
             indianStates: {},
+            reminder: null,
             ...propsOverride,
         },
         global: {

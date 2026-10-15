@@ -187,9 +187,11 @@ describe('Invoice/EmailModal', () => {
         );
     });
 
-    it('shows Send To label', () => {
+    it('shows To label', () => {
         const wrapper = mountComponent();
-        expect(wrapper.text()).toContain('Send To');
+        expect(wrapper.findAll('label').some((l) => l.text() === 'To')).toBe(
+            true,
+        );
     });
 
     it('shows Cc label', () => {

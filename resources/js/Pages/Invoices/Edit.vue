@@ -6,6 +6,7 @@ import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import DocumentOpenActions from '@/Components/Invoice/DocumentOpenActions.vue';
 import InvoiceForm from '@/Components/Invoice/InvoiceForm.vue';
 import PaymentModal from '@/Components/Invoice/PaymentModal.vue';
+import RemindAction from '@/Components/Invoice/RemindAction.vue';
 import MoneyDisplay from '@/Components/MoneyDisplay.vue';
 import {
     Breadcrumb,
@@ -40,6 +41,7 @@ import type {
     TaxRateOption,
     InvoiceNumberingSeries,
     InvoiceAttachment,
+    InvoiceReminderOffer,
     ShareLink,
 } from '@/types';
 
@@ -54,6 +56,8 @@ const props = defineProps<{
     attachments: InvoiceAttachment[];
     shareLink: ShareLink;
     indianStates: Record<string, string>;
+    /** Null when the invoice cannot be reminded about. */
+    reminder: InvoiceReminderOffer | null;
 }>();
 
 const showPaymentModal = ref(false);
@@ -158,18 +162,23 @@ function deletePayment() {
                         one, not the one they had just picked.
                     -->
                     <div id="document-status-control" />
-                    <span
-                        v-if="invoice.customer?.name"
-                        class="truncate text-sm text-muted-foreground"
-                    >
-                        {{ invoice.customer.name }}
-                    </span>
                 </div>
 
-                <DocumentOpenActions
-                    :invoice="invoice"
-                    :share-link="shareLink"
-                />
+                <div
+                    class="ml-auto flex flex-wrap items-center justify-end gap-2"
+                >
+                    <RemindAction
+                        v-if="reminder"
+                        :invoice="invoice"
+                        :attachments="attachments"
+                        :template-type="reminder.template_type"
+                        :customer-reminder="reminder.customer"
+                    />
+                    <DocumentOpenActions
+                        :invoice="invoice"
+                        :share-link="shareLink"
+                    />
+                </div>
             </div>
         </template>
 

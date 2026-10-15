@@ -5,6 +5,7 @@ import { computed, ref } from 'vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
 import DocumentOpenActions from '@/Components/Invoice/DocumentOpenActions.vue';
 import PaymentModal from '@/Components/Invoice/PaymentModal.vue';
+import RemindAction from '@/Components/Invoice/RemindAction.vue';
 import MoneyDisplay from '@/Components/MoneyDisplay.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { Badge } from '@/Components/ui/badge';
@@ -33,6 +34,7 @@ import { overdueLabel } from '@/composables/useOverdueLabel';
 import { usePermissions } from '@/composables/usePermissions';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import type {
+    CustomerReminderDraft,
     EmailDelivery,
     Invoice,
     InvoiceAttachment,
@@ -45,6 +47,8 @@ const props = defineProps<{
     attachments: InvoiceAttachment[];
     shareLink: ShareLink;
     shareLinkDays: number;
+    /** Set when this customer owes on other invoices too. */
+    customerReminder: CustomerReminderDraft | null;
     hasShippingAddress: boolean;
     paymentTermsLabel: string | null;
     placeOfSupplyLabel: string | null;
@@ -131,6 +135,19 @@ const canRecordPayment = computed(
 const items = computed(() => props.invoice.items ?? []);
 const payments = computed(() => props.invoice.payments ?? []);
 const deliveries = computed(() => props.invoice.email_deliveries ?? []);
+
+const REMINDER_TYPES = [
+    'invoice_reminder',
+    'invoice_overdue',
+    'customer_reminder',
+];
+const lastReminder = computed(() =>
+    deliveries.value.find(
+        (delivery) =>
+            REMINDER_TYPES.includes(delivery.template_type ?? '') &&
+            delivery.status !== 'failed',
+    ),
+);
 /**
  * The server stores the GST split as a map of label to amount in cents --
  * `{'CGST @ (9%)': 1800000}` -- which is what the PDF template iterates. A
@@ -145,6 +162,13 @@ const taxBreakdown = computed(() =>
 );
 
 const showPaymentModal = ref(false);
+
+const canRemind = computed(
+    () => canUpdate.value && (props.invoice.can_remind ?? false),
+);
+const reminderTemplate = computed(() =>
+    props.invoice.is_overdue ? 'invoice_overdue' : 'invoice_reminder',
+);
 /**
  * Deleting is the one action on this page that destroys the page. The server
  * redirects to the list rather than back here, because the document 404s the
@@ -289,19 +313,14 @@ function deletePayment() {
                         separately -- but in the summary strip, under the due
                         date, not as a second badge here.
                     -->
-                    <span
-                        v-if="invoice.customer?.name"
-                        class="truncate text-sm text-muted-foreground"
-                    >
-                        {{ invoice.customer.name }}
-                    </span>
                 </div>
 
                 <!--
                     Sending is not here: it belongs with the document you are
                     about to send, and the editor's "Save & Send" sends what is
                     on screen rather than a copy saved some time earlier. This
-                    row is what you do with the document as it stands.
+                    row is what you do with the document as it stands, which
+                    includes chasing it with a reminder.
 
                     One action leads, quietly. A filled accent button shouted
                     across a row of outlines and over the document it belongs
@@ -313,7 +332,9 @@ function deletePayment() {
                     a badge and the two otherwise shared a right edge at
                     different heights -- following Edit made every control jump.
                 -->
-                <div class="flex flex-wrap items-center gap-2">
+                <div
+                    class="ml-auto flex flex-wrap items-center justify-end gap-2"
+                >
                     <Button
                         v-if="isEstimate && canUpdate"
                         size="sm"
@@ -333,6 +354,14 @@ function deletePayment() {
                         <Plus />
                         Record payment
                     </Button>
+                    <RemindAction
+                        v-if="canRemind"
+                        :invoice="invoice"
+                        :attachments="attachments"
+                        :template-type="reminderTemplate"
+                        :customer-reminder="customerReminder"
+                        open-from-url
+                    />
                     <Button
                         v-if="canUpdate"
                         :as="Link"
@@ -850,6 +879,13 @@ function deletePayment() {
                     <Card v-if="deliveries.length">
                         <CardHeader>
                             <CardTitle>Email history</CardTitle>
+                            <p
+                                v-if="lastReminder"
+                                class="text-xs text-muted-foreground"
+                            >
+                                Last reminder
+                                {{ formatDate(deliveryTime(lastReminder)) }}
+                            </p>
                         </CardHeader>
                         <CardContent class="text-sm">
                             <ul class="space-y-3">
@@ -859,6 +895,11 @@ function deletePayment() {
                                     class="flex items-start justify-between gap-3"
                                 >
                                     <div class="min-w-0">
+                                        <div
+                                            class="font-medium text-foreground"
+                                        >
+                                            {{ delivery.template_label }}
+                                        </div>
                                         <div
                                             class="truncate text-muted-foreground"
                                             :title="

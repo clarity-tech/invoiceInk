@@ -43,7 +43,7 @@ class DefaultEmailTemplates
                 'subject' => 'Reminder: Invoice #{{invoice_number}} is due {{due_date}}',
                 'body' => '<p>Dear {{customer_name}},</p>'
                     .'<p>This is a friendly reminder that invoice <strong>#{{invoice_number}}</strong> '
-                    .'for <strong>{{amount_due}}</strong> is due on <strong>{{due_date}}</strong>.</p>'
+                    .'for <strong>{{balance_due}}</strong> is due on <strong>{{due_date}}</strong>.</p>'
                     .'<p>If you have already made the payment, please disregard this message.</p>'
                     .'<p>Thank you!</p>',
             ],
@@ -51,7 +51,7 @@ class DefaultEmailTemplates
             EmailTemplateType::InvoiceOverdue => [
                 'subject' => 'Overdue: Invoice #{{invoice_number}} — {{days_overdue}} days past due',
                 'body' => '<p>Dear {{customer_name}},</p>'
-                    .'<p>Invoice <strong>#{{invoice_number}}</strong> for <strong>{{amount_due}}</strong> '
+                    .'<p>Invoice <strong>#{{invoice_number}}</strong> for <strong>{{balance_due}}</strong> '
                     .'was due on <strong>{{due_date}}</strong> and is now <strong>{{days_overdue}} days overdue</strong>.</p>'
                     .'<p>Please arrange payment at your earliest convenience.</p>'
                     .'<p>If you have any questions, please don\'t hesitate to reach out.</p>',
@@ -101,20 +101,40 @@ class DefaultEmailTemplates
                     .'<p>We will follow up shortly with the next steps.</p>'
                     .'<p>We look forward to working with you!</p>',
             ],
+
+            // The list of invoices and their totals is added below the body when
+            // sending, from the invoices actually selected.
+            EmailTemplateType::CustomerReminder => [
+                'subject' => 'Payment reminder: {{invoice_numbers}}',
+                'body' => '<p>Dear {{customer_name}},</p>'
+                    .'<p>This is a friendly reminder that the invoices below are still awaiting payment.</p>'
+                    .'<p>If you have already made the payment, please disregard this message.</p>'
+                    .'<p>Thank you!</p>',
+            ],
         };
     }
 
     /**
-     * Get all available template variable names for documentation/UI.
+     * Get the template variable names a template can use, for documentation/UI.
      *
      * @return array<string, string>
      */
-    public static function availableVariables(): array
+    public static function availableVariables(?EmailTemplateType $type = null): array
     {
+        if ($type === EmailTemplateType::CustomerReminder) {
+            return [
+                '{{customer_name}}' => 'Customer name',
+                '{{invoice_numbers}}' => 'Numbers of the invoices in the reminder',
+                '{{organization_name}}' => 'Your organization name',
+                '{{organization_email}}' => 'Your organization email',
+            ];
+        }
+
         return [
             '{{customer_name}}' => 'Customer name',
             '{{invoice_number}}' => 'Document number',
             '{{amount_due}}' => 'Total amount (formatted with currency)',
+            '{{balance_due}}' => 'Amount still owed after payments',
             '{{subtotal}}' => 'Subtotal before tax',
             '{{tax_amount}}' => 'Tax amount',
             '{{currency}}' => 'Currency code (e.g. INR, USD)',

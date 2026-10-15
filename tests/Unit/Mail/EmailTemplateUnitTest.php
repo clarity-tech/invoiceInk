@@ -6,8 +6,8 @@ use App\Mail\Templates\TemplateVariableResolver;
 
 // --- Enum tests ---
 
-test('enum has 8 cases', function () {
-    expect(EmailTemplateType::cases())->toHaveCount(8);
+test('enum has 9 cases', function () {
+    expect(EmailTemplateType::cases())->toHaveCount(9);
 });
 
 test('enum values are snake_case strings', function () {
@@ -28,9 +28,9 @@ test('each case has a description', function () {
     }
 });
 
-test('document type is invoice or estimate', function () {
+test('document type is invoice, estimate or customer', function () {
     foreach (EmailTemplateType::cases() as $case) {
-        expect($case->documentType())->toBeIn(['invoice', 'estimate']);
+        expect($case->documentType())->toBeIn(['invoice', 'estimate', 'customer']);
     }
 });
 

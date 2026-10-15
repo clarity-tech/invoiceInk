@@ -165,10 +165,11 @@ describe('EmailSendFlow', () => {
         );
     });
 
-    it('renders Send To and Cc sections', () => {
+    it('renders To and Cc sections', () => {
         const wrapper = mountComponent();
-        expect(wrapper.text()).toContain('Send To');
-        expect(wrapper.text()).toContain('Cc');
+        const labels = wrapper.findAll('label').map((l) => l.text());
+        expect(labels).toContain('To');
+        expect(labels).toContain('Cc');
     });
 
     it('renders email input fields for To and Cc', () => {

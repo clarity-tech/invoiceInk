@@ -4,6 +4,7 @@ namespace App\Mail\Templates;
 
 use Akaunting\Money\Currency;
 use Akaunting\Money\Money;
+use App\Models\Customer;
 use App\Models\Invoice;
 
 /**
@@ -37,6 +38,7 @@ class TemplateVariableResolver
             '{{customer_name}}' => e($invoice->customer?->name ?? 'Customer'),
             '{{invoice_number}}' => e($invoice->invoice_number ?? ''),
             '{{amount_due}}' => e((new Money($total, new Currency($currencyCode)))->format()),
+            '{{balance_due}}' => e((new Money($invoice->remaining_balance, new Currency($currencyCode)))->format()),
             '{{subtotal}}' => e((new Money($subtotal, new Currency($currencyCode)))->format()),
             '{{tax_amount}}' => e((new Money($tax, new Currency($currencyCode)))->format()),
             '{{currency}}' => e($currencyCode),
@@ -48,6 +50,27 @@ class TemplateVariableResolver
             '{{days_overdue}}' => (string) $daysOverdue,
             '{{status}}' => e(ucfirst($invoice->status?->value ?? 'draft')),
         ];
+    }
+
+    /**
+     * Variables for an email about a customer rather than one document. The
+     * document variables resolve to nothing, so a stray one is not sent as-is.
+     *
+     * @return array<string, string>
+     */
+    public static function resolveForCustomer(Customer $customer): array
+    {
+        $customer->loadMissing('organization');
+        $organization = $customer->organization;
+
+        return array_merge(
+            array_fill_keys(array_keys(DefaultEmailTemplates::availableVariables()), ''),
+            [
+                '{{customer_name}}' => e($customer->name),
+                '{{organization_name}}' => e($organization?->company_name ?? $organization?->name ?? ''),
+                '{{organization_email}}' => e($organization?->emails?->first()['email'] ?? ''),
+            ],
+        );
     }
 
     /**
