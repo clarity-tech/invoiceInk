@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.17.0](https://github.com/clarity-tech/invoicing/compare/v1.16.0...v1.17.0) (2026-10-15)
+
+
+### Features
+
+* **invoices:** share documents by signed links that expire ([05d628b](https://github.com/clarity-tech/invoicing/commit/05d628b4044c381ffb426aaf907e473d66793f7d))
+* **mcp:** let Claude's connectors sign in over OAuth ([963955d](https://github.com/clarity-tech/invoicing/commit/963955d8ebecde53891e0182e2998ff74027b5c8))
+
 ## [1.16.0](https://github.com/clarity-tech/invoicing/compare/v1.15.2...v1.16.0) (2026-10-14)
 
 
