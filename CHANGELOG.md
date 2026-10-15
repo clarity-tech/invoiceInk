@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.1](https://github.com/clarity-tech/invoicing/compare/v1.17.0...v1.17.1) (2026-10-15)
+
+
+### Bug Fixes
+
+* **deploy:** bring a cold start under Claude's 10s connector limit ([3f7d663](https://github.com/clarity-tech/invoicing/commit/3f7d66384a1ec4616e3130a6567a9ba9349401fb))
+
 ## [1.17.0](https://github.com/clarity-tech/invoicing/compare/v1.16.0...v1.17.0) (2026-10-15)
 
 
