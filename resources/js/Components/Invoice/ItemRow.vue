@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { useHttp } from '@inertiajs/vue3';
 import { computed, nextTick, ref } from 'vue';
-import { Pencil, Plus, X } from 'lucide-vue-next';
+import { Loader2, Pencil, Plus, Sparkles, X } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { Input, quietControlClasses } from '@/Components/ui/input';
 import { Select } from '@/Components/ui/select';
@@ -17,6 +18,8 @@ const props = defineProps<{
     taxOptions: TaxRateOption[];
     canRemove: boolean;
     errors: Record<string, string>;
+    /** Offer to suggest the SAC code and tax rate with AI. */
+    aiSuggest?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -125,6 +128,60 @@ async function editSac() {
     await nextTick();
     sacInput.value?.$el?.focus();
 }
+
+const suggestion = useHttp<
+    { description: string },
+    { sac_code: string | null; tax_rate: number | null; reason: string }
+>({ description: '' });
+
+// What the AI took the line to be, shown under it until the next suggestion.
+const suggestionNote = ref<string | null>(null);
+const suggestionFailure = ref<string | null>(null);
+
+const canSuggest = computed(
+    () => props.aiSuggest && props.item.description.trim().length >= 3,
+);
+
+function suggest() {
+    suggestion.description = props.item.description;
+    suggestionNote.value = null;
+    suggestionFailure.value = null;
+
+    suggestion
+        .post('/invoices/item-suggestion', {
+            onSuccess: (suggested) => {
+                const updated = { ...props.item };
+
+                if (suggested.sac_code) {
+                    updated.sac_code = suggested.sac_code;
+                }
+
+                if (suggested.tax_rate !== null) {
+                    updated.tax_rate = suggested.tax_rate;
+                    taxMode.value =
+                        props.taxOptions.find(
+                            (t) => t.rate === suggested.tax_rate,
+                        )?.key ?? NO_TAX;
+                }
+
+                emit('update', updated);
+                suggestionNote.value = suggested.reason;
+            },
+            onHttpException: () => {
+                suggestionFailure.value =
+                    'No suggestion just now. Try again, or fill it in yourself.';
+
+                return false;
+            },
+        })
+        .catch(() => {});
+}
+
+const suggestionError = computed(() => {
+    const errors = suggestion.errors as Record<string, string | undefined>;
+
+    return suggestionFailure.value ?? errors.suggestion ?? errors.description;
+});
 </script>
 
 <template>
@@ -220,6 +277,40 @@ async function editSac() {
                     />
                     {{ item.sac_code ? `SAC ${item.sac_code}` : 'SAC code' }}
                 </button>
+                <button
+                    v-if="canSuggest && !editingSac"
+                    type="button"
+                    :disabled="suggestion.processing"
+                    class="ml-1 inline-flex cursor-pointer items-center gap-1 rounded px-1 py-0.5 text-xs text-primary hover:bg-primary-soft disabled:opacity-60 pointer-coarse:min-h-9 pointer-coarse:px-2"
+                    :aria-label="`Suggest the SAC code and tax for item ${index + 1}`"
+                    @click="suggest"
+                >
+                    <component
+                        :is="suggestion.processing ? Loader2 : Sparkles"
+                        class="size-3"
+                        :class="{ 'animate-spin': suggestion.processing }"
+                    />
+                    {{
+                        suggestion.processing
+                            ? 'Suggesting...'
+                            : 'Suggest code & tax'
+                    }}
+                </button>
+                <p
+                    v-if="suggestionError || suggestionNote"
+                    class="mt-0.5 text-xs"
+                    :class="
+                        suggestionError
+                            ? 'text-destructive'
+                            : 'text-muted-foreground'
+                    "
+                    role="status"
+                >
+                    {{
+                        suggestionError ??
+                        `Suggested by AI: ${suggestionNote} Check it before saving.`
+                    }}
+                </p>
             </div>
         </td>
         <td class="px-2 py-2 max-lg:p-0">

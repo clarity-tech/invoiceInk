@@ -11,6 +11,7 @@ use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceDraftController;
 use App\Http\Controllers\InvoiceEmailDraftController;
+use App\Http\Controllers\LineItemSuggestionController;
 use App\Http\Controllers\NumberingSeriesController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationSetupController;
@@ -128,6 +129,7 @@ Route::middleware([
         Route::get('/invoices/{invoice}/attachments/{media}', [InvoiceController::class, 'showAttachment'])->name('invoices.attachments.show');
         Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
         Route::post('/invoices/draft', [InvoiceDraftController::class, 'store'])->middleware('throttle:invoice-drafts')->name('invoices.draft');
+        Route::post('/invoices/item-suggestion', [LineItemSuggestionController::class, 'store'])->middleware('throttle:item-suggestions')->name('invoices.item-suggestion');
         Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
         // Deliberately registered below /invoices/create and /invoices/trash, and
         // constrained to a numeric id: a bare {invoice} placeholder matches those

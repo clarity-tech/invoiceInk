@@ -150,6 +150,11 @@ return [
         'past_due_date' => 'The document\'s due date, :date, has already passed, so it was not used.',
     ],
 
+    'item_suggestion' => [
+        'failed' => 'No suggestion just now. Try again, or fill it in yourself.',
+        'rate_limited' => 'You have asked for a lot of suggestions in the last hour. Try again later.',
+    ],
+
     'email_draft' => [
         'failed' => 'The email could not be written just now. Try again, or write it yourself.',
         'rate_limited' => 'You have written a lot of emails with AI in the last hour. Try again later.',

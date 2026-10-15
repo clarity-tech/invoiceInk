@@ -814,6 +814,10 @@ const orgContacts = computed<Contact[]>(
                                     :tax-options="taxOptions"
                                     :can-remove="items.length > 1"
                                     :errors="form.errors"
+                                    :ai-suggest="
+                                        page.props.auth?.currentTeam?.ai ===
+                                        true
+                                    "
                                     @update="updateItem(index, $event)"
                                     @remove="requestRemoveItem(index)"
                                 />

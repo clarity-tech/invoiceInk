@@ -50,6 +50,13 @@ class AppServiceProvider extends ServiceProvider
             ->by($request->user()?->id ?: $request->ip())
             ->response(fn () => back()->withErrors(['draft' => __('messages.invoice_draft.rate_limited')])));
 
+        RateLimiter::for('item-suggestions', fn (Request $request) => Limit::perHour(config('services.item_suggestions.per_hour'))
+            ->by($request->user()?->id ?: $request->ip())
+            ->response(fn () => response()->json([
+                'message' => __('messages.item_suggestion.rate_limited'),
+                'errors' => ['suggestion' => [__('messages.item_suggestion.rate_limited')]],
+            ], 422)));
+
         RateLimiter::for('email-drafts', fn (Request $request) => Limit::perHour(config('services.email_drafts.per_hour'))
             ->by($request->user()?->id ?: $request->ip())
             ->response(fn () => response()->json([

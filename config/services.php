@@ -68,4 +68,11 @@ return [
         'per_hour' => (int) env('EMAIL_DRAFT_PER_HOUR', 60),
     ],
 
+    // Suggesting a line item's SAC/HSN code and tax rate.
+    'item_suggestions' => [
+        'model' => env('ITEM_SUGGESTION_MODEL', 'claude-haiku-5-5'),
+        'timeout' => (int) env('ITEM_SUGGESTION_TIMEOUT', 20),
+        'per_hour' => (int) env('ITEM_SUGGESTION_PER_HOUR', 120),
+    ],
+
 ];
