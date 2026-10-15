@@ -132,6 +132,24 @@ return [
         'links_work_until' => 'These links work until :date.',
     ],
 
+    'invoice_draft' => [
+        'pasted_text' => 'pasted text',
+        'failed' => 'The document could not be read just now. Try again, or fill in the form yourself.',
+        'rate_limited' => 'You have drafted a lot of invoices in the last hour. Try again later.',
+        'no_customer' => 'The document does not say who the customer is. Choose one before saving.',
+        'unknown_customer' => 'No customer matches ":name". Choose one, or add them under Customers first.',
+        'currency_mismatch' => 'The document is in :document, but the draft is in :invoice. The amounts are copied as written, so convert them before saving.',
+        'no_items' => 'No billable lines were found. Add them before saving.',
+        'no_price' => '":line" has no price yet.',
+        'line_skipped' => 'A line could not be read (":line"). Add it yourself if it should be billed.',
+        'fractional_quantity' => '":line" is for :quantity units. Quantities are whole numbers here, so it is one line at the full amount, with the units in its description.',
+        'unknown_tax_rate' => '":line" states :rate% tax, which is not one of your rates, so it uses :default instead.',
+        'default_tax_rate' => 'The document does not state the tax rate for every line, so those lines use :rate, your usual rate. Change any that differ.',
+        'export_tax_rate' => 'The document does not state the tax rate for every line. This customer is overseas, so those lines are at :rate, as exports usually are.',
+        'total_mismatch' => 'The document\'s total is :stated, but these lines add up to :total. Check the prices, quantities and tax rates.',
+        'past_due_date' => 'The document\'s due date, :date, has already passed, so it was not used.',
+    ],
+
     'reminder' => [
         'title' => 'Payment reminder from :organization',
         'invoice' => 'Invoice',

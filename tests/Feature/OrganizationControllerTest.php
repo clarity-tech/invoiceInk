@@ -88,6 +88,17 @@ test('can update organization basics', function () {
     expect($organization->currency->value)->toBe('USD');
 });
 
+test('lets an owner opt in to AI drafting, and keeps the choice when the field is not sent', function () {
+    $organization = createOrganizationWithLocation([], [], $this->user);
+    $basics = ['name' => $organization->name, 'emails' => ['owner@test.com'], 'currency' => 'INR', 'country_code' => 'IN'];
+
+    $this->put("/organizations/{$organization->id}", [...$basics, 'ai_drafting_enabled' => true])->assertSessionHasNoErrors();
+    expect($organization->refresh()->ai_drafting_enabled)->toBeTrue();
+
+    $this->put("/organizations/{$organization->id}", $basics)->assertSessionHasNoErrors();
+    expect($organization->refresh()->ai_drafting_enabled)->toBeTrue();
+});
+
 test('rejects an invalid phone number when updating organization basics', function () {
     $organization = createOrganizationWithLocation([], [], $this->user);
 

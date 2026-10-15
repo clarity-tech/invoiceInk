@@ -4,7 +4,9 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Organization;
 use App\Models\User;
+use App\Services\InvoiceDraftBuilder;
 use App\ValueObjects\ContactCollection;
+use App\ValueObjects\InvoiceDraft;
 use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 use Laravel\Passport\ClientRepository;
 use Pest\Browser\Api\AwaitableWebpage;
@@ -271,7 +273,10 @@ it('carries a choice made in the app to the shared invoice', function () {
  */
 function darkModeFixture(): array
 {
+    // So "Draft with AI" shows wherever it would.
+    config(['ai.providers.anthropic.key' => 'test-key']);
     $user = darkModeUser();
+    $user->currentTeam->update(['ai_drafting_enabled' => true]);
     $organization = $user->fresh()->currentTeam;
     $customer = createCustomerWithLocation(['name' => 'Sandline Pharmacy LLC'], [], $organization);
     // Dated, so the editor's "Save & Send" can save it on the way to the email.
@@ -399,7 +404,23 @@ it('keeps the dialogs legible in dark mode', function (string $path, string $ope
     'add location' => ['/customers/{customer}', 'button:has-text("Add location")', 'Location Name'],
     'reminder' => ['/invoices/{invoice}', 'button:has-text("Remind")', 'Email to Sandline Pharmacy LLC'],
     'customer reminder' => ['/customers/{customer}', 'button:has-text("Send reminder")', 'Remind Sandline Pharmacy LLC'],
+    'draft with AI' => ['/invoices/create', 'button:has-text("Draft with AI")', 'Draft from a document'],
 ]);
+
+it('keeps a drafted invoice and its warnings legible in dark mode', function () {
+    $fixture = darkModeFixture();
+    $this->actingAs($fixture['user']);
+    $token = app(InvoiceDraftBuilder::class)->remember($fixture['user'], new InvoiceDraft(
+        ['items' => [['description' => 'Consulting (7.5 × ₹2,000.00)', 'sac_code' => null, 'quantity' => 1, 'unit_price' => 1500000, 'tax_rate' => 1800]]],
+        ['No customer matches "Acme Industries". Choose one, or add them under Customers first.'],
+        'po-4512.pdf',
+    ));
+
+    $page = visit("/invoices/create?draft={$token}")->inDarkMode();
+
+    $page->assertSee('Drafted from po-4512.pdf')->assertNoJavascriptErrors();
+    assertNoContrastFailures($page);
+});
 
 it('keeps the setup wizard legible in dark mode', function () {
     $user = User::factory()->withPersonalTeam()->create();

@@ -52,4 +52,13 @@ return [
         'timeout' => env('FRANKFURTER_TIMEOUT', 10),
     ],
 
+    // Drafting an invoice from a document with Claude. The key itself is
+    // ANTHROPIC_API_KEY, read by config/ai.php. The request runs while the user
+    // waits, so the timeout must stay under the web service's 120s.
+    'invoice_drafts' => [
+        'model' => env('INVOICE_DRAFT_MODEL', 'claude-haiku-5-5'),
+        'timeout' => (int) env('INVOICE_DRAFT_TIMEOUT', 60),
+        'per_hour' => (int) env('INVOICE_DRAFT_PER_HOUR', 20),
+    ],
+
 ];

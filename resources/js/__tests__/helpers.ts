@@ -59,6 +59,7 @@ export function makeOrganization(
         logo_url: null,
         logo_thumb_url: null,
         setup_completed_at: '2026-01-01T00:00:00.000000Z',
+        ai_drafting_enabled: false,
         created_at: '2026-01-01T00:00:00.000000Z',
         updated_at: '2026-01-01T00:00:00.000000Z',
         ...overrides,

@@ -81,6 +81,10 @@ test('taxOptions stores rates in basis points where 1% = 100', function () {
     expect($india->pluck('name'))->not->toContain('GST 28%');
 });
 
+test('the standard tax rate is one the country offers', function (Country $country) {
+    expect(array_column($country->taxOptions(), 'rate'))->toContain($country->standardTaxRate());
+})->with(Country::cases());
+
 test('taxOptions derives a stable slug key from the option name', function () {
     $india = collect(Country::IN->taxOptions());
 

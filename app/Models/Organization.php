@@ -68,6 +68,7 @@ class Organization extends Model implements HasMedia
         'financial_year_start_month',
         'financial_year_start_day',
         'setup_completed_at',
+        'ai_drafting_enabled',
     ];
 
     /**
@@ -99,6 +100,7 @@ class Organization extends Model implements HasMedia
             'financial_year_start_day' => 'integer',
             'bank_details' => BankDetailsCast::class,
             'setup_completed_at' => 'datetime',
+            'ai_drafting_enabled' => 'boolean',
         ];
     }
 

@@ -47,6 +47,7 @@ export interface Organization {
     logo_url: string | null;
     logo_thumb_url: string | null;
     setup_completed_at: string | null;
+    ai_drafting_enabled: boolean;
     created_at: string;
     updated_at: string;
 }

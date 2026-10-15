@@ -37,6 +37,7 @@ export interface Organization {
     registration_number: string | null;
     website: string | null;
     notes: string | null;
+    ai_drafting_enabled: boolean;
     bank_details: BankDetails | null;
     logo_url: string | null;
     primary_location: Location | null;

@@ -57,6 +57,7 @@ function makeOrg(overrides = {}) {
         registration_number: 'REG456',
         website: 'https://clarity.test',
         notes: 'Notes',
+        ai_drafting_enabled: false,
         bank_details: null,
         logo_url: null,
         primary_location: null,

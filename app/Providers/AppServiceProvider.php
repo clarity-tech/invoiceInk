@@ -8,9 +8,11 @@ use App\Listeners\EmbedBrandLogoInEmails;
 use App\Services\InvoiceNumberingService;
 use App\Services\PdfService;
 use Carbon\CarbonInterval;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
@@ -42,6 +44,11 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->forcePublicRootUrl();
         $this->configurePassport();
+
+        // Each draft is a paid call to the AI provider.
+        RateLimiter::for('invoice-drafts', fn (Request $request) => Limit::perHour(config('services.invoice_drafts.per_hour'))
+            ->by($request->user()?->id ?: $request->ip())
+            ->response(fn () => back()->withErrors(['draft' => __('messages.invoice_draft.rate_limited')])));
 
         Event::listen(MessageSending::class, EmbedBrandLogoInEmails::class);
     }

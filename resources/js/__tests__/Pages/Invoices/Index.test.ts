@@ -102,6 +102,7 @@ const defaultProps = () => ({
     invoices: makePaginatedInvoices(),
     filters: { type: null, status: null },
     statusOptions: { draft: 'Draft', sent: 'Sent', paid: 'Paid', void: 'Void' },
+    aiDrafting: false,
 });
 
 function mountComponent(propsOverride = {}) {
@@ -112,6 +113,7 @@ function mountComponent(propsOverride = {}) {
                 AppLayout: {
                     template: '<div><slot name="header" /><slot /></div>',
                 },
+                AiDraftButton: { template: '<button>Draft with AI</button>' },
                 MoneyDisplay: {
                     template: '<span>{{ amount }}</span>',
                     props: ['amount', 'currency'],
@@ -456,6 +458,13 @@ describe('Invoices/Index', () => {
         );
         expect(createInvoice).toBeTruthy();
         expect(createEstimate).toBeTruthy();
+    });
+
+    it('offers drafting with AI next to Create Invoice once it is available', () => {
+        expect(mountComponent().text()).not.toContain('Draft with AI');
+        expect(mountComponent({ aiDrafting: true }).text()).toContain(
+            'Draft with AI',
+        );
     });
 
     it('opens the document from its number, and keeps the PDF on the row', () => {

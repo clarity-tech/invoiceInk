@@ -1,5 +1,6 @@
 <?php
 
+use App\Ai\Agents\InvoiceDrafter;
 use App\Enums\InvoiceStatus;
 use App\Models\Organization;
 use App\Models\User;
@@ -341,4 +342,39 @@ it('tours the public documents', function () {
 
     tourShot(tourVisit(sharePath($data['invoices']['sent'])), '54-public-invoice');
     tourShot(tourVisit(sharePath($data['estimates']['sent'])), '55-public-estimate');
+});
+
+it('tours drafting with AI', function () {
+    $data = seedTourData();
+    config(['ai.providers.anthropic.key' => 'tour-key']);
+    $data['org']->update(['ai_drafting_enabled' => true]);
+    $this->actingAs($data['user']);
+
+    InvoiceDrafter::fake([[
+        'customer' => ['name' => $data['customers']['indian']->name, 'tax_number' => null, 'email' => null],
+        'subject' => 'October development',
+        'order_number' => 'PO-4512',
+        'due_date' => null,
+        'payment_terms_days' => 15,
+        'currency' => 'INR',
+        'items' => [
+            ['description' => 'Backend development', 'sac_code' => '998314', 'quantity' => 37.5, 'unit_price' => '2400.00', 'tax_rate_percent' => 18],
+            ['description' => 'Hosting setup', 'sac_code' => null, 'quantity' => 1, 'unit_price' => '15000.00', 'tax_rate_percent' => null],
+        ],
+        'stated_total' => '123900.00',
+    ]]);
+
+    tourShot(tourVisit('/invoices'), '56-invoices-list-draft-with-ai');
+
+    $page = tourVisit('/invoices/create');
+    $page->click('Draft with AI')->assertSee('Draft from a document');
+    $page->fill('#draft-text', 'Please invoice us for 37.5 hours of backend development at 2,400 an hour, plus the hosting setup fee of 15,000. PO-4512, payment in 15 days.');
+    tourShot($page, '57-invoice-draft-dialog');
+
+    $page->click('[role="dialog"] button:has-text("Draft invoice")')->assertSee('Drafted from pasted text');
+    tourShot($page, '58-invoice-drafted');
+
+    $page = tourVisit('/estimates/create');
+    $page->click('Draft with AI')->assertSee('AI fills in the estimate');
+    tourShot($page, '59-estimate-draft-dialog');
 });

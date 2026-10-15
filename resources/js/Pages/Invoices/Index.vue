@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import AiDraftButton from '@/Components/Invoice/AiDraftButton.vue';
 import MoneyDisplay from '@/Components/MoneyDisplay.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { Badge } from '@/Components/ui/badge';
@@ -26,6 +27,7 @@ const props = defineProps<{
     invoices: PaginatedInvoices;
     filters: { type: string | null; status: string | null };
     statusOptions: Record<string, string>;
+    aiDrafting: boolean;
 }>();
 
 /**
@@ -149,6 +151,7 @@ const tabs = [
                     >
                         Create Estimate
                     </a>
+                    <AiDraftButton v-if="aiDrafting && can('create')" />
                     <a
                         v-if="can('create')"
                         href="/invoices/create"
@@ -513,6 +516,7 @@ const tabs = [
                                         class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
                                         >Create Invoice</a
                                     >
+                                    <AiDraftButton v-if="aiDrafting" />
                                     <a
                                         href="/estimates/create"
                                         class="rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground shadow-sm hover:bg-success/90"

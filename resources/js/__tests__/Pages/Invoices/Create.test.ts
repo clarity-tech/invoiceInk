@@ -77,11 +77,16 @@ function mountComponent(propsOverride = {}) {
             attachments: [],
             indianStates: {},
             defaults,
+            aiDrafting: false,
+            draft: null,
             ...propsOverride,
         },
         global: {
             stubs: {
-                AppLayout: { template: '<div><slot /></div>' },
+                AppLayout: {
+                    template: '<div><slot name="header" /><slot /></div>',
+                },
+                AiDraftButton: { template: '<button>Draft with AI</button>' },
                 InvoiceForm: {
                     template:
                         '<div data-testid="invoice-form">{{ mode }} {{ type }}</div>',
@@ -147,6 +152,25 @@ describe('Invoices/Create', () => {
         expect(wrapper.find('[data-testid="invoice-form"]').exists()).toBe(
             true,
         );
+    });
+
+    it('offers drafting from a document only when it is available', () => {
+        expect(mountComponent().text()).not.toContain('Draft with AI');
+        expect(mountComponent({ aiDrafting: true }).text()).toContain(
+            'Draft with AI',
+        );
+    });
+
+    it('lists what to check in a drafted invoice', () => {
+        const wrapper = mountComponent({
+            draft: {
+                source: 'po-4512.pdf',
+                warnings: ['No customer matches "Acme".'],
+            },
+        });
+
+        expect(wrapper.text()).toContain('Drafted from po-4512.pdf');
+        expect(wrapper.text()).toContain('No customer matches "Acme".');
     });
 
     it('renders with numbering series', () => {

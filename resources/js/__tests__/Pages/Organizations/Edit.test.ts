@@ -87,6 +87,7 @@ function makeOrg(overrides = {}) {
         registration_number: null,
         website: null,
         notes: null,
+        ai_drafting_enabled: false,
         bank_details: null,
         logo_url: null,
         primary_location: null,

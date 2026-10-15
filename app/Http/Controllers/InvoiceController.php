@@ -25,12 +25,14 @@ use App\Services\EstimateToInvoiceConverter;
 use App\Services\ExchangeRateService;
 use App\Services\GstBreakdownService;
 use App\Services\InvoiceCalculator;
+use App\Services\InvoiceDraftBuilder;
 use App\Services\TdsTcsCalculator;
 use App\ValueObjects\ContactCollection;
 use App\ValueObjects\InvoiceTotals;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -91,6 +93,7 @@ class InvoiceController extends Controller
                 'status' => $request->status,
             ],
             'statusOptions' => InvoiceStatus::options(),
+            'aiDrafting' => InvoiceDraftBuilder::isAvailableFor($request->user()->currentTeam),
         ]);
     }
 
@@ -173,7 +176,7 @@ class InvoiceController extends Controller
         ]);
     }
 
-    public function create(Request $request): Response
+    public function create(Request $request, InvoiceDraftBuilder $drafts): Response
     {
         $this->authorize('create', Invoice::class);
 
@@ -225,6 +228,20 @@ class InvoiceController extends Controller
             ));
         }
 
+        // Drafted from a document by InvoiceDraftController. A customer
+        // archived since then is dropped, as the form only offers live ones.
+        $draft = $request->filled('draft')
+            ? $drafts->recall($user, $request->string('draft')->value())
+            : null;
+
+        if ($draft) {
+            $draftDefaults = $customers->contains('id', $draft->defaults['customer_id'] ?? null)
+                ? $draft->defaults
+                : Arr::except($draft->defaults, ['customer_id', 'customer_location_id', 'customer_shipping_location_id', 'place_of_supply', 'email_recipients', 'currency']);
+
+            $defaults = array_merge($defaults, $draftDefaults);
+        }
+
         return Inertia::render('Invoices/Create', [
             'type' => $type,
             'attachments' => [],
@@ -238,6 +255,8 @@ class InvoiceController extends Controller
                 ? IndianState::options()
                 : [],
             'defaults' => $defaults,
+            'aiDrafting' => InvoiceDraftBuilder::isAvailableFor($organization),
+            'draft' => $draft ? ['source' => $draft->source, 'warnings' => $draft->warnings] : null,
         ]);
     }
 

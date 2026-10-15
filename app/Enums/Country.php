@@ -268,6 +268,25 @@ enum Country: string
         );
     }
 
+    /**
+     * The rate most supplies are charged at, in basis points. Always one of
+     * taxOptions(). The US has no national sales tax, so it is 0 there.
+     */
+    public function standardTaxRate(): int
+    {
+        return match ($this) {
+            self::IN => 1800,
+            self::GB => 2000,
+            self::US => 0,
+            self::AE => 500,
+            self::AU => 1000,
+            self::CA => 500,
+            self::SG => 800,
+            self::JP => 1000,
+            self::DE => 1900,
+        };
+    }
+
     public function getRecommendedNumberingFormat(): string
     {
         return match ($this) {
