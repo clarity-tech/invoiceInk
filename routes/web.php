@@ -5,6 +5,7 @@ use App\Http\Controllers\CurrentTeamController;
 use App\Http\Controllers\CurrentUserController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerReminderController;
+use App\Http\Controllers\CustomerReminderDraftController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\InvoiceController;
@@ -112,6 +113,7 @@ Route::middleware([
         Route::delete('customers/{customer}/locations/{location}/force', [CustomerController::class, 'forceDestroyLocation'])->name('customers.locations.force-destroy')->withTrashed();
         Route::post('customers/{customer}/primary-location/{location}', [CustomerController::class, 'setPrimaryLocation'])->name('customers.primary-location');
         Route::post('customers/{customer}/send-reminder', [CustomerReminderController::class, 'store'])->name('customers.send-reminder');
+        Route::post('customers/{customer}/reminder-draft', [CustomerReminderDraftController::class, 'store'])->middleware('throttle:email-drafts')->name('customers.reminder-draft');
 
         // Invoice management routes
         Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');

@@ -2,6 +2,7 @@
 import { useForm, usePage } from '@inertiajs/vue3';
 import { BellRing, Send } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
+import AiEmailWriter from './AiEmailWriter.vue';
 import EmailRecipientInput from './EmailRecipientInput.vue';
 import MoneyDisplay from '@/Components/MoneyDisplay.vue';
 import TipTapEditor from '@/Components/TipTapEditor.vue';
@@ -34,6 +35,8 @@ const emit = defineEmits<{
 }>();
 
 const page = usePage();
+
+const aiAvailable = computed(() => page.props.auth?.currentTeam?.ai === true);
 
 const customerContacts = computed<Contact[]>(() => props.customer.emails ?? []);
 const orgContacts = computed<Contact[]>(
@@ -96,6 +99,12 @@ function fillSubject() {
     form.subject = props.reminder.subject
         .split('{{invoice_numbers}}')
         .join(selectedNumbers.value);
+}
+
+// Undoing an AI subject hands it back to the selection.
+function followSelection() {
+    subjectEdited.value = false;
+    fillSubject();
 }
 
 watch(selectedNumbers, () => {
@@ -311,7 +320,17 @@ function send() {
                 </p>
             </div>
 
-            <div>
+            <div class="space-y-2">
+                <!-- An AI subject stays put when the selection changes. -->
+                <AiEmailWriter
+                    v-if="aiAvailable"
+                    v-model:subject="form.subject"
+                    v-model:body="form.body"
+                    :url="`/customers/${customer.id}/reminder-draft`"
+                    :payload="{ invoice_ids: form.invoice_ids }"
+                    @written="subjectEdited = true"
+                    @undone="followSelection"
+                />
                 <TipTapEditor
                     v-model="form.body"
                     placeholder="Compose your email..."
@@ -322,7 +341,7 @@ function send() {
                 >
                     {{ form.errors.body }}
                 </p>
-                <p class="mt-2 text-xs text-muted-foreground">
+                <p class="text-xs text-muted-foreground">
                     The selected invoices, with links and totals, are listed
                     below your message.
                 </p>

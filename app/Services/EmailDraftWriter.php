@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Ai\Agents\EmailWriter;
 use App\Enums\EmailDeliveryStatus;
 use App\Enums\EmailTemplateType;
+use App\Models\Customer;
 use App\Models\Invoice;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Laravel\Ai\Enums\Lab;
 
@@ -44,6 +46,36 @@ class EmailDraftWriter
                 ? "Emails already sent about this {$document}: {$earlier->count()}, the last on ".$earlier->max('sent_at')->format('j M Y')
                 : null,
         ]);
+
+        return $this->write($facts, $tone, $note);
+    }
+
+    /**
+     * One reminder about several of a customer's unpaid invoices. The email
+     * lists them in a table below the message, so the facts are context.
+     *
+     * @param  Collection<int, Invoice>  $invoices
+     * @return array{subject: string, body: string}
+     */
+    public function forCustomerReminder(Customer $customer, Collection $invoices, string $tone, ?string $note): array
+    {
+        $customer->loadMissing('organization');
+
+        $lines = $invoices->sortBy('due_at')->map(fn (Invoice $invoice): string => "{$invoice->invoice_number}: balance {$invoice->formatted_remaining_balance}"
+            .($invoice->due_at ? ', due '.$invoice->due_at->format('j M Y') : '')
+            .($invoice->daysOverdue() ? ", overdue by {$invoice->daysOverdue()} days" : ''));
+
+        $totals = $invoices
+            ->groupBy(fn (Invoice $invoice): string => $invoice->currency->value)
+            ->map(fn (Collection $group): string => $group->first()->currency->formatAmount($group->sum('remaining_balance')));
+
+        $facts = [
+            'Purpose: one reminder covering several unpaid invoices. A table of them, with links, is added below the message, so do not list each one.',
+            'From: '.($customer->organization?->company_name ?? $customer->organization?->name),
+            "To: {$customer->name}",
+            'Invoices: '.$lines->implode('; '),
+            'Total due: '.$totals->implode(' and '),
+        ];
 
         return $this->write($facts, $tone, $note);
     }

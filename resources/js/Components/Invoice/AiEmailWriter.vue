@@ -13,7 +13,7 @@ const props = defineProps<{
 const subject = defineModel<string>('subject', { required: true });
 const body = defineModel<string>('body', { required: true });
 
-const emit = defineEmits<{ written: [] }>();
+const emit = defineEmits<{ written: []; undone: [] }>();
 
 const tones = [
     { value: 'friendly', label: 'Friendly' },
@@ -63,6 +63,7 @@ function undo() {
         subject.value = previous.value.subject;
         body.value = previous.value.body;
         previous.value = null;
+        emit('undone');
     }
 }
 </script>
