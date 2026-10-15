@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.18.0](https://github.com/clarity-tech/invoicing/compare/v1.17.1...v1.18.0) (2026-10-15)
+
+
+### Features
+
+* **invoices:** send payment reminders from an invoice or a customer ([73b837d](https://github.com/clarity-tech/invoicing/commit/73b837db23e5442deab52a3bb54d8b5fc860d88a))
+* **mail:** describe invoices to Gmail with schema.org markup ([0bbfc02](https://github.com/clarity-tech/invoicing/commit/0bbfc02275a42fd49ddd234463eca2e9f0129929))
+
 ## [1.17.1](https://github.com/clarity-tech/invoicing/compare/v1.17.0...v1.17.1) (2026-10-15)
 
 
