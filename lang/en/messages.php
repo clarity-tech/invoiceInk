@@ -38,6 +38,7 @@ return [
         'view_invoice_button' => 'View Invoice Online',
         'view_estimate_button' => 'View Estimate Online',
         'view_document_button' => 'View :type Online',
+        'view_invoice_action' => 'View invoice',
         'do_not_reply' => 'This is an automated email. Please do not reply to this message.',
         'email_footer' => 'This email was sent by :organization (:website)',
         'powered_by' => 'Invoicing powered by',

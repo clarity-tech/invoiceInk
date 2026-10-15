@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Mail\Concerns\AppendsBrandSubjectTag;
+use App\Mail\Concerns\BuildsInvoiceMarkup;
 use App\Mail\Concerns\EmbedsBrandLogo;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -24,7 +25,7 @@ use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
  */
 class CustomerReminderMail extends Mailable
 {
-    use AppendsBrandSubjectTag, EmbedsBrandLogo, Queueable, SerializesModels;
+    use AppendsBrandSubjectTag, BuildsInvoiceMarkup, EmbedsBrandLogo, Queueable, SerializesModels;
 
     /**
      * @param  Collection<int, Invoice>  $invoices
@@ -65,19 +66,25 @@ class CustomerReminderMail extends Mailable
         $organization = $this->customer->organization;
         $expiresAt = now()->addDays(config('app.share_link_days'));
         $invoices = $this->invoices->sortBy('due_at')->values();
+        $urls = $invoices->map(fn (Invoice $invoice): string => $invoice->shareUrl($expiresAt));
 
         $html = view('emails.customer-reminder', [
             'customBody' => $this->customBody,
             'organization' => $organization,
             'location' => $organization?->primaryLocation,
             'expiresAt' => $expiresAt,
-            'rows' => $invoices->map(fn (Invoice $invoice): array => [
+            'rows' => $invoices->map(fn (Invoice $invoice, int $index): array => [
                 'number' => $invoice->invoice_number,
-                'url' => $invoice->shareUrl($expiresAt),
+                'url' => $urls[$index],
                 'due' => $invoice->due_at?->format('j M Y'),
                 'days_overdue' => $invoice->daysOverdue(),
                 'balance' => $invoice->formatted_remaining_balance,
             ]),
+            'structuredData' => $invoices
+                ->map(fn (Invoice $invoice, int $index): ?array => $this->invoiceMarkup($invoice, $urls[$index]))
+                ->filter()
+                ->values()
+                ->all(),
             // Per currency: amounts in different currencies are never added up.
             'totals' => $invoices
                 ->groupBy(fn (Invoice $invoice): string => $invoice->currency->value)

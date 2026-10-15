@@ -5,6 +5,7 @@ namespace App\Mail;
 use App\Contracts\Services\PdfServiceInterface;
 use App\Enums\EmailTemplateType;
 use App\Mail\Concerns\AppendsBrandSubjectTag;
+use App\Mail\Concerns\BuildsInvoiceMarkup;
 use App\Mail\Concerns\EmbedsBrandLogo;
 use App\Mail\Templates\EmailTemplateService;
 use App\Models\Invoice;
@@ -26,7 +27,7 @@ use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
  */
 class DocumentMailer extends Mailable
 {
-    use AppendsBrandSubjectTag, EmbedsBrandLogo, Queueable, SerializesModels;
+    use AppendsBrandSubjectTag, BuildsInvoiceMarkup, EmbedsBrandLogo, Queueable, SerializesModels;
 
     /**
      * @param  array<int, array{disk: string, path: string, name: string, mime: string}>  $extraAttachments
@@ -94,12 +95,17 @@ class DocumentMailer extends Mailable
     public function renderHtml(): string
     {
         $body = $this->customBody ?? $this->resolveDefaultBody();
+        $shareLink = $this->invoice->shareLink();
 
         $html = view('emails.custom-document', [
             'customBody' => $body,
             'invoice' => $this->invoice,
-            'shareLink' => $this->invoice->shareLink(),
+            'shareLink' => $shareLink,
             'includeViewOnlineButton' => $this->includeViewOnlineButton,
+            'structuredData' => $this->invoiceMarkup(
+                $this->invoice,
+                $this->includeViewOnlineButton ? $shareLink->url : null,
+            ),
         ])->render();
 
         return (new CssToInlineStyles)->convert($html);

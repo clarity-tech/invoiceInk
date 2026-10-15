@@ -11,6 +11,9 @@
     <meta name="color-scheme" content="light dark">
     <meta name="supported-color-schemes" content="light dark">
     <title>@yield('title')</title>
+    @if(! empty($structuredData))
+    <script type="application/ld+json">@json($structuredData)</script>
+    @endif
     <style>
         body {
             margin: 0;
