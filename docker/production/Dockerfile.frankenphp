@@ -94,9 +94,9 @@ COPY --from=frontend --chown=www-data:www-data /build /var/www/html
 # when cloud-tasks.disable_task_handler is false. Baking the cache would freeze
 # in the build-time answer, and Laravel loads the compiled routes instead of
 # re-evaluating that condition — putting the task handler on the public service
-# regardless of its environment. It runs at container start instead.
+# regardless of its environment.
 #
-# config:cache is likewise left to runtime; it would freeze build-time env.
+# config:cache is likewise not baked; it would freeze build-time env.
 ARG BUILD_APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
 RUN composer dump-autoload --optimize --classmap-authoritative --no-dev \
     && APP_ENV=production APP_DEBUG=false APP_KEY=${BUILD_APP_KEY} \
@@ -117,15 +117,14 @@ RUN composer dump-autoload --optimize --classmap-authoritative --no-dev \
 # AUTORUN_LARAVEL_MIGRATION=true back in their own env file.
 #
 # view/event caches are baked into the image above and switched off here.
-# config:cache and route:cache must run at container start: both depend on the
-# runtime environment, and route registration in particular is conditional on it
-# (see the note above the build-time caches).
+# config:cache and route:cache are off too: Octane boots each worker once, so
+# at container start they only added ~4s to every cold start.
 ENV AUTORUN_ENABLED=true \
     AUTORUN_LARAVEL_MIGRATION=false \
     AUTORUN_LARAVEL_MIGRATION_ISOLATION=true \
     AUTORUN_LARAVEL_OPTIMIZE=false \
-    AUTORUN_LARAVEL_CONFIG_CACHE=true \
-    AUTORUN_LARAVEL_ROUTE_CACHE=true \
+    AUTORUN_LARAVEL_CONFIG_CACHE=false \
+    AUTORUN_LARAVEL_ROUTE_CACHE=false \
     AUTORUN_LARAVEL_VIEW_CACHE=false \
     AUTORUN_LARAVEL_EVENT_CACHE=false \
     AUTORUN_LARAVEL_STORAGE_LINK=false \
