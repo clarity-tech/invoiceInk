@@ -85,8 +85,6 @@ return [
          *
          * The package does not verify the OIDC token it receives (that was
          * removed in v4); Cloud Run IAM is the authentication boundary.
-         *
-         * See docs/cloud_run_deployment_plan.md §5.
          */
         'cloudtasks' => [
             'driver' => 'cloudtasks',

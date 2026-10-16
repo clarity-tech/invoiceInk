@@ -6,13 +6,8 @@
 # versioned until you choose to merge it, so main stays continuously deployable
 # while releases remain a deliberate act.
 #
-# Deployment is unchanged: docker-build.yml still deploys every push to main,
-# though deploy-production now waits on that workflow's test jobs first.
-# A release does not deploy -- it labels an image that is already live. The
-# retag step exists so rollbacks can name a version rather than a 40-character
-# SHA:
-#
-#   gcloud run services update invoicing-web --image .../invoicing:v1.2.0
+# A release does not deploy -- it labels the image already built for that
+# commit, so a deployment can name a version rather than a 40-character SHA.
 #
 # Images are retagged, never rebuilt, so a released version is byte-identical to
 # the artifact that was built and tested for that commit.
@@ -65,14 +60,11 @@ jobs:
     permissions:
       contents: read
       packages: write # push tags to GHCR
-      id-token: write # Workload Identity Federation for Artifact Registry
 
     env:
       VERSION: ${{ needs.release-please.outputs.version }}
       MAJOR: ${{ needs.release-please.outputs.major }}
       MINOR: ${{ needs.release-please.outputs.minor }}
-      PROJECT: ${{ vars.GCP_PROJECT }}
-      REGION: ${{ vars.GCP_REGION }}
 
     steps:
       - name: Log in to GHCR
@@ -81,14 +73,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v3
-        with:
-          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: ${{ vars.GCP_DEPLOY_SA }}
-
-      - uses: google-github-actions/setup-gcloud@v3
 
       # release-please tags the same commit that docker-build.yml is building
       # from, and the two workflows run concurrently. Wait for the image rather
@@ -118,41 +102,13 @@ jobs:
             --tag "ghcr.io/${{ github.repository }}:${MAJOR}" \
             "$SRC"
 
-      # Artifact Registry is tagged by commit SHA at deploy time. Add the
-      # version alongside it, pointing at the identical digest.
-      - name: Tag Artifact Registry image with the version
-        run: |
-          set -euo pipefail
-          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
-          AR="$REGION-docker.pkg.dev/$PROJECT/docker/invoicing"
-          for i in $(seq 1 40); do
-            if docker buildx imagetools inspect "$AR:${{ github.sha }}" >/dev/null 2>&1; then
-              docker buildx imagetools create \
-                --tag "$AR:v${VERSION}" \
-                --tag "$AR:${MAJOR}.${MINOR}" \
-                "$AR:${{ github.sha }}"
-              echo "Tagged $AR:v${VERSION}"
-              exit 0
-            fi
-            echo "Waiting for $AR:${{ github.sha }} (deploy job still running) ... ($i/40)"
-            sleep 30
-          done
-          echo "::error::Artifact Registry image for this commit never appeared." >&2
-          exit 1
-
       - name: Summary
         run: |
           {
             echo "### Released \`${{ needs.release-please.outputs.tag_name }}\`"
             echo
-            echo "Image tagged in both registries, pointing at the digest already deployed:"
+            echo "Image tagged, pointing at the digest built for this commit:"
             echo '```'
             echo "ghcr.io/${{ github.repository }}:v${VERSION}"
-            echo "$REGION-docker.pkg.dev/$PROJECT/docker/invoicing:v${VERSION}"
-            echo '```'
-            echo "Roll back with:"
-            echo '```bash'
-            echo "gcloud run services update invoicing-web --region=$REGION \\"
-            echo "  --image=$REGION-docker.pkg.dev/$PROJECT/docker/invoicing:v${VERSION}"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

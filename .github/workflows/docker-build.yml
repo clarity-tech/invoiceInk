@@ -1,4 +1,4 @@
-name: CI & Deploy
+name: CI
 
 on:
   push:
@@ -7,10 +7,9 @@ on:
       - develop
     tags:
       - 'v*'
-    # No paths-ignore on push, for two reasons. release.yml's tag-images polls
-    # for the image this workflow publishes for that exact commit and fails the
-    # release if it never appears. And `deploy-production` now waits on the test
-    # jobs, so skipping them on a release commit would skip the deploy with them.
+    # No paths-ignore on push: release.yml's tag-images polls for the image this
+    # workflow publishes for that exact commit and fails the release if it never
+    # appears.
   pull_request:
     branches:
       - main
@@ -25,15 +24,13 @@ on:
 # A superseded image build has nothing to offer once a newer commit is pushed.
 # `release` is deliberately excluded from this pattern -- it must not be
 # cancelled mid-retag.
-# Superseding a pull request build is free. Superseding a push to main is not:
-# this workflow deploys, and cancelling it between `gcloud run jobs execute` and
-# its completion leaves a migration running server-side with nothing watching it.
+# Superseding a pull request build is free. A push build is kept so every main
+# commit has an image to deploy or release.
 concurrency:
   group: docker-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Default for jobs that declare none; the publishing and deploying jobs widen
-# this for themselves.
+# Default for jobs that declare none; the publishing job widens this for itself.
 permissions:
   contents: read
 
@@ -273,11 +270,6 @@ jobs:
       contents: read
       packages: write
 
-    outputs:
-      # Consumed by deploy-production so it promotes the exact image built here
-      # rather than re-resolving a mutable tag.
-      digest: ${{ steps.build.outputs.digest }}
-
     strategy:
       matrix:
         target: [frankenphp]
@@ -345,8 +337,8 @@ jobs:
           file: ${{ matrix.dockerfile }}
           target: ${{ matrix.build-target }}
           platforms: linux/amd64
-          # A pull request has no consumer for its image: nothing deploys it and
-          # release.yml only ever retags a `main` commit. Load it into the local
+          # A pull request has no consumer for its image: release.yml only ever
+          # retags a `main` commit. Load it into the local
           # daemon so the smoke test below can run, and publish only from
           # branches and tags.
           push: ${{ github.event_name != 'pull_request' }}
@@ -447,62 +439,6 @@ jobs:
             cat 'trivy-results-${{ matrix.target }}.txt' 2>/dev/null || echo 'Scan produced no output.'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-
-  deploy-staging:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    if: github.ref == 'refs/heads/develop'
-    environment: staging
-
-    steps:
-      - name: Deploy to staging
-        run: |
-          echo "Deploying to staging environment..."
-          # Add your staging deployment logic here
-          # Example: kubectl, docker-compose, or other deployment tools
-
-  # Deploys to Cloud Run. Requires these GitHub repository variables:
-  #   GCP_PROJECT       e.g. invoiceink-prod
-  #   GCP_REGION        e.g. asia-south1
-  #   GCP_WIF_PROVIDER  projects/<number>/locations/global/workloadIdentityPools/github/providers/github
-  #   GCP_DEPLOY_SA     github-deployer@<project>.iam.gserviceaccount.com
-  #   GCP_DB_HOST       external MySQL hostname
-  #   GCP_DB_NAME       database name
-  #   GCP_DB_USER       database username
-  #   GCP_DB_PORT       database port (DigitalOcean managed MySQL uses 25060)
-  #   GCP_DB_SSL_CA     optional CA bundle path; leave unset to skip cert verification
-  #   GCP_AWS_KEY_ID    S3 access key id
-  #   GCP_AWS_REGION    S3 region
-  #   GCP_AWS_BUCKET    S3 bucket
-  #   GCP_AWS_URL       public base URL for the bucket
-  #   GCP_MAIL_HOST     SMTP host
-  #   GCP_MAIL_PORT     SMTP port
-  #   GCP_MAIL_USER     SMTP username
-  #   GCP_MAIL_FROM     From address
-  # (APP_KEY, DB_PASSWORD, MAIL_PASSWORD and AWS_SECRET_ACCESS_KEY come from
-  #  Secret Manager, referenced directly by the service YAML.)
-  # See docs/cloud_run_deployment_plan.md §14
-  deploy-production:
-    # The hard gate. Branch protection is unavailable on this plan, so PR checks
-    # cannot be made required and a red PR can still be merged -- this `needs:`
-    # is the only thing that actually stops untested code reaching production.
-    # `build-and-push` stays ungated so the image for a release commit appears
-    # promptly for release.yml's tag-images, which polls for it.
-    needs: [build-and-push, test-php, test-octane, test-frontend]
-    if: github.ref == 'refs/heads/main'
-    # A local `uses:` runs the called workflow from this same commit and inside
-    # this same run, so the gate above and the SHA below are genuinely ours --
-    # unlike `workflow_run`, which resolves to the newest commit on the default
-    # branch and would not fire at all when CI is skipped.
-    uses: ./.github/workflows/deploy-production.yml
-    with:
-      image_ref: ghcr.io/${{ github.repository }}@${{ needs.build-and-push.outputs.digest }}
-      tag: ${{ github.sha }}
-    secrets: inherit
-    permissions:
-      contents: read
-      id-token: write # Workload Identity Federation, requested in the called workflow
 
   notify:
     needs: [build-and-push]

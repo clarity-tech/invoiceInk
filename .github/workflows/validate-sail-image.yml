@@ -12,8 +12,6 @@
 # ghcr.io/clarity-tech/laravel-strict:php8.5, a different image entirely. So the
 # workflow's only real value is telling us when a change breaks the build, which
 # is what it now does.
-#
-# Cloud Run was never affected: docker-build.yml promotes by digest, not by tag.
 
 name: Validate Sail Image
 
