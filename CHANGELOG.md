@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.0](https://github.com/clarity-tech/invoicing/compare/v1.19.0...v1.20.0) (2026-10-16)
+
+
+### Features
+
+* **legal:** publish the privacy policy and terms of service ([b9208aa](https://github.com/clarity-tech/invoicing/commit/b9208aa6a7419005c4ed40ed77429050f89e4a82))
+
 ## [1.19.0](https://github.com/clarity-tech/invoicing/compare/v1.18.0...v1.19.0) (2026-10-16)
 
 
