@@ -117,7 +117,6 @@ class OrganizationController extends Controller
             'registration_number' => ['nullable', 'string', 'max:255'],
             'website' => ['nullable', 'string', 'max:255', 'url'],
             'notes' => ['nullable', 'string', 'max:1000'],
-            'ai_drafting_enabled' => ['sometimes', 'boolean'],
         ]);
 
         $this->validateCurrencyCountryMatch($validated['country_code'] ?? null, $validated['currency'] ?? null);
@@ -157,10 +156,6 @@ class OrganizationController extends Controller
         // that omit the field don't accidentally clear the legal business name.
         if ($request->has('company_name')) {
             $attributes['company_name'] = ($validated['company_name'] ?? '') ?: null;
-        }
-
-        if ($request->has('ai_drafting_enabled')) {
-            $attributes['ai_drafting_enabled'] = $request->boolean('ai_drafting_enabled');
         }
 
         $organization->update($attributes);

@@ -2,7 +2,6 @@
 import { useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import PhoneInput from '@/Components/PhoneInput.vue';
-import { Checkbox } from '@/Components/ui/checkbox';
 import type { Organization, CountryInfo } from '../types';
 
 const props = defineProps<{
@@ -32,7 +31,6 @@ const form = useForm({
     registration_number: props.organization.registration_number ?? '',
     website: props.organization.website ?? '',
     notes: props.organization.notes ?? '',
-    ai_drafting_enabled: props.organization.ai_drafting_enabled ?? false,
 });
 
 const selectedCountry = computed(
@@ -381,25 +379,6 @@ function submit() {
                     rows="3"
                     class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                 />
-            </div>
-
-            <!-- AI drafting -->
-            <div class="flex items-start gap-3">
-                <Checkbox
-                    id="org-ai-drafting"
-                    v-model="form.ai_drafting_enabled"
-                    class="mt-0.5"
-                />
-                <label for="org-ai-drafting" class="text-sm">
-                    <span class="font-medium text-soft-foreground"
-                        >Use AI to draft invoices, estimates and emails</span
-                    >
-                    <span class="mt-0.5 block text-muted-foreground">
-                        Text, files and invoice details you use it with are sent
-                        to an AI service. Nothing is saved or sent until someone
-                        reviews it.
-                    </span>
-                </label>
             </div>
         </div>
 

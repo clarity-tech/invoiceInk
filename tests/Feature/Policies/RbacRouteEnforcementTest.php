@@ -215,6 +215,16 @@ test('non-managers cannot reach the settings hub', function (string $role) {
         ->assertForbidden();
 })->with(['editor', 'viewer']);
 
+test('non-managers cannot switch AI features', function (string $role) {
+    $member = rbacMember($this->org, $role);
+
+    $this->actingAs($member)
+        ->put('/settings/ai', ['enabled' => true])
+        ->assertForbidden();
+
+    expect($this->org->refresh()->ai_drafting_enabled)->toBeFalse();
+})->with(['editor', 'viewer']);
+
 test('a manager can reach the settings hub', function () {
     $member = rbacMember($this->org, 'admin');
 

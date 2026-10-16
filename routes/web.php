@@ -153,6 +153,7 @@ Route::middleware([
 
         // Settings Hub
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+        Route::put('/settings/ai', [SettingsController::class, 'updateAi'])->name('settings.ai.update');
 
         // Connect AI tools — the discovery surface for the MCP server: how to
         // connect, the apps signed in over OAuth, and scoped API tokens.
