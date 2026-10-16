@@ -9,7 +9,6 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database with comprehensive demo data.
      * Note: Browser tests now use inline data creation, no longer need seeders.
-     * For production seeding, use: sail php artisan db:seed --class=ProductionSeeder
      */
     public function run(): void
     {
@@ -25,7 +24,6 @@ class DatabaseSeeder extends Seeder
             $this->command->error('Demo seeders can only be run in the local environment for safety.');
             $this->command->error('Current environment: '.app()->environment());
             $this->command->error('To run demo seeders, set APP_ENV=local in your .env file.');
-            $this->command->error('To run production seeders, use: sail php artisan db:seed --class=ProductionSeeder');
 
             return;
         }

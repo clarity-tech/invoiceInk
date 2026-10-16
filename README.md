@@ -187,7 +187,7 @@ There is no shell to attach to. Commands run as a Cloud Run Job execution:
 
 ```bash
 ./deploy/cloudrun/artisan.sh migrate:status
-./deploy/cloudrun/artisan.sh --logs db:seed --class=ProductionUserSeeder --force
+./deploy/cloudrun/artisan.sh --logs migrate:status
 ```
 
 Or from the Actions tab without any local tooling: **Artisan (production)** →
@@ -195,8 +195,7 @@ Run workflow. Destructive commands require ticking an acknowledgement box.
 
 Two traps worth knowing: jobs have **no Gotenberg sidecar**, so nothing that
 renders a PDF will work there; and runs are non-interactive, so any `confirm()`
-takes its default — which is why `ProductionSeeder` reports success while
-seeding nothing. Call the sub-seeders directly instead.
+takes its default answer.
 
 Full architecture, decisions and rejected alternatives:
 [docs/cloud_run_deployment_plan.md](docs/cloud_run_deployment_plan.md).
