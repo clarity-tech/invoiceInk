@@ -29,5 +29,17 @@ defineProps<{
         >
             <slot />
         </div>
+
+        <nav
+            aria-label="Legal"
+            class="mt-6 mb-6 flex gap-5 text-sm text-muted-foreground"
+        >
+            <a href="/terms-of-service" class="hover:text-foreground"
+                >Terms of Service</a
+            >
+            <a href="/privacy-policy" class="hover:text-foreground"
+                >Privacy Policy</a
+            >
+        </nav>
     </div>
 </template>

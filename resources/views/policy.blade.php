@@ -1,4 +1,4 @@
-<x-guest-layout>
+<x-guest-layout title="Privacy Policy">
     <div class="pt-4 bg-canvas">
         <div class="min-h-screen flex flex-col items-center pt-6 sm:pt-0">
             <div>
@@ -8,6 +8,8 @@
             <div class="w-full sm:max-w-2xl mt-6 p-6 bg-card shadow-md overflow-hidden sm:rounded-lg prose">
                 {!! $policy !!}
             </div>
+
+            @include('partials.legal-links')
         </div>
     </div>
 </x-guest-layout>

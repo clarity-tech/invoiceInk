@@ -350,6 +350,10 @@
                     <x-application-mark class="size-5" />
                     <span>&copy; {{ date('Y') }} {{ config('app.name', 'InvoiceInk') }}</span>
                 </div>
+                <nav aria-label="Legal" class="flex items-center gap-5 text-sm text-gray-500">
+                    <a href="{{ route('terms.show') }}" class="hover:text-gray-300 transition">Terms</a>
+                    <a href="{{ route('policy.show') }}" class="hover:text-gray-300 transition">Privacy</a>
+                </nav>
                 <a href="https://claritytech.io" target="_blank" rel="noopener" class="text-sm text-gray-600 hover:text-gray-400 transition">
                     Made with precision by <span class="text-gray-500">Clarity Technologies</span>
                 </a>

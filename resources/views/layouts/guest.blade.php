@@ -6,7 +6,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         @include('partials.appearance')
 
-        <title>{{ config('app.name', 'InvoiceInk') }}</title>
+        <title>{{ $title ? $title.' - ' : '' }}{{ config('app.name', 'InvoiceInk') }}</title>
 
         <!-- Favicon -->
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
