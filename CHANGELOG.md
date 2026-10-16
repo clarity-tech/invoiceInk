@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.19.0](https://github.com/clarity-tech/invoicing/compare/v1.18.0...v1.19.0) (2026-10-16)
+
+
+### Features
+
+* **email:** write invoice and estimate emails with AI ([076131a](https://github.com/clarity-tech/invoicing/commit/076131a27748f795ac1dcaaac31d040687a745fa))
+* **invoices:** draft an invoice or estimate from a message or document with AI ([e08c123](https://github.com/clarity-tech/invoicing/commit/e08c1233540ee0ab63e1b1aeae6575282e5d8d05))
+* **invoices:** suggest a line's SAC/HSN code and tax rate with AI ([b9a14bd](https://github.com/clarity-tech/invoicing/commit/b9a14bd5b1c99cd2758389fdeed97f3aa7bf6c04))
+* **mcp:** connect AI tools by signing in only ([42928de](https://github.com/clarity-tech/invoicing/commit/42928de6a2327be3aa161eafca9647d8b1bc2580))
+* **reminders:** write the combined customer reminder with AI ([a9bae3d](https://github.com/clarity-tech/invoicing/commit/a9bae3de9139f24b68a9bfab8fff29c00980f5d4))
+* **settings:** switch AI features on from the settings page ([9c1d45e](https://github.com/clarity-tech/invoicing/commit/9c1d45e018cb6e79ef4d1ed5bf6330cbde38db89))
+
 ## [1.18.0](https://github.com/clarity-tech/invoicing/compare/v1.17.1...v1.18.0) (2026-10-15)
 
 
