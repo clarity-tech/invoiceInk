@@ -14,6 +14,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Testing\Fluent\AssertableJson;
 use Laravel\Mcp\Facades\Mcp;
+use Laravel\Passport\Passport;
 
 /**
  * Builds two organizations owned by different users, each with one invoice and
@@ -245,9 +246,9 @@ test('the web MCP endpoint rejects unauthenticated requests', function () {
     ])->assertUnauthorized();
 });
 
-test('an API token authenticates the web MCP endpoint', function () {
+test('a signed-in client reaches the web MCP endpoint', function () {
     $organization = createOrganizationWithLocation();
-    $token = $organization->owner->createToken('mcp')->plainTextToken;
+    Passport::actingAs($organization->owner, ['mcp:use']);
 
     // Covers what a 401-only test cannot: that the route is reachable by a real
     // client. If routes/ai.php were ever loaded inside the "web" group,
@@ -257,7 +258,7 @@ test('an API token authenticates the web MCP endpoint', function () {
         'jsonrpc' => '2.0',
         'id' => 1,
         'method' => 'tools/list',
-    ], ['Authorization' => 'Bearer '.$token])
+    ])
         ->assertOk()
         ->assertSee('list-invoices');
 });
@@ -305,7 +306,7 @@ test('the web MCP endpoint is not wrapped in session or CSRF middleware', functi
         ->first(fn ($route) => $route->uri() === 'mcp' && in_array('POST', $route->methods(), true))
         ->gatherMiddleware();
 
-    expect($middleware)->toContain('auth:sanctum,api')
+    expect($middleware)->toContain('auth:api')
         ->and($middleware)->not->toContain('web')
         ->and($middleware)->not->toContain(VerifyCsrfToken::class)
         ->and($middleware)->not->toContain(StartSession::class);

@@ -75,8 +75,8 @@ return [
     | Local Server Acting User
     |--------------------------------------------------------------------------
     |
-    | The local (stdio) MCP server has no HTTP request, so it cannot carry an
-    | API token to identify the caller. This email names the user the local
+    | The local (stdio) MCP server has no HTTP request, so it cannot carry a
+    | token to identify the caller. This email names the user the local
     | server acts as. Without it the server still starts, but every tool fails
     | closed rather than reading data it cannot attribute to an organization.
     |

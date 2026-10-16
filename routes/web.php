@@ -156,11 +156,9 @@ Route::middleware([
         Route::put('/settings/ai', [SettingsController::class, 'updateAi'])->name('settings.ai.update');
 
         // Connect AI tools — the discovery surface for the MCP server: how to
-        // connect, the apps signed in over OAuth, and scoped API tokens.
+        // connect, and the apps signed in over OAuth.
         Route::get('/settings/ai-connection', [AiConnectionController::class, 'index'])->name('ai-connection.index');
-        Route::post('/settings/ai-connection', [AiConnectionController::class, 'store'])->name('ai-connection.store');
         Route::delete('/settings/ai-connection/apps/{client}', [AiConnectionController::class, 'disconnect'])->name('ai-connection.disconnect');
-        Route::delete('/settings/ai-connection/{token}', [AiConnectionController::class, 'destroy'])->name('ai-connection.destroy');
 
         // Email Templates
         Route::get('/email-templates', [EmailTemplateController::class, 'index'])->name('email-templates.index');

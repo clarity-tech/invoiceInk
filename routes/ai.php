@@ -20,22 +20,15 @@ use Laravel\Mcp\Facades\Mcp;
 //
 // Authentication is not optional here. Tools read organization-scoped data, and
 // they identify the organization from the authenticated user's current team.
-// Two kinds of bearer token are accepted:
-//
-// - OAuth (guard "api", Passport). Claude's connectors (claude.ai, Desktop,
-//   mobile) have no field for pasting a token: they follow the 401's
-//   resource_metadata pointer to the discovery documents oauthRoutes()
-//   registers, register themselves, and send the user through the consent
-//   screen. Without these routes they fail with "Couldn't reach the MCP server".
-// - A Sanctum API token from Settings > Connect AI tools, for clients that can
-//   send a header (Claude Code, scripts).
-//
-// Sanctum is tried first so a pasted token never makes Passport load its keys.
+// Only OAuth access tokens (guard "api", Passport) are accepted. Clients follow
+// the 401's resource_metadata pointer to the discovery documents oauthRoutes()
+// registers, register themselves, and send the user through the consent
+// screen. Without these routes they fail with "Couldn't reach the MCP server".
 if (config('mcp.web_enabled')) {
     Mcp::oauthRoutes();
 
     Mcp::web('/mcp', InvoicingServer::class)
-        ->middleware(['auth:sanctum,api', 'throttle:60,1']);
+        ->middleware(['auth:api', 'throttle:60,1']);
 }
 
 // The stdio transport carries no token, so it names its acting user through

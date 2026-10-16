@@ -44,8 +44,7 @@ return [
         ],
 
         // OAuth access tokens, issued only to MCP clients that sign in through
-        // Mcp::oauthRoutes() (Claude's connectors). Pasted API tokens keep going
-        // through Sanctum; see routes/ai.php.
+        // Mcp::oauthRoutes(); see routes/ai.php.
         'api' => [
             'driver' => 'passport',
             'provider' => 'users',
