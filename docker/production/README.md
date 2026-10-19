@@ -6,7 +6,7 @@ This directory contains multiple production-ready Docker configurations for the 
 
 ### 1. 🚀 FrankenPHP + Octane (Primary)
 **File**: `Dockerfile.frankenphp`  
-**Image**: `ghcr.io/clarity-tech/invoicing:latest`
+**Image**: `ghcr.io/clarity-tech/invoiceink:latest`
 
 - **Technology**: ServerSideUp FrankenPHP (`serversideup/php:8.5-frankenphp`) + Laravel Octane
 - **Performance**: High performance with worker mode and HTTP/2/3 support
@@ -31,7 +31,7 @@ docker-compose -f docker/production/docker-compose.prod.yml up -d
 
 ### 2. 🐳 Traditional Nginx + PHP-FPM
 **File**: `Dockerfile.nginx-fpm`  
-**Image**: `ghcr.io/clarity-tech/invoicing-nginx:latest`
+**Image**: `ghcr.io/clarity-tech/invoiceink-nginx:latest`
 
 - **Technology**: ServerSideUp Nginx + PHP-FPM
 - **Performance**: Traditional high performance setup
@@ -58,8 +58,8 @@ docker run -d -p 80:80 \
 ### 3. ⚡ Standalone Binary (Ultra-Minimal)
 **File**: `Dockerfile.standalone`  
 **Images**: 
-- `ghcr.io/clarity-tech/invoicing-standalone:latest` (Distroless)
-- `ghcr.io/clarity-tech/invoicing-standalone-alpine:latest` (Alpine)
+- `ghcr.io/clarity-tech/invoiceink-standalone:latest` (Distroless)
+- `ghcr.io/clarity-tech/invoiceink-standalone-alpine:latest` (Alpine)
 
 - **Technology**: FrankenPHP static binary with embedded application
 - **Performance**: Ultimate performance and minimal resource usage
