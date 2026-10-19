@@ -67,6 +67,10 @@ jobs:
       MINOR: ${{ needs.release-please.outputs.minor }}
 
     steps:
+      # Image names must be lowercase; the repository name is not.
+      - name: Set the image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
       - name: Log in to GHCR
         uses: docker/login-action@v4
         with:
@@ -80,7 +84,7 @@ jobs:
       - name: Wait for this commit's image
         run: |
           set -euo pipefail
-          SRC=ghcr.io/${{ github.repository }}:sha-${{ github.sha }}
+          SRC=$IMAGE:sha-${{ github.sha }}
           for i in $(seq 1 40); do
             if docker buildx imagetools inspect "$SRC" >/dev/null 2>&1; then
               echo "Found $SRC after $((i*30))s"
@@ -95,11 +99,11 @@ jobs:
       - name: Tag GHCR image with the version
         run: |
           set -euo pipefail
-          SRC=ghcr.io/${{ github.repository }}:sha-${{ github.sha }}
+          SRC=$IMAGE:sha-${{ github.sha }}
           docker buildx imagetools create \
-            --tag "ghcr.io/${{ github.repository }}:v${VERSION}" \
-            --tag "ghcr.io/${{ github.repository }}:${MAJOR}.${MINOR}" \
-            --tag "ghcr.io/${{ github.repository }}:${MAJOR}" \
+            --tag "$IMAGE:v${VERSION}" \
+            --tag "$IMAGE:${MAJOR}.${MINOR}" \
+            --tag "$IMAGE:${MAJOR}" \
             "$SRC"
 
       - name: Summary
@@ -109,6 +113,6 @@ jobs:
             echo
             echo "Image tagged, pointing at the digest built for this commit:"
             echo '```'
-            echo "ghcr.io/${{ github.repository }}:v${VERSION}"
+            echo "$IMAGE:v${VERSION}"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

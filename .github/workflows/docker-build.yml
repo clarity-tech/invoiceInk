@@ -36,7 +36,6 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   test-php:
@@ -294,6 +293,10 @@ jobs:
           # build-target: standalone-alpine
 
     steps:
+      # Image names must be lowercase; the repository name is not.
+      - name: Set the image name
+        run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
@@ -451,7 +454,7 @@ jobs:
         if: ${{ needs.build-and-push.result == 'success' }}
         run: |
           echo "✅ Docker images built and pushed successfully!"
-          echo "Images available at: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          echo "Images available at: ${{ env.REGISTRY }}/${GITHUB_REPOSITORY,,}"
 
       - name: Notify on failure
         if: ${{ needs.build-and-push.result == 'failure' }}
