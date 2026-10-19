@@ -13,15 +13,15 @@ A modern invoicing application built with Laravel 13, Inertia.js v3, Vue 3, and 
 ### 1. Clone and install PHP dependencies
 
 ```bash
-git clone <repository-url>
-cd invoicing
+git clone https://github.com/clarity-tech/invoiceInk.git
+cd invoiceInk
 
 docker run --rm \
     -u "$(id -u):$(id -g)" \
     -v "$(pwd):/var/www/html" \
     -w /var/www/html \
     composer:latest \
-    composer update --ignore-platform-reqs
+    composer install --ignore-platform-reqs
 ```
 
 ### 2. Environment setup
@@ -37,12 +37,6 @@ cp .env.example .env
 sail php artisan app:setup --seed # press enter if seems stuck at "Seeding database"
 sail bun install
 sail bun run build
-```
-
-bun is not installed by dockerfile, so we install it manually after the container is up.
-
-```bash
-sail root-shell -c "curl -fsSL https://bun.sh/install | bash && cp /root/.bun/bin/bun /usr/local/bin/bun"
 ```
 
 The `app:setup` command handles everything: key generation, migrations, database seeding, S3 bucket creation on RustFS, and cache clearing.
@@ -104,8 +98,6 @@ sail mysql                    # Access MySQL CLI
 sail php artisan app:setup-storage  # Recreate S3 bucket (local dev only)
 ```
 
-See `CLAUDE.md` for the full command reference (testing, formatting, database, frontend).
-
 ## Technology Stack
 
 | Layer          | Technology                                                    |
@@ -133,7 +125,7 @@ app/
   Services/               # Business logic (InvoiceCalculator, PdfService, etc.)
   Enums/                  # PHP enums (Currency, Country, InvoiceStatus, etc.)
 resources/
-  ts/                     # TypeScript + Vue 3 frontend
+  js/                     # TypeScript + Vue 3 frontend
     Pages/                # Inertia page components
     Components/           # Shared Vue components
     Layouts/              # App, Guest, NavigationMenu layouts
@@ -154,7 +146,7 @@ docker/
 ## Deployment
 
 Every push to `main` publishes a production image to
-`ghcr.io/clarity-tech/invoicing`, tagged with the commit SHA and, once released,
+`ghcr.io/clarity-tech/invoiceink`, tagged with the commit SHA and, once released,
 with its version. It is built from `docker/production/Dockerfile.frankenphp`; see
 [docker/production/README.md](docker/production/README.md) to run it yourself.
 
@@ -172,6 +164,10 @@ and `feat!:` or a `BREAKING CHANGE:` footer bumps the major.
 that commit. Images are retagged, never rebuilt, so `v1.2.0` is byte-identical to
 the artifact built and tested for that commit.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## License
 
-This application is intellectual property of CLARITY Technologies.
+InvoiceInk is open source under the [MIT License](LICENSE).

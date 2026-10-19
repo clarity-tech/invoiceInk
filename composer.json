@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "clarity-tech/laravel-strict",
+    "name": "clarity-tech/invoiceink",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Invoices and estimates for small businesses, built with Laravel, Inertia and Vue.",
+    "keywords": ["invoicing", "estimates", "gst", "laravel", "inertia", "vue"],
     "license": "MIT",
     "require": {
         "php": "^8.5",

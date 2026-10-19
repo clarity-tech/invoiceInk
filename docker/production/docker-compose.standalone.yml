@@ -12,7 +12,7 @@ services:
       target: runtime # or standalone-alpine for even smaller image
       args:
         - BUILDKIT_INLINE_CACHE=1
-    image: ghcr.io/clarity-tech/invoicing-standalone:latest
+    image: ghcr.io/clarity-tech/invoiceink-standalone:latest
     container_name: invoicing-standalone
     restart: unless-stopped
     ports:
@@ -125,7 +125,7 @@ services:
       context: ../..
       dockerfile: docker/production/Dockerfile.standalone
       target: runtime
-    image: ghcr.io/clarity-tech/invoicing-standalone:latest
+    image: ghcr.io/clarity-tech/invoiceink-standalone:latest
     container_name: invoicing-queue
     restart: unless-stopped
     environment:
@@ -172,7 +172,7 @@ services:
       context: ../..
       dockerfile: docker/production/Dockerfile.standalone
       target: runtime
-    image: ghcr.io/clarity-tech/invoicing-standalone:latest
+    image: ghcr.io/clarity-tech/invoiceink-standalone:latest
     container_name: invoicing-scheduler
     restart: unless-stopped
     environment:

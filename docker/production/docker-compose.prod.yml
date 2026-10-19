@@ -11,7 +11,7 @@ services:
       target: production
       args:
         - BUILDKIT_INLINE_CACHE=1
-    image: ghcr.io/clarity-tech/invoicing:latest
+    image: ghcr.io/clarity-tech/invoiceink:latest
     container_name: invoicing-app
     restart: unless-stopped
     ports:

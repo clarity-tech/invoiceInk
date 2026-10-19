@@ -1,53 +1,44 @@
-# Contributing to CLARITY Laravel Starter Kit  
+# Contributing to InvoiceInk
 
-Thank you for considering contributing to the CLARITY Laravel Starter Kit! This document outlines guidelines to help you contribute effectively.
+Thank you for considering a contribution.
 
----
+## Getting started
 
-## Getting Started  
-1. **Fork the repository** on GitHub.  
-2. **Clone your fork** locally:  
-   ```bash  
-   git clone https://github.com/your-username/laravel-essentials-starter-kit.git  
-   ```  
-3. **Install dependencies**:  
-   ```bash  
-   composer install  
-   bun install
-   ```  
+Fork the repository, clone your fork, and follow the setup in the
+[README](README.md). Everything runs through Laravel Sail.
 
----
+## Before opening a pull request
 
-## Pull Request Guidelines  
-- **Branch naming**: Use `feature/descriptive-name` or `fix/issue-number`  
-- **PR Requirements**:  
-  - Include a clear description of changes  
-  - Reference relevant issues (e.g., `Closes #123`)  
-  - Ensure all tests pass  
-  - Update documentation if needed  
+- Format your changes:
 
----
+  ```bash
+  sail pint --dirty && sail bun run lint && sail bun run format
+  ```
 
-## Code Standards  
-- Follow **PSR-12** coding standards.  
-- Maintain consistent naming conventions with existing code.  
-- Write **descriptive commit messages** following [Conventional Commits](https://www.conventionalcommits.org/).  
+- Run the tests:
 
----
+  ```bash
+  sail php artisan test --parallel
+  sail bun run test
+  ```
 
-## Testing  
-- Run tests before submitting:  
-  ```bash  
-  vendor/bin/phpunit  
-  ```  
-- New features **require** accompanying tests.  
+- Add or update tests for any change in behaviour.
 
----
+## Commits and pull requests
 
-## Code of Conduct  
-By participating, you agree to follow our [Contributor Covenant 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/).  
+Write commit messages as [Conventional Commits](https://www.conventionalcommits.org/).
+Releases are generated from them: `feat:` bumps the minor version, `fix:` the
+patch, and `feat!:` or a `BREAKING CHANGE:` footer the major.
 
----
+Describe what changed and why in the pull request, and reference any issue it
+closes (for example `Closes #12`).
 
-## License  
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+## Code of conduct
+
+By participating, you agree to follow the
+[Contributor Covenant 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/).
+
+## License
+
+By contributing, you agree that your contributions are licensed under the
+[MIT License](LICENSE).
