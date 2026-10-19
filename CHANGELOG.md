@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.20.1](https://github.com/clarity-tech/invoiceInk/compare/v1.20.0...v1.20.1) (2026-10-19)
+
+
+### Documentation
+
+* release InvoiceInk under the MIT License ([f3106de](https://github.com/clarity-tech/invoiceInk/commit/f3106de9c2a152165d6a45a35e0431db6ef01f0f))
+
+
+### Build & CI
+
+* lowercase the image name ([aab40c0](https://github.com/clarity-tech/invoiceInk/commit/aab40c0250fdc0d32d83e8132fe4fbc739082d30))
+* move deployment to a private repository ([5fdd3b0](https://github.com/clarity-tech/invoiceInk/commit/5fdd3b09bfdf1bab14d97b562c7490b88131997f))
+
 ## [1.20.0](https://github.com/clarity-tech/invoiceInk/compare/v1.19.0...v1.20.0) (2026-10-16)
 
 
