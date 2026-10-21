@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.2](https://github.com/clarity-tech/invoiceInk/compare/v1.20.1...v1.20.2) (2026-10-21)
+
+
+### Bug Fixes
+
+* log rejected OAuth tokens as warnings, not errors ([fa595f3](https://github.com/clarity-tech/invoiceInk/commit/fa595f3fd5dc70192b3bc9627b8bf04ee8f870d4))
+
 ## [1.20.1](https://github.com/clarity-tech/invoiceInk/compare/v1.20.0...v1.20.1) (2026-10-19)
 
 
