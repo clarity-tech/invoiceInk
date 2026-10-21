@@ -8,6 +8,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use League\OAuth2\Server\Exception\OAuthServerException;
+use Psr\Log\LogLevel;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -33,5 +35,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Passport reports every rejected bearer token, and most are access
+        // tokens that expired an hour in; the client refreshes and retries.
+        // Keep them in the logs but out of the error alerts.
+        $exceptions->level(OAuthServerException::class, LogLevel::WARNING);
     })->create();
