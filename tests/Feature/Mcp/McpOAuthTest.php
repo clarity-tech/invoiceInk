@@ -2,6 +2,7 @@
 
 use App\Models\Organization;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Laravel\Passport\Token;
@@ -105,6 +106,16 @@ test('an unauthenticated request is told where to find the authorization server'
             'WWW-Authenticate',
             'Bearer realm="mcp", resource_metadata="'.url('/.well-known/oauth-protected-resource/mcp').'"',
         );
+});
+
+test('a rejected token is logged as a warning, not posted as an error alert', function () {
+    Log::spy();
+
+    callListInvoices('not-a-jwt')->assertUnauthorized();
+
+    Log::shouldHaveReceived('warning')->once()
+        ->withArgs(fn ($message) => $message === 'The resource owner or authorization server denied the request.');
+    Log::shouldNotHaveReceived('error');
 });
 
 test('the protected resource metadata names the endpoint exactly as users paste it', function () {
