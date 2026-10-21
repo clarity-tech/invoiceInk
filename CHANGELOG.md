@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.3](https://github.com/clarity-tech/invoiceInk/compare/v1.20.2...v1.20.3) (2026-10-21)
+
+
+### Bug Fixes
+
+* **docker:** build on PHP 8.5.12 for CVE-2026-109618 and CVE-2026-109619 ([2fe8944](https://github.com/clarity-tech/invoiceInk/commit/2fe89441ba127cf0bb41418ad400ec7210ac708b))
+
 ## [1.20.2](https://github.com/clarity-tech/invoiceInk/compare/v1.20.1...v1.20.2) (2026-10-21)
 
 
