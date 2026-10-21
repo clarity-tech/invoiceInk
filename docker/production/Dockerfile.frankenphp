@@ -10,7 +10,9 @@
 # ========================================
 # Stage 1: PHP Dependencies
 # ========================================
-FROM serversideup/php:8.5-cli AS php-deps
+# Pinned to a PHP patch release, the same in both stages, so a security fix is
+# a deliberate bump rather than whatever the floating tag held at build time.
+FROM serversideup/php:8.5.12-cli AS php-deps
 
 USER root
 WORKDIR /var/www/html
@@ -67,7 +69,7 @@ RUN bun run build
 # pre-installed extensions (opcache, pcntl, redis, zip),
 # Laravel autorun (migrate, optimize, storage:link), health check scripts.
 # See: https://serversideup.net/open-source/docker-php/docs/image-variations/frankenphp
-FROM serversideup/php:8.5-frankenphp AS production
+FROM serversideup/php:8.5.12-frankenphp AS production
 
 # Install additional PHP extensions not included in base image
 USER root
