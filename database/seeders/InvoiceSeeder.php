@@ -244,6 +244,9 @@ class InvoiceSeeder extends ProductionSafeSeeder
         // Create appropriate invoice items based on invoice type and organization
         $itemsData = $this->getInvoiceItemsForType($organization, $invoice);
         $isIndianSupplier = $organization->country_code === Country::IN;
+        // The price lists are in the organization's own currency. Unconverted,
+        // a ₹1,20,000 licence billed in dirhams came to AED 1,20,000.
+        $rate = ExchangeRateSeeder::rateFor($organization->currency->value, $invoice->currency->value);
 
         foreach ($itemsData as $itemData) {
             $invoice->items()->create([
@@ -251,12 +254,24 @@ class InvoiceSeeder extends ProductionSafeSeeder
                 // SAC codes identify the service supplied on Indian invoices.
                 'sac_code' => $isIndianSupplier ? fake()->randomElement(['998313', '998314', '998319', '997331']) : null,
                 'quantity' => $itemData['quantity'],
-                'unit_price' => $itemData['unit_price'],
+                'unit_price' => $rate === 1.0 ? $itemData['unit_price'] : $this->convertedPrice($itemData['unit_price'], $rate),
                 'tax_rate' => $itemData['tax_rate'],
             ]);
         }
 
         $this->finalizeInvoice($invoice, $organization);
+    }
+
+    /**
+     * A price converted into another currency and rounded to two significant
+     * figures, as a price list in that currency would set it.
+     */
+    private function convertedPrice(int $unitPrice, float $rate): int
+    {
+        $converted = $unitPrice * $rate;
+        $step = 10 ** max(0, (int) floor(log10(max($converted, 1))) - 1);
+
+        return (int) (round($converted / $step) * $step);
     }
 
     /**
