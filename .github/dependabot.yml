@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # PHP patch releases only; moving to a new minor is deliberate. The fix:
+  # prefix makes merging the PR cut a patch release.
+  - package-ecosystem: docker
+    directory: /docker/production
+    schedule:
+      interval: daily
+    allow:
+      - dependency-name: serversideup/php
+    ignore:
+      - dependency-name: serversideup/php
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+    groups:
+      php:
+        patterns: ['serversideup/php']
+    commit-message:
+      prefix: fix
+      include: scope
