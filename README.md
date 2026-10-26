@@ -1,7 +1,10 @@
-![CLARITY Logo](.github/clarity-logo.png)
+![InvoiceInk: open-source invoicing](.github/banner.png)
+
 # InvoiceInk
 
 A modern invoicing application built with Laravel 13, Inertia.js v3, Vue 3, and TypeScript. Features multi-currency support, organization-centric architecture, and comprehensive document management.
+
+**Try it:** [invoiceink.claritytech.io](https://invoiceink.claritytech.io)
 
 ## Prerequisites
 
@@ -170,4 +173,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-InvoiceInk is open source under the [MIT License](LICENSE).
+InvoiceInk is open source under the [MIT License](LICENSE). It is built and maintained by [Clarity Technologies](https://claritytech.io).

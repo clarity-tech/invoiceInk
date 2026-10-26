@@ -1,0 +1,130 @@
+<!-- Source of banner.png. Render with: chrome --headless --window-size=1280,640 --force-device-scale-factor=2 --virtual-time-budget=8000 --screenshot=banner.png banner.html -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>InvoiceInk banner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=block" rel="stylesheet">
+<style>
+  :root {
+    --ink-deep: #2e1065;
+    --violet: #7c3aed;
+    --lilac: #c4b5fd;
+    --lilac-soft: #ddd6fe;
+    --paper: #ffffff;
+    --paper-text: #241a3a;
+    --paper-muted: #6b6480;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1280px; height: 640px; overflow: hidden; }
+  body {
+    background: var(--ink-deep);
+    font-family: Figtree, system-ui, sans-serif;
+    color: #fff;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .copy { position: absolute; left: 72px; top: 64px; width: 600px; height: 512px; display: flex; flex-direction: column; }
+  .wordmark { display: flex; align-items: center; gap: 10px; font-size: 34px; font-weight: 700; letter-spacing: -0.01em; }
+  .wordmark svg { width: 40px; height: 40px; }
+  .wordmark .ink { color: #a78bfa; }
+  h1 { margin-top: 56px; font-size: 78px; line-height: 0.98; font-weight: 800; letter-spacing: -0.035em; }
+  .lede { margin-top: 26px; font-size: 25px; line-height: 1.4; color: var(--lilac-soft); max-width: 500px; font-weight: 400; }
+  .links { margin-top: auto; display: grid; grid-template-columns: auto 1fr; column-gap: 18px; row-gap: 8px; align-items: baseline; }
+  .links dt { font-size: 17px; color: var(--lilac); font-weight: 500; }
+  .links dd { font-size: 22px; font-weight: 600; letter-spacing: -0.005em; }
+
+  .sheet {
+    position: absolute; left: 718px; top: 58px; width: 500px; height: 680px;
+    background: var(--paper); color: var(--paper-text); border-radius: 6px;
+    transform: rotate(4deg); transform-origin: 0 0;
+    box-shadow: 0 40px 80px rgba(8, 0, 28, 0.55), 0 2px 0 rgba(255,255,255,0.4) inset;
+    padding: 34px 36px;
+  }
+  .sheet-head { display: flex; justify-content: space-between; align-items: flex-start; }
+  .from { font-size: 18px; font-weight: 700; padding-top: 6px; }
+  .doc { text-align: right; }
+  .doc .kind { font-size: 24px; font-weight: 600; color: var(--violet); letter-spacing: 0.04em; }
+  .doc .num { margin-top: 2px; font-size: 14px; font-weight: 700; }
+  .bill { margin-top: 26px; }
+  .bill .label { font-size: 12px; color: var(--paper-muted); }
+  .bill .who { margin-top: 3px; font-size: 18px; font-weight: 700; }
+
+  table { margin-top: 24px; width: 100%; border-collapse: collapse; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+  thead tr { background: var(--violet); }
+  thead th { box-shadow: 0 0 0 1px var(--violet); color: #fff; font-weight: 500; text-align: left; padding: 9px 10px; }
+  thead th:last-child, td:last-child { text-align: right; }
+  td { padding: 11px 10px; border-bottom: 1px solid #eeebf3; }
+  td:first-child, th:first-child { width: 28px; color: var(--paper-muted); }
+  thead th:first-child { color: #fff; }
+
+  .totals { margin-top: 16px; margin-left: auto; width: 250px; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+  .totals div { display: flex; justify-content: space-between; padding: 6px 10px; }
+  .totals .due { background: #f2f0f6; font-weight: 700; margin-top: 4px; }
+
+  .stamp {
+    position: absolute; left: 66px; top: 428px;
+    transform: rotate(-13deg);
+    color: var(--violet); border: 5px solid currentColor; border-radius: 12px;
+    padding: 8px 20px 10px; text-align: center;
+    mix-blend-mode: multiply; opacity: 0.9;
+    filter: url(#rough);
+  }
+  .stamp .big { font-size: 43px; font-weight: 800; letter-spacing: 0.05em; line-height: 1; }
+  .stamp .small { margin-top: 5px; font-size: 16px; font-weight: 700; letter-spacing: 0.12em; }
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <symbol id="drop" viewBox="0 0 48 48">
+        <path d="M24 4C24 4 10 22 10 32a14 14 0 0028 0C38 22 24 4 24 4z" fill="#7c3aed"/>
+        <path d="M24 14l-4 12h8L24 14z" fill="#ffffff" opacity="0.9"/>
+      </symbol>
+      <!-- Rubber-stamp edges: roughen the outline, then knock out flecks of ink. -->
+      <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="grain"/>
+        <feDisplacementMap in="SourceGraphic" in2="grain" scale="3.2" result="edge"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.07" numOctaves="3" seed="3" result="blotch"/>
+        <feColorMatrix in="blotch" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -5 3.95" result="mask"/>
+        <feComposite in="edge" in2="mask" operator="in"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="copy">
+    <div class="wordmark"><svg><use href="#drop"/></svg><span>Invoice<span class="ink">Ink</span></span></div>
+    <h1>Open-source<br>invoicing</h1>
+    <p class="lede">Invoices, estimates and payments in nine currencies, with GST and VAT built in.</p>
+    <dl class="links">
+      <dt>Try it</dt><dd>invoiceink.claritytech.io</dd>
+      <dt>Source</dt><dd>github.com/clarity-tech/invoiceInk</dd>
+    </dl>
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-head">
+      <div class="from">Clarity Technologies</div>
+      <div class="doc"><div class="kind">INVOICE</div><div class="num"># INV-26001</div></div>
+    </div>
+    <div class="bill"><div class="label">Bill to</div><div class="who">Anyone who sends invoices</div></div>
+    <table>
+      <thead><tr><th>#</th><th>Item</th><th>Amount</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Branded PDF invoices</td><td>0.00</td></tr>
+        <tr><td>2</td><td>Share links for your customers</td><td>0.00</td></tr>
+        <tr><td>3</td><td>Numbering by financial year</td><td>0.00</td></tr>
+        <tr><td>4</td><td>MCP server for AI assistants</td><td>0.00</td></tr>
+      </tbody>
+    </table>
+    <div class="totals">
+      <div><span>Total</span><span>₹0.00</span></div>
+      <div class="due"><span>Balance due</span><span>₹0.00</span></div>
+    </div>
+    <div class="stamp"><div class="big">OPEN SOURCE</div><div class="small">MIT LICENSE</div></div>
+  </div>
+</body>
+</html>
