@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Organization;
 use App\Models\User;
 use App\Support\JetstreamFeatures as Features;
+use App\ValueObjects\BankDetails;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -126,7 +127,10 @@ class UserFactory extends Factory
                 ->personalTeam()
                 ->state([
                     'name' => 'Clarity Tech Admin',
+                    'company_name' => null,
                     'currency' => 'INR',
+                    'phone' => null,
+                    'phone_country' => null,
                 ])
                 ->count(1),
             'ownedTeams'
@@ -172,11 +176,28 @@ class UserFactory extends Factory
                 ->businessOrganization()
                 ->indianCompany()
                 ->completedSetup()
-                ->withBankDetails()
-                ->withHeadOffice()
+                ->withHeadOffice([
+                    'address_line_1' => '12 Church Street, Ashok Nagar',
+                    'city' => 'Bengaluru',
+                    'state' => 'Karnataka',
+                    'postal_code' => '560001',
+                    'country' => 'IN',
+                    'tax_id' => '29AAGCD4821M1Z6',
+                ])
                 ->state([
                     'name' => 'Demo Company Ltd',
                     'company_name' => 'Demo Company Private Limited',
+                    'phone' => '+918041234567',
+                    'phone_country' => 'IN',
+                    'bank_details' => new BankDetails(
+                        accountName: 'Demo Company Private Limited',
+                        accountNumber: '50200041237789',
+                        bankName: 'HDFC Bank',
+                        ifsc: 'HDFC0000523',
+                        branch: 'MG Road, Bengaluru',
+                        swift: 'HDFCINBB',
+                        pan: 'AAGCD4821M',
+                    ),
                 ])
                 ->count(1),
             'ownedTeams'
@@ -201,7 +222,6 @@ class UserFactory extends Factory
                 ->manufacturingCompany()
                 ->usCompany()
                 ->completedSetup()
-                ->withBankDetails()
                 ->withHeadOffice([
                     'address_line_1' => '123 Industrial Ave',
                     'city' => 'Detroit',
@@ -219,6 +239,13 @@ class UserFactory extends Factory
                     'phone_country' => 'US',
                     'website' => 'https://acmecorp.test',
                     'custom_domain' => 'invoicing.acmecorp.test',
+                    'bank_details' => new BankDetails(
+                        accountName: 'ACME Manufacturing Corporation',
+                        accountNumber: '1852330741',
+                        bankName: 'Comerica Bank',
+                        branch: 'Detroit, Michigan',
+                        swift: 'MNBDUS33',
+                    ),
                 ])
                 ->count(1),
             'ownedTeams'
@@ -239,7 +266,6 @@ class UserFactory extends Factory
                 ->techStartup()
                 ->usCompany()
                 ->completedSetup()
-                ->withBankDetails()
                 ->withHeadOffice([
                     'address_line_1' => '456 Innovation Blvd',
                     'city' => 'San Francisco',
@@ -257,6 +283,13 @@ class UserFactory extends Factory
                     'phone_country' => 'US',
                     'website' => 'https://techstartup.test',
                     'custom_domain' => 'billing.techstartup.test',
+                    'bank_details' => new BankDetails(
+                        accountName: 'TechStart Inc.',
+                        accountNumber: '7230415896',
+                        bankName: 'Wells Fargo Bank',
+                        branch: 'San Francisco, California',
+                        swift: 'WFBIUS6S',
+                    ),
                 ])
                 ->count(1),
             'ownedTeams'
@@ -277,7 +310,6 @@ class UserFactory extends Factory
                 ->consultingFirm()
                 ->germanCompany()
                 ->completedSetup()
-                ->withBankDetails()
                 ->withHeadOffice([
                     'address_line_1' => 'Unter den Linden 1',
                     'city' => 'Berlin',
@@ -294,6 +326,13 @@ class UserFactory extends Factory
                     'phone' => '+493012345678',
                     'phone_country' => 'DE',
                     'website' => 'https://euroconsult.test',
+                    'bank_details' => new BankDetails(
+                        accountName: 'EuroConsult GmbH',
+                        accountNumber: 'DE89 3704 0044 0532 0130 00',
+                        bankName: 'Commerzbank',
+                        branch: 'Berlin',
+                        swift: 'COBADEFFXXX',
+                    ),
                 ])
                 ->count(1),
             'ownedTeams'
@@ -314,7 +353,6 @@ class UserFactory extends Factory
                 ->tradingCompany()
                 ->uaeCompany()
                 ->completedSetup()
-                ->withBankDetails()
                 ->withHeadOffice([
                     'address_line_1' => 'Office 1205, Business Bay Tower',
                     'city' => 'Dubai',
@@ -331,6 +369,13 @@ class UserFactory extends Factory
                     'phone' => '+97141234567',
                     'phone_country' => 'AE',
                     'website' => 'https://dubaitrading.test',
+                    'bank_details' => new BankDetails(
+                        accountName: 'Dubai Trading LLC',
+                        accountNumber: 'AE07 0331 2345 6789 0123 456',
+                        bankName: 'Emirates NBD',
+                        branch: 'Business Bay, Dubai',
+                        swift: 'EBILAEAD',
+                    ),
                 ])
                 ->count(1),
             'ownedTeams'
@@ -350,7 +395,10 @@ class UserFactory extends Factory
                 ->personalTeam()
                 ->state([
                     'name' => 'Robert Global\'s Team',
+                    'company_name' => null,
                     'currency' => 'INR',
+                    'phone' => null,
+                    'phone_country' => null,
                 ])
                 ->count(1),
             'ownedTeams'
@@ -359,13 +407,30 @@ class UserFactory extends Factory
                 ->businessOrganization()
                 ->indianCompany()
                 ->completedSetup()
-                ->withBankDetails()
-                ->withHeadOffice()
+                ->withHeadOffice([
+                    'address_line_1' => '7th Floor, Maker Chambers IV, Nariman Point',
+                    'city' => 'Mumbai',
+                    'state' => 'Maharashtra',
+                    'postal_code' => '400021',
+                    'country' => 'IN',
+                    'tax_id' => '27AABCG7310K1ZQ',
+                ])
                 ->state([
                     'name' => 'GlobalCorp Holdings',
                     'company_name' => 'GlobalCorp Holdings Inc',
                     'currency' => 'INR',
                     'custom_domain' => 'invoicing.globalcorp.test',
+                    'phone' => '+912266554433',
+                    'phone_country' => 'IN',
+                    'bank_details' => new BankDetails(
+                        accountName: 'GlobalCorp Holdings Inc',
+                        accountNumber: '000405112233',
+                        bankName: 'ICICI Bank',
+                        ifsc: 'ICIC0000004',
+                        branch: 'Nariman Point, Mumbai',
+                        swift: 'ICICINBB',
+                        pan: 'AABCG7310K',
+                    ),
                 ])
                 ->count(1),
             'ownedTeams'
@@ -374,12 +439,29 @@ class UserFactory extends Factory
                 ->businessOrganization()
                 ->indianCompany()
                 ->completedSetup()
-                ->withBankDetails()
-                ->withHeadOffice()
+                ->withHeadOffice([
+                    'address_line_1' => 'Plot 17, HITEC City, Madhapur',
+                    'city' => 'Hyderabad',
+                    'state' => 'Telangana',
+                    'postal_code' => '500081',
+                    'country' => 'IN',
+                    'tax_id' => '36AADCG5592P1Z3',
+                ])
                 ->state([
                     'name' => 'GlobalCorp Tech Solutions',
                     'company_name' => 'GlobalCorp Tech Solutions Ltd',
                     'currency' => 'INR',
+                    'phone' => '+914040123456',
+                    'phone_country' => 'IN',
+                    'bank_details' => new BankDetails(
+                        accountName: 'GlobalCorp Tech Solutions Ltd',
+                        accountNumber: '918020045566771',
+                        bankName: 'Axis Bank',
+                        ifsc: 'UTIB0000553',
+                        branch: 'HITEC City, Hyderabad',
+                        swift: 'AXISINBB',
+                        pan: 'AADCG5592P',
+                    ),
                 ])
                 ->count(1),
             'ownedTeams'
