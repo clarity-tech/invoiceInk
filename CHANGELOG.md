@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.20.4](https://github.com/clarity-tech/invoiceInk/compare/v1.20.3...v1.20.4) (2026-10-26)
+
+
+### Documentation
+
+* add a banner and the live link to the README ([4580840](https://github.com/clarity-tech/invoiceInk/commit/45808403adde56080f510328b7342715ecec4ad3))
+* draw the banner's item rows without seams ([6ef4895](https://github.com/clarity-tech/invoiceInk/commit/6ef4895b7084632ea906f45cf249da019dd73ebf))
+
 ## [1.20.3](https://github.com/clarity-tech/invoiceInk/compare/v1.20.2...v1.20.3) (2026-10-21)
 
 
