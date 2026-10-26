@@ -208,18 +208,24 @@ test('total in words displays correctly for INR invoice', function () {
     $response->assertSee('Indian Rupee Forty-Seven Thousand Two Hundred Only');
 });
 
-test('the band overlays the document without moving it', function () {
-    // It is an overlay. Nothing reserves room for it, so the document sits
-    // exactly where it would without a band -- the band crosses the logo
-    // rather than pushing it down, as the reference does. Earlier revisions
-    // reserved header space and the gap was visible above the logo.
+test('the band crosses the logo but the sender name is kept clear of it on screen only', function () {
+    // It is an overlay that crosses the logo, as the reference does, so no
+    // room is reserved above the logo -- earlier revisions did that and the
+    // gap showed. Instead the logo's slot is pinned to a full-height logo's
+    // line, so a short or missing logo cannot let the name slide under the
+    // band. Print drops the band and the PDF never had one, so neither keeps
+    // the slot.
     $organization = createOrganizationWithLocation(['setup_completed_at' => now()]);
     $customer = createCustomerWithLocation([], [], $organization);
     $invoice = createInvoiceWithItems(['status' => 'draft'], null, $organization, $customer);
 
     expect(view('public.invoice', ['invoice' => $invoice, 'pdfUrl' => $invoice->sharePdfUrl(now()->addDay()), 'linkExpiresAt' => now()->addDay()])->render())
         ->toContain('<div class="doc-ribbon no-print')
-        ->not->toContain('.doc-header > div:first-child');
+        ->not->toContain('.doc-header > div:first-child')
+        ->toMatch('/@media screen \{\s+\.doc-from \{/');
+
+    expect(view('pdf.invoice', ['invoice' => $invoice])->render())
+        ->not->toContain('.doc-from {');
 });
 
 test('every status is drawn as a band on the preview, coloured by what the status means', function () {

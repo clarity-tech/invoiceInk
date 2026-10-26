@@ -486,10 +486,21 @@
         .doc-ribbon-green span { background: #059669; }
         .doc-ribbon-red span { background: #b91c1c; }
 
-        /* Nothing reserves room for the band. It is an overlay: it lies over
-           the top-left of the document and leaves the document exactly where
-           it would be without it, which is also how the reference does it --
-           the band crosses the logo rather than pushing it down. */
+        /* The band is an overlay that crosses the logo, as the reference does,
+           but it must not cross the sender's name. On screen the logo sits in
+           a slot as tall as a full-height logo's line (52px, its 10px margin
+           and 5px of line), so the name starts below the band whether the logo
+           is full height, short and wide, or missing -- and with a full-height
+           logo nothing moves. Print drops the band, so the slot goes too. */
+        @media screen {
+            .doc-from {
+                display: grid;
+                grid-template-rows: minmax(67px, auto) auto auto;
+            }
+            .doc-from .company-logo { grid-row: 1; align-self: start; justify-self: start; }
+            .doc-from .company-name { grid-row: 2; }
+            .doc-from .company-meta { grid-row: 3; }
+        }
 @endif
 
         /* ── Bill To + Details ────────────────────────────── */
@@ -773,7 +784,7 @@
 
             {{-- A. Header ──────────────────────────────────── --}}
             <div class="doc-header">
-                <div>
+                <div class="doc-from">
                     @if($logoUrl)
                         <img src="{{ $logoUrl }}" alt="{{ $organization->name }}" class="company-logo">
                     @endif
