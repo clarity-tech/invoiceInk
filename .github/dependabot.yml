@@ -1,11 +1,18 @@
 version: 2
+
+# Updates that ship in the image use fix:, so merging them cuts a patch release.
+# Composer dev tooling uses chore: and waits for the next release. Major
+# versions are left for a person to do.
 updates:
-  # PHP patch releases only; moving to a new minor is deliberate. The fix:
-  # prefix makes merging the PR cut a patch release.
   - package-ecosystem: docker
     directory: /docker/production
     schedule:
       interval: daily
+      time: '09:00'
+      timezone: Asia/Kolkata
+    # A PHP security release should not wait out the default 3-day cooldown.
+    cooldown:
+      default-days: 1
     allow:
       - dependency-name: serversideup/php
     ignore:
@@ -14,6 +21,48 @@ updates:
     groups:
       php:
         patterns: ['serversideup/php']
+    commit-message:
+      prefix: fix
+      include: scope
+
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: daily
+      time: '09:00'
+      timezone: Asia/Kolkata
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+    groups:
+      composer-runtime:
+        dependency-type: production
+      composer-dev:
+        dependency-type: development
+    commit-message:
+      prefix: fix
+      prefix-development: chore
+      include: scope
+
+  # Bun has no prefix-development, so dev updates are fix: too. Vite and
+  # Tailwind are dev dependencies whose bumps change the shipped assets anyway.
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: daily
+      time: '09:00'
+      timezone: Asia/Kolkata
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+      # typescript-eslint supports TypeScript below 6.1, and vue-tsc can't run on 7.
+      - dependency-name: typescript
+        versions: ['>= 6.1.0']
+    groups:
+      frontend-runtime:
+        dependency-type: production
+      frontend-dev:
+        dependency-type: development
     commit-message:
       prefix: fix
       include: scope
