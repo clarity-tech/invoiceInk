@@ -18,6 +18,7 @@ use App\Http\Controllers\OrganizationSetupController;
 use App\Http\Controllers\OtherBrowserSessionsController;
 use App\Http\Controllers\PrivacyPolicyController;
 use App\Http\Controllers\PublicViewController;
+use App\Http\Controllers\SeoController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamInvitationController;
@@ -32,6 +33,9 @@ Route::get('/', fn () => auth()->check() ? redirect('/dashboard') : view('welcom
 // Terms and Privacy Policy
 Route::get('/terms-of-service', [TermsOfServiceController::class, 'show'])->name('terms.show');
 Route::get('/privacy-policy', [PrivacyPolicyController::class, 'show'])->name('policy.show');
+
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 
 // Team invitation acceptance (signed URL). Reachable while unauthenticated so a
 // brand-new invitee can register through the accept flow; the controller branches
