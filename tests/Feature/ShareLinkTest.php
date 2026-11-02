@@ -78,6 +78,21 @@ test('an altered link is refused without saying whose document it was', function
     'no signature' => fn ($invoice) => preg_replace('/&signature=[^&]+/', '', $invoice->shareUrl()),
 ]);
 
+test('every response to a share link tells search engines not to index it', function (Closure $link, int $status) {
+    $this->mock(PdfService::class)
+        ->shouldReceive('downloadInvoicePdf')
+        ->andReturn(response('%PDF-fake', 200, ['Content-Type' => 'application/pdf']));
+
+    $this->get($link($this->invoice))
+        ->assertStatus($status)
+        ->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+})->with([
+    'the page' => [fn ($invoice) => $invoice->shareUrl(), 200],
+    'the PDF' => [fn ($invoice) => $invoice->sharePdfUrl(now()->addDay()), 200],
+    'an expired link' => [fn ($invoice) => $invoice->shareUrl(now()->subMinute()), 403],
+    'a forged link' => [fn ($invoice) => preg_replace('/&signature=[^&]+/', '', $invoice->shareUrl()), 403],
+]);
+
 test('a link still opens with tracking parameters added by whatever shared it', function () {
     $this->get($this->invoice->shareUrl().'&fbclid=IwAR0abc&utm_source=whatsapp')
         ->assertOk()
