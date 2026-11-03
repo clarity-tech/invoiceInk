@@ -27,6 +27,6 @@ it('renders every line of copy from the translation file', function () {
     $response = $this->get('/');
 
     $response->assertOk()
-        ->assertSeeTextInOrder(['GST invoices', 'at the speed of thought.'])
+        ->assertSeeTextInOrder(['Create invoices', 'at the speed of thought.'])
         ->assertDontSee('marketing.');
 });

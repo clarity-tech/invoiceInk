@@ -84,7 +84,6 @@
                 <nav aria-label="{{ __('marketing.footer.label') }}" class="flex items-center gap-5 text-sm text-gray-500">
                     <a href="{{ route('terms.show') }}" class="hover:text-gray-300 transition">{{ __('marketing.footer.terms') }}</a>
                     <a href="{{ route('policy.show') }}" class="hover:text-gray-300 transition">{{ __('marketing.footer.privacy') }}</a>
-                    <a href="https://github.com/clarity-tech/invoiceInk" target="_blank" rel="noopener" class="hover:text-gray-300 transition">{{ __('marketing.footer.source') }}</a>
                 </nav>
                 <a href="https://claritytech.io" target="_blank" rel="noopener" class="text-sm text-gray-600 hover:text-gray-400 transition">
                     {{ __('marketing.footer.made_by') }} <span class="text-gray-500">{{ __('marketing.footer.company') }}</span>
