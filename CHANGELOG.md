@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.20.4](https://github.com/clarity-tech/invoiceInk/compare/v1.20.3...v1.20.4) (2026-11-03)
+
+
+### Bug Fixes
+
+* **deps-dev:** bump the frontend-dev group across 1 directory with 11 updates ([0e78ed7](https://github.com/clarity-tech/invoiceInk/commit/0e78ed72bbcd1632785c2f5cf26fbea09a39089c))
+* **deps:** bump the composer-runtime group across 1 directory with 7 updates ([aac026c](https://github.com/clarity-tech/invoiceInk/commit/aac026c77837625a4c8bd713a7737bad490820ec))
+* **documents:** keep shared invoices out of search engines ([dc33328](https://github.com/clarity-tech/invoiceInk/commit/dc33328ce294ac14accac549b770647cb37183da))
+
+
+### Refactoring
+
+* **routes:** share one group for the share-link routes ([534560b](https://github.com/clarity-tech/invoiceInk/commit/534560b15c88d64d0cbdecf1578d29b7a0319168))
+
+
+### Documentation
+
+* add a banner and the live link to the README ([4580840](https://github.com/clarity-tech/invoiceInk/commit/45808403adde56080f510328b7342715ecec4ad3))
+* draw the banner's item rows without seams ([6ef4895](https://github.com/clarity-tech/invoiceInk/commit/6ef4895b7084632ea906f45cf249da019dd73ebf))
+
 ## [1.20.3](https://github.com/clarity-tech/invoiceInk/compare/v1.20.2...v1.20.3) (2026-10-21)
 
 
