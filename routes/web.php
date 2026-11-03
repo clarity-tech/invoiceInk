@@ -41,21 +41,23 @@ Route::get('/team-invitations/{invitation}', [TeamInvitationController::class, '
     ->middleware(['signed'])
     ->name('team-invitations.accept');
 
-// Public view routes for invoices and estimates (no authentication required, rate limited).
+// Public view and PDF routes for invoices and estimates (no authentication required, rate limited).
 // Reached only by a signed, expiring link -- see Invoice::shareUrl().
 //
 // The ULID pattern is set before group() so it reaches the routes; chained after
 // it, as it used to be, it constrained nothing.
-Route::middleware(['throttle:60,1', AddNoIndexHeader::class, ValidateShareLink::class])->where(['ulid' => '[0-9A-HJ-KM-NP-TV-Za-hj-km-np-tv-z]{26}'])->group(function () {
-    Route::get('/invoices/view/{ulid}', [PublicViewController::class, 'showInvoice'])->name('invoices.public');
-    Route::get('/estimates/view/{ulid}', [PublicViewController::class, 'showEstimate'])->name('estimates.public');
-});
+Route::middleware([AddNoIndexHeader::class, ValidateShareLink::class])->where(['ulid' => '[0-9A-HJ-KM-NP-TV-Za-hj-km-np-tv-z]{26}'])->group(function () {
+    Route::middleware('throttle:60,1')->group(function () {
+        Route::get('/invoices/view/{ulid}', [PublicViewController::class, 'showInvoice'])->name('invoices.public');
+        Route::get('/estimates/view/{ulid}', [PublicViewController::class, 'showEstimate'])->name('estimates.public');
+    });
 
-// PDF download routes (no authentication required, stricter rate limit due to resource cost).
-// Signed like the pages above; signed-in users download through invoices.download.
-Route::middleware(['throttle:10,1', AddNoIndexHeader::class, ValidateShareLink::class])->where(['ulid' => '[0-9A-HJ-KM-NP-TV-Za-hj-km-np-tv-z]{26}'])->group(function () {
-    Route::get('/invoices/{ulid}/pdf', [PublicViewController::class, 'downloadInvoicePdf'])->name('invoices.pdf');
-    Route::get('/estimates/{ulid}/pdf', [PublicViewController::class, 'downloadEstimatePdf'])->name('estimates.pdf');
+    // PDF downloads get a stricter rate limit due to resource cost.
+    // Signed-in users download through invoices.download.
+    Route::middleware('throttle:10,1')->group(function () {
+        Route::get('/invoices/{ulid}/pdf', [PublicViewController::class, 'downloadInvoicePdf'])->name('invoices.pdf');
+        Route::get('/estimates/{ulid}/pdf', [PublicViewController::class, 'downloadEstimatePdf'])->name('estimates.pdf');
+    });
 });
 
 // Protected application routes
