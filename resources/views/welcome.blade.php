@@ -16,21 +16,26 @@
         'sameAs' => ['https://github.com/clarity-tech/invoiceInk'],
     ];
 
-    // Heroicons (MIT) for the original six cards, Lucide (ISC) for the rest,
-    // drawn inline so this page loads no JavaScript.
     $features = [
-        'instant' => '<path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />',
-        'currencies' => '<path d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />',
-        'pdf' => '<path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />',
-        'organizations' => '<path d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3H21m-3.75 3H21" />',
-        'tax' => '<path d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V18zm2.498-6.75h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zm0 2.25h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V18zm2.504-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zm0 2.25h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V18zm2.498-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0012 2.25z" />',
-        'estimates' => '<path d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />',
-        'ai' => '<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /><path d="M20 2v4" /><path d="M22 4h-4" /><circle cx="4" cy="20" r="2" />',
-        'payments' => '<path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17" /><path d="m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9" /><path d="m2 16 6 6" /><circle cx="16" cy="9" r="2.9" /><circle cx="6" cy="5" r="3" />',
-        'numbering' => '<line x1="4" x2="20" y1="9" y2="9" /><line x1="4" x2="20" y1="15" y2="15" /><line x1="10" x2="8" y1="3" y2="21" /><line x1="16" x2="14" y1="3" y2="21" />',
-        'templates' => '<path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" /><rect x="2" y="4" width="20" height="16" rx="2" />',
-        'claude' => '<path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" /><path d="M7 11h10" /><path d="M7 15h6" /><path d="M7 7h8" />',
-        'open_source' => '<path d="m18 16 4-4-4-4" /><path d="m6 8-4 4 4 4" /><path d="m14.5 4-5 16" />',
+        'instant' => 'zap',
+        'currencies' => 'currency',
+        'pdf' => 'document',
+        'organizations' => 'office',
+        'tax' => 'calculator',
+        'estimates' => 'arrows',
+        'ai' => 'sparkles',
+        'payments' => 'hand-coins',
+        'numbering' => 'hash',
+        'templates' => 'mail',
+        'claude' => 'message-square-text',
+        'open_source' => 'code-xml',
+    ];
+
+    $featureLinks = [
+        'tax' => route('marketing.gst-invoicing'),
+        'ai' => route('marketing.hsn-sac-codes'),
+        'claude' => route('marketing.claude'),
+        'open_source' => route('marketing.open-source'),
     ];
 @endphp
 
@@ -244,38 +249,16 @@
 
             <div class="grid md:grid-cols-3 gap-6">
                 @foreach ($features as $key => $icon)
-                    <div class="group relative p-8 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] hover:border-brand-500/20 transition-all">
-                        <div class="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center mb-5">
-                            <svg class="w-6 h-6 text-brand-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                {!! $icon !!}
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-bold mb-2">{{ __("marketing.features.{$key}.title") }}</h3>
-                        <p class="text-gray-400 text-sm leading-relaxed">{{ __("marketing.features.{$key}.body") }}</p>
-                    </div>
+                    <x-marketing.feature-card
+                        :title="__('marketing.features.'.$key.'.title')"
+                        :icon="$icon"
+                        :href="$featureLinks[$key] ?? null"
+                        :link="__('marketing.features.learn_more')"
+                    >{{ __("marketing.features.{$key}.body") }}</x-marketing.feature-card>
                 @endforeach
             </div>
         </div>
     </section>
 
-    {{-- ===== CTA BAND ===== --}}
-    @guest
-        <section class="relative py-24 px-6">
-            <div class="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-brand-600/15 blur-[150px]"></div>
-            </div>
-            <div class="relative z-10 max-w-3xl mx-auto text-center">
-                <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-6">
-                    {{ __('marketing.cta.heading') }}<br>
-                    <span class="bg-gradient-to-r from-brand-400 to-fuchsia-400 bg-clip-text text-transparent">{{ __('marketing.cta.heading_accent') }}</span>
-                </h2>
-                <p class="text-gray-400 text-lg mb-10">{{ __('marketing.cta.body') }}</p>
-                <a href="{{ route('register') }}"
-                   class="group inline-flex items-center px-10 py-4 text-lg font-bold rounded-full bg-brand-600 hover:bg-brand-500 shadow-2xl shadow-brand-600/30 transition-all hover:shadow-brand-500/40 hover:scale-105">
-                    {{ __('marketing.cta.button') }}
-                    <span class="ml-2 inline-block transition-transform group-hover:translate-x-1">&rarr;</span>
-                </a>
-            </div>
-        </section>
-    @endguest
+    <x-marketing.cta-band />
 </x-marketing-layout>

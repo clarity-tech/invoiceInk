@@ -76,6 +76,11 @@
 
         {{-- ===== FOOTER ===== --}}
         <footer class="border-t border-white/5 py-8 px-6">
+            <nav aria-label="{{ __('marketing.footer.pages_label') }}" class="max-w-7xl mx-auto mb-8 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-gray-400">
+                @foreach (['gst_invoicing' => 'marketing.gst-invoicing', 'gst_invoice_format' => 'marketing.gst-invoice-format', 'hsn_sac_codes' => 'marketing.hsn-sac-codes', 'claude' => 'marketing.claude', 'open_source' => 'marketing.open-source'] as $key => $routeName)
+                    <a href="{{ route($routeName) }}" class="hover:text-white transition">{{ __('marketing.footer.pages.'.$key) }}</a>
+                @endforeach
+            </nav>
             <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="flex items-center gap-2 text-sm text-gray-500">
                     <x-application-mark class="size-5" />

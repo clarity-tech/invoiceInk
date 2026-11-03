@@ -23,6 +23,11 @@ it('lists the public pages on the public domain when reached on another host', f
         ->all();
     expect($locations)->toBe([
         'https://invoiceink.test/',
+        'https://invoiceink.test/gst-invoicing',
+        'https://invoiceink.test/gst-invoice-format',
+        'https://invoiceink.test/hsn-sac-codes',
+        'https://invoiceink.test/claude',
+        'https://invoiceink.test/open-source',
         'https://invoiceink.test/terms-of-service',
         'https://invoiceink.test/privacy-policy',
     ]);

@@ -27,6 +27,11 @@ class SeoController extends Controller
     {
         $entries = collect([
             '/',
+            route('marketing.gst-invoicing', absolute: false),
+            route('marketing.gst-invoice-format', absolute: false),
+            route('marketing.hsn-sac-codes', absolute: false),
+            route('marketing.claude', absolute: false),
+            route('marketing.open-source', absolute: false),
             route('terms.show', absolute: false),
             route('policy.show', absolute: false),
         ])->map(fn (string $path): string => '<url><loc>'.e($this->absolute($path)).'</loc></url>');

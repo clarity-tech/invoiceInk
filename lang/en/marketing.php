@@ -41,9 +41,38 @@ return [
         'cloud_setup' => 'Cloud Infrastructure Setup',
     ],
 
+    // A sample tax invoice drawn on the GST pages. Labels match the real
+    // document template; the businesses and GSTINs are made up.
+    'gst_mock' => [
+        'supplier' => 'Kestrel Design Studio',
+        'supplier_address' => 'Indiranagar, Bengaluru, Karnataka',
+        'supplier_gstin' => 'GSTIN 29AAAAA0000A1Z5',
+        'title' => 'TAX INVOICE',
+        'number' => '# INV-26014',
+        'bill_to' => 'Bill To',
+        'customer' => 'Acme Bakers Pvt Ltd',
+        'customer_gstin' => 'GSTIN 29BBBBB1111B1Z6',
+        'place_of_supply' => 'Place of Supply: Karnataka (29)',
+        'date_label' => 'Invoice Date',
+        'date' => '14/10/2026',
+        'item' => 'Item & Description',
+        'qty' => 'Qty',
+        'gst' => 'GST',
+        'amount' => 'Amount',
+        'line_one' => 'Website design and development',
+        'line_one_code' => 'HSN/SAC: 998314',
+        'line_two' => 'Hosting, 12 months',
+        'line_two_code' => 'HSN/SAC: 998315',
+        'sub_total' => 'Sub Total',
+        'cgst' => 'CGST @ (9%)',
+        'sgst' => 'SGST @ (9%)',
+        'total' => 'Total',
+    ],
+
     'features' => [
         'heading' => 'Everything you need.',
         'heading_accent' => 'Nothing you don’t.',
+        'learn_more' => 'Learn more',
         'instant' => [
             'title' => 'Instant Invoices',
             'body' => 'One form walks you through it. Line items, taxes, attachments — done in under a minute.',
@@ -103,6 +132,14 @@ return [
 
     'footer' => [
         'label' => 'Legal',
+        'pages_label' => 'Product',
+        'pages' => [
+            'gst_invoicing' => 'GST invoicing',
+            'gst_invoice_format' => 'GST invoice format',
+            'hsn_sac_codes' => 'HSN & SAC codes',
+            'claude' => 'InvoiceInk for Claude',
+            'open_source' => 'Open source',
+        ],
         'terms' => 'Terms',
         'privacy' => 'Privacy',
         'made_by' => 'Made with precision by',
