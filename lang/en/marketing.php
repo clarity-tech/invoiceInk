@@ -137,7 +137,7 @@ return [
             'gst_invoicing' => 'GST invoicing',
             'gst_invoice_format' => 'GST invoice format',
             'hsn_sac_codes' => 'HSN & SAC codes',
-            'claude' => 'InvoiceInk for Claude',
+            'claude' => 'Works with Claude',
             'open_source' => 'Open source',
         ],
         'terms' => 'Terms',
