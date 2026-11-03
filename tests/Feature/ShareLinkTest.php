@@ -78,6 +78,19 @@ test('an altered link is refused without saying whose document it was', function
     'no signature' => fn ($invoice) => preg_replace('/&signature=[^&]+/', '', $invoice->shareUrl()),
 ]);
 
+test('forged links are rate limited before their signature is checked', function (Closure $link, int $limit) {
+    $forged = preg_replace('/&signature=[^&]+/', '', $link($this->invoice));
+
+    foreach (range(1, $limit) as $attempt) {
+        $this->get($forged)->assertForbidden();
+    }
+
+    $this->get($forged)->assertTooManyRequests();
+})->with([
+    'the page, 60 a minute' => [fn ($invoice) => $invoice->shareUrl(), 60],
+    'the PDF, 10 a minute' => [fn ($invoice) => $invoice->sharePdfUrl(now()->addDay()), 10],
+]);
+
 test('every response to a share link tells search engines not to index it', function (Closure $link, int $status) {
     $this->mock(PdfService::class)
         ->shouldReceive('downloadInvoicePdf')
