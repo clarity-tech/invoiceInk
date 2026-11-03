@@ -18,7 +18,7 @@ const props = defineProps<{
     taxOptions: TaxRateOption[];
     canRemove: boolean;
     errors: Record<string, string>;
-    /** Offer to suggest the SAC code and tax rate with AI. */
+    /** Offer to suggest the HSN/SAC code and tax rate with AI. */
     aiSuggest?: boolean;
 }>();
 
@@ -115,7 +115,7 @@ function fieldId(field: string): string {
 }
 
 /**
- * The SAC code is a six-digit classification: set once, then only read. As a
+ * The HSN/SAC code is a short classification: set once, then only read. As a
  * second input under every description it cost each row the height of a field
  * nobody was editing, so it reads as a line of text and becomes an input when
  * it is asked for.
@@ -243,8 +243,8 @@ const suggestionError = computed(() => {
                     :model-value="item.sac_code"
                     type="text"
                     inputmode="numeric"
-                    placeholder="6-digit code"
-                    aria-label="SAC Code (optional)"
+                    placeholder="4 to 8 digits"
+                    aria-label="HSN/SAC code (optional)"
                     class="w-40 px-2 py-1 text-xs"
                     @blur="editingSac = false"
                     @keyup.enter="editingSac = false"
@@ -266,8 +266,8 @@ const suggestionError = computed(() => {
                     class="inline-flex cursor-pointer items-center gap-1 rounded px-1 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground pointer-coarse:min-h-9 pointer-coarse:px-2"
                     :aria-label="
                         item.sac_code
-                            ? `Edit SAC code for item ${index + 1}`
-                            : `Add a SAC code to item ${index + 1}`
+                            ? `Edit HSN/SAC code for item ${index + 1}`
+                            : `Add an HSN/SAC code to item ${index + 1}`
                     "
                     @click="editSac"
                 >
@@ -275,14 +275,14 @@ const suggestionError = computed(() => {
                         :is="item.sac_code ? Pencil : Plus"
                         class="size-3"
                     />
-                    {{ item.sac_code ? `SAC ${item.sac_code}` : 'SAC code' }}
+                    {{ item.sac_code ? `HSN/SAC ${item.sac_code}` : 'HSN/SAC' }}
                 </button>
                 <button
                     v-if="canSuggest && !editingSac"
                     type="button"
                     :disabled="suggestion.processing"
                     class="ml-1 inline-flex cursor-pointer items-center gap-1 rounded px-1 py-0.5 text-xs text-primary hover:bg-primary-soft disabled:opacity-60 pointer-coarse:min-h-9 pointer-coarse:px-2"
-                    :aria-label="`Suggest the SAC code and tax for item ${index + 1}`"
+                    :aria-label="`Suggest the HSN/SAC code and tax for item ${index + 1}`"
                     @click="suggest"
                 >
                     <component

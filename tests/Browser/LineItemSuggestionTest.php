@@ -16,7 +16,7 @@ it('suggests the SAC code and GST rate for a line on the invoice form', function
         ->fill('#item-0-description', 'Website design and development')
         ->click('button:has-text("Suggest code & tax")')
         ->waitForText('Suggested by AI')
-        ->assertSee('SAC 998314')
+        ->assertSee('HSN/SAC 998314')
         ->assertSelected('#item-0-tax_rate', 'gst-18')
         ->assertNoJavaScriptErrors();
 });

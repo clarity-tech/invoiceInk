@@ -66,7 +66,7 @@ return [
         'numbering_series' => 'Numbering Series',
         'numbering_series_optional' => 'Numbering Series (Optional)',
         'tax_id' => 'Tax ID',
-        'sac' => 'SAC',
+        'sac' => 'HSN/SAC',
         'email' => 'Email',
         'phone' => 'Phone',
         'website' => 'Website',

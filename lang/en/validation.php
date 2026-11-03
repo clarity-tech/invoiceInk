@@ -201,8 +201,8 @@ return [
             'max' => 'The tax rate for line item may not be greater than :max.',
         ],
         'items.*.sac_code' => [
-            'string' => 'The SAC code for line item must be text.',
-            'max' => 'The SAC code for line item may not be greater than :max characters.',
+            'string' => 'The HSN/SAC code for line item must be text.',
+            'max' => 'The HSN/SAC code for line item may not be greater than :max characters.',
         ],
         'contacts.*.name' => [
             'string' => 'The name for contact must be text.',
@@ -242,7 +242,7 @@ return [
         'items.*.quantity' => 'quantity',
         'items.*.unit_price' => 'unit price',
         'items.*.tax_rate' => 'tax rate',
-        'items.*.sac_code' => 'SAC code',
+        'items.*.sac_code' => 'HSN/SAC code',
         'contacts.*.name' => 'contact name',
         'contacts.*.email' => 'contact email',
         'recipients.*' => 'recipient email',
