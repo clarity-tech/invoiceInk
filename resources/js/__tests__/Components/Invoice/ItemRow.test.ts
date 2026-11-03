@@ -83,7 +83,7 @@ describe('ItemRow', () => {
     // Set once and then only read, so it reads as a line of text and becomes
     // an input when asked for -- it used to be a second field under every
     // description, costing each row the height of something nobody edits.
-    it('shows a set SAC code as text, not as a field', () => {
+    it('shows a set HSN/SAC code as text, not as a field', () => {
         const wrapper = mount(ItemRow, {
             props: {
                 ...defaultProps,
@@ -91,13 +91,15 @@ describe('ItemRow', () => {
             },
         });
 
-        expect(wrapper.text()).toContain('SAC 998311');
+        expect(wrapper.text()).toContain('HSN/SAC 998311');
         expect(
-            wrapper.find('input[aria-label="SAC Code (optional)"]').exists(),
+            wrapper
+                .find('input[aria-label="HSN/SAC code (optional)"]')
+                .exists(),
         ).toBe(false);
     });
 
-    it('opens an input when the SAC code is clicked', async () => {
+    it('opens an input when the HSN/SAC code is clicked', async () => {
         const wrapper = mount(ItemRow, {
             props: {
                 ...defaultProps,
@@ -106,16 +108,18 @@ describe('ItemRow', () => {
         });
 
         await wrapper
-            .find('button[aria-label="Edit SAC code for item 1"]')
+            .find('button[aria-label="Edit HSN/SAC code for item 1"]')
             .trigger('click');
 
-        const field = wrapper.find('input[aria-label="SAC Code (optional)"]');
+        const field = wrapper.find(
+            'input[aria-label="HSN/SAC code (optional)"]',
+        );
         expect((field.element as HTMLInputElement).value).toBe('998311');
-        // The six-digit hint moved onto the field it describes.
-        expect(field.attributes('placeholder')).toBe('6-digit code');
+        // An HSN code runs 4 to 8 digits, so the hint is not SAC's six.
+        expect(field.attributes('placeholder')).toBe('4 to 8 digits');
     });
 
-    it('offers to add one while the SAC code is empty', () => {
+    it('offers to add one while the HSN/SAC code is empty', () => {
         const wrapper = mount(ItemRow, {
             props: {
                 ...defaultProps,
@@ -125,7 +129,7 @@ describe('ItemRow', () => {
 
         expect(
             wrapper
-                .find('button[aria-label="Add a SAC code to item 1"]')
+                .find('button[aria-label="Add an HSN/SAC code to item 1"]')
                 .exists(),
         ).toBe(true);
     });

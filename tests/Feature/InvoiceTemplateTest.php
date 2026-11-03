@@ -69,6 +69,16 @@ test('public invoice template renders INVOICE header when no GSTIN', function ()
     $response->assertDontSee('TAX INVOICE');
 });
 
+test('the line item code is labelled HSN/SAC, since goods carry an HSN code', function () {
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+    $invoice = createInvoiceWithItems([
+        'type' => 'invoice',
+    ], [['description' => 'Laptop', 'sac_code' => '8471']], $organization, $customer);
+
+    $this->get($invoice->shareUrl())->assertOk()->assertSee('HSN/SAC: 8471');
+});
+
 test('public invoice renders TRN label for UAE organization location', function () {
     $organization = createOrganizationWithLocation([
         'currency' => 'AED',

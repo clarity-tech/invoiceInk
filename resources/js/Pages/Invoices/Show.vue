@@ -542,7 +542,7 @@ function deletePayment() {
                                                 v-if="item.sac_code"
                                                 class="mt-0.5 text-xs text-muted-foreground"
                                             >
-                                                SAC {{ item.sac_code }}
+                                                HSN/SAC {{ item.sac_code }}
                                             </div>
                                         </TableCell>
                                         <TableCell
