@@ -87,6 +87,10 @@ return [
 
     'share_link_days' => (int) env('SHARE_LINK_DAYS', 30),
 
+    // False keeps search engines out: robots.txt disallows everything and the
+    // public pages say noindex. Set it on staging and other non-public copies.
+    'indexable' => (bool) env('APP_INDEXABLE', true),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
