@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.21.0](https://github.com/clarity-tech/invoiceInk/compare/v1.20.6...v1.21.0) (2026-11-04)
+
+
+### Features
+
+* **marketing:** add SEO basics and GST, Claude and open-source pages ([0d4d113](https://github.com/clarity-tech/invoiceInk/commit/0d4d11345baca65c4bcc6f8d2ad3bce4c589f5d4))
+
 ## [1.20.6](https://github.com/clarity-tech/invoiceInk/compare/v1.20.5...v1.20.6) (2026-11-04)
 
 
