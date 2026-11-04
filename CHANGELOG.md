@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.6](https://github.com/clarity-tech/invoiceInk/compare/v1.20.5...v1.20.6) (2026-11-04)
+
+
+### Bug Fixes
+
+* **deps:** bump the composer-runtime group with 5 updates ([6208ce3](https://github.com/clarity-tech/invoiceInk/commit/6208ce3e8f07e59b566184beb8785adc46bfca3a))
+
 ## [1.20.5](https://github.com/clarity-tech/invoiceInk/compare/v1.20.4...v1.20.5) (2026-11-04)
 
 
