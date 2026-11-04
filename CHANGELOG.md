@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.20.5](https://github.com/clarity-tech/invoiceInk/compare/v1.20.4...v1.20.5) (2026-11-04)
+
+
+### Bug Fixes
+
+* **deps:** bump the frontend-runtime group across 1 directory with 8 updates ([7d8ed76](https://github.com/clarity-tech/invoiceInk/commit/7d8ed76cde7e8fd8a329affc89ebfb399e75333a))
+* **invoices:** label the line item code HSN/SAC, not just SAC ([5338fb8](https://github.com/clarity-tech/invoiceInk/commit/5338fb8e6c0fb12925cb743fee03a4af4871dcb6))
+
 ## [1.20.4](https://github.com/clarity-tech/invoiceInk/compare/v1.20.3...v1.20.4) (2026-11-03)
 
 
