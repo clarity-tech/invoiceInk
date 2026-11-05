@@ -14,6 +14,8 @@ class Payment extends Model
     protected $fillable = [
         'invoice_id',
         'amount',
+        'tds_amount',
+        'tds_section',
         'currency',
         'payment_date',
         'payment_method',
@@ -25,6 +27,7 @@ class Payment extends Model
     {
         return [
             'payment_date' => 'date',
+            'tds_amount' => 'integer',
             'currency' => Currency::class,
         ];
     }

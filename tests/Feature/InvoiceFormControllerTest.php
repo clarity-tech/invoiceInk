@@ -1149,3 +1149,64 @@ test('update recomputes the total when TDS is applied', function () {
     expect($fresh->tds_amount)->toBe(10000);
     expect($fresh->total)->toBe(90000); // 100000 - 10000
 });
+
+test('adding the TDS a customer withheld recomputes the payment status', function (string $status, InvoiceStatus $expected) {
+    $invoice = createInvoiceWithItems(
+        ['status' => $status, 'subtotal' => 100000, 'tax' => 0, 'total' => 100000, 'amount_paid' => 98000],
+        [['description' => 'Item', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 0]],
+        $this->organization,
+        $this->customer,
+    );
+    $invoice->payments()->create(['amount' => 98000, 'currency' => $invoice->currency, 'payment_date' => now()]);
+
+    $this->put(route('invoices.update', $invoice->id), [
+        'type' => 'invoice',
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => $status,
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'tds_rate' => 200,
+        'tds_section' => '194C',
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 0],
+        ],
+    ])->assertRedirect();
+
+    $fresh = $invoice->fresh();
+    expect($fresh->total)->toBe(98000)
+        ->and($fresh->status)->toBe($expected);
+})->with([
+    'part-paid invoice is settled' => ['partially_paid', InvoiceStatus::PAID],
+    'void invoice stays void' => ['void', InvoiceStatus::VOID],
+]);
+
+test('TDS cannot be added to an invoice whose payment already records it', function () {
+    $invoice = createInvoiceWithItems(
+        ['status' => 'paid', 'subtotal' => 100000, 'tax' => 0, 'total' => 100000, 'amount_paid' => 100000],
+        [['description' => 'Item', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 0]],
+        $this->organization,
+        $this->customer,
+    );
+    $invoice->payments()->create(['amount' => 98000, 'tds_amount' => 2000, 'currency' => $invoice->currency, 'payment_date' => now()]);
+
+    $this->put(route('invoices.update', $invoice->id), [
+        'type' => 'invoice',
+        'customer_id' => $this->customer->id,
+        'organization_location_id' => $this->organization->primaryLocation->id,
+        'customer_location_id' => $this->customer->primaryLocation->id,
+        'customer_shipping_location_id' => $this->customer->primaryLocation->id,
+        'status' => 'paid',
+        'issued_at' => now()->format('Y-m-d'),
+        'due_at' => now()->addDays(30)->format('Y-m-d'),
+        'tds_rate' => 200,
+        'tds_section' => '194C',
+        'items' => [
+            ['description' => 'Item', 'quantity' => 1, 'unit_price' => 100000, 'tax_rate' => 0],
+        ],
+    ])->assertSessionHasErrors('tds_rate');
+
+    expect($invoice->fresh()->total)->toBe(100000);
+});

@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -396,11 +397,20 @@ class Invoice extends Model implements HasMedia
     }
 
     /**
+     * What the payments settle: the cash received plus the TDS the customer
+     * withheld from it, which they pay to the government on our behalf.
+     */
+    public function settledByPayments(): int
+    {
+        return (int) $this->payments()->sum(DB::raw('amount + tds_amount'));
+    }
+
+    /**
      * Recalculate amount_paid from payments and update status accordingly.
      */
     public function recalculatePaymentStatus(): void
     {
-        $totalPaid = $this->payments()->sum('amount');
+        $totalPaid = $this->settledByPayments();
 
         $status = match (true) {
             $totalPaid >= $this->total => InvoiceStatus::PAID,

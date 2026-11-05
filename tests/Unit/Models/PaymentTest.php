@@ -278,6 +278,19 @@ describe('PaymentService', function () {
         ]))->toThrow(InvalidArgumentException::class, 'greater than zero');
     });
 
+    it('counts withheld TDS toward the invoice, including a TDS-only payment', function () {
+        $service = new PaymentService;
+
+        $service->recordPayment($this->invoice, [
+            'amount' => 0,
+            'tds_amount' => 2000,
+            'payment_date' => '2026-11-05',
+        ]);
+
+        expect($this->invoice->fresh()->amount_paid)->toBe(2000)
+            ->and($this->invoice->fresh()->status)->toBe(InvoiceStatus::PARTIALLY_PAID);
+    });
+
     it('rejects negative amount payment', function () {
         $service = new PaymentService;
 

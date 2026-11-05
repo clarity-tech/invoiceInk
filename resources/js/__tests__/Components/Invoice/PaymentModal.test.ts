@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { makeInvoice } from '../../helpers';
+import { makeInvoice, makePayment } from '../../helpers';
 
 const mockPost = vi.fn();
 const mockClearErrors = vi.fn();
@@ -165,5 +165,90 @@ describe('PaymentModal', () => {
             props: { show: true, invoice: defaultInvoice },
         });
         expect(wrapper.text()).toContain('INR');
+    });
+
+    it('offers the TDS field only when TDS applies', () => {
+        const without = mount(PaymentModal, {
+            props: { show: true, invoice: defaultInvoice },
+        });
+        expect(without.find('#payment-tds-amount').exists()).toBe(false);
+
+        const withTds = mount(PaymentModal, {
+            props: { show: true, invoice: defaultInvoice, tdsApplies: true },
+        });
+        expect(withTds.find('#payment-tds-amount').exists()).toBe(true);
+    });
+
+    it('takes the TDS off the prefilled amount until the amount is typed over', async () => {
+        const wrapper = mount(PaymentModal, {
+            props: { show: false, invoice: defaultInvoice, tdsApplies: true },
+        });
+        await wrapper.setProps({ show: true });
+        expect(formState.amount).toBe(7000000);
+
+        await wrapper.find('#payment-tds-amount').setValue('1400');
+        expect(formState.tds_amount).toBe(140000);
+        expect(formState.amount).toBe(6860000);
+
+        await wrapper.find('input[type="number"]').setValue('50000');
+        await wrapper.find('#payment-tds-amount').setValue('1000');
+        expect(formState.amount).toBe(5000000);
+    });
+
+    it('fills the TDS and its section from a rate on the subtotal', async () => {
+        const wrapper = mount(PaymentModal, {
+            props: {
+                show: false,
+                invoice: defaultInvoice,
+                tdsApplies: true,
+                tdsPresets: [
+                    { section: '194C', label: 'Contract', rate: 200 },
+                    { section: '194J', label: 'Professional', rate: 1000 },
+                ],
+            },
+        });
+        await wrapper.setProps({ show: true });
+
+        await wrapper
+            .findAll('button[type="button"]')
+            .filter((b) => b.text().includes('194C'))[0]
+            .trigger('click');
+
+        // 2% of the 1,00,000.00 subtotal, off the 70,000.00 balance.
+        expect(formState.tds_amount).toBe(200000);
+        expect(formState.tds_section).toBe('194C');
+        expect(formState.amount).toBe(6800000);
+    });
+
+    it('gives only the TDS not yet withheld, never more than the balance', async () => {
+        const invoice = makeInvoice({
+            subtotal: 10000000,
+            total: 10000000,
+            amount_paid: 9850000,
+            payments: [makePayment({ amount: 9700000, tds_amount: 150000 })],
+        });
+        const wrapper = mount(PaymentModal, {
+            props: {
+                show: false,
+                invoice,
+                tdsApplies: true,
+                tdsPresets: [
+                    { section: '194J', label: 'Technical', rate: 200 },
+                    { section: '194J', label: 'Professional', rate: 1000 },
+                ],
+            },
+        });
+        await wrapper.setProps({ show: true });
+        const presets = wrapper
+            .findAll('button[type="button"]')
+            .filter((b) => b.text().includes('194J'));
+
+        await presets[0].trigger('click');
+        expect(formState.tds_amount).toBe(50000);
+        expect(formState.amount).toBe(100000);
+
+        await presets[1].trigger('click');
+        expect(formState.tds_amount).toBe(150000);
+        expect(formState.amount).toBe(0);
     });
 });

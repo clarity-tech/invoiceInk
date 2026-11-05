@@ -225,10 +225,20 @@ export interface InvoiceAttachment {
     url: string;
 }
 
+/** A one-click TDS rate in the payment dialog; `rate` is basis points. */
+export interface TdsPreset {
+    section: string;
+    label: string;
+    rate: number;
+}
+
 export interface Payment {
     id: number;
     invoice_id: number;
     amount: number;
+    /** TDS the customer withheld; settles the invoice alongside `amount`. */
+    tds_amount: number;
+    tds_section: string | null;
     currency: Currency;
     payment_date: string;
     payment_method: string | null;
@@ -267,6 +277,9 @@ export interface Payment {
     id: number;
     invoice_id: number;
     amount: number;
+    /** TDS the customer withheld; settles the invoice alongside `amount`. */
+    tds_amount: number;
+    tds_section: string | null;
     currency: Currency;
     payment_date: string;
     payment_method: string | null;
