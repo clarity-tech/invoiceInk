@@ -145,7 +145,8 @@ test('get-invoice returns line items and payments', function () {
 
     Payment::create([
         'invoice_id' => $invoice->id,
-        'amount' => 3000,
+        'amount' => 2400,
+        'tds_amount' => 600,
         'currency' => 'INR',
         'payment_date' => now(),
         'payment_method' => 'bank_transfer',
@@ -162,6 +163,8 @@ test('get-invoice returns line items and payments', function () {
             ->where('totals.total_cents', 11800)
             ->where('totals.amount_paid_cents', 3000)
             ->where('totals.balance_cents', 8800)
+            ->where('payments.0.amount_cents', 2400)
+            ->where('payments.0.tds_amount_cents', 600)
             ->etc());
 });
 
@@ -376,6 +379,34 @@ test('revenue-summary separates what was invoiced from what was collected', func
             ->where('by_currency.0.invoiced_cents', 30000)
             ->where('by_currency.0.collected_cents', 20000)
             ->where('by_currency.0.outstanding_on_period_invoices_cents', 30000)
+            ->etc());
+});
+
+test('revenue-summary reports TDS withheld apart from the cash collected', function () {
+    $organization = createOrganizationWithLocation();
+
+    $invoice = createInvoiceWithItems([
+        'status' => 'paid',
+        'issued_at' => now(),
+        'total' => 20000,
+        'amount_paid' => 20000,
+    ], null, $organization);
+
+    Payment::create([
+        'invoice_id' => $invoice->id,
+        'amount' => 19600,
+        'tds_amount' => 400,
+        'currency' => 'INR',
+        'payment_date' => now(),
+    ]);
+
+    InvoicingServer::actingAs($organization->owner)
+        ->tool(RevenueSummaryTool::class, ['period' => 'this_month'])
+        ->assertOk()
+        ->assertStructuredContent(fn (AssertableJson $json) => $json
+            ->where('by_currency.0.collected_cents', 19600)
+            ->where('by_currency.0.tds_withheld_cents', 400)
+            ->where('by_currency.0.outstanding_on_period_invoices_cents', 0)
             ->etc());
 });
 

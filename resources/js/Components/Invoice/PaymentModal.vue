@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { formatMoney } from '@/composables/useFormatMoney';
-import type { Invoice } from '@/types';
+import type { Invoice, TdsPreset } from '@/types';
 
 const props = defineProps<{
     show: boolean;
     invoice: Invoice;
+    /** Offer the TDS field: an Indian customer, and no TDS on the invoice itself. */
+    tdsApplies?: boolean;
+    tdsPresets?: TdsPreset[];
 }>();
 
 const emit = defineEmits<{
@@ -22,17 +25,90 @@ const balanceDue = computed(() => {
 
 const form = useForm({
     amount: 0,
+    tds_amount: 0,
+    tds_section: '',
     payment_date: new Date().toISOString().split('T')[0],
     payment_method: '',
     reference: '',
     notes: '',
 });
 
+/**
+ * Until the amount is typed over, entering TDS takes it off the prefilled
+ * balance, so the amount reads as what actually arrived in the bank.
+ */
+const amountEdited = ref(false);
+
+const settled = computed(() => form.amount + form.tds_amount);
+
+function toCents(event: Event): number {
+    return Math.round(Number((event.target as HTMLInputElement).value) * 100);
+}
+
+function onAmountInput(event: Event) {
+    amountEdited.value = true;
+    form.amount = toCents(event);
+}
+
+function setTds(cents: number) {
+    form.tds_amount = cents;
+
+    if (cents <= 0) {
+        form.tds_section = '';
+    }
+
+    if (!amountEdited.value) {
+        form.amount = Math.max(0, balanceDue.value - cents);
+    }
+}
+
+function onTdsInput(event: Event) {
+    setTds(toCents(event));
+}
+
+const tdsAlreadyWithheld = computed(() =>
+    (props.invoice.payments ?? []).reduce(
+        (sum, payment) => sum + (payment.tds_amount ?? 0),
+        0,
+    ),
+);
+
+/**
+ * TDS is on the subtotal, before GST, for the whole invoice. Less what earlier
+ * payments already withheld, so recording it after the cash gives the rest.
+ */
+function presetAmount(preset: TdsPreset): number {
+    const onInvoice = Math.round(
+        ((props.invoice.subtotal ?? 0) * preset.rate) / 10000,
+    );
+
+    return Math.min(
+        balanceDue.value,
+        Math.max(0, onInvoice - tdsAlreadyWithheld.value),
+    );
+}
+
+function applyPreset(preset: TdsPreset) {
+    setTds(presetAmount(preset));
+    form.tds_section = form.tds_amount > 0 ? preset.section : '';
+}
+
+function isPresetApplied(preset: TdsPreset): boolean {
+    return (
+        form.tds_amount > 0 &&
+        form.tds_section === preset.section &&
+        form.tds_amount === presetAmount(preset)
+    );
+}
+
 watch(
     () => props.show,
     (isOpen) => {
         if (isOpen) {
             form.amount = balanceDue.value;
+            form.tds_amount = 0;
+            form.tds_section = '';
+            amountEdited.value = false;
             form.payment_date = new Date().toISOString().split('T')[0];
             form.payment_method = '';
             form.reference = '';
@@ -136,17 +212,10 @@ function fmt(amount: number): string {
                             :value="form.amount / 100"
                             type="number"
                             inputmode="decimal"
-                            min="0.01"
+                            min="0"
                             step="0.01"
                             class="w-full rounded-md border border-input py-2 pr-3 pl-14 text-sm focus:ring-2 focus:ring-ring focus:outline-none pointer-coarse:text-base"
-                            @input="
-                                form.amount = Math.round(
-                                    Number(
-                                        ($event.target as HTMLInputElement)
-                                            .value,
-                                    ) * 100,
-                                )
-                            "
+                            @input="onAmountInput"
                         />
                     </div>
                     <p
@@ -154,6 +223,80 @@ function fmt(amount: number): string {
                         class="mt-1 text-xs text-destructive"
                     >
                         {{ form.errors.amount }}
+                    </p>
+                </div>
+
+                <!-- TDS withheld by the customer -->
+                <div v-if="tdsApplies" class="mb-4">
+                    <label
+                        for="payment-tds-amount"
+                        class="mb-1 block text-sm font-medium text-soft-foreground"
+                        >TDS deducted by customer</label
+                    >
+                    <div class="relative">
+                        <span
+                            class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-faint-foreground"
+                            >{{ invoice.currency }}</span
+                        >
+                        <input
+                            id="payment-tds-amount"
+                            :value="
+                                form.tds_amount ? form.tds_amount / 100 : ''
+                            "
+                            type="number"
+                            inputmode="decimal"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            class="w-full rounded-md border border-input py-2 pr-3 pl-14 text-sm focus:ring-2 focus:ring-ring focus:outline-none pointer-coarse:text-base"
+                            @input="onTdsInput"
+                        />
+                    </div>
+                    <div
+                        v-if="tdsPresets?.length"
+                        class="mt-2 flex flex-wrap gap-1.5"
+                    >
+                        <button
+                            v-for="preset in tdsPresets"
+                            :key="`${preset.section}-${preset.rate}-${preset.label}`"
+                            type="button"
+                            class="rounded-full border px-2.5 py-1 text-xs hover:bg-muted"
+                            :class="
+                                isPresetApplied(preset)
+                                    ? 'border-primary text-primary'
+                                    : 'border-input text-soft-foreground'
+                            "
+                            @click="applyPreset(preset)"
+                        >
+                            <span class="font-medium"
+                                >{{ preset.rate / 100 }}%</span
+                            >
+                            {{ preset.section }}
+                            {{ preset.label.toLowerCase() }}
+                        </button>
+                    </div>
+                    <p
+                        v-if="tdsPresets?.length"
+                        class="mt-1 text-xs text-muted-foreground"
+                    >
+                        Of the {{ fmt(invoice.subtotal ?? 0) }} subtotal, before
+                        GST. Pick the rate on the customer's TDS certificate.
+                    </p>
+                    <p
+                        v-if="form.errors.tds_amount"
+                        class="mt-1 text-xs text-destructive"
+                    >
+                        {{ form.errors.tds_amount }}
+                    </p>
+                    <p v-else class="mt-1 text-xs text-muted-foreground">
+                        <template v-if="form.tds_amount > 0">
+                            Settles {{ fmt(settled) }} of the
+                            {{ fmt(balanceDue) }} due.
+                        </template>
+                        <template v-else>
+                            Paid short because they withheld TDS? Enter it here.
+                            It counts toward the balance.
+                        </template>
                     </p>
                 </div>
 
@@ -236,7 +379,7 @@ function fmt(amount: number): string {
                     </button>
                     <button
                         type="submit"
-                        :disabled="form.processing || form.amount <= 0"
+                        :disabled="form.processing || settled <= 0"
                         class="flex-1 rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {{

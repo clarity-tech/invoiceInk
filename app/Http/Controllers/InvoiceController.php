@@ -29,6 +29,7 @@ use App\Services\InvoiceDraftBuilder;
 use App\Services\TdsTcsCalculator;
 use App\ValueObjects\ContactCollection;
 use App\ValueObjects\InvoiceTotals;
+use App\ValueObjects\TdsPreset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -169,6 +170,7 @@ class InvoiceController extends Controller
                 && ! $invoice->customer?->isOverseas(),
             'tdsLabel' => $invoice->tdsLabel(),
             'tcsLabel' => $invoice->tcsLabel(),
+            'tdsPresets' => $this->tdsPresets($invoice),
             'taxLabels' => Country::taxLabels(),
             // Addresses render through formatLocationLine(), which resolves a
             // country code to its name from this map.
@@ -534,7 +536,28 @@ class InvoiceController extends Controller
             'indianStates' => $organization?->country_code === Country::IN
                 ? IndianState::options()
                 : [],
+            'tdsPresets' => $this->tdsPresets($invoice),
         ]);
+    }
+
+    /**
+     * One-click TDS rates for the payment dialog, for the same customers the
+     * invoice form offers TDS on.
+     *
+     * @return list<array{section: string, label: string, rate: int}>
+     */
+    private function tdsPresets(Invoice $invoice): array
+    {
+        $organization = $invoice->organization;
+
+        if ($organization?->country_code !== Country::IN || $invoice->customer?->isOverseas()) {
+            return [];
+        }
+
+        return array_map(
+            fn (TdsPreset $preset): array => $preset->toArray(),
+            TdsPreset::forPayeePan($organization->pan()),
+        );
     }
 
     public function update(Request $request, Invoice $invoice): RedirectResponse
@@ -567,6 +590,12 @@ class InvoiceController extends Controller
                     ->where('locatable_id', $request->input('customer_id')),
             ],
         ]));
+
+        if (($validated['tds_rate'] ?? 0) > 0 && $invoice->payments()->where('tds_amount', '>', 0)->exists()) {
+            throw ValidationException::withMessages([
+                'tds_rate' => 'The TDS is already recorded on a payment. Remove it there before adding it to the invoice.',
+            ]);
+        }
 
         $this->guardAttachmentsTotalSize($request->file('attachments', []));
 
@@ -629,6 +658,12 @@ class InvoiceController extends Controller
 
             $this->persistItems($invoice, $validated['items']);
             $this->applyGstBreakdown($invoice);
+
+            // An edit can move the total past what has been paid; the form's
+            // status would otherwise keep reading "Partially Paid".
+            if ($invoice->status !== InvoiceStatus::VOID && $invoice->payments()->exists()) {
+                $invoice->recalculatePaymentStatus();
+            }
         });
 
         $this->syncInvoiceAttachments($invoice, $request);
@@ -882,16 +917,34 @@ class InvoiceController extends Controller
         $this->authorize('update', $invoice);
 
         $validated = $request->validate([
-            'amount' => ['required', 'integer', 'min:1'],
+            'amount' => ['required', 'integer', 'min:0'],
+            'tds_amount' => ['nullable', 'integer', 'min:0'],
+            'tds_section' => ['nullable', 'string', 'max:20'],
             'payment_date' => ['required', 'date'],
             'payment_method' => ['nullable', 'string', 'max:100'],
             'reference' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        DB::transaction(function () use ($invoice, $validated) {
+        $tdsAmount = (int) ($validated['tds_amount'] ?? 0);
+
+        if ($tdsAmount > 0 && $invoice->hasTds()) {
+            throw ValidationException::withMessages([
+                'tds_amount' => 'This invoice already deducts TDS from its total.',
+            ]);
+        }
+
+        if ($validated['amount'] + $tdsAmount <= 0) {
+            throw ValidationException::withMessages([
+                'amount' => 'Enter the amount received or the TDS deducted.',
+            ]);
+        }
+
+        DB::transaction(function () use ($invoice, $validated, $tdsAmount) {
             $invoice->payments()->create([
                 'amount' => $validated['amount'],
+                'tds_amount' => $tdsAmount,
+                'tds_section' => $tdsAmount > 0 ? ($validated['tds_section'] ?? null) : null,
                 'currency' => $invoice->currency,
                 'payment_date' => $validated['payment_date'],
                 'payment_method' => $validated['payment_method'] ?? null,

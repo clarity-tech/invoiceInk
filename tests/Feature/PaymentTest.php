@@ -140,6 +140,83 @@ test('payment amount must be positive', function () {
         ->assertSessionHasErrors('amount');
 });
 
+// --- TDS withheld by the customer ---
+
+test('cash plus the TDS the customer withheld settles the invoice', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    $org = createOrganizationWithLocation([], [], $user);
+    $invoice = createInvoiceWithItems(['status' => 'sent', 'total' => 100000], null, $org);
+
+    $this->actingAs($user)
+        ->post("/invoices/{$invoice->id}/payments", [
+            'amount' => 98000,
+            'tds_amount' => 2000,
+            'tds_section' => '194C',
+            'payment_date' => '2026-11-05',
+        ])
+        ->assertSessionHasNoErrors();
+
+    $invoice->refresh();
+    expect($invoice->amount_paid)->toBe(100000)
+        ->and($invoice->total)->toBe(100000)
+        ->and($invoice->status)->toBe(InvoiceStatus::PAID)
+        ->and(Payment::sole()->tds_amount)->toBe(2000)
+        ->and(Payment::sole()->tds_section)->toBe('194C');
+});
+
+test('TDS can be recorded on its own after the cash', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    $org = createOrganizationWithLocation([], [], $user);
+    $invoice = createInvoiceWithItems(['status' => 'sent', 'total' => 100000], null, $org);
+
+    $this->actingAs($user)->post("/invoices/{$invoice->id}/payments", [
+        'amount' => 98000,
+        'payment_date' => '2026-11-05',
+    ]);
+    expect($invoice->fresh()->status)->toBe(InvoiceStatus::PARTIALLY_PAID);
+
+    $this->actingAs($user)
+        ->post("/invoices/{$invoice->id}/payments", [
+            'amount' => 0,
+            'tds_amount' => 2000,
+            'payment_date' => '2026-11-20',
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect($invoice->fresh()->status)->toBe(InvoiceStatus::PAID);
+});
+
+test('a payment cannot add TDS to an invoice that already deducts it', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    $org = createOrganizationWithLocation([], [], $user);
+    $invoice = createInvoiceWithItems(
+        ['status' => 'sent', 'subtotal' => 100000, 'tax' => 0, 'total' => 98000, 'tds_rate' => 200, 'tds_amount' => 2000],
+        null,
+        $org,
+    );
+
+    $this->actingAs($user)
+        ->post("/invoices/{$invoice->id}/payments", [
+            'amount' => 98000,
+            'tds_amount' => 2000,
+            'payment_date' => '2026-11-05',
+        ])
+        ->assertSessionHasErrors('tds_amount');
+
+    // The dialog always sends the field, so a zero must still go through.
+    $this->actingAs($user)
+        ->post("/invoices/{$invoice->id}/payments", [
+            'amount' => 98000,
+            'tds_amount' => 0,
+            'tds_section' => '194C',
+            'payment_date' => '2026-11-05',
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect($invoice->fresh()->status)->toBe(InvoiceStatus::PAID)
+        ->and(Payment::sole()->tds_section)->toBeNull();
+});
+
 // --- Authorization ---
 
 test('unauthenticated users cannot record payments', function () {
