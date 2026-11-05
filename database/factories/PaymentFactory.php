@@ -16,6 +16,7 @@ class PaymentFactory extends Factory
         return [
             'invoice_id' => Invoice::factory(),
             'amount' => $this->faker->numberBetween(1000, 100000),
+            'tds_amount' => 0,
             // Payments are always denominated in their invoice's currency.
             'currency' => fn (array $attributes) => Invoice::find($attributes['invoice_id'])?->currency ?? 'INR',
             'payment_date' => $this->faker->date(),

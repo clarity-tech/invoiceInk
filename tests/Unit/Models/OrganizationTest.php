@@ -974,3 +974,14 @@ test('logoBase64 reads from configured media disk (not local filesystem)', funct
     expect($base64)->toStartWith('data:image/png;base64,')
         ->and(base64_decode(substr($base64, strlen('data:image/png;base64,'))))->toBe($pngBytes);
 });
+
+test('pan is read from the tax number, then the bank details, then the GSTIN', function (array $organization, ?string $gstin, ?string $expected) {
+    $org = createOrganizationWithLocation($organization, ['tax_id' => $gstin]);
+
+    expect($org->fresh()->pan())->toBe($expected);
+})->with([
+    'tax number first' => [['tax_number' => 'abcpe1234f', 'bank_details' => ['bank_name' => 'Test Bank', 'pan' => 'ABCCE1234F']], '29ABCFE1234F1Z5', 'ABCPE1234F'],
+    'then bank details' => [['tax_number' => null, 'bank_details' => ['bank_name' => 'Test Bank', 'pan' => 'ABCCE1234F']], '29ABCFE1234F1Z5', 'ABCCE1234F'],
+    'then the GSTIN' => [['tax_number' => 'not a pan', 'bank_details' => null], '29ABCFE1234F1Z5', 'ABCFE1234F'],
+    'none valid' => [['tax_number' => null, 'bank_details' => null], null, null],
+]);

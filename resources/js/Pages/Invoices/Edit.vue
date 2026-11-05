@@ -43,6 +43,7 @@ import type {
     InvoiceAttachment,
     InvoiceReminderOffer,
     ShareLink,
+    TdsPreset,
 } from '@/types';
 
 const props = defineProps<{
@@ -56,6 +57,7 @@ const props = defineProps<{
     attachments: InvoiceAttachment[];
     shareLink: ShareLink;
     indianStates: Record<string, string>;
+    tdsPresets: TdsPreset[];
     /** Null when the invoice cannot be reminded about. */
     reminder: InvoiceReminderOffer | null;
 }>();
@@ -67,6 +69,14 @@ const paymentToDelete = ref<number | null>(null);
 
 const balanceDue = computed(() =>
     Math.max(0, (props.invoice.total ?? 0) - (props.invoice.amount_paid ?? 0)),
+);
+
+// The same customers the form offers TDS for, minus invoices that already carry it.
+const tdsApplies = computed(
+    () =>
+        Object.keys(props.indianStates ?? {}).length > 0 &&
+        props.invoice.customer?.gst_treatment !== 'overseas' &&
+        !props.invoice.tds_amount,
 );
 
 function methodOf(payment: Payment): string {
@@ -329,6 +339,24 @@ function deletePayment() {
                                             :amount="payment.amount"
                                             :currency="invoice.currency"
                                         />
+                                        <div
+                                            v-if="payment.tds_amount > 0"
+                                            class="text-xs font-normal text-muted-foreground"
+                                        >
+                                            +
+                                            <MoneyDisplay
+                                                bare
+                                                :amount="payment.tds_amount"
+                                                :currency="invoice.currency"
+                                            />
+                                            TDS<template
+                                                v-if="payment.tds_section"
+                                            >
+                                                ({{
+                                                    payment.tds_section
+                                                }})</template
+                                            >
+                                        </div>
                                     </TableCell>
                                     <TableCell class="text-right">
                                         <Button
@@ -361,6 +389,8 @@ function deletePayment() {
         <PaymentModal
             :show="showPaymentModal"
             :invoice="invoice"
+            :tds-applies="tdsApplies"
+            :tds-presets="tdsPresets"
             @close="showPaymentModal = false"
         />
 
