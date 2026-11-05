@@ -151,6 +151,8 @@ export function makePayment(overrides: Partial<Payment> = {}): Payment {
         id: 1,
         invoice_id: 1,
         amount: 5000000,
+        tds_amount: 0,
+        tds_section: null,
         currency: 'INR' as Currency,
         payment_date: '2026-03-15',
         payment_method: 'bank_transfer',

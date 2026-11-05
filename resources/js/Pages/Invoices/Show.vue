@@ -40,6 +40,7 @@ import type {
     InvoiceAttachment,
     Location,
     ShareLink,
+    TdsPreset,
 } from '@/types';
 
 const props = defineProps<{
@@ -55,6 +56,7 @@ const props = defineProps<{
     placeOfSupplyApplies: boolean;
     tdsLabel: string | null;
     tcsLabel: string | null;
+    tdsPresets: TdsPreset[];
     taxLabels: Record<string, string>;
     countryNames: Record<string, string>;
 }>();
@@ -90,6 +92,11 @@ const amountPaid = computed(() => props.invoice.amount_paid ?? 0);
  * its figures.
  */
 const hasPayments = computed(() => !isEstimate.value && amountPaid.value > 0);
+
+/** Part of Paid that the customer withheld as TDS rather than transferred. */
+const tdsWithheld = computed(() =>
+    payments.value.reduce((sum, payment) => sum + (payment.tds_amount ?? 0), 0),
+);
 
 /**
  * The summary strip's tiles, in reading order: what it comes to, what has been
@@ -435,6 +442,18 @@ function deletePayment() {
                                     :amount="amountPaid"
                                     :currency="invoice.currency"
                                 />
+                            </div>
+                            <div
+                                v-if="tdsWithheld > 0"
+                                class="mt-1 text-xs text-muted-foreground"
+                            >
+                                incl.
+                                <MoneyDisplay
+                                    bare
+                                    :amount="tdsWithheld"
+                                    :currency="invoice.currency"
+                                />
+                                TDS
                             </div>
                         </div>
                         <div class="bg-card px-5 py-4">
@@ -1030,6 +1049,22 @@ function deletePayment() {
                                         :amount="payment.amount"
                                         :currency="invoice.currency"
                                     />
+                                    <div
+                                        v-if="payment.tds_amount > 0"
+                                        class="text-xs font-normal text-muted-foreground"
+                                    >
+                                        +
+                                        <MoneyDisplay
+                                            bare
+                                            :amount="payment.tds_amount"
+                                            :currency="invoice.currency"
+                                        />
+                                        TDS<template v-if="payment.tds_section">
+                                            ({{
+                                                payment.tds_section
+                                            }})</template
+                                        >
+                                    </div>
                                 </TableCell>
                                 <TableCell class="text-right">
                                     <Button
@@ -1087,6 +1122,8 @@ function deletePayment() {
         <PaymentModal
             :show="showPaymentModal"
             :invoice="invoice"
+            :tds-applies="placeOfSupplyApplies && !invoice.tds_amount"
+            :tds-presets="tdsPresets"
             @close="showPaymentModal = false"
         />
 

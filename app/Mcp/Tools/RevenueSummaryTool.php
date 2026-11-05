@@ -65,7 +65,7 @@ class RevenueSummaryTool extends Tool
                 ->where('organization_id', $organization->id)
                 ->where('type', 'invoice'))
             ->whereBetween('payment_date', [$from, $to])
-            ->selectRaw('currency, COUNT(*) as payment_count, SUM(amount) as total_cents')
+            ->selectRaw('currency, COUNT(*) as payment_count, SUM(amount) as total_cents, SUM(tds_amount) as tds_cents')
             ->groupBy('currency')
             ->get()
             ->keyBy(fn ($row): string => $this->currencyCode($row->currency));
@@ -80,8 +80,9 @@ class RevenueSummaryTool extends Tool
             'from' => $from->toDateString(),
             'to' => $to->toDateString(),
             'note' => '"invoiced" counts documents issued in the period; "collected" counts payments '
-                .'received in the period against invoices raised at any time. Totals are per currency '
-                .'and must not be added across currencies.',
+                .'received in the period against invoices raised at any time. "collected" is cash only; '
+                .'"tds_withheld" is TDS customers deducted from those payments, which also settles invoices. '
+                .'Totals are per currency and must not be added across currencies.',
             'by_currency' => $currencies->map(function (string $currency) use ($invoiced, $collected): array {
                 $invoicedRow = $invoiced->get($currency);
                 $collectedRow = $collected->get($currency);
@@ -92,6 +93,7 @@ class RevenueSummaryTool extends Tool
                     'invoiced_document_count' => (int) ($invoicedRow->document_count ?? 0),
                     'collected_cents' => (int) ($collectedRow->total_cents ?? 0),
                     'collected_payment_count' => (int) ($collectedRow->payment_count ?? 0),
+                    'tds_withheld_cents' => (int) ($collectedRow->tds_cents ?? 0),
                     'outstanding_on_period_invoices_cents' => (int) ($invoicedRow->total_cents ?? 0)
                         - (int) ($invoicedRow->paid_cents ?? 0),
                 ];

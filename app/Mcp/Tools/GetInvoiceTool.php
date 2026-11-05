@@ -112,6 +112,8 @@ class GetInvoiceTool extends Tool
             'payments' => $invoice->payments->map(fn (Payment $payment): array => [
                 'amount_cents' => $payment->amount,
                 'amount' => $payment->formatted_amount,
+                'tds_amount_cents' => $payment->tds_amount,
+                'tds_section' => $payment->tds_section,
                 'payment_date' => $payment->payment_date?->toDateString(),
                 'payment_method' => $payment->payment_method,
                 'reference' => $payment->reference,

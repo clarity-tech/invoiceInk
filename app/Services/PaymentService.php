@@ -19,17 +19,19 @@ class PaymentService
     ];
 
     /**
-     * @param  array{amount: int, payment_date: string, payment_method?: string, reference?: string, notes?: string}  $data
+     * @param  array{amount: int, tds_amount?: int, tds_section?: string, payment_date: string, payment_method?: string, reference?: string, notes?: string}  $data
      */
     public function recordPayment(Invoice $invoice, array $data): Payment
     {
         $this->validatePayable($invoice);
-        $this->validateAmount($data['amount']);
+        $this->validateAmount($data['amount'], $data['tds_amount'] ?? 0);
 
         return DB::transaction(function () use ($invoice, $data) {
             $payment = Payment::create([
                 'invoice_id' => $invoice->id,
                 'amount' => $data['amount'],
+                'tds_amount' => $data['tds_amount'] ?? 0,
+                'tds_section' => ($data['tds_amount'] ?? 0) > 0 ? ($data['tds_section'] ?? null) : null,
                 'currency' => $invoice->currency,
                 'payment_date' => $data['payment_date'],
                 'payment_method' => $data['payment_method'] ?? null,
@@ -54,7 +56,7 @@ class PaymentService
 
     public function updateInvoicePaymentStatus(Invoice $invoice): void
     {
-        $totalPaid = $invoice->payments()->sum('amount');
+        $totalPaid = $invoice->settledByPayments();
         $invoice->amount_paid = $totalPaid;
 
         // Don't modify status of voided invoices
@@ -87,9 +89,13 @@ class PaymentService
         }
     }
 
-    private function validateAmount(int $amount): void
+    /**
+     * A payment can be TDS alone, recorded when the certificate arrives after
+     * the cash, so only the two together must be positive.
+     */
+    private function validateAmount(int $amount, int $tdsAmount): void
     {
-        if ($amount <= 0) {
+        if ($amount < 0 || $tdsAmount < 0 || $amount + $tdsAmount <= 0) {
             throw new InvalidArgumentException('Payment amount must be greater than zero.');
         }
     }

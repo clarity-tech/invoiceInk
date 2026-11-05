@@ -247,6 +247,25 @@ test('the place of supply is offered only where a document could carry one', fun
         ->assertInertia(fn ($page) => $page->where('placeOfSupplyApplies', false));
 });
 
+test('TDS rates are offered for a domestic customer and follow the payee PAN', function () {
+    $organization = createOrganizationWithLocation(['tax_number' => 'ABCCE1234F']);
+    $this->actingAs($organization->owner);
+
+    $domestic = createInvoiceWithItems([], null, $organization);
+
+    $this->get("/invoices/{$domestic->id}")
+        ->assertInertia(fn ($page) => $page
+            ->where('tdsPresets.0', ['section' => '194C', 'label' => 'Contract', 'rate' => 200])
+            ->count('tdsPresets', 3)
+        );
+
+    $overseas = createCustomerWithLocation(['gst_treatment' => GstTreatment::Overseas], ['country' => 'AE'], $organization);
+    $export = createInvoiceWithItems(['place_of_supply' => null], null, $organization, $overseas);
+
+    $this->get("/invoices/{$export->id}")
+        ->assertInertia(fn ($page) => $page->where('tdsPresets', []));
+});
+
 test('recording a payment from the detail page comes back to it', function () {
     $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation([], [], $organization);

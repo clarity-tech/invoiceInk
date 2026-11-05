@@ -445,6 +445,29 @@ class Organization extends Model implements HasMedia
     }
 
     /**
+     * The organization's PAN, from wherever it was entered: the tax number,
+     * the bank details, or characters 3-12 of the primary location's GSTIN.
+     */
+    public function pan(): ?string
+    {
+        $candidates = [
+            $this->tax_number,
+            $this->bank_details?->pan,
+            substr((string) $this->primaryLocation?->tax_id, 2, 10),
+        ];
+
+        foreach ($candidates as $candidate) {
+            $pan = strtoupper(trim((string) $candidate));
+
+            if (preg_match('/^[A-Z]{5}[0-9]{4}[A-Z]$/', $pan)) {
+                return $pan;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Check if the organization has bank details configured.
      */
     public function hasBankDetails(): bool
