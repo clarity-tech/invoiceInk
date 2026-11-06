@@ -44,8 +44,8 @@
         "vue-tsc": "^3.3.14"
     },
     "dependencies": {
-        "@inertiajs/vite": "^3.10.0",
-        "@inertiajs/vue3": "^3.10.0",
+        "@inertiajs/vite": "^3.11.0",
+        "@inertiajs/vue3": "^3.11.0",
         "@tiptap/extension-link": "^3.32.2",
         "@tiptap/extension-placeholder": "^3.32.2",
         "@tiptap/extension-underline": "^3.32.2",
