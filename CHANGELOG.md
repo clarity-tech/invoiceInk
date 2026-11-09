@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.21.1](https://github.com/clarity-tech/invoiceInk/compare/v1.21.0...v1.21.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* **deps:** bump inertiajs/inertia-laravel ([d832a99](https://github.com/clarity-tech/invoiceInk/commit/d832a99565f6025f5fdee1292a5f9fd218f8531d))
+* **deps:** bump the frontend-runtime group across 1 directory with 8 updates ([4d728fb](https://github.com/clarity-tech/invoiceInk/commit/4d728fb1de1b340c3686866f094a52011b526a9c))
+
 ## [1.21.0](https://github.com/clarity-tech/invoiceInk/compare/v1.20.6...v1.21.0) (2026-11-04)
 
 
