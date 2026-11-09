@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.0](https://github.com/clarity-tech/invoiceInk/compare/v1.21.1...v1.22.0) (2026-11-09)
+
+
+### Features
+
+* **payments:** record TDS withheld by the customer ([bdeebe0](https://github.com/clarity-tech/invoiceInk/commit/bdeebe05127511e70c5a8d71d2dc3ed3e2ac5981))
+
 ## [1.21.1](https://github.com/clarity-tech/invoiceInk/compare/v1.21.0...v1.21.1) (2026-11-09)
 
 
