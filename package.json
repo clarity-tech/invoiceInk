@@ -44,13 +44,13 @@
         "vue-tsc": "^3.3.14"
     },
     "dependencies": {
-        "@inertiajs/vite": "^3.10.0",
-        "@inertiajs/vue3": "^3.10.0",
-        "@tiptap/extension-link": "^3.32.2",
-        "@tiptap/extension-placeholder": "^3.32.2",
-        "@tiptap/extension-underline": "^3.32.2",
-        "@tiptap/starter-kit": "^3.32.2",
-        "@tiptap/vue-3": "^3.32.2",
+        "@inertiajs/vite": "^3.11.0",
+        "@inertiajs/vue3": "^3.11.0",
+        "@tiptap/extension-link": "^3.33.0",
+        "@tiptap/extension-placeholder": "^3.33.0",
+        "@tiptap/extension-underline": "^3.33.0",
+        "@tiptap/starter-kit": "^3.33.0",
+        "@tiptap/vue-3": "^3.33.0",
         "@types/node": "^26.6.6",
         "@vitejs/plugin-vue": "^6.0.10",
         "class-variance-authority": "^0.7.1",
@@ -59,7 +59,7 @@
         "lucide-vue-next": "^1.0.0",
         "tailwind-merge": "^3.7.0",
         "typescript": "6.0.3",
-        "vue": "^3.5.44"
+        "vue": "^3.5.45"
     },
     "overrides": {
         "postcss-selector-parser": "^7.1.6"
