@@ -256,3 +256,49 @@ export function resetAppearance(): void {
     document.documentElement.classList.remove('dark');
     stubSystemTheme(false);
 }
+
+export const ANDROID_CHROME_UA =
+    'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36';
+export const IPHONE_SAFARI_UA =
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+
+/** The media queries and user agent the install prompt reads; a phone by default. */
+export function stubInstallEnvironment({
+    standalone = false,
+    touch = true,
+    userAgent = ANDROID_CHROME_UA,
+}: { standalone?: boolean; touch?: boolean; userAgent?: string } = {}): void {
+    vi.stubGlobal(
+        'matchMedia',
+        vi.fn((query: string) => ({
+            matches: query.includes('standalone') ? standalone : touch,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+        })),
+    );
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(userAgent);
+}
+
+/** Chromium's `beforeinstallprompt`, with a stubbed prompt and the given answer. */
+export function fireInstallPrompt(
+    outcome: 'accepted' | 'dismissed' = 'accepted',
+) {
+    const event = Object.assign(
+        new Event('beforeinstallprompt', { cancelable: true }),
+        {
+            prompt: vi.fn().mockResolvedValue(undefined),
+            userChoice: Promise.resolve({ outcome }),
+        },
+    );
+
+    window.dispatchEvent(event);
+
+    return event;
+}
+
+/** A fresh copy of the install prompt module, as a new page load gets. */
+export async function loadInstallPrompt() {
+    vi.resetModules();
+
+    return import('@/composables/useInstallPrompt');
+}

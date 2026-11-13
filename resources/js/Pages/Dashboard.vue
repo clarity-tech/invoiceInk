@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router, usePage, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import InstallBanner from '@/Components/InstallBanner.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { formatMoney } from '@/composables/useFormatMoney';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -1023,5 +1024,8 @@ const totalStatusCount = computed(() =>
                 </a>
             </div>
         </div>
+
+        <!-- Dashboard only: on form pages it would cover the sticky Save bar. -->
+        <InstallBanner />
     </AppLayout>
 </template>

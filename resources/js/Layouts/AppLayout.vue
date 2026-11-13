@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import NavigationMenu from './NavigationMenu.vue';
 import FlashMessages from '@/Components/FlashMessages.vue';
+import NetworkErrorNotice from '@/Components/NetworkErrorNotice.vue';
 
 defineProps<{
     title?: string;
@@ -37,5 +38,7 @@ defineProps<{
                 <slot />
             </div>
         </main>
+
+        <NetworkErrorNotice />
     </div>
 </template>
