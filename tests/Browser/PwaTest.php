@@ -30,6 +30,27 @@ function pwaWorkerStatusScript(): string
     JS;
 }
 
+/** Waits for every registration and cache to be gone, then reports what is left. */
+function pwaRemovalScript(): string
+{
+    return <<<'JS'
+        async () => {
+            const left = async () => ({
+                registrations: (await navigator.serviceWorker.getRegistrations()).length,
+                caches: await caches.keys(),
+            });
+
+            for (let i = 0; i < 30; i++) {
+                const { registrations, caches } = await left();
+                if (registrations === 0 && caches.length === 0) break;
+                await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+
+            return { ...(await left()), meta: document.querySelector('meta[name="pwa"]').content };
+        }
+    JS;
+}
+
 it('registers a service worker that controls the whole site', function () {
     $page = $this->visit('/login');
 
@@ -99,4 +120,39 @@ it('links a manifest that describes an installable app', function () {
     expect($manifest['status'])->toBe(200)
         ->and($manifest['body']['display'])->toBe('standalone')
         ->and(collect($manifest['body']['icons'])->pluck('sizes')->all())->toContain('192x192', '512x512');
+});
+
+it('removes the worker and its caches on the next page load once switched off, and restores them once back on', function () {
+    $page = $this->visit('/login');
+    expect($page->script(pwaWorkerStatusScript()))->toMatchArray(['controlled' => true, 'caches' => true]);
+
+    config(['app.pwa_enabled' => false]);
+    $page->refresh();
+
+    expect($page->script(pwaRemovalScript()))
+        ->toBe(['registrations' => 0, 'caches' => [], 'meta' => 'disabled']);
+
+    config(['app.pwa_enabled' => true]);
+    $page->refresh();
+
+    expect($page->script(pwaWorkerStatusScript()))->toMatchArray(['controlled' => true, 'caches' => true]);
+    $page->assertNoJavascriptErrors();
+});
+
+/*
+ * The case the page cannot help with: a broken worker can stop page code from
+ * running at all. The browser still fetches /sw.js on its own to look for an
+ * update, so the switched-off worker must take over and remove itself unaided.
+ */
+it('replaces an installed worker with one that removes itself, without the page doing anything', function () {
+    $page = $this->visit('/login');
+    expect($page->script(pwaWorkerStatusScript()))->toMatchArray(['controlled' => true, 'caches' => true]);
+
+    config(['app.pwa_enabled' => false]);
+
+    // No reload: this page still says "enabled", so only the worker can act.
+    $page->script('async () => { await (await navigator.serviceWorker.getRegistration()).update(); }');
+
+    expect($page->script(pwaRemovalScript()))
+        ->toBe(['registrations' => 0, 'caches' => [], 'meta' => 'enabled']);
 });

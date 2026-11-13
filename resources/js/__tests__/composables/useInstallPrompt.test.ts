@@ -3,6 +3,7 @@ import {
     fireInstallPrompt,
     IPHONE_SAFARI_UA,
     loadInstallPrompt,
+    setPwaMeta,
     stubInstallEnvironment,
 } from '../helpers';
 
@@ -28,6 +29,7 @@ describe('useInstallPrompt', () => {
 
     beforeEach(async () => {
         localStorage.clear();
+        setPwaMeta('enabled');
         stubInstallEnvironment();
         ({ useInstallPrompt } = await pageLoad());
     });
@@ -35,6 +37,14 @@ describe('useInstallPrompt', () => {
     afterEach(() => {
         vi.unstubAllGlobals();
         vi.restoreAllMocks();
+        setPwaMeta(null);
+    });
+
+    it('offers nothing while the PWA is switched off', () => {
+        setPwaMeta('disabled');
+        fireInstallPrompt();
+
+        expect(useInstallPrompt().mode.value).toBeNull();
     });
 
     it('offers nothing until the browser says the app is installable', () => {

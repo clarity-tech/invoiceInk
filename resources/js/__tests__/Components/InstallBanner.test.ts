@@ -5,6 +5,7 @@ import {
     fireInstallPrompt,
     IPHONE_SAFARI_UA,
     loadInstallPrompt,
+    setPwaMeta,
     stubInstallEnvironment,
 } from '../helpers';
 
@@ -13,6 +14,7 @@ describe('InstallBanner', () => {
 
     beforeEach(async () => {
         localStorage.clear();
+        setPwaMeta('enabled');
         stubInstallEnvironment();
         (await loadInstallPrompt()).listenForInstallPrompt();
         // Imported after the reset, so it shares the fresh module above.
@@ -23,6 +25,7 @@ describe('InstallBanner', () => {
     afterEach(() => {
         vi.unstubAllGlobals();
         vi.restoreAllMocks();
+        setPwaMeta(null);
     });
 
     it('renders nothing when the app cannot be installed', () => {
