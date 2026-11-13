@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.2](https://github.com/clarity-tech/invoiceInk/compare/v1.23.1...v1.23.2) (2026-11-13)
+
+
+### Build & CI
+
+* label images as InvoiceInk's own, with version and annotations ([dd44367](https://github.com/clarity-tech/invoiceInk/commit/dd4436741e4dbcfd69fd7cce00d4d7b08a190531))
+
 ## [1.23.1](https://github.com/clarity-tech/invoiceInk/compare/v1.23.0...v1.23.1) (2026-11-13)
 
 
