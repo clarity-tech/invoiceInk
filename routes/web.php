@@ -19,6 +19,7 @@ use App\Http\Controllers\OtherBrowserSessionsController;
 use App\Http\Controllers\PrivacyPolicyController;
 use App\Http\Controllers\PublicViewController;
 use App\Http\Controllers\SeoController;
+use App\Http\Controllers\ServiceWorkerController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamInvitationController;
@@ -31,17 +32,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => auth()->check() ? redirect('/dashboard') : view('welcome'));
 
-// PWA service worker. Vite emits it into /build, but a worker's scope is capped
-// at its own path, so it is served from the site root to be able to control "/".
-// A static file, so it skips the session and the rest of the web stack.
-Route::get('/sw.js', function () {
-    abort_unless(is_file($sw = public_path('build/sw.js')), 404);
-
-    return response()->file($sw, [
-        'Content-Type' => 'text/javascript',
-        'Cache-Control' => 'no-cache',
-    ]);
-})->withoutMiddleware('web')->name('pwa.service-worker');
+// PWA service worker. A static file, so it skips the session and the rest of the web stack.
+Route::get('/sw.js', ServiceWorkerController::class)
+    ->withoutMiddleware('web')
+    ->name('pwa.service-worker');
 
 // Terms and Privacy Policy
 Route::get('/terms-of-service', [TermsOfServiceController::class, 'show'])->name('terms.show');

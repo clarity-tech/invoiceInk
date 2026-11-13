@@ -91,6 +91,11 @@ return [
     // public pages say noindex. Set it on staging and other non-public copies.
     'indexable' => (bool) env('APP_INDEXABLE', true),
 
+    // Kill switch for the PWA service worker. False serves a worker at /sw.js
+    // that deletes its caches and unregisters itself, and pages stop
+    // registering one. An env change and a new revision; no image build.
+    'pwa_enabled' => (bool) env('PWA_ENABLED', true),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

@@ -1,4 +1,5 @@
 import { computed, ref, shallowRef } from 'vue';
+import { pwaState } from '@/lib/serviceWorker';
 
 /**
  * The non-standard event Chromium fires when the app is installable. Safari
@@ -92,6 +93,7 @@ export function useInstallPrompt() {
         if (
             snoozed.value ||
             typeof window === 'undefined' ||
+            pwaState() !== 'enabled' ||
             isStandalone() ||
             !isTouchDevice()
         ) {
