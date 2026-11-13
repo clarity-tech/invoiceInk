@@ -36,6 +36,17 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
+  # Our values for the OCI keys metadata-action does not set, plus the title and
+  # url it would take from the repository (`source` keeps the repository URL;
+  # GHCR links the package through it). Without them the base image's vendor,
+  # authors and documentation link (serversideup/php) carry through into ours.
+  # Applied as labels and as annotations.
+  IMAGE_METADATA: |
+    org.opencontainers.image.title=InvoiceInk
+    org.opencontainers.image.url=https://invoiceink.claritytech.io/
+    org.opencontainers.image.vendor=Clarity Technologies
+    org.opencontainers.image.authors=Clarity Technologies
+    org.opencontainers.image.documentation=https://github.com/clarity-tech/invoiceInk/blob/main/docker/production/README.md
 
 jobs:
   test-php:
@@ -262,12 +273,43 @@ jobs:
       - name: Run Vitest
         run: bun run test
 
+  # The version stamped into the image's labels and annotations. A release
+  # commit (release-please bumps version.txt in it) builds the very image
+  # release.yml retags, so it gets that version exactly. Any other commit is
+  # described from the last release tag, e.g. 1.23.1-2-g24d72d1: two commits
+  # after v1.23.1. `revision` carries the full commit SHA either way.
+  version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Work out the image version
+        id: version
+        run: |
+          set -euo pipefail
+          if ! git diff --quiet HEAD~1 HEAD -- version.txt; then
+            version="$(cat version.txt)"
+          else
+            version="$(git describe --tags --match 'v*' --abbrev=7 --always)"
+            version="${version#v}"
+          fi
+          echo "Image version: $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
   # One native runner per architecture, so arm64 builds as fast as amd64 with
   # no QEMU. Pushes publish each platform by digest only and `publish` tags the
   # combined multi-arch index. Pull requests load each image into the runner's
   # own daemon and smoke-test it on its own architecture instead.
   build:
     name: build (${{ matrix.target }}, ${{ matrix.arch }})
+    needs: version
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     permissions:
@@ -327,12 +369,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Labels only; `publish` owns the tags.
+      # Labels and per-platform annotations only; `publish` owns the tags.
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.IMAGE }}
+          labels: |
+            ${{ env.IMAGE_METADATA }}
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
+          annotations: |
+            ${{ env.IMAGE_METADATA }}
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
 
       - name: Build Docker image
         id: build
@@ -349,6 +397,9 @@ jobs:
           load: ${{ github.event_name == 'pull_request' }}
           tags: ${{ github.event_name == 'pull_request' && format('{0}:pr-{1}', env.IMAGE, github.event.pull_request.number) || '' }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Annotations belong to the pushed manifest; the pull request image
+          # is only loaded for the smoke test.
+          annotations: ${{ github.event_name != 'pull_request' && steps.meta.outputs.annotations || '' }}
           cache-from: type=gha,scope=${{ matrix.target }}-${{ matrix.arch }}
           cache-to: type=gha,scope=${{ matrix.target }}-${{ matrix.arch }},mode=max
           build-args: |
@@ -468,7 +519,7 @@ jobs:
   # No `name:`: a job skipped by its `if` never expands the matrix, so a name
   # built from it would show the raw expression on pull requests.
   publish:
-    needs: build
+    needs: [version, build]
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -504,11 +555,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Annotations at index level: for a multi-arch image that is where GHCR
+      # (and other registries) read the description from.
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v6
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: index
         with:
           images: ${{ env.IMAGE }}
+          annotations: |
+            ${{ env.IMAGE_METADATA }}
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -522,16 +580,21 @@ jobs:
             type=sha,format=long
 
       # Every platform must be present, each with the provenance attestation
-      # buildx attached to it.
+      # buildx attached to it, and the index must carry its description.
       - name: Check the combined index before tagging it
         working-directory: ${{ runner.temp }}/digests
         run: |
           set -euo pipefail
           refs=()
           for digest in *; do refs+=("$IMAGE@sha256:$digest"); done
-          docker buildx imagetools create --dry-run -t "$IMAGE:dry-run" "${refs[@]}" > "$RUNNER_TEMP/index.json"
+          mapfile -t annotations < <(jq -r '.annotations[] | "--annotation", .' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          docker buildx imagetools create --dry-run -t "$IMAGE:dry-run" "${annotations[@]}" "${refs[@]}" > "$RUNNER_TEMP/index.json"
 
-          jq '.manifests[] | {digest, platform, annotations}' "$RUNNER_TEMP/index.json"
+          jq '{annotations, manifests: [.manifests[] | {digest, platform, annotations}]}' "$RUNNER_TEMP/index.json"
+
+          jq -e '.annotations["org.opencontainers.image.description"] // "" | length > 0' \
+            "$RUNNER_TEMP/index.json" > /dev/null \
+            || { echo "::error::The index has no description annotation."; exit 1; }
 
           jq -e '[.manifests[] | select(.platform.os == "linux") | .platform.architecture] | sort == ["amd64", "arm64"]' \
             "$RUNNER_TEMP/index.json" > /dev/null \
@@ -549,7 +612,8 @@ jobs:
           refs=()
           for digest in *; do refs+=("$IMAGE@sha256:$digest"); done
           mapfile -t tags < <(jq -r '.tags[] | "--tag", .' <<< "$DOCKER_METADATA_OUTPUT_JSON")
-          docker buildx imagetools create "${tags[@]}" "${refs[@]}"
+          mapfile -t annotations < <(jq -r '.annotations[] | "--annotation", .' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          docker buildx imagetools create "${tags[@]}" "${annotations[@]}" "${refs[@]}"
 
       - name: Show the published index
         run: |
@@ -562,7 +626,7 @@ jobs:
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
   notify:
-    needs: [build, publish]
+    needs: [version, build, publish]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
@@ -572,11 +636,11 @@ jobs:
       - name: Notify on success
         if: ${{ needs.build.result == 'success' && contains(fromJSON('["success", "skipped"]'), needs.publish.result) }}
         run: |
-          echo "✅ Docker images built for amd64 and arm64."
+          echo "✅ Docker images built for amd64 and arm64 (version ${{ needs.version.outputs.version }})."
           echo "Images available at: ${{ env.REGISTRY }}/${GITHUB_REPOSITORY,,}"
 
       - name: Notify on failure
-        if: ${{ needs.build.result == 'failure' || needs.publish.result == 'failure' }}
+        if: ${{ needs.version.result == 'failure' || needs.build.result == 'failure' || needs.publish.result == 'failure' }}
         run: |
           echo "❌ Docker image build failed!"
           exit 1
