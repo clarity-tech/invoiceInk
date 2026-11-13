@@ -31,6 +31,18 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => auth()->check() ? redirect('/dashboard') : view('welcome'));
 
+// PWA service worker. Vite emits it into /build, but a worker's scope is capped
+// at its own path, so it is served from the site root to be able to control "/".
+// A static file, so it skips the session and the rest of the web stack.
+Route::get('/sw.js', function () {
+    abort_unless(is_file($sw = public_path('build/sw.js')), 404);
+
+    return response()->file($sw, [
+        'Content-Type' => 'text/javascript',
+        'Cache-Control' => 'no-cache',
+    ]);
+})->withoutMiddleware('web')->name('pwa.service-worker');
+
 // Terms and Privacy Policy
 Route::get('/terms-of-service', [TermsOfServiceController::class, 'show'])->name('terms.show');
 Route::get('/privacy-policy', [PrivacyPolicyController::class, 'show'])->name('policy.show');
