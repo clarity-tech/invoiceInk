@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - develop
+      # TEMPORARY, proof branch only: exercises the publish path before merge.
+      - ci/image-labels-proof
     tags:
       - 'v*'
     # No paths-ignore on push: release.yml's tag-images polls for the image this
