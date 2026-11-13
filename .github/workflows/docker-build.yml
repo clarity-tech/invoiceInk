@@ -465,8 +465,9 @@ jobs:
   # Combines the per-architecture images into one multi-arch index and tags it.
   # The index is checked before any tag exists: release.yml waits only for the
   # `sha-` tag to appear, so a tagged but incomplete index would get released.
+  # No `name:`: a job skipped by its `if` never expands the matrix, so a name
+  # built from it would show the raw expression on pull requests.
   publish:
-    name: publish (${{ matrix.target }})
     needs: build
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
