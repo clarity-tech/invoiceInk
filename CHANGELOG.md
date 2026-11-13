@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.23.1](https://github.com/clarity-tech/invoiceInk/compare/v1.23.0...v1.23.1) (2026-11-13)
+
+
+### Build & CI
+
+* build amd64 and arm64 images on native runners ([65d2499](https://github.com/clarity-tech/invoiceInk/commit/65d2499c836aaa90f4bef5a641dda23727f66be9))
+* show the skipped publish check by its plain name ([24d72d1](https://github.com/clarity-tech/invoiceInk/commit/24d72d1ac050819e82179091326b00af8b568e34))
+
 ## [1.23.0](https://github.com/clarity-tech/invoiceInk/compare/v1.22.0...v1.23.0) (2026-11-13)
 
 
