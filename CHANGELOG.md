@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.23.3](https://github.com/clarity-tech/invoiceInk/compare/v1.23.2...v1.23.3) (2026-11-13)
+
+
+### Bug Fixes
+
+* **deps-dev:** bump the frontend-dev group across 1 directory with 12 updates ([f798778](https://github.com/clarity-tech/invoiceInk/commit/f798778ec7d6e96366d1dc1a6bd7c478bb6094dd))
+* **deps:** bump the composer-runtime group across 1 directory with 6 updates ([ab49664](https://github.com/clarity-tech/invoiceInk/commit/ab496647fdc7663ef4a7ec4b295ee405b263a9d5))
+
 ## [1.23.2](https://github.com/clarity-tech/invoiceInk/compare/v1.23.1...v1.23.2) (2026-11-13)
 
 
