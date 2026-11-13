@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.23.0](https://github.com/clarity-tech/invoiceInk/compare/v1.22.0...v1.23.0) (2026-11-13)
+
+
+### Features
+
+* make the app an installable, lightweight PWA ([5248353](https://github.com/clarity-tech/invoiceInk/commit/5248353315c25db6a40554232bbccc0adc7ebbb3))
+* **pwa:** add a PWA_ENABLED kill switch for the service worker ([11f16d0](https://github.com/clarity-tech/invoiceInk/commit/11f16d0380758523166e359a83cc6c89e30eeebf))
+
 ## [1.22.0](https://github.com/clarity-tech/invoiceInk/compare/v1.21.1...v1.22.0) (2026-11-09)
 
 
