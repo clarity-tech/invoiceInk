@@ -149,11 +149,11 @@ jobs:
           touch database/database.sqlite
           php artisan migrate --force
 
-      # docker-build.yml builds this exact Dockerfile and target with a GitHub
-      # Actions layer cache. Building it here the same way turns a ~4 minute cold
-      # build into a cache hit; `load: true` puts it in the local daemon so
-      # test-octane.sh can run it. Cache is read-only -- docker-build.yml owns
-      # writing it, and two writers would just thrash the same key.
+      # The `build` job builds this exact Dockerfile and target with a GitHub
+      # Actions layer cache, one scope per architecture. Reading the amd64 scope
+      # turns a ~4 minute cold build into a cache hit; `load: true` puts it in
+      # the local daemon so test-octane.sh can run it. Cache is read-only --
+      # `build` owns writing it, and two writers would just thrash the same key.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -167,7 +167,7 @@ jobs:
           load: true
           push: false
           tags: invoicing-test:octane
-          cache-from: type=gha
+          cache-from: type=gha,scope=frankenphp-amd64
           build-args: |
             BUILDKIT_INLINE_CACHE=1
             VITE_APP_NAME=InvoiceInk
@@ -262,17 +262,26 @@ jobs:
       - name: Run Vitest
         run: bun run test
 
-  build-and-push:
-    runs-on: ubuntu-latest
+  # One native runner per architecture, so arm64 builds as fast as amd64 with
+  # no QEMU. Pushes publish each platform by digest only and `publish` tags the
+  # combined multi-arch index. Pull requests load each image into the runner's
+  # own daemon and smoke-test it on its own architecture instead.
+  build:
+    name: build (${{ matrix.target }}, ${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     permissions:
       contents: read
       packages: write
 
     strategy:
+      # Let the other architecture finish, so a failure shows whether it is
+      # specific to one platform.
+      fail-fast: false
       matrix:
         target: [frankenphp]
         # target: [frankenphp, nginx-fpm, standalone, standalone-alpine]
+        arch: [amd64, arm64]
         include:
           - target: frankenphp
             dockerfile: docker/production/Dockerfile.frankenphp
@@ -291,11 +300,15 @@ jobs:
           # dockerfile: docker/production/Dockerfile.standalone
           # image-suffix: '-standalone-alpine'
           # build-target: standalone-alpine
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
 
     steps:
       # Image names must be lowercase; the repository name is not.
       - name: Set the image name
-        run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+        run: echo "IMAGE=${{ env.REGISTRY }}/${GITHUB_REPOSITORY,,}${{ matrix.image-suffix }}" >> "$GITHUB_ENV"
 
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -314,45 +327,50 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Labels only; `publish` owns the tags.
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest,enable={{is_default_branch}}
-            # Immutable, per-commit tag. `main` and `latest` both move, so this
-            # is what release.yml retags from when cutting a version -- it
-            # guarantees the released image is byte-identical to the one that
-            # was built and tested for that commit, rather than a rebuild.
-            type=sha,format=long
+          images: ${{ env.IMAGE }}
 
-      - name: Build and push Docker image
+      - name: Build Docker image
         id: build
         uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
           target: ${{ matrix.build-target }}
-          platforms: linux/amd64
-          # A pull request has no consumer for its image: release.yml only ever
-          # retags a `main` commit. Load it into the local
-          # daemon so the smoke test below can run, and publish only from
-          # branches and tags.
-          push: ${{ github.event_name != 'pull_request' }}
+          platforms: linux/${{ matrix.arch }}
+          # Pushes publish this platform untagged, by digest. A pull request
+          # has no consumer for its image (release.yml only ever retags a
+          # `main` commit), so it is loaded for the smoke test instead.
+          outputs: ${{ github.event_name != 'pull_request' && format('type=image,name={0},push-by-digest=true,name-canonical=true,push=true', env.IMAGE) || '' }}
           load: ${{ github.event_name == 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ github.event_name == 'pull_request' && format('{0}:pr-{1}', env.IMAGE, github.event.pull_request.number) || '' }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.target }}-${{ matrix.arch }}
+          cache-to: type=gha,scope=${{ matrix.target }}-${{ matrix.arch }},mode=max
           build-args: |
             BUILDKIT_INLINE_CACHE=1
             VITE_APP_NAME=InvoiceInk
+
+      - name: Export the digest
+        if: github.event_name != 'pull_request'
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
+
+      - name: Upload the digest
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: digests-${{ matrix.target }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
 
       # Runs here rather than in a separate job because a pull request's image
       # is only in this runner's local daemon -- there is nothing in the
@@ -360,8 +378,8 @@ jobs:
       - name: Smoke test the image
         if: github.event_name == 'pull_request'
         run: |
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}:pr-${{ github.event.pull_request.number }}"
-          echo "Testing image: $IMAGE"
+          IMAGE="$IMAGE:pr-${{ github.event.pull_request.number }}"
+          echo "Testing image: $IMAGE ($(uname -m))"
 
           docker run -d \
             --name test-container \
@@ -405,11 +423,10 @@ jobs:
       # silently and quietly stopped scanning pull requests altogether.
       - name: Resolve the image reference to scan
         run: |
-          BASE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image-suffix }}"
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "SCAN_REF=${BASE}:pr-${{ github.event.pull_request.number }}" >> "$GITHUB_ENV"
+            echo "SCAN_REF=${IMAGE}:pr-${{ github.event.pull_request.number }}" >> "$GITHUB_ENV"
           else
-            echo "SCAN_REF=${BASE}@${{ steps.build.outputs.digest }}" >> "$GITHUB_ENV"
+            echo "SCAN_REF=${IMAGE}@${{ steps.build.outputs.digest }}" >> "$GITHUB_ENV"
           fi
 
       # Findings go to the run summary rather than the Security tab: uploading
@@ -424,10 +441,12 @@ jobs:
       - name: Run Trivy vulnerability scanner
         continue-on-error: true
         uses: aquasecurity/trivy-action@v0.36.0
+        env:
+          TRIVY_PLATFORM: linux/${{ matrix.arch }}
         with:
           image-ref: ${{ env.SCAN_REF }}
           format: 'table'
-          output: 'trivy-results-${{ matrix.target }}.txt'
+          output: 'trivy-results-${{ matrix.target }}-${{ matrix.arch }}.txt'
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
           exit-code: '0'
@@ -436,28 +455,127 @@ jobs:
         if: always()
         run: |
           {
-            echo "## Trivy — ${{ matrix.target }} (fixable HIGH/CRITICAL)"
+            echo "## Trivy — ${{ matrix.target }} ${{ matrix.arch }} (fixable HIGH/CRITICAL)"
             echo ''
             echo '```'
-            cat 'trivy-results-${{ matrix.target }}.txt' 2>/dev/null || echo 'Scan produced no output.'
+            cat 'trivy-results-${{ matrix.target }}-${{ matrix.arch }}.txt' 2>/dev/null || echo 'Scan produced no output.'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+  # Combines the per-architecture images into one multi-arch index and tags it.
+  # The index is checked before any tag exists: release.yml waits only for the
+  # `sha-` tag to appear, so a tagged but incomplete index would get released.
+  publish:
+    name: publish (${{ matrix.target }})
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        target: [frankenphp]
+        include:
+          - target: frankenphp
+            image-suffix: ''
+
+    steps:
+      - name: Set the image name
+        run: echo "IMAGE=${{ env.REGISTRY }}/${GITHUB_REPOSITORY,,}${{ matrix.image-suffix }}" >> "$GITHUB_ENV"
+
+      - name: Download the per-architecture digests
+        uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ matrix.target }}-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            # Immutable, per-commit tag. `main` and `latest` both move, so this
+            # is what release.yml retags from when cutting a version -- it
+            # guarantees the released image is byte-identical to the one that
+            # was built and tested for that commit, rather than a rebuild.
+            type=sha,format=long
+
+      # Every platform must be present, each with the provenance attestation
+      # buildx attached to it.
+      - name: Check the combined index before tagging it
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          set -euo pipefail
+          refs=()
+          for digest in *; do refs+=("$IMAGE@sha256:$digest"); done
+          docker buildx imagetools create --dry-run -t "$IMAGE:dry-run" "${refs[@]}" > "$RUNNER_TEMP/index.json"
+
+          jq '.manifests[] | {digest, platform, annotations}' "$RUNNER_TEMP/index.json"
+
+          jq -e '[.manifests[] | select(.platform.os == "linux") | .platform.architecture] | sort == ["amd64", "arm64"]' \
+            "$RUNNER_TEMP/index.json" > /dev/null \
+            || { echo "::error::The index is missing a platform."; exit 1; }
+
+          jq -e '([.manifests[] | select(.annotations["vnd.docker.reference.type"] == "attestation-manifest") | .annotations["vnd.docker.reference.digest"]] | sort)
+                 == ([.manifests[] | select(.platform.os == "linux") | .digest] | sort)' \
+            "$RUNNER_TEMP/index.json" > /dev/null \
+            || { echo "::error::Each platform needs exactly one attestation."; exit 1; }
+
+      - name: Create and tag the multi-arch index
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          set -euo pipefail
+          refs=()
+          for digest in *; do refs+=("$IMAGE@sha256:$digest"); done
+          mapfile -t tags < <(jq -r '.tags[] | "--tag", .' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          docker buildx imagetools create "${tags[@]}" "${refs[@]}"
+
+      - name: Show the published index
+        run: |
+          {
+            echo "## Published ${IMAGE}:sha-${GITHUB_SHA}"
+            echo ''
+            echo '```'
+            docker buildx imagetools inspect "${IMAGE}:sha-${GITHUB_SHA}"
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
   notify:
-    needs: [build-and-push]
+    needs: [build, publish]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
 
     steps:
+      # `publish` is skipped on pull requests, which is a success there.
       - name: Notify on success
-        if: ${{ needs.build-and-push.result == 'success' }}
+        if: ${{ needs.build.result == 'success' && contains(fromJSON('["success", "skipped"]'), needs.publish.result) }}
         run: |
-          echo "✅ Docker images built and pushed successfully!"
+          echo "✅ Docker images built for amd64 and arm64."
           echo "Images available at: ${{ env.REGISTRY }}/${GITHUB_REPOSITORY,,}"
 
       - name: Notify on failure
-        if: ${{ needs.build-and-push.result == 'failure' }}
+        if: ${{ needs.build.result == 'failure' || needs.publish.result == 'failure' }}
         run: |
           echo "❌ Docker image build failed!"
           exit 1
