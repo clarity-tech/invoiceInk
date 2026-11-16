@@ -233,6 +233,10 @@ function submit() {
                                         id="location-tax-id"
                                         v-model="form.tax_id"
                                         type="text"
+                                        autocapitalize="characters"
+                                        autocorrect="off"
+                                        spellcheck="false"
+                                        autocomplete="off"
                                         class="mt-1 block w-full rounded-md shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                         :class="
                                             fieldErrors.tax_id

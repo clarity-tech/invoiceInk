@@ -166,6 +166,10 @@ function submit() {
                         id="org-tax"
                         v-model="form.tax_number"
                         type="text"
+                        autocapitalize="characters"
+                        autocorrect="off"
+                        spellcheck="false"
+                        autocomplete="off"
                         class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                     />
                 </div>
@@ -183,6 +187,10 @@ function submit() {
                         id="org-reg"
                         v-model="form.registration_number"
                         type="text"
+                        autocapitalize="characters"
+                        autocorrect="off"
+                        spellcheck="false"
+                        autocomplete="off"
                         class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                     />
                 </div>
