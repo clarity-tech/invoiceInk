@@ -14,6 +14,17 @@ describe('PhoneInput', () => {
         expect(wrapper.find('#phone').exists()).toBe(true);
     });
 
+    it('puts the dialling code before the country name', () => {
+        const wrapper = mount(PhoneInput, {
+            props: { id: 'phone', modelValue: '', country: 'DE' },
+        });
+
+        // The closed select truncates its text, so the code has to come first
+        // or a long name pushes it out of view.
+        const germany = wrapper.find('option[value="DE"]').text();
+        expect(germany).toMatch(/\+49 Germany$/);
+    });
+
     it('emits an E.164 number when a national number is entered', async () => {
         const wrapper = mount(PhoneInput, {
             props: { id: 'phone', modelValue: '', country: 'US' },
