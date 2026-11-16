@@ -93,7 +93,9 @@ onBeforeUnmount(() => {
                 data-slot="dialog"
                 :class="
                     cn(
-                        'flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-xl border border-border bg-card text-card-foreground shadow-2xl outline-none sm:rounded-xl',
+                        // Below sm a bottom sheet, so it pads for the home
+                        // indicator in the installed iPhone app.
+                        'flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-xl border border-border bg-card pb-[env(safe-area-inset-bottom,0px)] text-card-foreground shadow-2xl outline-none sm:rounded-xl sm:pb-0',
                         sizes[size],
                         props.class,
                     )

@@ -959,11 +959,13 @@ const orgContacts = computed<Contact[]>(
                 the page's scroll area (app.css), so a field the browser brings
                 into view on focus is not left underneath it. Tighter below
                 640px: at 320px the three buttons ran 11px past the bar and
-                clipped Save & Send.
+                clipped Save & Send. Its bottom padding grows by the safe area,
+                so in the installed iPhone app the buttons stay above the home
+                indicator while the bar's background runs under it.
             -->
             <div
                 data-sticky-actions
-                class="sticky bottom-0 z-10 flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.06)] sm:gap-3 sm:px-4"
+                class="sticky bottom-0 z-10 flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-[0_-2px_8px_rgba(0,0,0,0.06)] sm:gap-3 sm:px-4"
             >
                 <Button type="button" variant="outline" @click="cancel">
                     Cancel
