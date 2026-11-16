@@ -178,7 +178,7 @@ onMounted(hydrate);
                 :value="currentCountry()"
                 :disabled="disabled"
                 aria-label="Country code"
-                class="w-40 shrink-0 rounded-l-md border-input bg-muted text-sm focus:z-10 focus:border-ring focus:ring-ring"
+                class="w-40 shrink-0 rounded-l-md border-input bg-muted text-base focus:z-10 focus:border-ring focus:ring-ring sm:text-sm"
                 :class="error ? 'border-destructive/40' : 'border-input'"
                 @change="onCountryChange"
             >
@@ -187,7 +187,9 @@ onMounted(hydrate);
                     :key="opt.code"
                     :value="opt.code"
                 >
-                    {{ opt.flag }} {{ opt.name }} (+{{ opt.dialCode }})
+                    <!-- Code before name: the closed select truncates its
+                         text, and a long name used to cut off the code. -->
+                    {{ opt.flag }} +{{ opt.dialCode }} {{ opt.name }}
                 </option>
             </select>
             <input
