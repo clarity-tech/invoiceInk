@@ -127,6 +127,21 @@ it('leaves the tab bar out of the invoice form, which has its own Save bar', fun
         ->assertNoJavaScriptErrors();
 });
 
+it('leaves the tab bar out of the setup wizard, where every tab leads back to it', function () {
+    $user = User::factory()->withPersonalTeam()->create([
+        'email' => 'nav-tabs-setup@example.test',
+    ]);
+    $user->currentTeam->update(['setup_completed_at' => null, 'company_name' => null]);
+
+    $this->actingAs($user);
+
+    visit('/organization/setup')->resize(390, 844)
+        ->assertPathIs('/organization/setup')
+        ->assertSee('Company Information')
+        ->assertScript('function () { return document.querySelector("[data-tab-bar]") === null; }')
+        ->assertNoJavaScriptErrors();
+});
+
 it('lets the end of a long list scroll clear of the tab bar', function () {
     // 12 documents puts the pagination bar at the very end of the page.
     [$user] = seedInvoiceListFixture(12);

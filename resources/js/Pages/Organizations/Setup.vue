@@ -180,8 +180,11 @@ function goToStep(step: number): void {
 </script>
 
 <template>
+    <!-- No tab bar: until setup is done every tab leads straight back here,
+         so on a phone it would only compete with the wizard. -->
     <AppLayout
         :title="`Organization Setup - Step ${currentStep} of ${totalSteps}`"
+        hide-tab-bar
     >
         <div class="px-4 py-4 sm:px-0">
             <div class="mx-auto max-w-3xl">
