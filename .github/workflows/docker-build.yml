@@ -200,6 +200,71 @@ jobs:
           path: tests/Browser/Screenshots/
           retention-days: 7
 
+  # The browser suite again, in WebKit -- Safari's engine, and so the one an
+  # iPhone uses, home-screen app included -- rather than Chromium. It catches
+  # what only WebKit does differently: layout, CSS and DOM events. It cannot
+  # stand in for a phone: safe-area insets read 0 and there is no home-screen
+  # mode or on-screen keyboard. Deliberately not one of the three checks the
+  # production deploy gates on.
+  test-browser-webkit:
+    name: Browser Tests (WebKit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo_sqlite
+          coverage: none
+
+      # `composer install` costs ~10s in each job and the lockfile rarely moves.
+      # Exact key only: a partially restored vendor/ is worse than none.
+      - name: Cache Composer dependencies
+        uses: actions/cache@v6
+        with:
+          path: vendor
+          key: composer-php8.5-${{ hashFiles('composer.lock') }}
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install frontend dependencies, build assets, and install WebKit
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+          npx playwright install webkit --with-deps
+
+      - name: Prepare test environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          sed -i 's/APP_ENV=local/APP_ENV=testing/' .env
+          sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=sqlite/' .env
+          sed -i 's|DB_DATABASE=.*|DB_DATABASE=database/database.sqlite|' .env
+          echo "TELESCOPE_ENABLED=false" >> .env
+          touch database/database.sqlite
+          php artisan migrate --force
+
+      # Pest names WebKit "safari".
+      - name: Run browser tests in WebKit
+        run: php artisan test tests/Browser --compact --browser safari
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: webkit-browser-screenshots
+          path: tests/Browser/Screenshots/
+          retention-days: 7
+
   test-frontend:
     name: Lint & Frontend Tests
     runs-on: ubuntu-latest

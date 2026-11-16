@@ -91,6 +91,16 @@
             "@php -r \"echo 'Installing Playwright Chromium browser...'.PHP_EOL;\"",
             "npx playwright install chromium",
             "@php -r \"echo 'Done! Run browser tests with: php artisan test tests/Browser'.PHP_EOL;\""
+        ],
+        "browser-setup-webkit": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"echo 'Installing Playwright WebKit browser...'.PHP_EOL;\"",
+            "npx playwright install webkit",
+            "@php -r \"echo 'Done! Run browser tests in WebKit with: composer browser-webkit'.PHP_EOL;\""
+        ],
+        "browser-webkit": [
+            "Composer\\Config::disableProcessTimeout",
+            "php artisan test tests/Browser --browser safari"
         ]
     },
     "extra": {
