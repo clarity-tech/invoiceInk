@@ -347,7 +347,7 @@
      * browser bringing a focused field into view does not know the bar is
      * there. Reserving its height keeps the field being typed into above it. */
     html:has([data-sticky-actions]) {
-        scroll-padding-bottom: 5rem;
+        scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
     }
 
     /* The phone tab bar (NavigationMenu): 4rem of tabs plus the home
