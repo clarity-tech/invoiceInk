@@ -1,17 +1,19 @@
 # Screenshots of feat/mobile-app-layout
 
-Every screen the theme tour visits, captured from `feat/mobile-app-layout` at `fff6e0e2`, compared with `main` at `0fab47a4`, in light and dark mode by [this run](https://github.com/clarity-tech/invoiceInk/actions/runs/43938046007). Each run is a commit on this branch, so a commit's diff shows what changed since the run before it.
+Every screen the theme tour visits, captured from `feat/mobile-app-layout` at `f21f915d`, compared with `main` at `0fab47a4`, in light and dark mode by [this run](https://github.com/clarity-tech/invoiceInk/actions/runs/43946570041). Each run is a commit on this branch, so a commit's diff shows what changed since the run before it.
 
 **4 of 59 compared screens differ between main and feat/mobile-app-layout.**
 
 | Screen | Light | Dark |
 |---|---:|---:|
-| [12. Setup step 1 company](#12-setup-step-1-company) | 0.27% | same |
+| [12. Setup step 1 company](#12-setup-step-1-company) | same | 0.34% |
 | [17. Mobile menu open](#17-mobile-menu-open) | 3.08% | 3.09% |
-| [20. Invoices list mobile](#20-invoices-list-mobile) | 54.16% | 54.18% |
+| [20. Invoices list mobile](#20-invoices-list-mobile) | 53.23% | 53.26% |
 | [31. Invoice show mobile](#31-invoice-show-mobile) | 5.13% | 5.10% |
 
 Percentages are the share of pixels that changed.
+
+Not captured on every side: [60. Customers list mobile](#60-customers-list-mobile), [61. Mobile new menu open](#61-mobile-new-menu-open).
 
 ## 01. Welcome
 
@@ -366,3 +368,15 @@ Percentages are the share of pixels that changed.
 | `main` · light | `feat/mobile-app-layout` · light | `main` · dark | `feat/mobile-app-layout` · dark |
 |---|---|---|---|
 | <a href="before-light/59-estimate-draft-dialog.png"><img src="before-light/59-estimate-draft-dialog.png" width="200" alt="main · light"></a> | <a href="after-light/59-estimate-draft-dialog.png"><img src="after-light/59-estimate-draft-dialog.png" width="200" alt="feat/mobile-app-layout · light"></a> | <a href="before-dark/59-estimate-draft-dialog.png"><img src="before-dark/59-estimate-draft-dialog.png" width="200" alt="main · dark"></a> | <a href="after-dark/59-estimate-draft-dialog.png"><img src="after-dark/59-estimate-draft-dialog.png" width="200" alt="feat/mobile-app-layout · dark"></a> |
+
+## 60. Customers list mobile
+
+| `main` · light | `feat/mobile-app-layout` · light | `main` · dark | `feat/mobile-app-layout` · dark |
+|---|---|---|---|
+| *not captured* | <a href="after-light/60-customers-list-mobile.png"><img src="after-light/60-customers-list-mobile.png" width="200" alt="feat/mobile-app-layout · light"></a> | *not captured* | <a href="after-dark/60-customers-list-mobile.png"><img src="after-dark/60-customers-list-mobile.png" width="200" alt="feat/mobile-app-layout · dark"></a> |
+
+## 61. Mobile new menu open
+
+| `main` · light | `feat/mobile-app-layout` · light | `main` · dark | `feat/mobile-app-layout` · dark |
+|---|---|---|---|
+| *not captured* | <a href="after-light/61-mobile-new-menu-open.png"><img src="after-light/61-mobile-new-menu-open.png" width="200" alt="feat/mobile-app-layout · light"></a> | *not captured* | <a href="after-dark/61-mobile-new-menu-open.png"><img src="after-dark/61-mobile-new-menu-open.png" width="200" alt="feat/mobile-app-layout · dark"></a> |
