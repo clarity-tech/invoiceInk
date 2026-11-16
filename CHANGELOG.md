@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.24.0](https://github.com/clarity-tech/invoiceInk/compare/v1.23.4...v1.24.0) (2026-11-16)
+
+
+### Features
+
+* **pwa:** add home screen shortcuts ([9a9cb1e](https://github.com/clarity-tech/invoiceInk/commit/9a9cb1e13429f66c5f052a6a7a45e20063f37bab))
+* **ui:** add a tab bar for phones ([1c96c51](https://github.com/clarity-tech/invoiceInk/commit/1c96c51fb9e7b067e06a96d14d2fb16b1c20bec4))
+* **ui:** make the setup wizard work on a phone ([1cfec70](https://github.com/clarity-tech/invoiceInk/commit/1cfec704de17f43a7ac7199eb625305d9234b29c))
+* **ui:** show invoices and customers as cards on a phone ([400e343](https://github.com/clarity-tech/invoiceInk/commit/400e343bff45fd32c264f45281f8e5bfd916b659))
+* **ui:** type tax IDs as codes on a phone ([4b73def](https://github.com/clarity-tech/invoiceInk/commit/4b73defe77ed5e44d94f15fe14d74de05aa52ab1))
+
+
+### Bug Fixes
+
+* **ui:** keep the dialling code visible in the phone country picker ([1d52ed1](https://github.com/clarity-tech/invoiceInk/commit/1d52ed1c62f437ff8243ba96a9c8b2933c18ff86))
+* **ui:** keep the Save bar and bottom sheets clear of the home indicator ([076d6ca](https://github.com/clarity-tech/invoiceInk/commit/076d6ca210ee37b9cbf8d3f7f5b6bc21535d0e39))
+* **ui:** leave the lone dash out of a draft's card on a phone ([9973b88](https://github.com/clarity-tech/invoiceInk/commit/9973b88e64ff3ddff1806f69f3e2c3c90cb14ab2))
+* **ui:** leave the tab bar out of the setup wizard ([9b7b88d](https://github.com/clarity-tech/invoiceInk/commit/9b7b88de5d06f500f40fbbc098166682020fbbd6))
+
+
+### Build & CI
+
+* run the browser tests in WebKit too ([100c87c](https://github.com/clarity-tech/invoiceInk/commit/100c87cbfa0a69cca94f4a1cc2c68d30dcb095a2))
+
 ## [1.23.4](https://github.com/clarity-tech/invoiceInk/compare/v1.23.3...v1.23.4) (2026-11-16)
 
 
