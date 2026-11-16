@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { Link, usePage, router } from '@inertiajs/vue3';
+import { FileText, House, Menu, Plus, Users } from 'lucide-vue-next';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { dashboard, logout } from '@/routes';
 import { index as customersIndex } from '@/routes/customers';
-import { index as invoicesIndex } from '@/routes/invoices';
+import { create as estimatesCreate } from '@/routes/estimates';
+import {
+    create as invoicesCreate,
+    index as invoicesIndex,
+} from '@/routes/invoices';
 import { index as settingsIndex } from '@/routes/settings';
 import { index as organizationsIndex } from '@/routes/organizations';
 import { create as teamsCreate } from '@/routes/teams';
@@ -20,9 +25,15 @@ interface TeamSummary {
     company_name: string | null;
 }
 
+const props = defineProps<{
+    /** For pages with their own bar along the bottom (the invoice form). */
+    hideTabBar?: boolean;
+}>();
+
 const page = usePage();
 const showMobileMenu = ref(false);
 const showUserDropdown = ref(false);
+const showNewMenu = ref(false);
 
 const auth = computed(
     () =>
@@ -45,7 +56,7 @@ const auth = computed(
 const teams = computed<TeamSummary[]>(() => auth.value.user?.all_teams ?? []);
 const hasMultipleTeams = computed(() => teams.value.length > 1);
 
-const { canManage } = usePermissions();
+const { can, canManage } = usePermissions();
 
 function handleLogout() {
     router.flushAll();
@@ -72,6 +83,8 @@ function selectTeam(teamId: number) {
 router.on('navigate', () => {
     showMobileMenu.value = false;
     showUserDropdown.value = false;
+    showNewMenu.value = false;
+    syncTyping();
 });
 
 // Close dropdowns when clicking outside
@@ -81,10 +94,92 @@ function handleClickOutside(event: MouseEvent) {
     if (showUserDropdown.value && !target.closest('[data-user-dropdown]')) {
         showUserDropdown.value = false;
     }
+
+    if (showNewMenu.value && !target.closest('[data-new-menu]')) {
+        showNewMenu.value = false;
+    }
 }
 
-onMounted(() => document.addEventListener('click', handleClickOutside));
-onUnmounted(() => document.removeEventListener('click', handleClickOutside));
+function handleEscape(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+        showNewMenu.value = false;
+    }
+}
+
+/**
+ * The tab bar's More opens the same panel as the hamburger. That panel sits
+ * at the top of the page, so opening it from the bottom of a long list first
+ * brings the top into view.
+ */
+function toggleMenuFromTabBar() {
+    showMobileMenu.value = !showMobileMenu.value;
+
+    if (showMobileMenu.value) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+/**
+ * Whether a text field has focus. While one does the tab bar steps aside: a
+ * phone's keyboard either covers it or, on Android, pushes it up on top of
+ * the field being typed into. Selects open a picker, not a keyboard.
+ */
+const typing = ref(false);
+const NON_TEXT_INPUTS = [
+    'button',
+    'checkbox',
+    'color',
+    'file',
+    'image',
+    'radio',
+    'range',
+    'reset',
+    'submit',
+];
+
+function isTextField(target: EventTarget | null): boolean {
+    return (
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLElement && target.isContentEditable) ||
+        (target instanceof HTMLInputElement &&
+            !NON_TEXT_INPUTS.includes(target.type))
+    );
+}
+
+function handleFocusIn(event: FocusEvent) {
+    typing.value = isTextField(event.target);
+}
+
+/**
+ * Re-reads what has focus once the page has settled. Closing a sheet or
+ * leaving a page removes the focused field outright, and nothing guarantees a
+ * focusout for that: a tap on a button does not move focus on iOS, so the
+ * field is still the focused element when it goes. Without this the bar
+ * could stay hidden with no keyboard up. Deferred so a click's own DOM
+ * changes have landed first.
+ */
+function syncTyping() {
+    setTimeout(() => {
+        typing.value = isTextField(document.activeElement);
+    });
+}
+
+const showTabBar = computed(() => !props.hideTabBar);
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', syncTyping);
+    document.addEventListener('click', syncTyping);
+});
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside);
+    document.removeEventListener('keydown', handleEscape);
+    document.removeEventListener('focusin', handleFocusIn);
+    document.removeEventListener('focusout', syncTyping);
+    document.removeEventListener('click', syncTyping);
+});
 </script>
 
 <template>
@@ -535,6 +630,128 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                         Log Out
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <!--
+            Tab bar: the phone's primary navigation, within thumb reach, the
+            way an installed app has it. Inside this <nav> rather than a second
+            one, so it adds no landmark. Pages with their own bar along the
+            bottom (the invoice form's Save) leave it out; it also steps aside
+            while the keyboard is up. Its height, safe area included, is
+            --tab-bar-height in app.css, which the page reserves at its foot.
+        -->
+        <div
+            v-if="showTabBar"
+            v-show="!typing"
+            data-tab-bar
+            class="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] md:hidden"
+        >
+            <div
+                class="mx-auto grid h-16 max-w-md"
+                :class="can('create') ? 'grid-cols-5' : 'grid-cols-4'"
+            >
+                <Link
+                    :href="dashboard.url()"
+                    class="flex flex-col items-center justify-center gap-0.5 text-xs font-medium"
+                    :class="
+                        isCurrentPath('/dashboard')
+                            ? 'text-primary'
+                            : 'text-muted-foreground hover:text-foreground'
+                    "
+                    :aria-current="
+                        isCurrentPath('/dashboard') ? 'page' : undefined
+                    "
+                >
+                    <House class="size-5" aria-hidden="true" />
+                    Dashboard
+                </Link>
+                <Link
+                    :href="invoicesIndex.url()"
+                    class="flex flex-col items-center justify-center gap-0.5 text-xs font-medium"
+                    :class="
+                        isCurrentPath('/invoices') ||
+                        isCurrentPath('/estimates')
+                            ? 'text-primary'
+                            : 'text-muted-foreground hover:text-foreground'
+                    "
+                    :aria-current="
+                        isCurrentPath('/invoices') ||
+                        isCurrentPath('/estimates')
+                            ? 'page'
+                            : undefined
+                    "
+                >
+                    <FileText class="size-5" aria-hidden="true" />
+                    Invoices
+                </Link>
+
+                <div
+                    v-if="can('create')"
+                    data-new-menu
+                    class="relative flex items-center justify-center"
+                >
+                    <button
+                        type="button"
+                        class="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                        aria-label="Create new"
+                        aria-controls="tab-bar-new-menu"
+                        :aria-expanded="showNewMenu"
+                        @click="showNewMenu = !showNewMenu"
+                    >
+                        <Plus class="size-6" aria-hidden="true" />
+                    </button>
+                    <div
+                        v-if="showNewMenu"
+                        id="tab-bar-new-menu"
+                        class="absolute bottom-full mb-3 w-48 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-lg"
+                    >
+                        <Link
+                            :href="invoicesCreate.url()"
+                            class="block rounded-md px-3 py-2.5 text-sm font-medium hover:bg-muted"
+                        >
+                            New invoice
+                        </Link>
+                        <Link
+                            :href="estimatesCreate.url()"
+                            class="block rounded-md px-3 py-2.5 text-sm font-medium hover:bg-muted"
+                        >
+                            New estimate
+                        </Link>
+                    </div>
+                </div>
+
+                <Link
+                    :href="customersIndex.url()"
+                    class="flex flex-col items-center justify-center gap-0.5 text-xs font-medium"
+                    :class="
+                        isCurrentPath('/customers')
+                            ? 'text-primary'
+                            : 'text-muted-foreground hover:text-foreground'
+                    "
+                    :aria-current="
+                        isCurrentPath('/customers') ? 'page' : undefined
+                    "
+                >
+                    <Users class="size-5" aria-hidden="true" />
+                    Customers
+                </Link>
+                <!-- Not "Toggle navigation menu": that names the hamburger. -->
+                <button
+                    type="button"
+                    class="flex flex-col items-center justify-center gap-0.5 text-xs font-medium"
+                    :class="
+                        showMobileMenu
+                            ? 'text-primary'
+                            : 'text-muted-foreground hover:text-foreground'
+                    "
+                    aria-controls="mobile-nav-panel"
+                    :aria-expanded="showMobileMenu"
+                    @click="toggleMenuFromTabBar"
+                >
+                    <Menu class="size-5" aria-hidden="true" />
+                    More
+                </button>
             </div>
         </div>
     </nav>

@@ -6,6 +6,8 @@ import NetworkErrorNotice from '@/Components/NetworkErrorNotice.vue';
 
 defineProps<{
     title?: string;
+    /** For pages with their own bar along the bottom (the invoice form). */
+    hideTabBar?: boolean;
 }>();
 </script>
 
@@ -18,7 +20,7 @@ defineProps<{
         >
             Skip to content
         </a>
-        <NavigationMenu />
+        <NavigationMenu :hide-tab-bar="hideTabBar" />
 
         <!-- Page Heading -->
         <header v-if="$slots.header" class="bg-card shadow">
@@ -32,7 +34,12 @@ defineProps<{
         </header>
 
         <!-- Page Content -->
-        <main id="main-content">
+        <!-- Below md, room at the foot for the fixed tab bar, so the last row
+             and the pagination can scroll clear of it. -->
+        <main
+            id="main-content"
+            :class="{ 'pb-(--tab-bar-height) md:pb-0': !hideTabBar }"
+        >
             <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
                 <FlashMessages />
                 <slot />

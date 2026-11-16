@@ -114,6 +114,7 @@ function deletePayment() {
 <template>
     <AppLayout
         :title="`Edit ${invoice.type === 'estimate' ? 'Estimate' : 'Invoice'}`"
+        hide-tab-bar
     >
         <template #header>
             <Breadcrumb>

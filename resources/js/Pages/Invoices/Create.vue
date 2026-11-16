@@ -39,6 +39,7 @@ defineProps<{
 <template>
     <AppLayout
         :title="`Create ${type === 'estimate' ? 'Estimate' : 'Invoice'}`"
+        hide-tab-bar
     >
         <template #header>
             <Breadcrumb>

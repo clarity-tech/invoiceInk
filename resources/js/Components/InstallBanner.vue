@@ -17,7 +17,7 @@ const { mode, install, dismiss } = useInstallPrompt();
         role="region"
         aria-label="Install app"
         data-testid="install-banner"
-        class="fixed inset-x-0 bottom-0 z-40 p-3 sm:left-auto sm:max-w-sm"
+        class="fixed inset-x-0 bottom-(--tab-bar-height) z-40 p-3 sm:left-auto sm:max-w-sm md:bottom-0"
     >
         <div
             class="flex items-start gap-3 rounded-lg border border-border bg-card p-4 shadow-lg"
