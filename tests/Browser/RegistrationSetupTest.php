@@ -284,3 +284,47 @@ it('navigates back and preserves data', function () {
         ->assertValue('#address_line_1', '500 Navigation Ave')
         ->assertValue('#city', 'Portland');
 });
+
+// ─── Phone: Next stays on screen, and each step opens at its top ───
+
+it('keeps Next on screen on a phone and opens each step at its top', function () {
+    [$user] = createSetupUser('setup-phone@example.test');
+    $this->actingAs($user);
+
+    $nextOnScreen = 'function () {
+        const next = Array.from(document.querySelectorAll("button"))
+            .find((button) => ["Next", "Complete Setup"].includes(button.textContent.trim()));
+        const r = next.getBoundingClientRect();
+        return r.top >= 0 && r.bottom <= window.innerHeight;
+    }';
+
+    $page = $this->visit('/organization/setup')->resize(390, 844);
+
+    // Step 1 is taller than the screen, and Next is still in view.
+    $page->assertScript('function () { return document.documentElement.scrollHeight > window.innerHeight + 100; }')
+        ->assertScript($nextOnScreen)
+        ->fill('#company_name', 'Clarity Technologies Pvt Ltd')
+        ->fill('input[aria-describedby="error-emails-0"]', 'accounts@claritytech.io');
+
+    // Next is pressed from the bottom of the step; step 2 opens at its top,
+    // with no banner announcing the save.
+    $page->script('function () { window.scrollTo(0, document.documentElement.scrollHeight); }');
+    $page->click('Next')
+        ->assertSee('Primary Location')
+        ->assertDontSee('Step saved successfully')
+        ->wait(1)
+        ->assertScript('function () { return window.scrollY === 0; }')
+        ->assertScript($nextOnScreen)
+        ->fill('#location_name', 'Head Office')
+        ->select('#country_code', 'IN')
+        ->fill('#address_line_1', '42 MG Road')
+        ->fill('#city', 'Bangalore')
+        ->fill('#state', 'Karnataka')
+        ->fill('#postal_code', '560038')
+        ->click('Next')
+        ->assertSee('Financial Settings')
+        // The recommended format is not what a new organization's invoices
+        // are numbered with, so the wizard no longer shows it.
+        ->assertDontSee('Recommended Format')
+        ->assertNoJavaScriptErrors();
+});

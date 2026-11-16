@@ -171,6 +171,14 @@ function previousStep(): void {
     }
 }
 
+/**
+ * A step is saved with preserveScroll, so the next one would open wherever the
+ * last was left: on a phone, near the bottom, below its first fields.
+ */
+watch(currentStep, () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
 function goToStep(step: number): void {
     if (step <= currentStep.value) {
         currentStep.value = step;
@@ -296,6 +304,7 @@ function goToStep(step: number): void {
                                         id="company_name"
                                         v-model="form.company_name"
                                         type="text"
+                                        autocomplete="organization"
                                         placeholder="Your company name"
                                         class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
@@ -321,6 +330,7 @@ function goToStep(step: number): void {
                                                 v-model="form.emails[index]"
                                                 :aria-describedby="`error-emails-${index}`"
                                                 type="email"
+                                                autocomplete="email"
                                                 placeholder="email@company.com"
                                                 class="block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                             />
@@ -395,6 +405,10 @@ function goToStep(step: number): void {
                                         id="tax_number"
                                         v-model="form.tax_number"
                                         type="text"
+                                        autocapitalize="characters"
+                                        autocorrect="off"
+                                        spellcheck="false"
+                                        autocomplete="off"
                                         class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                 </div>
@@ -407,6 +421,10 @@ function goToStep(step: number): void {
                                         id="registration_number"
                                         v-model="form.registration_number"
                                         type="text"
+                                        autocapitalize="characters"
+                                        autocorrect="off"
+                                        spellcheck="false"
+                                        autocomplete="off"
                                         class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                 </div>
@@ -419,6 +437,10 @@ function goToStep(step: number): void {
                                         id="website"
                                         v-model="form.website"
                                         type="text"
+                                        inputmode="url"
+                                        autocapitalize="none"
+                                        spellcheck="false"
+                                        autocomplete="url"
                                         placeholder="example.com"
                                         class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
@@ -478,6 +500,7 @@ function goToStep(step: number): void {
                                     <select
                                         id="country_code"
                                         v-model="form.country_code"
+                                        autocomplete="country"
                                         class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     >
                                         <option value="">
@@ -507,6 +530,10 @@ function goToStep(step: number): void {
                                         id="tax_id"
                                         v-model="form.tax_id"
                                         type="text"
+                                        autocapitalize="characters"
+                                        autocorrect="off"
+                                        spellcheck="false"
+                                        autocomplete="off"
                                         class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                 </div>
@@ -519,6 +546,7 @@ function goToStep(step: number): void {
                                         id="address_line_1"
                                         v-model="form.address_line_1"
                                         type="text"
+                                        autocomplete="address-line1"
                                         class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                     <p
@@ -537,6 +565,7 @@ function goToStep(step: number): void {
                                         id="address_line_2"
                                         v-model="form.address_line_2"
                                         type="text"
+                                        autocomplete="address-line2"
                                         class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                 </div>
@@ -549,6 +578,7 @@ function goToStep(step: number): void {
                                         id="city"
                                         v-model="form.city"
                                         type="text"
+                                        autocomplete="address-level2"
                                         class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                     <p
@@ -567,6 +597,7 @@ function goToStep(step: number): void {
                                         id="state"
                                         v-model="form.state"
                                         type="text"
+                                        autocomplete="address-level1"
                                         class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                     <p
@@ -585,6 +616,7 @@ function goToStep(step: number): void {
                                         id="postal_code"
                                         v-model="form.postal_code"
                                         type="text"
+                                        autocomplete="postal-code"
                                         class="mt-1 block w-full rounded-lg border-input shadow-sm focus:border-ring focus:ring-ring sm:text-sm"
                                     />
                                     <p
@@ -686,21 +718,24 @@ function goToStep(step: number): void {
                                                 )
                                             }}
                                         </p>
-                                        <p>
-                                            <strong>Recommended Format:</strong>
-                                            {{
-                                                selectedCountry.recommended_numbering
-                                            }}
-                                        </p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Navigation Buttons -->
+                    <!--
+                        Navigation, sticky to the foot of the screen like the
+                        invoice form's Save bar: on a phone steps 1 and 2 run
+                        well past one screen, and Next was below the fold.
+                        `data-sticky-actions` reserves its height when the
+                        browser scrolls a focused field into view (app.css), and
+                        the bottom padding grows by the home indicator's safe
+                        area in the installed iPhone app.
+                    -->
                     <div
-                        class="flex items-center justify-between border-t border-border bg-muted/50 px-6 py-4"
+                        data-sticky-actions
+                        class="sticky bottom-0 z-10 flex items-center justify-between rounded-b-xl border-t border-border bg-card px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
                     >
                         <button
                             v-if="currentStep > 1"
