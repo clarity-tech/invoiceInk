@@ -215,6 +215,15 @@ it('tours the setup wizard', function () {
     $page->press('Next');
     $page->assertSee('Currency');
     tourShot($page, '14-setup-step-3-financial');
+
+    // The wizard on a phone, with its navigation stuck to the foot of the
+    // screen. The next free numbers, so earlier shots keep their names.
+    $page = tourVisit('/organization/setup', mobile: true);
+    tourShot($page, '62-setup-step-1-mobile');
+
+    $page->press('Next');
+    $page->assertSee('Your main business address');
+    tourShot($page, '63-setup-step-2-mobile');
 });
 
 it('tours the dashboard and documents', function () {
