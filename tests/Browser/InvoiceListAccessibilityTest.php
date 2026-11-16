@@ -306,3 +306,40 @@ it('hides the decorative empty-state icon from assistive technology', function (
             "function () { const svg = document.querySelector('tbody svg'); return !!svg && svg.getAttribute('aria-hidden') === 'true'; }"
         );
 });
+
+it('lays each document out as a card on a phone, with nothing scrolled out of reach', function () {
+    // 12 documents, so the pagination bar is there too.
+    [$user] = seedInvoiceListFixture(12);
+    $this->actingAs($user);
+
+    // The document-level check above lets the table scroll inside its own
+    // wrapper, which is exactly how the phone layout used to work: six columns
+    // with the totals and actions off to the right. This measures the wrapper.
+    $page = visit('/invoices')->resize(390, 844)
+        ->screenshot(fullPage: true, filename: 'layout/invoice-list-phone');
+
+    $layout = $page->script(<<<'JS'
+    function () {
+        const region = document.querySelector('[aria-label="Invoices and estimates list"]');
+        const rows = Array.from(region.querySelectorAll('tbody tr'));
+        const controls = rows.flatMap(row => Array.from(row.querySelectorAll('a, button')));
+
+        return {
+            regionOverflow: region.scrollWidth - region.clientWidth,
+            headerShown: getComputedStyle(region.querySelector('thead')).display !== 'none',
+            rows: rows.length,
+            cards: rows.filter(row => getComputedStyle(row).display === 'grid').length,
+            controlsOffScreen: controls.filter(el => {
+                const r = el.getBoundingClientRect();
+                return r.left < 0 || r.right > window.innerWidth;
+            }).map(el => el.textContent.trim()),
+        };
+    }
+    JS);
+
+    expect($layout['regionOverflow'])->toBeLessThanOrEqual(1);
+    expect($layout['headerShown'])->toBeFalse();
+    expect($layout['rows'])->toBe(10);
+    expect($layout['cards'])->toBe($layout['rows']);
+    expect($layout['controlsOffScreen'])->toBe([]);
+});

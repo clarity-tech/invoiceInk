@@ -304,15 +304,22 @@ function locationSummary(customer: Customer): string {
                 </div>
             </Teleport>
 
-            <!-- Customer Table -->
+            <!--
+                Customer Table. One table at every width: below md each row is
+                restyled into a card (name and actions on top, contact details
+                under them) instead of a table that scrolls sideways on a
+                phone. Every desktop class sits behind md:.
+            -->
             <div
                 ref="listRegion"
                 tabindex="-1"
                 aria-label="Customers list"
                 class="overflow-x-auto rounded-xl border border-border bg-card shadow-sm focus:ring-2 focus:ring-ring focus:outline-none"
             >
-                <table class="min-w-full divide-y divide-border">
-                    <thead class="bg-muted/60">
+                <table
+                    class="block w-full divide-y divide-border md:table md:min-w-full"
+                >
+                    <thead class="hidden bg-muted/60 md:table-header-group">
                         <tr>
                             <th
                                 class="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground"
@@ -346,14 +353,18 @@ function locationSummary(customer: Customer): string {
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-border bg-card">
+                    <tbody
+                        class="block divide-y divide-border bg-card md:table-row-group"
+                    >
                         <template
                             v-for="customer in customers.data"
                             :key="customer.id"
                         >
-                            <tr class="hover:bg-muted/40">
+                            <tr
+                                class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 px-4 py-3 hover:bg-muted/40 md:table-row md:p-0"
+                            >
                                 <td
-                                    class="px-4 py-4 text-sm font-medium text-foreground"
+                                    class="col-start-1 row-start-1 min-w-0 text-sm font-medium text-foreground md:px-4 md:py-4"
                                 >
                                     <Link
                                         :href="`/customers/${customer.id}`"
@@ -363,8 +374,14 @@ function locationSummary(customer: Customer): string {
                                         {{ customer.name }}
                                     </Link>
                                 </td>
+                                <!-- An empty cell would leave a gap in the
+                                     card, so a phone drops it; the table
+                                     keeps it to hold its column. -->
                                 <td
-                                    class="px-4 py-4 text-sm text-muted-foreground"
+                                    class="col-start-1 row-start-2 min-w-0 text-sm text-muted-foreground md:table-cell md:px-4 md:py-4"
+                                    :class="{
+                                        hidden: !primaryEmail(customer),
+                                    }"
                                 >
                                     <div
                                         class="max-w-[260px] truncate"
@@ -374,20 +391,31 @@ function locationSummary(customer: Customer): string {
                                     </div>
                                 </td>
                                 <td
-                                    class="px-4 py-4 text-sm whitespace-nowrap text-muted-foreground"
+                                    class="col-start-1 row-start-3 text-sm whitespace-nowrap text-muted-foreground md:table-cell md:px-4 md:py-4"
+                                    :class="{
+                                        hidden: !customer.formatted_phone,
+                                    }"
                                 >
                                     {{ customer.formatted_phone ?? '-' }}
                                 </td>
                                 <td
-                                    class="px-4 py-4 text-sm whitespace-nowrap text-muted-foreground"
+                                    class="col-start-2 row-start-2 text-right text-sm whitespace-nowrap text-muted-foreground md:px-4 md:py-4 md:text-left"
                                 >
                                     {{ customer.currency ?? '-' }}
                                 </td>
                                 <td
-                                    class="px-4 py-4 text-sm text-muted-foreground"
+                                    class="col-span-2 row-start-4 min-w-0 text-sm text-muted-foreground md:px-4 md:py-4"
                                 >
+                                    <!-- On a phone the count below already
+                                         says there is none; a lone "-" in the
+                                         card would only look like a gap. -->
                                     <div
                                         class="max-w-[200px] truncate"
+                                        :class="{
+                                            'hidden md:block':
+                                                locationSummary(customer) ===
+                                                '-',
+                                        }"
                                         :title="locationSummary(customer)"
                                     >
                                         {{ locationSummary(customer) }}
@@ -404,7 +432,7 @@ function locationSummary(customer: Customer): string {
                                     </div>
                                 </td>
                                 <td
-                                    class="px-4 py-4 text-right text-sm whitespace-nowrap"
+                                    class="col-start-2 row-start-1 text-right text-sm whitespace-nowrap md:px-4 md:py-4"
                                 >
                                     <button
                                         v-if="can('update')"
@@ -425,8 +453,14 @@ function locationSummary(customer: Customer): string {
                                 </td>
                             </tr>
                         </template>
-                        <tr v-if="customers.data.length === 0">
-                            <td colspan="6" class="px-4 py-12 text-center">
+                        <tr
+                            v-if="customers.data.length === 0"
+                            class="block md:table-row"
+                        >
+                            <td
+                                colspan="6"
+                                class="block px-4 py-12 text-center md:table-cell"
+                            >
                                 <template v-if="searchQuery">
                                     <svg
                                         class="mx-auto h-12 w-12 text-faint-foreground"
