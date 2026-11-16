@@ -343,3 +343,50 @@ it('lays each document out as a card on a phone, with nothing scrolled out of re
     expect($layout['cards'])->toBe($layout['rows']);
     expect($layout['controlsOffScreen'])->toBe([]);
 });
+
+it('leaves a lone dash out of a draft card on a phone, but keeps it in the table', function () {
+    [$user, $organization, $customer] = seedInvoiceListFixture();
+
+    // Drafts have no issue date yet; one has a due date already.
+    createInvoiceWithItems([
+        'invoice_number' => 'CT-INV-DRAFT-1',
+        'type' => 'invoice',
+        'status' => 'draft',
+        'issued_at' => null,
+        'due_at' => null,
+    ], null, $organization, $customer);
+    createInvoiceWithItems([
+        'invoice_number' => 'CT-INV-DRAFT-2',
+        'type' => 'invoice',
+        'status' => 'draft',
+        'issued_at' => null,
+        'due_at' => now()->addDays(14),
+    ], null, $organization, $customer);
+
+    $this->actingAs($user);
+
+    // What each draft's date cell shows, as rendered. innerText leaves out
+    // hidden children, but a cell that is itself hidden returns all its text,
+    // so that case is read as empty first.
+    $dates = <<<'JS'
+    function () {
+        const shown = (cell) => getComputedStyle(cell).display === 'none' ? '' : cell.innerText.trim();
+
+        return Object.fromEntries(Array.from(document.querySelectorAll('tbody tr'))
+            .filter(row => row.textContent.includes('DRAFT'))
+            .map(row => [row.querySelector('a').textContent.trim(), shown(row.children[4])]));
+    }
+    JS;
+
+    $page = visit('/invoices');
+
+    expect($page->resize(390, 844)->script($dates))->toBe([
+        'CT-INV-DRAFT-1' => '',
+        'CT-INV-DRAFT-2' => 'Due '.now()->addDays(14)->format('d M Y'),
+    ]);
+
+    expect($page->resize(1440, 900)->script($dates))->toBe([
+        'CT-INV-DRAFT-1' => '-',
+        'CT-INV-DRAFT-2' => "-\nDue ".now()->addDays(14)->format('d M Y'),
+    ]);
+});

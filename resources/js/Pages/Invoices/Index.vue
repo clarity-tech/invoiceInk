@@ -419,9 +419,21 @@ const tabs = [
                                 </div>
                             </td>
                             <td
-                                class="col-start-1 row-start-3 text-sm whitespace-nowrap text-muted-foreground md:px-4 md:py-4"
+                                class="col-start-1 row-start-3 text-sm whitespace-nowrap text-muted-foreground md:table-cell md:px-4 md:py-4"
+                                :class="{
+                                    hidden:
+                                        !invoice.issued_at && !invoice.due_at,
+                                }"
                             >
-                                {{ formatDate(invoice.issued_at) }}
+                                <!-- A draft has no issue date yet. The table
+                                     keeps its "-" to hold the column; on a
+                                     phone it would be a lone dash in the card. -->
+                                <span
+                                    :class="{
+                                        'hidden md:inline': !invoice.issued_at,
+                                    }"
+                                    >{{ formatDate(invoice.issued_at) }}</span
+                                >
                                 <!--
                                     The issue date was the only one shown, but
                                     the due date is the one that decides whether
