@@ -83,6 +83,21 @@ test('step 1 sets company name without overwriting the organization name', funct
     ]);
 });
 
+test('saving a step goes back to the wizard without a message', function () {
+    $organization = $this->user->currentTeam;
+
+    // The wizard's progress bar already shows the step moving on; a banner
+    // on every step only pushed the form down.
+    $this->from('/organization/setup')
+        ->post("/organization/setup/{$organization->id}/step", [
+            'step' => 1,
+            'company_name' => 'New Test Company',
+            'emails' => ['test@example.test'],
+        ])
+        ->assertRedirect('/organization/setup')
+        ->assertSessionMissing('message');
+});
+
 test('validates step 1 requires company name', function () {
     $organization = $this->user->currentTeam;
 

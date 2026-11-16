@@ -115,7 +115,9 @@ class OrganizationSetupController extends Controller
                 ->with('message', __('messages.notifications.organization_setup_complete'));
         }
 
-        return back()->with('message', 'Step saved successfully.');
+        // No message: the wizard's progress bar already shows the step
+        // moving on, and a banner on every step pushed the form down.
+        return back();
     }
 
     private function validateStep(Request $request, int $step): void
