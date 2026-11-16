@@ -12,5 +12,47 @@
         { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
         { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
         { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    ],
+    "shortcuts": [
+        {
+            "name": "New invoice",
+            "short_name": "New invoice",
+            "description": "Start a new invoice",
+            "url": "/invoices/create",
+            "icons": [
+                { "src": "/icons/shortcut-new-invoice-96.png", "sizes": "96x96", "type": "image/png" },
+                { "src": "/icons/shortcut-new-invoice-192.png", "sizes": "192x192", "type": "image/png" }
+            ]
+        },
+        {
+            "name": "Invoices",
+            "short_name": "Invoices",
+            "description": "Your invoices and estimates",
+            "url": "/invoices",
+            "icons": [
+                { "src": "/icons/shortcut-invoices-96.png", "sizes": "96x96", "type": "image/png" },
+                { "src": "/icons/shortcut-invoices-192.png", "sizes": "192x192", "type": "image/png" }
+            ]
+        },
+        {
+            "name": "New estimate",
+            "short_name": "New estimate",
+            "description": "Start a new estimate",
+            "url": "/estimates/create",
+            "icons": [
+                { "src": "/icons/shortcut-new-estimate-96.png", "sizes": "96x96", "type": "image/png" },
+                { "src": "/icons/shortcut-new-estimate-192.png", "sizes": "192x192", "type": "image/png" }
+            ]
+        },
+        {
+            "name": "Customers",
+            "short_name": "Customers",
+            "description": "Your customers",
+            "url": "/customers",
+            "icons": [
+                { "src": "/icons/shortcut-customers-96.png", "sizes": "96x96", "type": "image/png" },
+                { "src": "/icons/shortcut-customers-192.png", "sizes": "192x192", "type": "image/png" }
+            ]
+        }
     ]
 }

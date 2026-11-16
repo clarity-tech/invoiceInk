@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Support\Facades\File;
 
 /**
@@ -31,6 +32,32 @@ test('the web app manifest is installable', function () {
 
     foreach ($manifest['icons'] as $icon) {
         expect(public_path($icon['src']))->toBeFile();
+    }
+});
+
+test('the manifest offers home screen shortcuts that open real pages', function () {
+    $manifest = json_decode(file_get_contents(public_path('manifest.webmanifest')), true, flags: JSON_THROW_ON_ERROR);
+
+    // Long-pressing the installed app's icon lists these, in this order.
+    expect(collect($manifest['shortcuts'])->pluck('url')->all())
+        ->toBe(['/invoices/create', '/invoices', '/estimates/create', '/customers']);
+
+    $user = User::factory()->withPersonalTeam()->create();
+    $user->currentTeam->update(['setup_completed_at' => now(), 'currency' => 'INR', 'country_code' => 'IN']);
+
+    foreach ($manifest['shortcuts'] as $shortcut) {
+        expect($shortcut['name'])->not->toBeEmpty();
+
+        // Not a redirect: a shortcut that bounced through another page would
+        // open the app on the wrong screen.
+        $this->actingAs($user)->get($shortcut['url'])->assertOk();
+
+        foreach ($shortcut['icons'] as $icon) {
+            [$width, $height] = getimagesize(public_path($icon['src']));
+            expect("{$width}x{$height}")->toBe($icon['sizes']);
+        }
+
+        expect(collect($shortcut['icons'])->pluck('sizes'))->toContain('96x96');
     }
 });
 
