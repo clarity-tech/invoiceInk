@@ -234,6 +234,14 @@ it('tours the dashboard and documents', function () {
     $page->click('[aria-label="Toggle navigation menu"]')->assertVisible('#mobile-nav-panel');
     tourShot($page, '17-mobile-menu-open');
 
+    // New shots take the next free numbers rather than a slot in sequence:
+    // a run is compared with the one before it by file name, so renumbering
+    // the rest would compare every later screen with a different one.
+    $page = tourVisit('/dashboard', mobile: true);
+    $page->wait(0.5);
+    $page->click('[aria-label="Create new"]')->assertVisible('#tab-bar-new-menu');
+    tourShot($page, '61-mobile-new-menu-open');
+
     tourShot(tourVisit('/invoices'), '18-invoices-list');
     tourShot(tourVisit('/invoices?type=estimate'), '19-estimates-list');
     tourShot(tourVisit('/invoices', mobile: true), '20-invoices-list-mobile');
@@ -273,6 +281,8 @@ it('tours customers', function () {
     $this->actingAs($data['user']);
 
     tourShot(tourVisit('/customers'), '32-customers-list');
+    // Numbered after the rest; see 61.
+    tourShot(tourVisit('/customers', mobile: true), '60-customers-list-mobile');
 
     $page = tourVisit('/customers');
     $page->click('Add Customer');
