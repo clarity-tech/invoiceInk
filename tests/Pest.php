@@ -27,6 +27,19 @@ pest()->extend(TestCase::class)
     ->in('Browser');
 
 /*
+ * WebKit (`--browser safari`) is slower to load a page than Chromium, and
+ * under a full run the heaviest pages (the invoice form in dark mode) passed
+ * Pest's 5s alone but ran past it in the suite. Give WebKit the 15s the
+ * screenshot tour already uses; Chromium runs keep the 5s. The plugin keeps
+ * the chosen browser to itself, so this reads the argument it came from.
+ */
+$browserArgument = array_search('--browser', $_SERVER['argv'] ?? [], true);
+
+if ($browserArgument !== false && ($_SERVER['argv'][$browserArgument + 1] ?? null) === 'safari') {
+    pest()->browser()->timeout(15_000);
+}
+
+/*
 |--------------------------------------------------------------------------
 | Expectations
 |--------------------------------------------------------------------------

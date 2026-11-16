@@ -62,10 +62,12 @@ RUN apt-get update && apt-get upgrade -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Playwright: system deps only (fast, ~10s). Browser binaries are opt-in.
-# Run `sail composer browser-setup` to download Chromium when needed.
+# Playwright: system deps only. Browser binaries are opt-in.
+# Run `sail composer browser-setup` to download Chromium when needed, and
+# `sail composer browser-setup-webkit` for WebKit, Safari's engine, which the
+# browser tests run in with `sail composer browser-webkit`.
 ENV PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers
-RUN npx playwright install-deps chromium
+RUN npx playwright install-deps chromium webkit
 
 RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.5
 
