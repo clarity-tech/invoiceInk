@@ -47,10 +47,17 @@ function chooseAppearance(PendingAwaitablePage|AwaitableWebpage|Webpage $page, s
  * break. The light theme is not held to it here because it carries contrast
  * failures that predate dark mode (gray-400 hint text, 2.6:1).
  *
+ * axe is loaded here rather than relied on: since pest-plugin-browser 5.2.0 it
+ * is no longer put on every page, only loaded by the plugin's own
+ * assertNoAccessibilityIssues(). injectAxe() does nothing if it is already
+ * there, and also loads it into iframes, which axe.run() reaches into.
+ *
  * @param  list<string>  $exclude  selectors left out of the check, each with a reason at the call
  */
-function assertNoContrastFailures(PendingAwaitablePage|AwaitableWebpage|Webpage $page, array $exclude = []): void
+function assertNoContrastFailures(PendingAwaitablePage|AwaitableWebpage $page, array $exclude = []): void
 {
+    $page->page()->injectAxe();
+
     $exclude = json_encode($exclude);
 
     $failures = $page->script(<<<JS
