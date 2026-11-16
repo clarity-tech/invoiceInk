@@ -2,7 +2,8 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? null) === \App\Enums\Appearance::DARK])>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {{-- viewport-fit=cover lets the installed app reach the screen's edges; the tab bar and app.css pad back in from them with env(safe-area-inset-*). --}}
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     @include('partials.appearance')
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     {{-- Read by app.ts, which registers or removes the service worker to match (config app.pwa_enabled). --}}

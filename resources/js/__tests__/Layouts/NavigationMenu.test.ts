@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { reactive } from 'vue';
+import { nextTick, reactive } from 'vue';
 
 const { mockRouterPost, mockRouterPut, pageState } = vi.hoisted(() => ({
     mockRouterPost: vi.fn(),
@@ -10,7 +10,10 @@ const { mockRouterPost, mockRouterPut, pageState } = vi.hoisted(() => ({
     // `ReturnType<typeof reactive>` without a type argument widens to `object`,
     // which has no `props` -- so the mock page could not be reached by type.
     pageState: {
-        current: null as { props: Record<string, unknown> } | null,
+        current: null as {
+            props: Record<string, unknown>;
+            url?: string;
+        } | null,
     },
 }));
 
@@ -70,6 +73,11 @@ vi.mock('@/routes/customers', () => ({
 
 vi.mock('@/routes/invoices', () => ({
     index: { url: () => '/invoices' },
+    create: { url: () => '/invoices/create' },
+}));
+
+vi.mock('@/routes/estimates', () => ({
+    create: { url: () => '/estimates/create' },
 }));
 
 vi.mock('@/routes/organizations', () => ({
@@ -229,5 +237,137 @@ describe('NavigationMenu', () => {
         expect(
             wrapper.find('#mobile-nav-panel [data-appearance-toggle]').exists(),
         ).toBe(true);
+    });
+
+    describe('tab bar', () => {
+        function tabBar(wrapper: ReturnType<typeof mount>) {
+            return wrapper.find('[data-tab-bar]');
+        }
+
+        /** Lets the deferred focus check run, then Vue re-render. */
+        async function settle() {
+            await new Promise((resolve) => setTimeout(resolve));
+            await nextTick();
+        }
+
+        it('links the main sections and marks the current one', () => {
+            const bar = tabBar(mount(NavigationMenu));
+
+            expect(bar.exists()).toBe(true);
+            expect(
+                bar
+                    .findAll('a')
+                    .filter(
+                        (link) => !link.element.closest('#tab-bar-new-menu'),
+                    )
+                    .map((link) => link.attributes('href')),
+            ).toEqual(['/dashboard', '/invoices', '/customers']);
+            expect(bar.find('a[aria-current="page"]').text()).toBe('Dashboard');
+        });
+
+        it('counts an estimate as part of Invoices', () => {
+            pageState.current!.url = '/estimates/create';
+            const bar = tabBar(mount(NavigationMenu));
+
+            expect(bar.find('a[aria-current="page"]').text()).toBe('Invoices');
+        });
+
+        it('offers a new invoice or estimate from the + button', async () => {
+            const bar = tabBar(mount(NavigationMenu));
+            const button = bar.find('[aria-label="Create new"]');
+
+            // Not rendered while closed, so the page's own create links are
+            // the only ones a selector or a screen reader's link list finds.
+            expect(button.attributes('aria-expanded')).toBe('false');
+            expect(bar.find('#tab-bar-new-menu').exists()).toBe(false);
+
+            await button.trigger('click');
+
+            expect(button.attributes('aria-expanded')).toBe('true');
+            expect(
+                bar
+                    .find('#tab-bar-new-menu')
+                    .findAll('a')
+                    .map((link) => link.attributes('href')),
+            ).toEqual(['/invoices/create', '/estimates/create']);
+        });
+
+        it('leaves out the + button for someone who cannot create', () => {
+            (
+                pageState.current!.props.auth as {
+                    currentTeam: { permissions: string[] };
+                }
+            ).currentTeam.permissions = ['view'];
+            const bar = tabBar(mount(NavigationMenu));
+
+            expect(bar.find('[aria-label="Create new"]').exists()).toBe(false);
+        });
+
+        it('opens the same panel as the hamburger from More', async () => {
+            window.scrollTo = vi.fn();
+            const wrapper = mount(NavigationMenu);
+            const more = tabBar(wrapper).find(
+                'button[aria-controls="mobile-nav-panel"]',
+            );
+            const burger = wrapper.find(
+                '[aria-label="Toggle navigation menu"]',
+            );
+
+            await more.trigger('click');
+
+            expect(more.attributes('aria-expanded')).toBe('true');
+            expect(burger.attributes('aria-expanded')).toBe('true');
+            expect(window.scrollTo).toHaveBeenCalled();
+        });
+
+        it('steps aside while a text field has focus, not for a checkbox', async () => {
+            const wrapper = mount(NavigationMenu, { attachTo: document.body });
+            const field = document.createElement('input');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            document.body.append(field, checkbox);
+
+            field.focus();
+            await settle();
+            expect(tabBar(wrapper).isVisible()).toBe(false);
+
+            checkbox.focus();
+            await settle();
+            expect(tabBar(wrapper).isVisible()).toBe(true);
+
+            field.remove();
+            checkbox.remove();
+            wrapper.unmount();
+        });
+
+        it('comes back after a tap when the focused field was removed without a focusout', async () => {
+            const wrapper = mount(NavigationMenu, { attachTo: document.body });
+            const field = document.createElement('input');
+            document.body.append(field);
+
+            field.focus();
+            await settle();
+            expect(tabBar(wrapper).isVisible()).toBe(false);
+
+            // As on iOS: the tap that closes a sheet leaves focus on its field,
+            // which then goes with the sheet. Stop the focusout reaching the
+            // component, so only the tap can bring the bar back.
+            const swallow = (event: Event) => event.stopImmediatePropagation();
+            field.addEventListener('focusout', swallow);
+            field.remove();
+            document.body.click();
+            await settle();
+
+            expect(tabBar(wrapper).isVisible()).toBe(true);
+            wrapper.unmount();
+        });
+
+        it('is left out on pages that have their own bottom bar', () => {
+            const wrapper = mount(NavigationMenu, {
+                props: { hideTabBar: true },
+            });
+
+            expect(tabBar(wrapper).exists()).toBe(false);
+        });
     });
 });

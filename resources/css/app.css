@@ -349,6 +349,27 @@
     html:has([data-sticky-actions]) {
         scroll-padding-bottom: 5rem;
     }
+
+    /* The phone tab bar (NavigationMenu): 4rem of tabs plus the home
+     * indicator's strip. AppLayout reserves it at the foot of the page, the
+     * install banner sits on top of it, and focus scrolling keeps clear of it.
+     * 48rem is the md breakpoint, where the bar gives way to the top nav. */
+    :root {
+        --tab-bar-height: calc(4rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    @media (width < 48rem) {
+        html:has([data-tab-bar]) {
+            scroll-padding-bottom: var(--tab-bar-height);
+        }
+    }
+
+    /* viewport-fit=cover (app.blade.php) lets the page run under the notch of
+     * a phone held sideways; keep the content out from under it. */
+    body {
+        padding-left: env(safe-area-inset-left, 0px);
+        padding-right: env(safe-area-inset-right, 0px);
+    }
 }
 
 /* The typography plugin's `prose` palette, pointed at the tokens so long-form
