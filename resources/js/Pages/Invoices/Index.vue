@@ -208,17 +208,26 @@ const tabs = [
                 </select>
             </div>
 
-            <!-- Table -->
+            <!--
+                One table at every width. Below md it is restyled rather than
+                swapped for a second card list: each row becomes a two-column
+                card (who and what on the left, money and status on the right),
+                so a phone shows every document without scrolling sideways, and
+                there is still only one set of links for tests and screen
+                readers to find. Every desktop class sits behind md:.
+            -->
             <div
                 tabindex="-1"
                 aria-label="Invoices and estimates list"
                 class="overflow-x-auto rounded-xl border border-border bg-card shadow-sm focus:ring-2 focus:ring-ring focus:outline-none"
             >
-                <table class="min-w-full divide-y divide-border">
+                <table
+                    class="block w-full divide-y divide-border md:table md:min-w-full"
+                >
                     <caption class="sr-only">
                         Invoices and estimates
                     </caption>
-                    <thead class="bg-muted/60">
+                    <thead class="hidden bg-muted/60 md:table-header-group">
                         <tr>
                             <th
                                 scope="col"
@@ -258,13 +267,17 @@ const tabs = [
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-border bg-card">
+                    <tbody
+                        class="block divide-y divide-border bg-card md:table-row-group"
+                    >
                         <tr
                             v-for="invoice in invoices.data"
                             :key="invoice.id"
-                            class="hover:bg-muted/40"
+                            class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 px-4 py-3 hover:bg-muted/40 md:table-row md:p-0"
                         >
-                            <td class="px-4 py-4 whitespace-nowrap">
+                            <td
+                                class="col-start-1 row-start-1 whitespace-nowrap md:px-4 md:py-4"
+                            >
                                 <!--
                                     The number is how a row is identified, so it
                                     is also how the document opens. Reading an
@@ -300,7 +313,9 @@ const tabs = [
                                     </Badge>
                                 </div>
                             </td>
-                            <td class="px-4 py-4 text-sm text-muted-foreground">
+                            <td
+                                class="col-start-1 row-start-2 min-w-0 text-sm text-muted-foreground md:px-4 md:py-4"
+                            >
                                 <!--
                                     The second way into the document, and the
                                     one people actually aim at: the number is
@@ -336,7 +351,9 @@ const tabs = [
                                     </div>
                                 </Link>
                             </td>
-                            <td class="px-4 py-4 text-right whitespace-nowrap">
+                            <td
+                                class="col-start-2 row-start-1 text-right whitespace-nowrap md:px-4 md:py-4"
+                            >
                                 <div
                                     class="text-sm font-medium text-foreground"
                                 >
@@ -372,7 +389,9 @@ const tabs = [
                                     />
                                 </div>
                             </td>
-                            <td class="px-4 py-4 whitespace-nowrap">
+                            <td
+                                class="col-start-2 row-span-2 row-start-2 text-right whitespace-nowrap md:px-4 md:py-4 md:text-left"
+                            >
                                 <StatusBadge :status="invoice.status" />
                                 <!--
                                     Shown under the document status rather than in a
@@ -400,7 +419,7 @@ const tabs = [
                                 </div>
                             </td>
                             <td
-                                class="px-4 py-4 text-sm whitespace-nowrap text-muted-foreground"
+                                class="col-start-1 row-start-3 text-sm whitespace-nowrap text-muted-foreground md:px-4 md:py-4"
                             >
                                 {{ formatDate(invoice.issued_at) }}
                                 <!--
@@ -416,7 +435,7 @@ const tabs = [
                                 </div>
                             </td>
                             <td
-                                class="px-4 py-4 text-right text-sm whitespace-nowrap"
+                                class="col-span-2 row-start-4 text-sm whitespace-nowrap md:px-4 md:py-4 md:text-right"
                             >
                                 <!--
                                     Six coloured links per row, repeated down
@@ -434,8 +453,11 @@ const tabs = [
                                     An overdue row also offers a reminder, which
                                     opens on the document's page.
                                 -->
+                                <!-- Flush left on a phone: -ml-3 takes back
+                                     the ghost buttons' own padding so their
+                                     text lines up with the card's. -->
                                 <div
-                                    class="flex items-center justify-end gap-1"
+                                    class="-ml-3 flex items-center gap-1 md:ml-0 md:justify-end"
                                 >
                                     <Button
                                         v-if="
@@ -482,8 +504,14 @@ const tabs = [
                                 </div>
                             </td>
                         </tr>
-                        <tr v-if="invoices.data.length === 0">
-                            <td colspan="6" class="px-6 py-12 text-center">
+                        <tr
+                            v-if="invoices.data.length === 0"
+                            class="block md:table-row"
+                        >
+                            <td
+                                colspan="6"
+                                class="block px-6 py-12 text-center md:table-cell"
+                            >
                                 <svg
                                     class="mx-auto h-12 w-12 text-faint-foreground"
                                     aria-hidden="true"

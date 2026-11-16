@@ -115,3 +115,64 @@ it('reaches the location manager from the listing for a customer with no locatio
         ->waitForText('No locations yet')
         ->assertSee('+ Add location');
 });
+
+it('lays each customer out as a card on a phone, with nothing scrolled out of reach', function () {
+    $user = User::factory()->withPersonalTeam()->create([
+        'email' => 'customer-list-phone@example.test',
+    ]);
+
+    $org = createOrganizationWithLocation([
+        'name' => 'Clarity Technologies',
+        'currency' => 'INR',
+        'country_code' => 'IN',
+        'setup_completed_at' => now(),
+    ], [], $user);
+
+    // The same worst case as the desktop test: long name, long email, a phone.
+    createCustomerWithLocation([
+        'name' => 'Riverbend Institute of Medical Sciences Limited',
+        'phone' => '+914012345678',
+        'phone_country' => 'IN',
+        'emails' => new ContactCollection([['name' => 'Accounts Payable', 'email' => 'accounts.payable@riverbend-hospitals.test']]),
+    ], [
+        'city' => 'Secunderabad',
+        'state' => 'Telangana',
+        'country' => 'IN',
+    ], $org);
+
+    // No email and no phone: their cells drop out of the card rather than
+    // leaving gaps or a lone "-".
+    Customer::factory()->create([
+        'name' => 'Locationless Trading Company Limited',
+        'organization_id' => $org->id,
+        'phone' => null,
+    ]);
+
+    $this->actingAs($user);
+
+    $page = visit('/customers')->resize(390, 844)
+        ->screenshot(fullPage: true, filename: 'layout/customer-list-phone');
+
+    $layout = $page->script(<<<'JS'
+    function () {
+        const region = document.querySelector('[aria-label="Customers list"]');
+        const rows = Array.from(region.querySelectorAll('tbody tr'));
+        const controls = rows.flatMap(row => Array.from(row.querySelectorAll('a, button')));
+
+        return {
+            regionOverflow: region.scrollWidth - region.clientWidth,
+            headerShown: getComputedStyle(region.querySelector('thead')).display !== 'none',
+            cards: rows.filter(row => getComputedStyle(row).display === 'grid').length,
+            controlsOffScreen: controls.filter(el => {
+                const r = el.getBoundingClientRect();
+                return r.left < 0 || r.right > window.innerWidth;
+            }).map(el => el.textContent.trim()),
+        };
+    }
+    JS);
+
+    expect($layout['regionOverflow'])->toBeLessThanOrEqual(1);
+    expect($layout['headerShown'])->toBeFalse();
+    expect($layout['cards'])->toBe(2);
+    expect($layout['controlsOffScreen'])->toBe([]);
+});
