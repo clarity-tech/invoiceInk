@@ -64,6 +64,14 @@ function assertNoContrastFailures(PendingAwaitablePage|AwaitableWebpage $page, a
         async () => {
             // A colour mid-transition (a button fading in from `disabled`) is
             // not one a person reads, so let finite animations finish first.
+            // A Vue <Transition> only starts its CSS transition a frame or two
+            // after the element appears, and an animation not yet started is
+            // not in the list. WebKit measured a dialog at about half opacity
+            // that way, so let a few frames pass before asking.
+            for (let frame = 0; frame < 3; frame++) {
+                await new Promise((resolve) => requestAnimationFrame(resolve));
+            }
+
             await Promise.all(
                 document.getAnimations()
                     .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
