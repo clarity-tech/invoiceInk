@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.23.4](https://github.com/clarity-tech/invoiceInk/compare/v1.23.3...v1.23.4) (2026-11-16)
+
+
+### Bug Fixes
+
+* **deps-dev:** bump the frontend-dev group with 2 updates ([6705ede](https://github.com/clarity-tech/invoiceInk/commit/6705ede081f60e638b7ed48e42e948f2c2cc96ee))
+* **deps:** bump laravel/octane ([ba5f314](https://github.com/clarity-tech/invoiceInk/commit/ba5f314c743d1ca3a254d7e38d77a26ce1346834))
+* **deps:** bump the frontend-runtime group with 7 updates ([fee0457](https://github.com/clarity-tech/invoiceInk/commit/fee0457532b962065b800d0f14f1483d5f73d4ad))
+* **tests:** load axe for the dark mode contrast checks ([68bf8fd](https://github.com/clarity-tech/invoiceInk/commit/68bf8fd6090d517ee7d87ce95d96b69e9c5db4b7))
+
 ## [1.23.3](https://github.com/clarity-tech/invoiceInk/compare/v1.23.2...v1.23.3) (2026-11-13)
 
 
