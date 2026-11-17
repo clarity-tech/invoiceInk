@@ -59,6 +59,9 @@
                     </table>
                 </div>
                 <p class="mt-4 text-sm text-gray-500">{{ __($t.'.digits.note') }}</p>
+                <a href="{{ route('marketing.gst-invoice-format') }}" class="mt-4 inline-block text-sm font-semibold text-brand-300 transition hover:text-brand-200">
+                    {{ __($t.'.digits.format_link') }} <span aria-hidden="true">&rarr;</span>
+                </a>
             </div>
 
             <div>
