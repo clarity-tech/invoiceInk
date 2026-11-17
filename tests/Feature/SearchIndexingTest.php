@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Testing\TestResponse;
 
 /*
  * What search engines may index, checked as a whole rather than page by page:
@@ -11,6 +12,22 @@ use App\Models\User;
 beforeEach(function () {
     config(['app.url' => 'https://invoiceink.test']);
 });
+
+/**
+ * The canonical URL a page names, or null when it names none.
+ */
+function canonicalOf(string $html): ?string
+{
+    return preg_match('#<link rel="canonical" href="([^"]+)"#', $html, $match) ? $match[1] : null;
+}
+
+/**
+ * The meta description a page gives, or null when it gives none.
+ */
+function descriptionOf(string $html): ?string
+{
+    return preg_match('#<meta name="description" content="([^"]*)"#', $html, $match) ? html_entity_decode($match[1]) : null;
+}
 
 it('keeps the private and throwaway sign-in screens out of search results', function (string $path) {
     $this->get($path)
@@ -61,4 +78,58 @@ it('points its icons and share image at real files of the size it declares', fun
         }
     }
     expect(array_slice(getimagesize(public_path($image[1])), 0, 2))->toBe([(int) $imageSize[1], (int) $imageSize[2]]);
+});
+
+/**
+ * Each page the sitemap lists, fetched on another host the way a stray
+ * *.run.app link would reach it, keyed by the URL the sitemap gives.
+ *
+ * @return array<string, TestResponse>
+ */
+function sitemapPages(): array
+{
+    $sitemap = test()->get('/sitemap.xml')->assertOk()->getContent();
+    $pages = [];
+
+    foreach (simplexml_load_string($sitemap)->xpath('//*[local-name()="loc"]') as $loc) {
+        $pages[(string) $loc] = test()->get('http://invoicing-web-abc123-el.a.run.app'.parse_url((string) $loc, PHP_URL_PATH));
+    }
+
+    return $pages;
+}
+
+it('lets search engines index every page in the sitemap, each naming its own sitemap URL as canonical', function () {
+    $pages = sitemapPages();
+
+    expect($pages)->toHaveCount(8);
+    foreach ($pages as $url => $response) {
+        $response->assertOk()
+            ->assertHeaderMissing('X-Robots-Tag')
+            ->assertDontSee('<meta name="robots"', false);
+        expect(canonicalOf($response->getContent()))->toBe($url);
+    }
+});
+
+it('gives every page in the sitemap a title and description of its own', function () {
+    $titles = [];
+    $descriptions = [];
+
+    foreach (sitemapPages() as $url => $response) {
+        preg_match('#<title>(.*?)</title>#s', $response->getContent(), $title);
+
+        expect($title[1] ?? '')->not->toBeEmpty("{$url} has no title")
+            ->and(descriptionOf($response->getContent()))->not->toBeEmpty("{$url} has no meta description");
+        $titles[$url] = $title[1];
+        $descriptions[$url] = descriptionOf($response->getContent());
+    }
+
+    expect(array_unique($titles))->toBe($titles)
+        ->and(array_unique($descriptions))->toBe($descriptions);
+});
+
+it('only serves structured data that parses', function () {
+    foreach (sitemapPages() as $response) {
+        // structuredData() itself fails the test on a block that isn't valid JSON-LD.
+        expect(structuredData($response->getContent()))->toBeArray();
+    }
 });
