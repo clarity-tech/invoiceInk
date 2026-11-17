@@ -1,4 +1,4 @@
-<x-guest-layout title="Privacy Policy">
+<x-guest-layout title="Privacy Policy" :description="__('marketing.meta.privacy_description', ['app' => config('app.name')])">
     <div class="pt-4 bg-canvas">
         <div class="min-h-screen flex flex-col items-center pt-6 sm:pt-0">
             <div>
