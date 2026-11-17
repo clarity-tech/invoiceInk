@@ -27,12 +27,22 @@ it('tells search engines not to index it only when the deployment is not indexab
 it('describes the app as free software in its structured data', function () {
     $html = $this->get('/')->assertOk()->getContent();
 
-    preg_match('#<script type="application/ld\+json">(.*?)</script>#s', $html, $match);
-    expect(json_decode($match[1], true))->toMatchArray([
-        '@type' => 'SoftwareApplication',
+    expect(structuredData($html)['SoftwareApplication'])->toMatchArray([
         'url' => 'https://invoiceink.test/',
         'offers' => ['@type' => 'Offer', 'price' => '0', 'priceCurrency' => 'INR'],
-    ]);
+    ])->not->toHaveKey('aggregateRating')->not->toHaveKey('review');
+});
+
+it('gives search results the site name rather than the domain', function () {
+    $html = $this->get('http://invoicing-web-abc123-el.a.run.app/')->assertOk()->getContent();
+
+    expect(array_keys(structuredData($html)))->toBe(['SoftwareApplication', 'WebSite'])
+        ->and(structuredData($html)['WebSite'])->toBe([
+            '@context' => 'https://schema.org',
+            '@type' => 'WebSite',
+            'name' => config('app.name'),
+            'url' => 'https://invoiceink.test/',
+        ]);
 });
 
 it('renders every line of copy from the translation file', function () {

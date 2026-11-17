@@ -327,3 +327,30 @@ if (! function_exists('sharePath')) {
         return parse_url($url, PHP_URL_PATH).'?'.parse_url($url, PHP_URL_QUERY);
     }
 }
+
+if (! function_exists('structuredData')) {
+    /**
+     * Every JSON-LD block in a page, decoded and keyed by its schema.org @type.
+     *
+     * A block that isn't valid JSON fails the test here rather than dropping
+     * out of the result, because search engines drop it just as quietly. So
+     * does a second block of the same type, which would contradict the first.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    function structuredData(string $html): array
+    {
+        preg_match_all('#<script type="application/ld\+json">(.*?)</script>#s', $html, $matches);
+
+        $blocks = [];
+
+        foreach ($matches[1] as $json) {
+            $block = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
+            expect($block['@context'] ?? null)->toBe('https://schema.org')
+                ->and($blocks)->not->toHaveKey($block['@type']);
+            $blocks[$block['@type']] = $block;
+        }
+
+        return $blocks;
+    }
+}

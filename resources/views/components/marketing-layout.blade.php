@@ -1,4 +1,4 @@
-@props(['title', 'description', 'path' => '/'])
+@props(['title', 'description', 'path' => '/', 'breadcrumb' => null])
 
 @php
     // Rooted at APP_URL rather than the request, so a copy reached on another
@@ -6,6 +6,17 @@
     $root = rtrim(config('app.url'), '/');
     $canonical = $root.'/'.ltrim($path, '/');
     $appName = config('app.name', 'InvoiceInk');
+
+    // A guide's place under the home page, for the trail search results show
+    // in place of the URL. The name is the guide's short footer label.
+    $breadcrumbData = $breadcrumb === null ? null : [
+        '@context' => 'https://schema.org',
+        '@type' => 'BreadcrumbList',
+        'itemListElement' => [
+            ['@type' => 'ListItem', 'position' => 1, 'name' => $appName, 'item' => $root.'/'],
+            ['@type' => 'ListItem', 'position' => 2, 'name' => $breadcrumb, 'item' => $canonical],
+        ],
+    ];
 @endphp
 
 <!DOCTYPE html>
@@ -34,6 +45,10 @@
         <meta name="twitter:card" content="summary_large_image">
 
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+
+        @if ($breadcrumbData)
+            <script type="application/ld+json">@json($breadcrumbData)</script>
+        @endif
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800,900&display=swap" rel="stylesheet" />

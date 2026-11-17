@@ -1,7 +1,22 @@
 @props(['heading', 'items'])
 
+@php
+    // Built from the same items the questions below render, so the markup
+    // can't claim a question the page doesn't show.
+    $faqData = [
+        '@context' => 'https://schema.org',
+        '@type' => 'FAQPage',
+        'mainEntity' => array_map(fn (array $item): array => [
+            '@type' => 'Question',
+            'name' => $item['question'],
+            'acceptedAnswer' => ['@type' => 'Answer', 'text' => $item['answer']],
+        ], $items),
+    ];
+@endphp
+
 {{-- $items: list<array{question: string, answer: string}> --}}
 <section class="px-6 py-24">
+    <script type="application/ld+json">@json($faqData)</script>
     <div class="mx-auto max-w-3xl">
         <h2 class="mb-10 text-center text-3xl font-extrabold tracking-tight sm:text-4xl">{{ $heading }}</h2>
         <div class="divide-y divide-white/5 rounded-2xl border border-white/5 bg-white/[0.02]">
