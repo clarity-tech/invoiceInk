@@ -47,7 +47,7 @@ return [
         ],
         'source_taxes' => [
             'title' => 'TDS and TCS',
-            'body' => 'Add TDS or TCS with its section, such as 194J or 206C(1H). TDS comes off the total, TCS goes on, and both are printed.',
+            'body' => 'Add TDS or TCS with the section it falls under. TDS comes off the total, TCS goes on, and both are printed.',
         ],
         'numbering' => [
             'title' => 'Financial-year numbering',

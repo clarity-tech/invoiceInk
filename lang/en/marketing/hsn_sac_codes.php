@@ -34,7 +34,7 @@ return [
 
     'digits' => [
         'heading' => 'How many digits?',
-        'intro' => 'It depends on your aggregate turnover in the previous financial year. This is Notification 78/2020-Central Tax, in force since 1 April 2021.',
+        'intro' => 'It depends on your aggregate turnover in the previous financial year. This is Notification 12/2017-Central Tax as amended by Notification 78/2020-Central Tax, in force since 1 April 2021.',
         'columns' => [
             'turnover' => 'Turnover last year',
             'digits' => 'Digits on your tax invoices',
@@ -43,7 +43,7 @@ return [
             ['turnover' => 'Up to ₹5 crore', 'digits' => '4 digits on invoices to registered customers (B2B). Optional on invoices to unregistered customers (B2C).'],
             ['turnover' => 'Above ₹5 crore', 'digits' => '6 digits on every tax invoice.'],
         ],
-        'note' => 'A separately notified list of chemicals needs 8 digits whatever your turnover.',
+        'note' => 'A list of chemicals in Notification 90/2020-Central Tax needs 8 digits whatever your turnover.',
         'format_link' => 'Everything else a GST invoice must show',
     ],
 
@@ -80,7 +80,7 @@ return [
         ],
     ],
 
-    'disclaimer' => 'A summary written in November 2026. It isn’t tax advice: check the current rules or ask your CA.',
+    'disclaimer' => 'A summary checked against CBIC’s notifications in November 2026. It isn’t tax advice: check the current rules or ask your CA.',
 
     'faq' => [
         'heading' => 'Questions',

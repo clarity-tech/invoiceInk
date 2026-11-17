@@ -31,9 +31,9 @@ return [
             ['clause' => 'a', 'status' => 'yes', 'particular' => 'Your name, address and GSTIN.', 'note' => 'From your organization’s settings.'],
             ['clause' => 'b', 'status' => 'partly', 'particular' => 'A consecutive serial number of up to 16 characters, using letters, numbers, hyphens and slashes, unique for the financial year.', 'note' => 'Generated for you; the default, INV-26001, is 9 characters. Custom patterns aren’t checked against the 16-character limit, so keep yours short.'],
             ['clause' => 'c', 'status' => 'yes', 'particular' => 'The date of issue.', 'note' => 'Printed as the invoice date.'],
-            ['clause' => 'd', 'status' => 'yes', 'particular' => 'The recipient’s name, address and GSTIN, if they’re registered.', 'note' => 'Printed under Bill To.'],
+            ['clause' => 'd', 'status' => 'yes', 'particular' => 'The recipient’s name, address and GSTIN (or Unique Identity Number), if they’re registered.', 'note' => 'Printed under Bill To.'],
             ['clause' => 'e–f', 'status' => 'yes', 'particular' => 'For an unregistered recipient: name, address and delivery address with the state name and code, if the supply is ₹50,000 or more or the recipient asks.', 'note' => 'Name and address under Bill To, a separate Ship To when it differs, and the place of supply with its state code when you set it.'],
-            ['clause' => 'g', 'status' => 'yes', 'particular' => 'The HSN code for goods or SAC code for services.', 'note' => 'One code per line, with optional AI suggestions.'],
+            ['clause' => 'g', 'status' => 'yes', 'particular' => 'The HSN code of the goods or services (for services, the SAC).', 'note' => 'One code per line, with optional AI suggestions.'],
             ['clause' => 'h', 'status' => 'yes', 'particular' => 'A description of the goods or services.', 'note' => 'Each line’s description.'],
             ['clause' => 'i', 'status' => 'partly', 'particular' => 'For goods, the quantity and its unit or Unique Quantity Code (UQC).', 'note' => 'Whole-number quantities only, and no unit field yet. Put the unit in the description.'],
             ['clause' => 'j', 'status' => 'yes', 'particular' => 'The total value of the supply.', 'note' => 'The invoice total, also in words.'],
@@ -44,7 +44,7 @@ return [
             ['clause' => 'p', 'status' => 'no', 'particular' => 'Whether tax is payable on reverse charge.', 'note' => 'No reverse-charge marker yet. Add a line in the notes if it applies.'],
             ['clause' => 'q', 'status' => 'no', 'particular' => 'Your signature or digital signature. A proviso waives this for electronic invoices issued under the Information Technology Act, 2000.', 'note' => 'No signature field yet.'],
             ['clause' => 'r', 'status' => 'no', 'particular' => 'For an e-invoice, a QR code with the Invoice Reference Number (IRN).', 'note' => 'InvoiceInk doesn’t generate e-invoices yet.'],
-            ['clause' => 's', 'status' => 'no', 'particular' => 'If your turnover is above the e-invoicing limit but an invoice isn’t an e-invoice, a declaration saying why.', 'note' => 'Not supported yet.'],
+            ['clause' => 's', 'status' => 'no', 'particular' => 'If your turnover in any year since 2017-18 was above the e-invoicing limit, a set declaration on each invoice that isn’t an e-invoice, saying it isn’t required to be one.', 'note' => 'Not supported yet.'],
             ['clause' => 'proviso', 'status' => 'no', 'particular' => 'For exports, an endorsement such as “Supply meant for export under bond or letter of undertaking without payment of integrated tax”, and the country of destination.', 'note' => 'Put the endorsement in the invoice notes.'],
         ],
     ],
@@ -55,7 +55,7 @@ return [
         'link' => 'How InvoiceInk works out GST',
     ],
 
-    'disclaimer' => 'A plain-English summary of Rule 46 of the CGST Rules, 2017, as amended up to November 2024, written in November 2026. It isn’t tax advice: check the current rules or ask your CA.',
+    'disclaimer' => 'A plain-English summary of Rule 46 of the CGST Rules, 2017, as last amended by Notification 20/2024–Central Tax from 1 November 2024, checked against CBIC’s published rules in November 2026. It isn’t tax advice: check the current rules or ask your CA.',
 
     'faq' => [
         'heading' => 'Questions',
