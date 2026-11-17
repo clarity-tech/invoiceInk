@@ -16,6 +16,15 @@
         'sameAs' => ['https://github.com/clarity-tech/invoiceInk'],
     ];
 
+    // What search results read for the site's name above each link, which
+    // would otherwise fall back to the domain. It belongs on the home page only.
+    $websiteData = [
+        '@context' => 'https://schema.org',
+        '@type' => 'WebSite',
+        'name' => $appName,
+        'url' => $root.'/',
+    ];
+
     $features = [
         'instant' => 'zap',
         'currencies' => 'currency',
@@ -45,6 +54,7 @@
 >
     <x-slot:head>
         <script type="application/ld+json">@json($structuredData)</script>
+        <script type="application/ld+json">@json($websiteData)</script>
 
         <style>
             /* Heights must match translateY steps in their respective keyframes */

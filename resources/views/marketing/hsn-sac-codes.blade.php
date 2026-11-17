@@ -6,6 +6,7 @@
     :title="__($t.'.meta.title', ['app' => config('app.name')])"
     :description="__($t.'.meta.description')"
     path="/hsn-sac-codes"
+    :breadcrumb="__('marketing.footer.pages.hsn_sac_codes')"
 >
     <x-marketing.page-hero :badge="__($t.'.hero.badge')" :title="__($t.'.hero.title')" :accent="__($t.'.hero.accent')">
         {{ __($t.'.hero.intro') }}

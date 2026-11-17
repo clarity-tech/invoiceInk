@@ -11,6 +11,7 @@
     :title="__($t.'.meta.title', ['app' => config('app.name')])"
     :description="__($t.'.meta.description')"
     path="/gst-invoice-format"
+    :breadcrumb="__('marketing.footer.pages.gst_invoice_format')"
 >
     <x-marketing.page-hero :badge="__($t.'.hero.badge')" :title="__($t.'.hero.title')" :accent="__($t.'.hero.accent')">
         {{ __($t.'.hero.intro') }}
