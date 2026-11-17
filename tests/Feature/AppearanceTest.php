@@ -84,7 +84,8 @@ it('keeps the PDF light whatever the choice', function (string $type) {
     // template; only the template's own PDF check keeps it out.
     Config::set('services.gotenberg.enabled', true);
     Config::set('services.gotenberg.url', 'http://gotenberg:3000');
-    Http::fake(['gotenberg:3000/*' => Http::response('%PDF-1.4 /Count 1', 200)]);
+    // Two pages, so both the first pass and the stretched final pass are checked.
+    Http::fake(['gotenberg:3000/*' => Http::response('%PDF-1.4 /Count 2', 200)]);
     $document = createInvoiceWithItems(['type' => $type]);
 
     $this->withUnencryptedCookie(Appearance::COOKIE, 'dark')
