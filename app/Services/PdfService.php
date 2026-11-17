@@ -43,21 +43,31 @@ class PdfService implements PdfServiceInterface
      * Render a document view to PDF.
      *
      * Chromium cannot anchor a block to the bottom of the final page on its
-     * own, so we render twice: the first pass measures the document's page
-     * count, and the second pass tells the template to stretch the card across
-     * exactly that many pages, letting it pin the footer to the bottom of the
-     * last page. The second pass is skipped when the page count can't be read.
+     * own, so the template is told how many pages to stretch the card across
+     * and pins the footer to the bottom of the last one. That number is only
+     * known once the document has been rendered.
+     *
+     * Most documents are one page, so the first pass assumes one. Its page
+     * count is still the real one: the template keeps the footer's room in the
+     * flow, so content that does not fit spills onto further pages rather than
+     * under the footer. One page means the first pass is already the finished
+     * PDF, which halves the time of a typical download. A longer document is
+     * rendered again, stretched across the pages the first pass came to.
+     *
+     * When the page count can't be read the first pass is returned as it is:
+     * right for a one-page document, and for a longer one the footer simply
+     * follows the content, where an unpinned render would put it.
      *
      * @param  array<string, mixed>  $data
      */
     private function renderDocument(string $view, array $data, string $filename): string
     {
-        $firstPass = View::make($view, $data + ['fillPages' => null])->render();
+        $firstPass = View::make($view, $data + ['fillPages' => 1])->render();
         $pdf = $this->generatePdfFromHtml($firstPass, $filename);
 
         $pages = $this->countPdfPages($pdf);
 
-        if ($pages < 1) {
+        if ($pages <= 1) {
             return $pdf;
         }
 
