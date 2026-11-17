@@ -7,6 +7,12 @@
     $canonical = $root.'/'.ltrim($path, '/');
     $appName = config('app.name', 'InvoiceInk');
 
+    // The copy is written in Indian English for Indian businesses, which is
+    // what og:locale already says. Only `en` is narrowed: the translations
+    // stay in lang/en, so app.locale itself must not change.
+    $locale = str_replace('_', '-', app()->getLocale());
+    $lang = $locale === 'en' ? 'en-IN' : $locale;
+
     // A guide's place under the home page, for the trail search results show
     // in place of the URL. The name is the guide's short footer label.
     $breadcrumbData = $breadcrumb === null ? null : [
@@ -20,7 +26,7 @@
 @endphp
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ $lang }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -44,7 +50,10 @@
         <meta property="og:image:alt" content="{{ __('marketing.meta.image_alt', ['app' => $appName]) }}">
         <meta name="twitter:card" content="summary_large_image">
 
+        {{-- The .ico is for crawlers and browsers that can't use SVG; search results want a multiple of 48px. --}}
+        <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="48x48">
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
 
         @if ($breadcrumbData)
             <script type="application/ld+json">@json($breadcrumbData)</script>

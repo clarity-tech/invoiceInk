@@ -158,7 +158,7 @@
                     € EUR
                 </div>
                 <div class="absolute bottom-1/3 -left-3 sm:-left-6 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold font-mono animate-bounce [animation-delay:1.5s] [animation-duration:3s]">
-                    <img src="{{ asset('images/dirham-symbol.svg') }}" alt="AED" class="inline h-3 hero-dirham-icon opacity-80"> AED
+                    <img src="{{ asset('images/dirham-symbol.svg') }}" alt="AED" width="14" height="12" class="inline h-3 hero-dirham-icon opacity-80"> AED
                 </div>
                 <div class="absolute -bottom-3 right-1/3 px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-bold font-mono animate-bounce [animation-delay:2s] [animation-duration:3s]">
                     £ GBP
@@ -196,7 +196,7 @@
                                         <span class="hero-line-item flex items-center gap-1">₹10,37,500</span>
                                         <span class="hero-line-item flex items-center gap-1">$12,500.00</span>
                                         <span class="hero-line-item flex items-center gap-1">€11,600.00</span>
-                                        <span class="hero-line-item flex items-center gap-1"><img src="{{ asset('images/dirham-symbol.svg') }}" alt="AED" class="h-3 shrink-0 hero-dirham-icon"> 45,900</span>
+                                        <span class="hero-line-item flex items-center gap-1"><img src="{{ asset('images/dirham-symbol.svg') }}" alt="AED" width="14" height="12" class="h-3 shrink-0 hero-dirham-icon"> 45,900</span>
                                         <span class="hero-line-item flex items-center gap-1">£9,800.00</span>
                                     </span>
                                 </span>
@@ -208,7 +208,7 @@
                                         <span class="hero-line-item flex items-center gap-1">₹3,98,400</span>
                                         <span class="hero-line-item flex items-center gap-1">$4,800.00</span>
                                         <span class="hero-line-item flex items-center gap-1">€4,450.00</span>
-                                        <span class="hero-line-item flex items-center gap-1"><img src="{{ asset('images/dirham-symbol.svg') }}" alt="AED" class="h-3 shrink-0 hero-dirham-icon"> 17,600</span>
+                                        <span class="hero-line-item flex items-center gap-1"><img src="{{ asset('images/dirham-symbol.svg') }}" alt="AED" width="14" height="12" class="h-3 shrink-0 hero-dirham-icon"> 17,600</span>
                                         <span class="hero-line-item flex items-center gap-1">£3,760.00</span>
                                     </span>
                                 </span>
@@ -220,7 +220,7 @@
                                         <span class="hero-line-item flex items-center gap-1">₹1,82,600</span>
                                         <span class="hero-line-item flex items-center gap-1">$2,200.00</span>
                                         <span class="hero-line-item flex items-center gap-1">€2,050.00</span>
-                                        <span class="hero-line-item flex items-center gap-1"><img src="{{ asset('images/dirham-symbol.svg') }}" alt="AED" class="h-3 shrink-0 hero-dirham-icon"> 8,080</span>
+                                        <span class="hero-line-item flex items-center gap-1"><img src="{{ asset('images/dirham-symbol.svg') }}" alt="AED" width="14" height="12" class="h-3 shrink-0 hero-dirham-icon"> 8,080</span>
                                         <span class="hero-line-item flex items-center gap-1">£1,720.00</span>
                                     </span>
                                 </span>
@@ -236,7 +236,7 @@
                                     <span class="hero-total-item flex items-center text-3xl font-black bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">$19,500.00</span>
                                     <span class="hero-total-item flex items-center text-3xl font-black bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">€18,100.00</span>
                                     {{-- Dirham uses a separate gradient-tinted filter since bg-clip-text hides the <img> --}}
-                                    <span class="hero-total-item flex items-center gap-1.5 text-3xl font-black"><img src="{{ asset('images/dirham-symbol.svg') }}" alt="AED" class="h-5 shrink-0 hero-dirham-icon-gradient"> <span class="bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">71,580</span></span>
+                                    <span class="hero-total-item flex items-center gap-1.5 text-3xl font-black"><img src="{{ asset('images/dirham-symbol.svg') }}" alt="AED" width="23" height="20" class="h-5 shrink-0 hero-dirham-icon-gradient"> <span class="bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">71,580</span></span>
                                     <span class="hero-total-item flex items-center text-3xl font-black bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent">£15,280.00</span>
                                 </div>
                             </div>

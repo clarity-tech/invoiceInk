@@ -45,3 +45,20 @@ it('marks log in and register noindex when the deployment is not indexable', fun
         ->assertOk()
         ->assertHeader('X-Robots-Tag', 'noindex, nofollow');
 })->with(['/login', '/register']);
+
+it('points its icons and share image at real files of the size it declares', function () {
+    $html = $this->get('/')->assertOk()->getContent();
+    preg_match_all('#<link rel="(?:icon|apple-touch-icon)" href="https?://[^/"]+/([^"]+)"(?: sizes="(\d+)x\d+")?#', $html, $icons, PREG_SET_ORDER);
+    preg_match('#<meta property="og:image" content="https?://[^/"]+/([^"]+)">#', $html, $image);
+    preg_match('#<meta property="og:image:width" content="(\d+)">\s*<meta property="og:image:height" content="(\d+)">#', $html, $imageSize);
+
+    expect($icons)->toHaveCount(3);
+    foreach ($icons as $icon) {
+        // filesize() rather than file_exists(): favicon.ico used to be an empty file.
+        expect(filesize(public_path($icon[1])))->toBeGreaterThan(0, "{$icon[1]} is empty");
+        if (isset($icon[2])) {
+            expect(getimagesize(public_path($icon[1]))[0])->toBe((int) $icon[2]);
+        }
+    }
+    expect(array_slice(getimagesize(public_path($image[1])), 0, 2))->toBe([(int) $imageSize[1], (int) $imageSize[2]]);
+});
