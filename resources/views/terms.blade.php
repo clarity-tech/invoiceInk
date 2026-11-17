@@ -1,4 +1,4 @@
-<x-guest-layout title="Terms of Service">
+<x-guest-layout title="Terms of Service" :description="__('marketing.meta.terms_description', ['app' => config('app.name')])">
     <div class="pt-4 bg-canvas">
         <div class="min-h-screen flex flex-col items-center pt-6 sm:pt-0">
             <div>

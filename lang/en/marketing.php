@@ -14,6 +14,9 @@ return [
         'title' => ':app — Free, open-source invoicing with GST and VAT',
         'description' => 'Draft, send and track invoices and estimates in nine currencies, with GST and VAT built in, PDFs, payments, reminders and AI drafting. Free and open source.',
         'image_alt' => ':app: open-source invoicing with GST and VAT built in',
+        // Search-result snippets for the legal pages, summarising their own sections.
+        'terms_description' => 'The terms for using :app: your account, who owns your data, your responsibility for the invoices and GST you issue, AI features and acceptable use.',
+        'privacy_description' => 'What personal data :app handles and why, who sees it and how long it’s kept. Written for India’s DPDP Act, 2023. No ad or analytics trackers.',
     ],
 
     'nav' => [
