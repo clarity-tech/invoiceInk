@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AddNoIndexHeader;
 use Laravel\Fortify\Features;
 
 return [
@@ -101,7 +102,13 @@ return [
     |
     */
 
-    'middleware' => ['web'],
+    // AddNoIndexHeader keeps the private and throwaway screens out of search
+    // results: the password reset link (which carries a token and an email
+    // address), forgot-password, two-factor, confirm-password and verify-email.
+    // Log in and register are excepted, because people search for them.
+    // robots.txt deliberately still allows all of these, or the header would go
+    // unseen.
+    'middleware' => ['web', AddNoIndexHeader::except('login', 'register')],
 
     /*
     |--------------------------------------------------------------------------
