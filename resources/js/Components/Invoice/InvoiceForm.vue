@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { useForm, router, usePage } from '@inertiajs/vue3';
 import { ref, computed, provide, watch, onMounted, nextTick } from 'vue';
-import { ChevronDown, Plus, X } from 'lucide-vue-next';
+import { ChevronDown, Loader2, Plus, X } from 'lucide-vue-next';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
+import { emailModalDialog } from '@/Components/lazyDialogs';
 import { Button } from '@/Components/ui/button';
 import {
     Card,
@@ -25,13 +26,13 @@ import ExtrasCard from './Form/ExtrasCard.vue';
 import { InvoiceFormKey } from './Form/formContext';
 import SourceTaxesCard from './Form/SourceTaxesCard.vue';
 import AttachmentDropzone from './AttachmentDropzone.vue';
-import EmailModal from './EmailModal.vue';
 import ItemRow from './ItemRow.vue';
 import RecipientEditor from './RecipientEditor.vue';
 import { useFormatMoney } from '@/composables/useFormatMoney';
 import { mergeRecipients } from '@/composables/useRecipients';
 import { buildGstBreakdown } from '@/composables/useGstBreakdown';
 import { useInvoiceCalculator } from '@/composables/useInvoiceCalculator';
+import { useLazyDialog } from '@/composables/useLazyDialog';
 import type { LineItem } from '@/composables/useInvoiceCalculator';
 import { calcTdsAmount, calcTcsAmount } from '@/composables/useSourceTaxes';
 import {
@@ -73,6 +74,16 @@ const props = defineProps<{
 
 const { formatAmount, currencySymbol } = useFormatMoney();
 const showEmailModal = ref(false);
+// The composer carries the email editor, so it loads on first use; pressing
+// Save & Send starts fetching it while the save is still in flight.
+const EmailModal = emailModalDialog.component;
+const emailDialog = useLazyDialog(emailModalDialog);
+
+function openEmailModal() {
+    emailDialog.open(() => {
+        showEmailModal.value = true;
+    });
+}
 // Build initial items — from the invoice being edited, or from the defaults
 // when the create form was seeded by "Duplicate".
 function buildInitialItems(): LineItem[] {
@@ -505,7 +516,7 @@ function submit(send = false) {
         // the edit page with ?send=1, which reopens it there (see onMounted).
         onSuccess: () => {
             if (send && props.mode === 'edit') {
-                showEmailModal.value = true;
+                openEmailModal();
             }
         },
     };
@@ -535,7 +546,7 @@ onMounted(() => {
     const params = new URLSearchParams(window.location.search);
 
     if (params.get('send') === '1') {
-        showEmailModal.value = true;
+        openEmailModal();
         params.delete('send');
         const query = params.toString();
         window.history.replaceState(
@@ -982,8 +993,11 @@ const orgContacts = computed<Contact[]>(
                     <Button
                         type="button"
                         :disabled="form.processing"
+                        :aria-busy="emailDialog.busy"
+                        v-on="emailDialog.intent"
                         @click="saveAndSend"
                     >
+                        <Loader2 v-if="emailDialog.busy" class="animate-spin" />
                         {{ form.processing ? 'Saving...' : 'Save & Send' }}
                     </Button>
                 </div>
@@ -992,7 +1006,7 @@ const orgContacts = computed<Contact[]>(
 
         <!-- Email Modal -->
         <EmailModal
-            v-if="mode === 'edit' && invoice"
+            v-if="mode === 'edit' && invoice && emailDialog.loaded"
             :show="showEmailModal"
             :invoice="invoice"
             :customers="customers"

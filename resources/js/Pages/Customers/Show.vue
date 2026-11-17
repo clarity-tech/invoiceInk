@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { Link, router, useForm } from '@inertiajs/vue3';
+import { Loader2 } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
-import CustomerForm from '@/Components/CustomerForm.vue';
-import CustomerReminderModal from '@/Components/Invoice/CustomerReminderModal.vue';
+import {
+    customerFormDialog,
+    customerReminderDialog,
+} from '@/Components/lazyDialogs';
 import LocationModal from '@/Components/LocationModal.vue';
 import MoneyDisplay from '@/Components/MoneyDisplay.vue';
 import { formatDate } from '@/composables/useFormatDate';
@@ -12,6 +15,7 @@ import {
     formatLocationSummary,
 } from '@/composables/useLocationFormat';
 import { overdueLabel } from '@/composables/useOverdueLabel';
+import { useLazyDialog } from '@/composables/useLazyDialog';
 import { usePermissions } from '@/composables/usePermissions';
 import { taxLabelFor } from '@/composables/useTaxLabel';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -42,7 +46,20 @@ const props = defineProps<{
     reminder: CustomerReminderDraft | null;
 }>();
 
+// The edit form (libphonenumber) and the reminder (the email editor) load on
+// first use rather than with the page. See useLazyDialog.
+const CustomerForm = customerFormDialog.component;
+const CustomerReminderModal = customerReminderDialog.component;
+const formDialog = useLazyDialog(customerFormDialog);
+const reminderDialog = useLazyDialog(customerReminderDialog);
+
 const showReminderModal = ref(false);
+
+function openReminder() {
+    reminderDialog.open(() => {
+        showReminderModal.value = true;
+    });
+}
 
 const isMounted = ref(false);
 onMounted(() => {
@@ -69,17 +86,19 @@ const form = useForm({
 });
 
 function openEdit() {
-    form.name = props.customer.name;
-    form.phone = props.customer.phone ?? '';
-    form.phone_country = props.customer.phone_country ?? '';
-    form.currency = props.customer.currency ?? 'INR';
-    form.place_of_supply = props.customer.place_of_supply ?? '';
-    form.gst_treatment = props.customer.gst_treatment ?? 'domestic';
-    form.contacts = props.customer.emails?.length
-        ? [...props.customer.emails]
-        : [{ name: '', email: '' }];
-    form.clearErrors();
-    showForm.value = true;
+    formDialog.open(() => {
+        form.name = props.customer.name;
+        form.phone = props.customer.phone ?? '';
+        form.phone_country = props.customer.phone_country ?? '';
+        form.currency = props.customer.currency ?? 'INR';
+        form.place_of_supply = props.customer.place_of_supply ?? '';
+        form.gst_treatment = props.customer.gst_treatment ?? 'domestic';
+        form.contacts = props.customer.emails?.length
+            ? [...props.customer.emails]
+            : [{ name: '', email: '' }];
+        form.clearErrors();
+        showForm.value = true;
+    });
 }
 
 function submitCustomer() {
@@ -204,8 +223,15 @@ const showArchived = ref(false);
                     v-if="can('update')"
                     type="button"
                     class="cursor-pointer rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
+                    :aria-busy="formDialog.busy"
+                    v-on="formDialog.intent"
                     @click="openEdit"
                 >
+                    <Loader2
+                        v-if="formDialog.busy"
+                        class="mr-1.5 -ml-0.5 inline size-4 animate-spin align-[-3px]"
+                        aria-hidden="true"
+                    />
                     Edit Customer
                 </button>
             </div>
@@ -286,8 +312,15 @@ const showArchived = ref(false);
                         v-if="can('update')"
                         type="button"
                         class="cursor-pointer text-sm font-medium text-primary hover:text-primary-soft-foreground"
-                        @click="showReminderModal = true"
+                        :aria-busy="reminderDialog.busy"
+                        v-on="reminderDialog.intent"
+                        @click="openReminder"
                     >
+                        <Loader2
+                            v-if="reminderDialog.busy"
+                            class="mr-1 inline size-4 animate-spin align-[-3px]"
+                            aria-hidden="true"
+                        />
                         Send reminder
                     </button>
                 </div>
@@ -534,7 +567,7 @@ const showArchived = ref(false);
         </Teleport>
 
         <CustomerReminderModal
-            v-if="reminder"
+            v-if="reminder && reminderDialog.loaded"
             :show="showReminderModal"
             :customer="customer"
             :reminder="reminder"

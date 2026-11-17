@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { BellRing, Layers } from 'lucide-vue-next';
+import { BellRing, Layers, Loader2 } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
-import CustomerReminderModal from './CustomerReminderModal.vue';
-import EmailModal from './EmailModal.vue';
+import {
+    customerReminderDialog,
+    emailModalDialog,
+} from '@/Components/lazyDialogs';
 import { Button } from '@/Components/ui/button';
+import { useLazyDialog } from '@/composables/useLazyDialog';
 import type {
     CustomerReminderDraft,
     Invoice,
@@ -20,12 +23,27 @@ const props = defineProps<{
     openFromUrl?: boolean;
 }>();
 
+// Both dialogs carry the email editor, so they load on first use rather than
+// with the invoice page. See useLazyDialog.
+const EmailModal = emailModalDialog.component;
+const CustomerReminderModal = customerReminderDialog.component;
+const emailDialog = useLazyDialog(emailModalDialog);
+const reminderDialog = useLazyDialog(customerReminderDialog);
+
 const showReminderModal = ref(false);
 const showCustomerReminderModal = ref(false);
 
+function remind() {
+    emailDialog.open(() => {
+        showReminderModal.value = true;
+    });
+}
+
 function remindAboutAll() {
-    showReminderModal.value = false;
-    showCustomerReminderModal.value = true;
+    reminderDialog.open(() => {
+        showReminderModal.value = false;
+        showCustomerReminderModal.value = true;
+    });
 }
 
 onMounted(() => {
@@ -33,20 +51,28 @@ onMounted(() => {
         props.openFromUrl &&
         new URLSearchParams(window.location.search).get('remind') === '1'
     ) {
-        showReminderModal.value = true;
+        remind();
     }
 });
 </script>
 
 <template>
     <div class="contents">
-        <Button variant="outline" size="sm" @click="showReminderModal = true">
-            <BellRing />
+        <Button
+            variant="outline"
+            size="sm"
+            :aria-busy="emailDialog.busy"
+            v-on="emailDialog.intent"
+            @click="remind"
+        >
+            <Loader2 v-if="emailDialog.busy" class="animate-spin" />
+            <BellRing v-else />
             Remind
         </Button>
 
         <Teleport to="body">
             <EmailModal
+                v-if="emailDialog.loaded"
                 :show="showReminderModal"
                 :invoice="invoice"
                 :customers="invoice.customer ? [invoice.customer] : []"
@@ -68,9 +94,16 @@ onMounted(() => {
                         </span>
                         <button
                             type="button"
-                            class="font-medium text-primary hover:underline"
+                            class="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"
+                            :aria-busy="reminderDialog.busy"
+                            v-on="reminderDialog.intent"
                             @click="remindAboutAll"
                         >
+                            <Loader2
+                                v-if="reminderDialog.busy"
+                                class="size-4 animate-spin"
+                                aria-hidden="true"
+                            />
                             Send one combined reminder
                         </button>
                     </div>
@@ -78,7 +111,11 @@ onMounted(() => {
             </EmailModal>
 
             <CustomerReminderModal
-                v-if="customerReminder && invoice.customer"
+                v-if="
+                    reminderDialog.loaded &&
+                    customerReminder &&
+                    invoice.customer
+                "
                 :show="showCustomerReminderModal"
                 :customer="invoice.customer"
                 :reminder="customerReminder"

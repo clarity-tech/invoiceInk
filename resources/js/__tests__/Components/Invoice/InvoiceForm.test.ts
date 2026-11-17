@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
     makeCustomer,
@@ -189,6 +189,12 @@ const defaultProps = () => ({
         currency: 'INR',
     },
 });
+
+/** The composer loads on first use (useLazyDialog); wait for it to arrive. */
+async function settleLazyDialogs() {
+    await vi.dynamicImportSettled();
+    await flushPromises();
+}
 
 function mountComponent(propsOverride = {}) {
     return mount(InvoiceForm, {
@@ -628,9 +634,9 @@ describe('Invoice/InvoiceForm', () => {
             // The composer starts closed.
             expect(
                 wrapper
-                    .find('[data-testid="email-modal"]')
-                    .attributes('data-show'),
-            ).toBe('false');
+                    .find('[data-testid="email-modal"][data-show="true"]')
+                    .exists(),
+            ).toBe(false);
 
             const btn = wrapper
                 .findAll('button')
@@ -647,7 +653,7 @@ describe('Invoice/InvoiceForm', () => {
                 onSuccess: () => void;
             };
             options.onSuccess();
-            await wrapper.vm.$nextTick();
+            await settleLazyDialogs();
 
             expect(
                 wrapper
@@ -668,13 +674,13 @@ describe('Invoice/InvoiceForm', () => {
                 onSuccess: () => void;
             };
             options.onSuccess();
-            await wrapper.vm.$nextTick();
+            await settleLazyDialogs();
 
             expect(
                 wrapper
-                    .find('[data-testid="email-modal"]')
-                    .attributes('data-show'),
-            ).toBe('false');
+                    .find('[data-testid="email-modal"][data-show="true"]')
+                    .exists(),
+            ).toBe(false);
         });
 
         it('pre-fills item rows from invoice data', () => {
