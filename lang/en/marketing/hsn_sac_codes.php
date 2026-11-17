@@ -44,6 +44,7 @@ return [
             ['turnover' => 'Above ₹5 crore', 'digits' => '6 digits on every tax invoice.'],
         ],
         'note' => 'A separately notified list of chemicals needs 8 digits whatever your turnover.',
+        'format_link' => 'Everything else a GST invoice must show',
     ],
 
     'examples' => [

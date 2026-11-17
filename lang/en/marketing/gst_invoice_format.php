@@ -26,6 +26,7 @@ return [
             'partly' => 'Partly',
             'no' => 'Not yet',
         ],
+        'codes_link' => 'HSN and SAC codes explained',
         'rows' => [
             ['clause' => 'a', 'status' => 'yes', 'particular' => 'Your name, address and GSTIN.', 'note' => 'From your organization’s settings.'],
             ['clause' => 'b', 'status' => 'partly', 'particular' => 'A consecutive serial number of up to 16 characters, using letters, numbers, hyphens and slashes, unique for the financial year.', 'note' => 'Generated for you; the default, INV-26001, is 9 characters. Custom patterns aren’t checked against the 16-character limit, so keep yours short.'],
@@ -51,6 +52,7 @@ return [
     'other_documents' => [
         'heading' => 'Other GST documents',
         'body' => 'InvoiceInk issues tax invoices and estimates. It doesn’t issue bills of supply for composition dealers, credit or debit notes, or e-invoices yet.',
+        'link' => 'How InvoiceInk works out GST',
     ],
 
     'disclaimer' => 'A plain-English summary of Rule 46 of the CGST Rules, 2017, as amended up to November 2024, written in November 2026. It isn’t tax advice: check the current rules or ask your CA.',

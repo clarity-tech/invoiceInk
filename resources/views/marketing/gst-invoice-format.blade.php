@@ -5,6 +5,10 @@
         'partly' => 'border-amber-500/30 bg-amber-500/10 text-amber-300',
         'no' => 'border-white/10 bg-white/5 text-gray-400',
     ];
+    // Clauses with a guide of their own, linked from the checklist row.
+    $clauseLinks = [
+        'g' => ['href' => route('marketing.hsn-sac-codes'), 'label' => __($t.'.checklist.codes_link')],
+    ];
 @endphp
 
 <x-marketing-layout
@@ -44,6 +48,11 @@
                                         {{ __($t.'.checklist.status.'.$row['status']) }}
                                     </span>
                                     <span class="block text-gray-400">{{ $row['note'] }}</span>
+                                    @isset($clauseLinks[$row['clause']])
+                                        <a href="{{ $clauseLinks[$row['clause']]['href'] }}" class="mt-1 inline-block font-semibold text-brand-300 transition hover:text-brand-200">
+                                            {{ $clauseLinks[$row['clause']]['label'] }} <span aria-hidden="true">&rarr;</span>
+                                        </a>
+                                    @endisset
                                 </td>
                             </tr>
                         @endforeach
@@ -57,6 +66,9 @@
         <div class="mx-auto max-w-4xl rounded-2xl border border-white/5 bg-white/[0.02] p-8">
             <h2 class="mb-3 text-xl font-bold">{{ __($t.'.other_documents.heading') }}</h2>
             <p class="leading-relaxed text-gray-300">{{ __($t.'.other_documents.body') }}</p>
+            <a href="{{ route('marketing.gst-invoicing') }}" class="mt-4 inline-block font-semibold text-brand-300 transition hover:text-brand-200">
+                {{ __($t.'.other_documents.link') }} <span aria-hidden="true">&rarr;</span>
+            </a>
         </div>
     </section>
 
