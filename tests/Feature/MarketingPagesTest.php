@@ -8,6 +8,7 @@ it('renders each marketing page with its own canonical URL and no missing copy',
     $response = $this->get('http://invoicing-web-abc123-el.a.run.app'.$path);
 
     $response->assertOk()
+        ->assertSee('<html lang="en-IN">', false)
         ->assertSee('<link rel="canonical" href="https://invoiceink.test'.$path.'">', false)
         ->assertSeeText($headline)
         ->assertDontSee('marketing.')
