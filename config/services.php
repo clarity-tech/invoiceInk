@@ -41,9 +41,10 @@ return [
     'gotenberg' => [
         'enabled' => env('GOTENBERG_ENABLED', true),
         'url' => env('GOTENBERG_URL', 'http://gotenberg:3000'),
-        // Each document is rendered twice (page count, then footer placement), so
-        // this must clear two Chromium renders. It also has to stay above
-        // Gotenberg's own --api-timeout and below Octane's max_execution_time.
+        // A one-page document is rendered once, but a longer one twice (page
+        // count, then footer placement), so this must clear two Chromium
+        // renders. It also has to stay above Gotenberg's own --api-timeout and
+        // below Octane's max_execution_time.
         'timeout' => env('GOTENBERG_TIMEOUT', 90),
     ],
 

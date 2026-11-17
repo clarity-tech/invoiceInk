@@ -6,6 +6,7 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\View;
 
 beforeEach(function () {
     $this->pdfService = new PdfService;
@@ -79,13 +80,59 @@ test('sends html as index.html multipart attachment with A4 options', function (
     });
 });
 
-test('renders a second pass to pin the footer when the page count is known', function () {
+/**
+ * A stand-in for a Gotenberg PDF: just the page-tree /Count that Chromium
+ * writes uncompressed into the catalog, which is all PdfService reads.
+ */
+function fakeGotenbergPdf(int $pages, string $tag = ''): string
+{
+    return "%PDF-1.4\n1 0 obj << /Type /Pages /Kids [] /Count {$pages} >> endobj\n%{$tag}\n";
+}
+
+/**
+ * The HTML a Gotenberg request carried, from its index.html attachment.
+ */
+function sentDocumentHtml(Request $request): string
+{
+    return collect($request->data())->firstWhere('name', 'files')['contents'];
+}
+
+test('renders a one-page document in a single pass', function () {
     Config::set('services.gotenberg.enabled', true);
     Config::set('services.gotenberg.url', 'http://gotenberg:3000');
 
-    // Mimic the page-tree /Count Chromium writes uncompressed into the catalog.
     Http::fake([
-        'gotenberg:3000/forms/chromium/convert/html' => Http::response("%PDF-1.4\n/Type /Pages /Count 2\n", 200),
+        'gotenberg:3000/forms/chromium/convert/html' => Http::response(fakeGotenbergPdf(1), 200),
+    ]);
+
+    $invoice = createInvoiceWithItems([
+        'invoice_number' => 'INV-PDF-ONE',
+        'status' => 'sent',
+        'notes' => 'Thank you for your business.',
+    ]);
+
+    $pdf = $this->pdfService->generateInvoicePdf($invoice);
+
+    expect($pdf)->toBe(fakeGotenbergPdf(1));
+    Http::assertSentCount(1);
+
+    // The single pass is the final render: byte for byte the HTML a pass
+    // stretched across one page sends, so the PDF is that render's PDF.
+    $finalRenderHtml = View::make('pdf.invoice', ['invoice' => $invoice, 'fillPages' => 1])->render();
+    $sentHtml = sentDocumentHtml(Http::recorded()[0][0]);
+
+    expect($sentHtml)->toBe($finalRenderHtml)
+        ->and($sentHtml)->toContain('min-height: 100vh');
+});
+
+test('renders a longer document again across the pages the first pass came to', function () {
+    Config::set('services.gotenberg.enabled', true);
+    Config::set('services.gotenberg.url', 'http://gotenberg:3000');
+
+    Http::fake([
+        'gotenberg:3000/forms/chromium/convert/html' => Http::sequence()
+            ->push(fakeGotenbergPdf(2, 'first'), 200)
+            ->push(fakeGotenbergPdf(2, 'final'), 200),
     ]);
 
     $invoice = createInvoiceWithItems([
@@ -93,11 +140,64 @@ test('renders a second pass to pin the footer when the page count is known', fun
         'status' => 'sent',
     ]);
 
-    $this->pdfService->generateInvoicePdf($invoice);
+    $pdf = $this->pdfService->generateInvoicePdf($invoice);
 
-    // One measuring render plus one final render that fills the two pages.
+    expect($pdf)->toBe(fakeGotenbergPdf(2, 'final'));
     Http::assertSentCount(2);
-    Http::assertSent(fn (Request $request) => str_contains($request->body(), 'min-height: 200vh'));
+
+    [$first, $final] = array_map(fn (array $pair) => sentDocumentHtml($pair[0]), Http::recorded()->all());
+
+    expect($first)->toContain('min-height: 100vh')
+        ->and($final)->toContain('min-height: 200vh')
+        ->and($final)->toBe(View::make('pdf.invoice', ['invoice' => $invoice, 'fillPages' => 2])->render());
+});
+
+test('renders estimates through the same single pass', function (int $pages, int $requests, string $finalHeight) {
+    Config::set('services.gotenberg.enabled', true);
+    Config::set('services.gotenberg.url', 'http://gotenberg:3000');
+
+    Http::fake([
+        'gotenberg:3000/forms/chromium/convert/html' => Http::response(fakeGotenbergPdf($pages), 200),
+    ]);
+
+    $estimate = createInvoiceWithItems([
+        'type' => 'estimate',
+        'invoice_number' => "EST-PDF-PAGES-{$pages}",
+        'status' => 'draft',
+    ]);
+
+    $this->pdfService->generateEstimatePdf($estimate);
+
+    Http::assertSentCount($requests);
+
+    $recorded = Http::recorded()->all();
+
+    expect(sentDocumentHtml($recorded[0][0]))->toContain('min-height: 100vh')
+        ->and(sentDocumentHtml(end($recorded)[0]))->toContain("min-height: {$finalHeight}");
+})->with([
+    'one page' => [1, 1, '100vh'],
+    'three pages' => [3, 2, '300vh'],
+]);
+
+test('keeps an invisible copy of the footer in the flow on a pinned render', function () {
+    $invoice = createInvoiceWithItems([
+        'invoice_number' => 'INV-PDF-RESERVE',
+        'notes' => 'Reserve-check note',
+    ]);
+    $invoice->load(['items', 'organizationLocation', 'customerLocation']);
+
+    $pinned = View::make('pdf.invoice', ['invoice' => $invoice, 'fillPages' => 1])->render();
+    $unpinned = View::make('pdf.invoice', ['invoice' => $invoice, 'fillPages' => null])->render();
+
+    // Without the in-flow copy the page count leaves the footer out, and a
+    // footer that does not fit below the content lands on top of the totals.
+    expect($pinned)->toContain('<div class="doc-bottom-reserve">')
+        ->and($pinned)->toMatch('/\.doc-bottom-reserve \{\s*visibility: hidden;/')
+        ->and(strpos($pinned, 'class="doc-bottom-reserve"'))->toBeLessThan(strpos($pinned, 'class="doc-bottom"'))
+        ->and(substr_count($pinned, 'Reserve-check note'))->toBe(2);
+
+    expect($unpinned)->not->toContain('class="doc-bottom-reserve"')
+        ->and(substr_count($unpinned, 'Reserve-check note'))->toBe(1);
 });
 
 test('renders a single pass when the page count cannot be read', function () {
@@ -117,6 +217,7 @@ test('renders a single pass when the page count cannot be read', function () {
 
     expect($pdf)->toBe('no-count-here');
     Http::assertSentCount(1);
+    Http::assertSent(fn (Request $request) => str_contains(sentDocumentHtml($request), 'min-height: 100vh'));
 });
 
 // --- Error handling tests ---

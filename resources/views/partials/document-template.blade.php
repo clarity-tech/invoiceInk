@@ -15,8 +15,9 @@
 --}}
 @php
     // Number of pages to stretch the PDF card across so the footer can be
-    // pinned to the bottom of the last page. Null on the web view and on the
-    // first (measuring) PDF render; set to the page count on the final render.
+    // pinned to the bottom of the last page. Null on the web view. PdfService
+    // renders the PDF with 1 first, and again with the page count only when
+    // that render comes out longer than a page.
     $fillPages = $fillPages ?? null;
 
     // The sheet the document is laid out on. `@page` below wins over the
@@ -353,8 +354,17 @@
            PDF: flexbox does not fragment cleanly across print pages in
            Chromium, so we use a block card whose min-height is set to the
            exact page count ($fillPages × 100vh, where 100vh == one printable
-           page) and absolutely position the footer at its bottom. $fillPages
-           is resolved by PdfService via a first measuring render.
+           page) and absolutely position the footer at its bottom. PdfService
+           finds the page count by rendering with $fillPages = 1 and counting
+           the pages that come back.
+
+           That count is only right if the footer's height is in it, and an
+           absolutely positioned footer takes up no room in the flow. So a
+           pinned render also lays the footer out a second time, invisibly and
+           in the flow (.doc-bottom-reserve): the flow is then exactly the
+           unpinned layout, a footer that does not fit below the content spills
+           onto another page instead of sitting on top of the totals, and the
+           page count comes out as the visible footer needs it.
         */
         .document-card {
             background: var(--card);
@@ -377,6 +387,10 @@
 
 @if($isPdf)
 @if($fillPages)
+        .doc-bottom-reserve {
+            visibility: hidden;
+        }
+
         .doc-bottom {
             position: absolute;
             bottom: 0;
@@ -998,7 +1012,13 @@
                 </div>
             </div>
 
-            <div class="doc-bottom">
+            {{-- A pinned PDF render lays the footer out twice: an invisible copy
+                 in the flow that holds the footer's room, then the visible one
+                 pinned to the bottom of the card. See .document-card above.
+                 visibility: hidden also keeps the copy out of the text, the
+                 links and the accessibility tree. --}}
+            @foreach($isPdf && $fillPages ? ['doc-bottom-reserve', 'doc-bottom'] : ['doc-bottom'] as $bottomClass)
+            <div class="{{ $bottomClass }}">
             {{-- E. Notes ───────────────────────────────────── --}}
             @if($document->notes)
                 <div class="info-section">
@@ -1051,6 +1071,7 @@
                 </div>
             </div>
             </div>{{-- /.doc-bottom --}}
+            @endforeach
         </div>
     </div>
 @if(!$isPdf)
