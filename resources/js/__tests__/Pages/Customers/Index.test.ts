@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { makeCustomer, makeLocation, makeContact } from '../../helpers';
 
@@ -127,6 +127,12 @@ const defaultProps = () => ({
     gstTreatments: {},
     filters: { search: '' },
 });
+
+/** The form loads on first use (useLazyDialog); wait for it, as a click does. */
+async function settleLazyDialogs() {
+    await vi.dynamicImportSettled();
+    await flushPromises();
+}
 
 function mountComponent(propsOverride = {}) {
     return mount(CustomersIndex, {
@@ -327,6 +333,7 @@ describe('Customers/Index', () => {
             .findAll('button')
             .find((b) => b.text() === 'Add Customer');
         await addBtn!.trigger('click');
+        await settleLazyDialogs();
         expect(wrapper.find('[data-testid="customer-form"]').exists()).toBe(
             true,
         );
@@ -340,6 +347,7 @@ describe('Customers/Index', () => {
             .findAll('button')
             .find((b) => b.text() === 'Add Customer');
         await addBtn!.trigger('click');
+        await settleLazyDialogs();
 
         // findComponent() with a CSS selector returns WrapperLike, which has no
         // `vm`. CustomerForm is an inline stub here, so there is no component
@@ -364,6 +372,7 @@ describe('Customers/Index', () => {
             .findAll('button')
             .find((b) => b.text() === 'Edit');
         await editBtn!.trigger('click');
+        await settleLazyDialogs();
 
         expect(wrapper.find('[data-testid="customer-form"]').exists()).toBe(
             true,

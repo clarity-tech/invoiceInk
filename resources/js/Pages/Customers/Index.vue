@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { Link, useForm, router } from '@inertiajs/vue3';
+import { Loader2 } from 'lucide-vue-next';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import ConfirmationModal from '@/Components/ConfirmationModal.vue';
-import CustomerForm from '@/Components/CustomerForm.vue';
+import { customerFormDialog } from '@/Components/lazyDialogs';
+import { useLazyDialog } from '@/composables/useLazyDialog';
 import { formatLocationSummary } from '@/composables/useLocationFormat';
 import { usePermissions } from '@/composables/usePermissions';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -86,6 +88,11 @@ onUnmounted(() => {
 const showForm = ref(false);
 const editingCustomer = ref<Customer | null>(null);
 
+// The form's phone field carries libphonenumber, so it loads on first use
+// rather than with the listing. See useLazyDialog.
+const CustomerForm = customerFormDialog.component;
+const formDialog = useLazyDialog(customerFormDialog);
+
 const form = useForm({
     name: '',
     phone: '',
@@ -97,26 +104,30 @@ const form = useForm({
 });
 
 function openCreate() {
-    editingCustomer.value = null;
-    form.reset();
-    form.contacts = [{ name: '', email: '' }];
-    form.clearErrors();
-    showForm.value = true;
+    formDialog.open(() => {
+        editingCustomer.value = null;
+        form.reset();
+        form.contacts = [{ name: '', email: '' }];
+        form.clearErrors();
+        showForm.value = true;
+    }, 'create');
 }
 
 function openEdit(customer: Customer) {
-    editingCustomer.value = customer;
-    form.name = customer.name;
-    form.phone = customer.phone ?? '';
-    form.phone_country = customer.phone_country ?? '';
-    form.currency = customer.currency ?? 'INR';
-    form.place_of_supply = customer.place_of_supply ?? '';
-    form.gst_treatment = customer.gst_treatment ?? 'domestic';
-    form.contacts = customer.emails?.length
-        ? [...customer.emails]
-        : [{ name: '', email: '' }];
-    form.clearErrors();
-    showForm.value = true;
+    formDialog.open(() => {
+        editingCustomer.value = customer;
+        form.name = customer.name;
+        form.phone = customer.phone ?? '';
+        form.phone_country = customer.phone_country ?? '';
+        form.currency = customer.currency ?? 'INR';
+        form.place_of_supply = customer.place_of_supply ?? '';
+        form.gst_treatment = customer.gst_treatment ?? 'domestic';
+        form.contacts = customer.emails?.length
+            ? [...customer.emails]
+            : [{ name: '', email: '' }];
+        form.clearErrors();
+        showForm.value = true;
+    }, customer.id);
 }
 
 function submitCustomer() {
@@ -216,8 +227,15 @@ function locationSummary(customer: Customer): string {
                         v-if="can('create')"
                         type="button"
                         class="cursor-pointer rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
+                        :aria-busy="formDialog.opening === 'create'"
+                        v-on="formDialog.intent"
                         @click="openCreate"
                     >
+                        <Loader2
+                            v-if="formDialog.opening === 'create'"
+                            class="mr-1.5 -ml-0.5 inline size-4 animate-spin align-[-3px]"
+                            aria-hidden="true"
+                        />
                         Add Customer
                     </button>
                 </div>
@@ -438,8 +456,20 @@ function locationSummary(customer: Customer): string {
                                         v-if="can('update')"
                                         type="button"
                                         class="mr-3 cursor-pointer text-primary hover:text-primary-soft-foreground"
+                                        :aria-busy="
+                                            formDialog.opening === customer.id
+                                        "
+                                        v-on="formDialog.intent"
                                         @click="openEdit(customer)"
                                     >
+                                        <Loader2
+                                            v-if="
+                                                formDialog.opening ===
+                                                customer.id
+                                            "
+                                            class="mr-1 inline size-3.5 animate-spin align-[-2px]"
+                                            aria-hidden="true"
+                                        />
                                         Edit
                                     </button>
                                     <button
@@ -516,8 +546,20 @@ function locationSummary(customer: Customer): string {
                                         <button
                                             type="button"
                                             class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
+                                            :aria-busy="
+                                                formDialog.opening === 'create'
+                                            "
+                                            v-on="formDialog.intent"
                                             @click="openCreate"
                                         >
+                                            <Loader2
+                                                v-if="
+                                                    formDialog.opening ===
+                                                    'create'
+                                                "
+                                                class="mr-1.5 -ml-0.5 inline size-4 animate-spin align-[-3px]"
+                                                aria-hidden="true"
+                                            />
                                             Add Customer
                                         </button>
                                     </div>
