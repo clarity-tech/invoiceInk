@@ -21,7 +21,12 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/Pages/{$page['component']}.vue"])
     <x-inertia::head>
-        <title>{{ config('app.name', 'InvoiceInk') }}</title>
+        {{-- Same "Page - App" form as the title callback in app.ts, which replaces this once the page runs. --}}
+        <title>{{ isset($pageTitle) ? $pageTitle.' - ' : '' }}{{ config('app.name', 'InvoiceInk') }}</title>
+        {{-- A page's `head` prop (FortifyServiceProvider::searchable()), here for crawlers that don't run scripts; app.ts manages it from then on. --}}
+        @foreach ($page['props']['head'] ?? [] as $element)
+            {!! $element !!}
+        @endforeach
     </x-inertia::head>
 </head>
 <body class="bg-canvas font-sans text-foreground antialiased">

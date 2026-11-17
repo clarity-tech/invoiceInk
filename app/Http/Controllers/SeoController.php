@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Route;
 
 /**
  * robots.txt and the sitemap, rooted at APP_URL so that every deployment,
@@ -27,6 +28,14 @@ class SeoController extends Controller
         return response($body, 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
     }
 
+    /**
+     * Every page meant to be found by search, and nothing else.
+     *
+     * Register is listed because it is where a search for the app should land
+     * someone new; a self-hosted copy with registration switched off has no
+     * such page. Log in is left out: it is for people who already know the
+     * way, and every page links to it.
+     */
     public function sitemap(): Response
     {
         $entries = collect([
@@ -36,9 +45,10 @@ class SeoController extends Controller
             route('marketing.hsn-sac-codes', absolute: false),
             route('marketing.claude', absolute: false),
             route('marketing.open-source', absolute: false),
+            Route::has('register') ? route('register', absolute: false) : null,
             route('terms.show', absolute: false),
             route('policy.show', absolute: false),
-        ])->map(fn (string $path): string => '<url><loc>'.e($this->absolute($path)).'</loc></url>');
+        ])->filter()->map(fn (string $path): string => '<url><loc>'.e($this->absolute($path)).'</loc></url>');
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n"
             .'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'

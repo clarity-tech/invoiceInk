@@ -19,6 +19,19 @@ return [
         'privacy_description' => 'What personal data :app handles and why, who sees it and how long it’s kept. Written for India’s DPDP Act, 2023. No ad or analytics trackers.',
     ],
 
+    // The two sign-in screens search engines may index (FortifyServiceProvider).
+    // Each title must match the page's <Head title> in resources/js/Pages/Auth.
+    'auth' => [
+        'login' => [
+            'title' => 'Log in',
+            'description' => 'Log in to :app to draft, send and track your invoices, estimates and payments.',
+        ],
+        'register' => [
+            'title' => 'Register',
+            'description' => 'Create a free :app account for GST and VAT invoices, estimates, PDFs, payments and reminders in nine currencies. No credit card required.',
+        ],
+    ],
+
     'nav' => [
         'home' => ':app home',
         'dashboard' => 'Dashboard →',

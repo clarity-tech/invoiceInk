@@ -49,11 +49,19 @@ it('keeps the screens partway through signing in out of search results', functio
     'verify email' => ['/email/verify', fn ($test, User $user) => $test->actingAs(tap($user)->update(['email_verified_at' => null]))],
 ]);
 
-it('leaves log in and register to search engines', function (string $path) {
-    $this->get($path)
+it('lets search engines index log in and register, with the title, description and canonical in the HTML it sends', function (string $path, string $title, string $description) {
+    $html = $this->get('http://invoicing-web-abc123-el.a.run.app'.$path)
         ->assertOk()
-        ->assertHeaderMissing('X-Robots-Tag');
-})->with(['/login', '/register']);
+        ->assertHeaderMissing('X-Robots-Tag')
+        ->assertSee('<title>'.$title.' - '.config('app.name').'</title>', false)
+        ->getContent();
+
+    expect(canonicalOf($html))->toBe('https://invoiceink.test'.$path)
+        ->and(descriptionOf($html))->toBe(__($description, ['app' => config('app.name')]));
+})->with([
+    'log in' => ['/login', 'Log in', 'marketing.auth.login.description'],
+    'register' => ['/register', 'Register', 'marketing.auth.register.description'],
+]);
 
 it('marks log in and register noindex when the deployment is not indexable', function (string $path) {
     config(['app.indexable' => false]);
@@ -101,7 +109,7 @@ function sitemapPages(): array
 it('lets search engines index every page in the sitemap, each naming its own sitemap URL as canonical', function () {
     $pages = sitemapPages();
 
-    expect($pages)->toHaveCount(8);
+    expect($pages)->toHaveCount(9);
     foreach ($pages as $url => $response) {
         $response->assertOk()
             ->assertHeaderMissing('X-Robots-Tag')
