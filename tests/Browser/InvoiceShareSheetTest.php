@@ -2,6 +2,7 @@
 
 use App\Models\Invoice;
 use App\Models\User;
+use App\Services\PaymentService;
 
 /**
  * On a phone the document's link goes out through the system share sheet
@@ -99,9 +100,12 @@ function nativeShareControlsOn(string $path): string
 }
 
 /**
+ * A sent invoice for ₹1,18,000, due 15 Jan 2027. A part payment goes through
+ * PaymentService, as a real one does, so amount_paid is the app's own figure.
+ *
  * @return array{0: User, 1: Invoice}
  */
-function nativeShareInvoice(): array
+function nativeShareInvoice(int $paidCents = 0): array
 {
     $user = User::factory()->withPersonalTeam()->create([
         'email' => 'share-sheet@example.test',
@@ -129,11 +133,20 @@ function nativeShareInvoice(): array
         ['description' => 'Monthly retainer', 'quantity' => 1, 'unit_price' => 10000000, 'tax_rate' => 1800],
     ], $org, $customer);
 
-    return [$user, $invoice];
+    if ($paidCents > 0) {
+        (new PaymentService)->recordPayment($invoice, [
+            'amount' => $paidCents,
+            'payment_date' => '2026-12-20',
+            'payment_method' => 'bank_transfer',
+            'reference' => 'NEFT-SHARE-001',
+        ]);
+    }
+
+    return [$user, $invoice->fresh()];
 }
 
-it('shares the invoice from a phone with its number, sender, total and due date', function () {
-    [$user, $invoice] = nativeShareInvoice();
+it('shares the invoice from a phone with its number, sender, what is owed and due date', function (int $paidCents, string $text) {
+    [$user, $invoice] = nativeShareInvoice($paidCents);
     $this->actingAs($user);
 
     $page = visit('/invoices')->on()->mobile()->inLightMode();
@@ -150,7 +163,7 @@ it('shares the invoice from a phone with its number, sender, total and due date'
     expect($result['shared'])->toHaveCount(1);
     expect($result['shared'][0])->toEqual([
         'title' => 'Invoice CT-INV-SHARE from Clarity Technologies',
-        'text' => 'Invoice CT-INV-SHARE from Clarity Technologies for ₹1,18,000.00, due 15 Jan 2027.',
+        'text' => $text,
         // The same signed link View public opens; the page cannot mint its own.
         'url' => $result['publicUrl'],
     ]);
@@ -163,10 +176,16 @@ it('shares the invoice from a phone with its number, sender, total and due date'
     // on screen, not cut off at the edge.
     expect($result['messageFits'])->toBeTrue('the status message runs off the screen');
     expect($result['overflow'])->toBeLessThanOrEqual(1);
-});
+})->with([
+    'unpaid' => [0, 'Invoice CT-INV-SHARE from Clarity Technologies for ₹1,18,000.00, due 15 Jan 2027.'],
+    // The customer is asked for what is left, with the total for context.
+    'partly paid' => [4000000, 'Invoice CT-INV-SHARE from Clarity Technologies: ₹78,000.00 of ₹1,18,000.00 still due by 15 Jan 2027.'],
+]);
 
+// Partly paid on purpose: the edit page sends no remaining_balance, so the
+// balance there comes from amount_paid alone.
 it('offers the same share on the edit page', function () {
-    [$user, $invoice] = nativeShareInvoice();
+    [$user, $invoice] = nativeShareInvoice(4000000);
     $this->actingAs($user);
 
     $page = visit('/invoices')->on()->mobile()->inLightMode();
@@ -185,7 +204,7 @@ it('offers the same share on the edit page', function () {
     expect($result['shared'])->toHaveCount(1);
     expect($result['shared'][0]['url'])->toBe($result['publicUrl']);
     expect($result['shared'][0]['text'])->toBe(
-        'Invoice CT-INV-SHARE from Clarity Technologies for ₹1,18,000.00, due 15 Jan 2027.',
+        'Invoice CT-INV-SHARE from Clarity Technologies: ₹78,000.00 of ₹1,18,000.00 still due by 15 Jan 2027.',
     );
     expect($result['message'])->toBe("Link shared. It works until {$result['expiresOn']}.");
     expect($result['messageFits'])->toBeTrue('the status message runs off the screen');

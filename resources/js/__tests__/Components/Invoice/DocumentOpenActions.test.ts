@@ -152,6 +152,48 @@ describe('DocumentOpenActions', () => {
             );
         });
 
+        // A customer who has paid half should be asked for the other half,
+        // not the whole amount again.
+        it('leads with what is still owed on a partly paid invoice', async () => {
+            const { share } = stubDevice();
+            const wrapper = mountActions({
+                total: 10030000,
+                amount_paid: 5015000,
+            });
+
+            await tap(wrapper);
+
+            expect(share.mock.calls[0][0].text).toBe(
+                'Invoice INV-26001 from Clarity Technologies: ₹50,150.00 of ₹1,00,300.00 still due by 13 Dec 2026.',
+            );
+        });
+
+        it('gives the balance without a date when a partly paid invoice has none', async () => {
+            const { share } = stubDevice();
+            const wrapper = mountActions({
+                total: 10030000,
+                amount_paid: 5015000,
+                due_at: null,
+            });
+
+            await tap(wrapper);
+
+            expect(share.mock.calls[0][0].text).toBe(
+                'Invoice INV-26001 from Clarity Technologies: ₹50,150.00 of ₹1,00,300.00 still due.',
+            );
+        });
+
+        it('says nothing is due once the invoice is paid in full', async () => {
+            const { share } = stubDevice();
+            const wrapper = mountActions({ amount_paid: 11800000 });
+
+            await tap(wrapper);
+
+            expect(share.mock.calls[0][0].text).toBe(
+                'Invoice INV-26001 from Clarity Technologies for ₹1,18,000.00, paid in full.',
+            );
+        });
+
         it('formats the total in the document currency', async () => {
             const { share } = stubDevice();
             const wrapper = mountActions({ currency: 'USD', total: 250000 });

@@ -84,6 +84,14 @@ const opensShareSheet = canOpenShareSheet(props.shareLink.url);
  * asks first: how much, and by when. "Valid until" for an estimate, as the
  * detail page labels the same date.
  *
+ * "How much" is what is still owed. Once part of an invoice is paid, the
+ * balance leads and the total follows for context, so the customer is not
+ * asked for money they have already sent; once all of it is paid, nothing is
+ * said to be due. An estimate has no payments, so it always gives its total.
+ * The balance is worked out as the server's remaining_balance is, total less
+ * amount_paid in integer cents: the edit page does not send remaining_balance,
+ * and amount_paid already counts any TDS the customer withheld.
+ *
  * The link goes only in `url`. Android joins text and url into one message,
  * so a link written into the text as well would arrive twice.
  */
@@ -97,16 +105,34 @@ const shareTitle = computed(() => {
 });
 
 const shareText = computed(() => {
-    const parts = [
-        `${shareTitle.value} for ${formatMoney(props.invoice.total, props.invoice.currency)}`,
-    ];
+    const { invoice } = props;
+    const money = (cents: number) => formatMoney(cents, invoice.currency);
+    const total = money(invoice.total);
+    const dueOn = invoice.due_at ? formatDate(invoice.due_at) : null;
 
-    if (props.invoice.due_at) {
-        const label = props.invoice.type === 'estimate' ? 'valid until' : 'due';
-        parts.push(`${label} ${formatDate(props.invoice.due_at)}`);
+    if (invoice.type === 'estimate') {
+        return dueOn
+            ? `${shareTitle.value} for ${total}, valid until ${dueOn}.`
+            : `${shareTitle.value} for ${total}.`;
     }
 
-    return `${parts.join(', ')}.`;
+    const paid = invoice.amount_paid;
+
+    if (paid > 0 && paid >= invoice.total) {
+        return `${shareTitle.value} for ${total}, paid in full.`;
+    }
+
+    if (paid > 0) {
+        const owed = `${money(invoice.total - paid)} of ${total} still due`;
+
+        return dueOn
+            ? `${shareTitle.value}: ${owed} by ${dueOn}.`
+            : `${shareTitle.value}: ${owed}.`;
+    }
+
+    return dueOn
+        ? `${shareTitle.value} for ${total}, due ${dueOn}.`
+        : `${shareTitle.value} for ${total}.`;
 });
 
 /**
