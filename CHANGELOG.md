@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.25.0](https://github.com/clarity-tech/invoiceInk/compare/v1.24.0...v1.25.0) (2026-11-18)
+
+
+### Features
+
+* **marketing:** link the GST guides to each other in the body ([8362e7d](https://github.com/clarity-tech/invoiceInk/commit/8362e7d547c19db588371dd607308197db16fe6b))
+* **seo:** add breadcrumb, FAQ and site-name structured data ([b0b77b9](https://github.com/clarity-tech/invoiceInk/commit/b0b77b9fb3733db5081b3199ce6baaa74f4a9909))
+* **seo:** give the legal pages a canonical URL and a description ([38a5126](https://github.com/clarity-tech/invoiceInk/commit/38a51266b02311b991bf39c649d256a795a2db84))
+* **seo:** let search engines index log in and register ([8096127](https://github.com/clarity-tech/invoiceInk/commit/8096127d428e198ef25a2de6f4c05c5f630ccab5))
+
+
+### Bug Fixes
+
+* **marketing:** bring the GST guides' legal references up to date ([c23a571](https://github.com/clarity-tech/invoiceInk/commit/c23a5719579f14341c201d2f30bf1383a647b47c))
+* **seo:** keep the private sign-in screens out of search results ([4d9f39a](https://github.com/clarity-tech/invoiceInk/commit/4d9f39ae3c8a1a67f1545545f7c6a2b45357c971))
+* **seo:** serve a real favicon.ico and tag the marketing pages en-IN ([67a720e](https://github.com/clarity-tech/invoiceInk/commit/67a720e2e8dfa63dc238bb7018698a338199820c))
+
 ## [1.24.0](https://github.com/clarity-tech/invoiceInk/compare/v1.23.4...v1.24.0) (2026-11-16)
 
 
