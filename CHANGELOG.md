@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.25.1](https://github.com/clarity-tech/invoiceInk/compare/v1.25.0...v1.25.1) (2026-11-20)
+
+
+### Performance
+
+* **ui:** load the email composer and customer form on first use ([1034621](https://github.com/clarity-tech/invoiceInk/commit/10346217b79b8687e9a2475dd35192f92090988a))
+
 ## [1.25.0](https://github.com/clarity-tech/invoiceInk/compare/v1.24.0...v1.25.0) (2026-11-18)
 
 
