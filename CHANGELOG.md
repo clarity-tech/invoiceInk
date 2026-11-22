@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.25.2](https://github.com/clarity-tech/invoiceInk/compare/v1.25.1...v1.25.2) (2026-11-22)
+
+
+### Performance
+
+* **pdf:** render one-page documents in a single pass ([0e8b29f](https://github.com/clarity-tech/invoiceInk/commit/0e8b29fcb3fa51cabf749b18a82080b2331130ae))
+
 ## [1.25.1](https://github.com/clarity-tech/invoiceInk/compare/v1.25.0...v1.25.1) (2026-11-20)
 
 
