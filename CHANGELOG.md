@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.26.0](https://github.com/clarity-tech/invoiceInk/compare/v1.25.2...v1.26.0) (2026-11-23)
+
+
+### Features
+
+* **pwa:** open the phone's share sheet for an invoice link ([c45a163](https://github.com/clarity-tech/invoiceInk/commit/c45a163ffd5ebed0beee5cb6207535af22e9553a))
+
+
+### Bug Fixes
+
+* **deps-dev:** bump the frontend-dev group across 1 directory with 8 updates ([1077032](https://github.com/clarity-tech/invoiceInk/commit/1077032f04a7ea172e24c252d2eedd203a04ec36))
+* **deps:** bump the composer-runtime group across 1 directory with 10 updates ([64a59ab](https://github.com/clarity-tech/invoiceInk/commit/64a59ab0a2b050175bd2937ea875ab2ba11eb9c5))
+* **deps:** bump the frontend-runtime group across 1 directory with 7 updates ([630cce0](https://github.com/clarity-tech/invoiceInk/commit/630cce075ad630c4cee113832ff0c6a6fd855880))
+
 ## [1.25.2](https://github.com/clarity-tech/invoiceInk/compare/v1.25.1...v1.25.2) (2026-11-22)
 
 
