@@ -283,6 +283,39 @@ it('tours the dashboard and documents', function () {
     tourShot(tourVisit("/invoices/{$data['invoices']['paid']->id}"), '29-invoice-show-paid');
     tourShot(tourVisit("/invoices/{$sent->id}/edit"), '30-invoice-edit');
     tourShot(tourVisit("/invoices/{$sent->id}", mobile: true), '31-invoice-show-mobile');
+
+    // On a phone that has a share sheet, Copy link becomes Share. Headless
+    // browsers have none, and the button decides once as the page renders,
+    // so a stand-in goes in on the list and the invoice is opened from there
+    // with a client-side visit. Numbered after the rest; see 61.
+    $page = tourVisit('/invoices', mobile: true);
+    $page->script(<<<'JS'
+        (() => {
+            Object.defineProperty(navigator, 'share', {
+                configurable: true,
+                value: () => Promise.resolve(),
+            });
+
+            return true;
+        })()
+        JS);
+    $page->click("[aria-label=\"Open invoice {$sent->invoice_number}\"]");
+    $shareShown = $page->script(<<<'JS'
+        new Promise((resolve) => {
+            const started = Date.now();
+            (function check() {
+                const shown = Array.from(document.querySelectorAll('button'))
+                    .some((button) => button.textContent.trim() === 'Share');
+                if (shown || Date.now() - started > 4000) {
+                    resolve(shown);
+                } else {
+                    setTimeout(check, 50);
+                }
+            })();
+        })
+        JS);
+    expect($shareShown)->toBeTrue('the invoice page did not offer Share');
+    tourShot($page, '64-invoice-show-mobile-share');
 });
 
 it('tours customers', function () {
