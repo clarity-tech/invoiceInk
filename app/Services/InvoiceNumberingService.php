@@ -4,10 +4,12 @@ namespace App\Services;
 
 use App\Contracts\Services\InvoiceNumberingServiceInterface;
 use App\Enums\ResetFrequency;
+use App\Exceptions\InvoiceNumberUnavailable;
 use App\Models\Invoice;
 use App\Models\InvoiceNumberingSeries;
 use App\Models\Location;
 use App\Models\Organization;
+use App\Models\Scopes\OrganizationScope;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use InvalidArgumentException;
@@ -28,6 +30,59 @@ class InvoiceNumberingService implements InvoiceNumberingServiceInterface
         // Validate financial year setup for FY-based series
         $this->validateFinancialYearSetup($series, $organization);
 
+        return $this->allocateNumber($series, $organization);
+    }
+
+    /**
+     * Take the next number from exactly this series, or refuse.
+     *
+     * generateInvoiceNumber() finds a pinned series by name, and names are not
+     * unique, so it can number from a same-named sibling; it is also allowed
+     * to create a default series. This goes by id, so the number comes from the
+     * series the caller pinned or from none. Re-read here rather than trusting
+     * the model passed in, which may predate a deactivation.
+     *
+     * @return array{invoice_number: string, series_id: int, sequence_number: int}
+     *
+     * @throws InvoiceNumberUnavailable when the series is another organization's or inactive,
+     *                                  FY setup is missing for an FY pattern, or no free number is left
+     */
+    public function generateInvoiceNumberForSeries(Organization $organization, InvoiceNumberingSeries $series): array
+    {
+        $current = InvoiceNumberingSeries::withoutGlobalScope(OrganizationScope::class)
+            ->forOrganization($organization->id)
+            ->whereKey($series->getKey())
+            ->first();
+
+        if (! $current) {
+            throw InvoiceNumberUnavailable::seriesNotInOrganization($series->getKey(), $organization->id);
+        }
+
+        if (! $current->is_active) {
+            throw InvoiceNumberUnavailable::seriesInactive($current);
+        }
+
+        try {
+            $this->validateFinancialYearSetup($current, $organization);
+
+            return $this->allocateNumber($current, $organization);
+        } catch (InvalidArgumentException $e) {
+            throw InvoiceNumberUnavailable::refused($e, $current->id);
+        }
+    }
+
+    /**
+     * Commit the next free number in the series, under a lock so two requests
+     * cannot take the same one. The series is refreshed inside the lock, and a
+     * number some invoice already holds (the counter drifted behind) is skipped
+     * rather than reused.
+     *
+     * @return array{invoice_number: string, series_id: int, sequence_number: int}
+     *
+     * @throws InvalidArgumentException when no free number turns up within 1000 attempts
+     */
+    protected function allocateNumber(InvoiceNumberingSeries $series, Organization $organization): array
+    {
         // Use atomic lock to prevent concurrent number generation for the same series
         $lockKey = "invoice-numbering-series-{$series->id}";
 

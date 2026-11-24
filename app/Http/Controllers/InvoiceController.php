@@ -9,6 +9,7 @@ use App\Enums\EmailDeliveryStatus;
 use App\Enums\EmailTemplateType;
 use App\Enums\IndianState;
 use App\Enums\InvoiceStatus;
+use App\Enums\NumberingMode;
 use App\Exceptions\ExchangeRateUnavailable;
 use App\Jobs\SendDocumentEmail;
 use App\Mail\DocumentMailer;
@@ -22,12 +23,13 @@ use App\Models\Organization;
 use App\Models\Payment;
 use App\Services\CustomerReminders;
 use App\Services\EstimateToInvoiceConverter;
-use App\Services\ExchangeRateService;
-use App\Services\GstBreakdownService;
-use App\Services\InvoiceCalculator;
+use App\Services\InvoiceCreator;
 use App\Services\InvoiceDraftBuilder;
 use App\Services\TdsTcsCalculator;
+use App\Support\EmailRecipients;
 use App\ValueObjects\ContactCollection;
+use App\ValueObjects\InvoiceInput;
+use App\ValueObjects\InvoiceLineInput;
 use App\ValueObjects\InvoiceTotals;
 use App\ValueObjects\TdsPreset;
 use Illuminate\Http\RedirectResponse;
@@ -48,10 +50,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class InvoiceController extends Controller
 {
     public function __construct(
-        private readonly InvoiceCalculator $calculator,
-        private readonly ExchangeRateService $exchangeRateService,
+        private readonly InvoiceCreator $invoiceCreator,
         private readonly InvoiceNumberingServiceInterface $numberingService,
-        private readonly GstBreakdownService $gstBreakdownService,
         private readonly TdsTcsCalculator $tdsTcsCalculator,
     ) {}
 
@@ -306,7 +306,7 @@ class InvoiceController extends Controller
             'tcs_section' => $source->tcs_section ?? '',
             'notes' => $source->notes ?? '',
             'terms' => $source->terms ?? '',
-            'email_recipients' => $this->normalizeEmailRecipients($source->email_recipients ?? []),
+            'email_recipients' => EmailRecipients::normalize($source->email_recipients ?? []),
             'items' => $source->items->map(fn (InvoiceItem $item) => [
                 'description' => $item->description,
                 'sac_code' => $item->sac_code,
@@ -369,84 +369,11 @@ class InvoiceController extends Controller
 
         $this->guardAttachmentsTotalSize($request->file('attachments', []));
 
-        $invoice = DB::transaction(function () use ($validated) {
-            $totals = $this->calculateTotals($validated['items']);
-
-            // Generate invoice number
-            $invoiceNumber = null;
-            $seriesId = null;
-            if ($validated['type'] === 'invoice') {
-                $organization = Organization::find($validated['organization_id']);
-                $location = Location::find($validated['organization_location_id']);
-
-                try {
-                    $series = ! empty($validated['invoice_numbering_series_id'])
-                        ? InvoiceNumberingSeries::find($validated['invoice_numbering_series_id'])
-                        : null;
-
-                    $data = $series
-                        ? $this->numberingService->generateInvoiceNumber($organization, $location, $series->name)
-                        : $this->numberingService->generateInvoiceNumber($organization, $location);
-                    $invoiceNumber = $data['invoice_number'];
-                    $seriesId = $data['series_id'];
-                } catch (InvalidArgumentException) {
-                    $invoiceNumber = $this->generateFallbackNumber($validated['type'], $validated['organization_id']);
-                }
-            }
-
-            if (! $invoiceNumber) {
-                $invoiceNumber = $this->generateFallbackNumber($validated['type'], $validated['organization_id']);
-            }
-
-            $customer = Customer::find($validated['customer_id']);
-            $currency = $customer?->currency?->value;
-            $issuedAt = ! empty($validated['issued_at']) ? now()->parse($validated['issued_at']) : now();
-            $orgCurrency = Organization::find($validated['organization_id'])?->currency?->value;
-            $exchangeRate = $this->resolveExchangeRate($currency, $orgCurrency, $issuedAt);
-
-            $sourceTaxes = $this->tdsTcsCalculator->compute(
-                $totals->subtotal,
-                $totals->tax,
-                $validated['tds_rate'] ?? null,
-                $validated['tcs_rate'] ?? null,
-            );
-
-            $invoice = Invoice::create([
-                'type' => $validated['type'],
-                'organization_id' => $validated['organization_id'],
-                'customer_id' => $validated['customer_id'],
-                'organization_location_id' => $validated['organization_location_id'],
-                'customer_location_id' => $validated['customer_location_id'],
-                'customer_shipping_location_id' => $validated['customer_shipping_location_id'],
-                'invoice_number' => $invoiceNumber,
-                'order_number' => $validated['order_number'] ?? null,
-                'invoice_numbering_series_id' => $seriesId,
-                'status' => $validated['status'],
-                'issued_at' => ! empty($validated['issued_at']) ? now()->parse($validated['issued_at']) : null,
-                'due_at' => ! empty($validated['due_at']) ? now()->parse($validated['due_at']) : null,
-                'subtotal' => $totals->subtotal,
-                'tax' => $totals->tax,
-                'total' => $sourceTaxes['total'],
-                'currency' => $currency,
-                'place_of_supply' => $customer?->isOverseas() ? null : ($validated['place_of_supply'] ?? null),
-                'tds_rate' => $validated['tds_rate'] ?? null,
-                'tds_amount' => $sourceTaxes['tds_amount'],
-                'tds_section' => $validated['tds_section'] ?? null,
-                'tcs_rate' => $validated['tcs_rate'] ?? null,
-                'tcs_amount' => $sourceTaxes['tcs_amount'],
-                'tcs_section' => $validated['tcs_section'] ?? null,
-                'exchange_rate' => $exchangeRate,
-                'subject' => $validated['subject'] ?? null,
-                'notes' => $validated['notes'] ?? null,
-                'terms' => $validated['terms'] ?? null,
-                'email_recipients' => $this->normalizeEmailRecipients($validated['email_recipients'] ?? []),
-            ]);
-
-            $this->persistItems($invoice, $validated['items']);
-            $this->applyGstBreakdown($invoice);
-
-            return $invoice;
-        });
+        try {
+            $invoice = $this->invoiceCreator->create(InvoiceInput::fromValidated($validated), NumberingMode::Lenient);
+        } catch (ExchangeRateUnavailable $e) {
+            throw $this->exchangeRateUnavailableError($e);
+        }
 
         $this->syncInvoiceAttachments($invoice, $request);
 
@@ -650,7 +577,7 @@ class InvoiceController extends Controller
                 'order_number' => $validated['order_number'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'terms' => $validated['terms'] ?? null,
-                'email_recipients' => $this->normalizeEmailRecipients($validated['email_recipients'] ?? []),
+                'email_recipients' => EmailRecipients::normalize($validated['email_recipients'] ?? []),
             ]);
 
             // Sync items: delete all, recreate
@@ -738,7 +665,7 @@ class InvoiceController extends Controller
         // everything sent becomes a checked entry (new addresses appended), and
         // anything remembered but not sent this time is kept but unchecked — so
         // the next send and the invoice form both pre-select who this went to.
-        $invoice->email_recipients = $this->mergeSentRecipients(
+        $invoice->email_recipients = EmailRecipients::merge(
             $invoice->email_recipients ?? [],
             $validated['recipients'],
         );
@@ -974,79 +901,56 @@ class InvoiceController extends Controller
         return back()->with('success', 'Payment deleted.');
     }
 
+    /*
+     * update() rewrites an existing invoice through the four helpers below.
+     * They delegate to InvoiceCreator so an edited invoice is computed exactly
+     * like a new one.
+     */
+
     /** @param array<int, array{description: string, quantity: int|string, unit_price: int|string, tax_rate?: int|string|null}> $items */
     private function calculateTotals(array $items): InvoiceTotals
     {
-        $collection = collect($items)->map(fn (array $item) => new InvoiceItem([
-            'description' => $item['description'],
-            'quantity' => (int) $item['quantity'],
-            'unit_price' => (int) $item['unit_price'],
-            'tax_rate' => (int) ($item['tax_rate'] ?? 0),
-        ]));
-
-        return $this->calculator->calculateFromItems($collection);
+        return $this->invoiceCreator->totalsFor(InvoiceLineInput::listFromValidated($items));
     }
 
-    /**
-     * Derive the CGST/SGST/UTGST/IGST split from the place of supply and store
-     * it on the invoice. Leaves both fields null for non-GST invoices so the
-     * document falls back to a single aggregate tax line.
-     */
     private function applyGstBreakdown(Invoice $invoice): void
     {
-        $invoice->load(['items', 'organizationLocation', 'customerLocation']);
-
-        $breakdown = $this->gstBreakdownService->build($invoice);
-
-        $invoice->update([
-            'tax_breakdown' => $breakdown ?: null,
-            'tax_type' => $breakdown ? 'GST' : null,
-        ]);
+        $this->invoiceCreator->applyGstBreakdown($invoice);
     }
 
-    /**
-     * The rate is persisted at issue time and never re-read, so a wrong one is
-     * permanent. When none can be resolved we surface it on the form rather
-     * than letting a 500 escape or -- worse -- storing 1.0 and understating the
-     * invoice by the whole rate.
-     */
     private function resolveExchangeRate(?string $from, ?string $to, Carbon $date): float
     {
-        if (! $from || ! $to) {
-            return 1.0;
-        }
-
         try {
-            return $this->exchangeRateService->getRate($from, $to, $date);
+            return $this->invoiceCreator->resolveExchangeRate($from, $to, $date);
         } catch (ExchangeRateUnavailable $e) {
-            // Catching it means Laravel's handler never sees it, so report()
-            // would never fire and the failure would reach nobody but the one
-            // person looking at the form. Report explicitly, then convert.
-            report($e);
-
-            throw ValidationException::withMessages([
-                'issued_at' => __('forms.validation.exchange_rate_unavailable', [
-                    'from' => $e->from,
-                    'to' => $e->to,
-                    'date' => $e->date,
-                ]),
-            ]);
+            throw $this->exchangeRateUnavailableError($e);
         }
     }
 
     /** @param array<int, array{description: string, sac_code?: string|null, quantity: int|string, unit_price: int|string, tax_rate?: int|string|null}> $items */
     private function persistItems(Invoice $invoice, array $items): void
     {
-        foreach ($items as $item) {
-            InvoiceItem::create([
-                'invoice_id' => $invoice->id,
-                'description' => $item['description'],
-                'sac_code' => $item['sac_code'] ?? null,
-                'quantity' => (int) $item['quantity'],
-                'unit_price' => (int) $item['unit_price'],
-                'tax_rate' => (int) ($item['tax_rate'] ?? 0),
-            ]);
-        }
+        $this->invoiceCreator->persistItems($invoice, InvoiceLineInput::listFromValidated($items));
+    }
+
+    /**
+     * A missing rate belongs on the form, beside the issue date the user can
+     * change, rather than a 500 escaping. Catching it means Laravel's handler
+     * never sees it, so report() would never fire and the failure would reach
+     * nobody but the one person looking at the form. Report explicitly, then
+     * convert.
+     */
+    private function exchangeRateUnavailableError(ExchangeRateUnavailable $e): ValidationException
+    {
+        report($e);
+
+        return ValidationException::withMessages([
+            'issued_at' => __('forms.validation.exchange_rate_unavailable', [
+                'from' => $e->from,
+                'to' => $e->to,
+                'date' => $e->date,
+            ]),
+        ]);
     }
 
     /** @return array<string, array<int, mixed>> */
@@ -1080,92 +984,6 @@ class InvoiceController extends Controller
             'removed_attachment_ids' => ['nullable', 'array'],
             'removed_attachment_ids.*' => ['integer'],
         ];
-    }
-
-    /**
-     * Normalize a submitted recipient list into a deduped array of
-     * `['email' => ..., 'checked' => bool]`, unique by lowercased email. A
-     * missing `checked` defaults to true. Legacy plain-string email entries
-     * (older invoices/seed data) are treated as checked.
-     *
-     * @param  array<int, array{email?: string, checked?: mixed}|string>  $recipients
-     * @return array<int, array{email: string, checked: bool}>
-     */
-    private function normalizeEmailRecipients(array $recipients): array
-    {
-        $seen = [];
-        $normalized = [];
-
-        foreach ($recipients as $recipient) {
-            if (is_string($recipient)) {
-                $recipient = ['email' => $recipient, 'checked' => true];
-            }
-
-            if (! is_array($recipient)) {
-                continue;
-            }
-
-            $email = trim($recipient['email'] ?? '');
-
-            if ($email === '') {
-                continue;
-            }
-
-            $key = strtolower($email);
-
-            if (isset($seen[$key])) {
-                continue;
-            }
-
-            $seen[$key] = true;
-            $normalized[] = [
-                'email' => $email,
-                'checked' => filter_var($recipient['checked'] ?? true, FILTER_VALIDATE_BOOLEAN),
-            ];
-        }
-
-        return $normalized;
-    }
-
-    /**
-     * Merge the addresses a document was just sent to into its remembered
-     * recipient list. Sent addresses become checked (new ones appended); any
-     * previously remembered address that was not sent this time is kept but
-     * marked unchecked.
-     *
-     * @param  array<int, array{email?: string, checked?: mixed}|string>  $existing
-     * @param  array<int, string>  $sent
-     * @return array<int, array{email: string, checked: bool}>
-     */
-    private function mergeSentRecipients(array $existing, array $sent): array
-    {
-        $sentKeys = collect($sent)
-            ->map(fn (string $email): string => strtolower(trim($email)))
-            ->filter()
-            ->flip();
-
-        $result = [];
-        $seen = [];
-
-        foreach ($this->normalizeEmailRecipients($existing) as $entry) {
-            $key = strtolower($entry['email']);
-            $seen[$key] = true;
-            $result[] = ['email' => $entry['email'], 'checked' => $sentKeys->has($key)];
-        }
-
-        foreach ($sent as $email) {
-            $email = trim($email);
-            $key = strtolower($email);
-
-            if ($email === '' || isset($seen[$key])) {
-                continue;
-            }
-
-            $seen[$key] = true;
-            $result[] = ['email' => $email, 'checked' => true];
-        }
-
-        return $result;
     }
 
     /**
@@ -1217,30 +1035,5 @@ class InvoiceController extends Controller
         foreach ($request->file('attachments', []) as $file) {
             $invoice->addMedia($file)->toMediaCollection('attachments');
         }
-    }
-
-    private function generateFallbackNumber(string $type, int $organizationId): string
-    {
-        return DB::transaction(function () use ($type, $organizationId) {
-            $prefix = match ($type) {
-                'invoice' => 'INV',
-                default => 'EST',
-            };
-            $year = now()->year;
-            $month = now()->format('m');
-
-            $lastDocument = Invoice::where('type', $type)
-                ->where('organization_id', $organizationId)
-                ->where('invoice_number', 'like', "{$prefix}-{$year}-{$month}-%")
-                ->lockForUpdate()
-                ->orderBy('invoice_number', 'desc')
-                ->first();
-
-            $sequence = $lastDocument
-                ? (int) last(explode('-', $lastDocument->invoice_number)) + 1
-                : 1;
-
-            return sprintf('%s-%s-%s-%04d', $prefix, $year, $month, $sequence);
-        });
     }
 }
