@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ResetFrequency;
+use App\Exceptions\InvoiceNumberUnavailable;
 use App\Models\Invoice;
 use App\Models\InvoiceNumberingSeries;
 use App\Models\Location;
@@ -354,4 +355,54 @@ test('concurrent number generation is thread safe', function () {
 
     // Check final state
     expect($series->fresh()->current_number)->toBe(5);
+});
+
+describe('generateInvoiceNumberForSeries', function () {
+    beforeEach(function () {
+        $this->organization = Organization::factory()->withLocation()->create();
+        $this->series = InvoiceNumberingSeries::factory()->create([
+            'organization_id' => $this->organization->id,
+            'name' => 'Retainers',
+            'prefix' => 'RET',
+            'format_pattern' => '{PREFIX}-{SEQUENCE:4}',
+            'current_number' => 0,
+            'is_active' => true,
+            'reset_frequency' => ResetFrequency::NEVER,
+            'last_reset_at' => now(),
+        ]);
+    });
+
+    it('allocates through the same locked path, skipping numbers already taken', function () {
+        Invoice::factory()->create([
+            'organization_id' => $this->organization->id,
+            'invoice_number' => 'RET-0001',
+            'type' => 'invoice',
+        ]);
+
+        $result = $this->service->generateInvoiceNumberForSeries($this->organization, $this->series);
+
+        expect($result)->toBe([
+            'invoice_number' => 'RET-0002',
+            'series_id' => $this->series->id,
+            'sequence_number' => 2,
+        ])->and($this->series->fresh()->current_number)->toBe(2);
+    });
+
+    it('refuses a series deactivated after the caller loaded it', function () {
+        InvoiceNumberingSeries::withoutGlobalScopes()->whereKey($this->series->id)->update(['is_active' => false]);
+
+        expect(fn () => $this->service->generateInvoiceNumberForSeries($this->organization, $this->series))
+            ->toThrow(InvoiceNumberUnavailable::class, 'inactive');
+
+        expect($this->series->fresh()->current_number)->toBe(0);
+    });
+
+    it('refuses another organization\'s series', function () {
+        $other = Organization::factory()->withLocation()->create();
+
+        expect(fn () => $this->service->generateInvoiceNumberForSeries($other, $this->series))
+            ->toThrow(InvoiceNumberUnavailable::class, 'does not belong');
+
+        expect($this->series->fresh()->current_number)->toBe(0);
+    });
 });

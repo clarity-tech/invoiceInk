@@ -2,6 +2,7 @@
 
 namespace App\Contracts\Services;
 
+use App\Exceptions\InvoiceNumberUnavailable;
 use App\Models\InvoiceNumberingSeries;
 use App\Models\Location;
 use App\Models\Organization;
@@ -13,6 +14,16 @@ interface InvoiceNumberingServiceInterface
      * @return array{invoice_number: string, series_id: int}
      */
     public function generateInvoiceNumber(Organization $organization, ?Location $location = null, ?string $seriesName = null): array;
+
+    /**
+     * Strict: number from this series by id, which must be the organization's
+     * and active. Never falls back to another series or creates one.
+     *
+     * @return array{invoice_number: string, series_id: int, sequence_number: int}
+     *
+     * @throws InvoiceNumberUnavailable
+     */
+    public function generateInvoiceNumberForSeries(Organization $organization, InvoiceNumberingSeries $series): array;
 
     public function getNextNumber(InvoiceNumberingSeries $series): int;
 
