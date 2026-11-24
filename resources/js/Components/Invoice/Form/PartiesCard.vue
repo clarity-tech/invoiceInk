@@ -7,7 +7,7 @@ import { Field } from '@/Components/ui/field';
 import { Label } from '@/Components/ui/label';
 import { Select } from '@/Components/ui/select';
 import type { Customer, Location } from '@/types';
-import { InvoiceFormKey } from './formContext';
+import { DocumentFormKey } from './formContext';
 
 /**
  * Who is issuing the document and who it is for.
@@ -33,7 +33,7 @@ const selectedCustomerId = defineModel<number | null>('selectedCustomerId', {
 });
 const sameAsBilling = defineModel<boolean>('sameAsBilling', { required: true });
 
-const form = inject(InvoiceFormKey)!;
+const form = inject(DocumentFormKey)!;
 
 const selectedBillingLocation = computed(() =>
     props.customerLocations.find((l) => l.id === form.customer_location_id),

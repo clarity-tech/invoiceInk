@@ -23,7 +23,7 @@ import AddressLines from './AddressLines.vue';
 import DetailsCard from './Form/DetailsCard.vue';
 import PartiesCard from './Form/PartiesCard.vue';
 import ExtrasCard from './Form/ExtrasCard.vue';
-import { InvoiceFormKey } from './Form/formContext';
+import { DocumentFormKey, InvoiceFormKey } from './Form/formContext';
 import SourceTaxesCard from './Form/SourceTaxesCard.vue';
 import AttachmentDropzone from './AttachmentDropzone.vue';
 import ItemRow from './ItemRow.vue';
@@ -240,8 +240,10 @@ const form = useForm({
 });
 
 // Shared with the section components below rather than passed as a prop; see
-// Form/formContext.ts for why.
+// Form/formContext.ts for why. The cards another document form can reuse take
+// the narrower DocumentFormKey view of the same object.
 provide(InvoiceFormKey, form);
+provide(DocumentFormKey, form);
 
 // Existing invoice attachments still visible (i.e. not marked for removal).
 const selectedOrgLocation = computed(
