@@ -11,9 +11,9 @@ import {
 } from '@/Components/ui/card';
 import { Field } from '@/Components/ui/field';
 import { Input } from '@/Components/ui/input';
-import { InvoiceFormKey } from './formContext';
+import { DocumentFormKey } from './formContext';
 
-const form = inject(InvoiceFormKey)!;
+const form = inject(DocumentFormKey)!;
 
 /**
  * The fields start collapsed: they apply to a minority of documents but used
