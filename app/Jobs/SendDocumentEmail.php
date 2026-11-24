@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\EmailDeliveryStatus;
 use App\Enums\InvoiceStatus;
 use App\Mail\DocumentMailer;
 use App\Models\EmailDelivery;
@@ -36,6 +37,10 @@ class SendDocumentEmail implements ShouldQueue
 
     public function handle(): void
     {
+        if ($this->alreadySent()) {
+            return;
+        }
+
         $this->delivery->markSending($this->attempts());
 
         Mail::send($this->mailable);
@@ -43,6 +48,26 @@ class SendDocumentEmail implements ShouldQueue
         $this->delivery->markSent();
 
         $this->promoteInvoice();
+    }
+
+    /**
+     * Whether an earlier run of this delivery already got the mail away, in
+     * which case this run must not send it again.
+     *
+     * Nothing upstream deduplicates. A Laravel retry re-pushes the payload as a
+     * brand-new Cloud Task under a fresh ULID name, so Cloud Tasks never sees a
+     * repeat, and Cloud Tasks itself delivers at least once. A second run of the
+     * same delivery is therefore expected. The row is re-read rather than trusted
+     * as the job holds it, and an early return leaves the status, the attempt
+     * count and the invoice exactly as the successful run left them.
+     *
+     * This only covers runs that follow one another. Two copies running at the
+     * same moment, or a worker that dies between Mail::send() and markSent(),
+     * still find the row short of SENT and send again.
+     */
+    private function alreadySent(): bool
+    {
+        return $this->delivery->refresh()->status === EmailDeliveryStatus::SENT;
     }
 
     /**

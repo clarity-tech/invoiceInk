@@ -205,6 +205,39 @@ it('records the outcome on every invoice the email covered', function () {
         ->and(EmailDelivery::pluck('error')->unique()->all())->toBe(['Mailbox unavailable']);
 });
 
+it('does not send the reminder again once an earlier run has sent it', function () {
+    Mail::fake();
+    [$organization, $customer] = customerWithOrganization();
+    $invoices = collect([owedInvoice($organization, $customer), owedInvoice($organization, $customer)]);
+    $deliveries = new Collection($invoices->map(fn (Invoice $invoice) => EmailDelivery::create([
+        'organization_id' => $organization->id,
+        'invoice_id' => $invoice->id,
+        'mailable_type' => CustomerReminderMail::class,
+        'status' => EmailDeliveryStatus::QUEUED,
+        'recipients' => ['accounts@customer.test'],
+    ]))->all());
+    $job = new SendCustomerReminder($deliveries, new CustomerReminderMail(
+        $customer,
+        new Collection($invoices->all()),
+        new ContactCollection([['name' => '', 'email' => 'accounts@customer.test']]),
+        'Payment reminder',
+        '<p>Please pay.</p>',
+    ));
+
+    // The earlier run sent the one email, then died after marking only the
+    // first row. That row alone proves the email went.
+    [$marked, $unmarked] = $deliveries->all();
+    EmailDelivery::query()->update(['status' => EmailDeliveryStatus::SENDING, 'attempts' => 1]);
+    EmailDelivery::whereKey($marked->id)->update(['status' => EmailDeliveryStatus::SENT, 'sent_at' => now()]);
+
+    $job->handle();
+
+    Mail::assertNothingSent();
+    expect($marked->fresh()->status)->toBe(EmailDeliveryStatus::SENT)
+        ->and($unmarked->fresh()->status)->toBe(EmailDeliveryStatus::SENDING)
+        ->and(EmailDelivery::pluck('attempts')->unique()->all())->toBe([1]);
+});
+
 it('escapes what customers and admins type into the email', function () {
     [$organization, $customer] = customerWithOrganization(['name' => 'Acme <script>alert(1)</script>']);
     $invoice = owedInvoice($organization, $customer, ['invoice_number' => 'INV-<b>1</b>']);

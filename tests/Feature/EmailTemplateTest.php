@@ -109,6 +109,38 @@ test('amount_due includes tax and tax_amount is non-zero', function () {
         ->and($variables['{{amount_due}}'])->toContain('118.00');
 });
 
+test('amounts are the stored totals, so amount_due is net of TDS and TCS', function (array $attributes, string $amountDue) {
+    // One line of 100.00 at 18% GST: subtotal 100.00, tax 18.00, gross 118.00.
+    $invoice = createInvoiceWithItems(
+        array_merge(['currency' => 'INR', 'subtotal' => 10000, 'tax' => 1800], $attributes),
+        [['quantity' => 1, 'unit_price' => 10000, 'tax_rate' => 1800]],
+    );
+
+    $variables = TemplateVariableResolver::resolve($invoice);
+
+    expect($variables['{{amount_due}}'])->toBe($amountDue)
+        ->and($variables['{{subtotal}}'])->toBe('₹100.00')
+        ->and($variables['{{tax_amount}}'])->toBe('₹18.00');
+})->with([
+    // TDS is withheld on the 100.00 taxable value: 118.00 - 10.00.
+    '10% TDS' => [['tds_rate' => 1000, 'tds_amount' => 1000, 'total' => 10800], '₹108.00'],
+    // TCS is collected on the 118.00 invoice value: 118.00 + 1.18.
+    '1% TCS' => [['tcs_rate' => 100, 'tcs_amount' => 118, 'total' => 11918], '₹119.18'],
+    // Estimates take TDS/TCS on the same form, and their PDF shows the net total.
+    'an estimate with 10% TDS' => [['type' => 'estimate', 'tds_rate' => 1000, 'tds_amount' => 1000, 'total' => 10800], '₹108.00'],
+]);
+
+test('subtotal and tax_amount come from the stored columns, not the line items', function () {
+    // No items at all: re-adding them would render 0.00 for every amount.
+    $invoice = createInvoiceWithItems(['currency' => 'INR', 'subtotal' => 10000, 'tax' => 1800, 'total' => 11800], []);
+
+    $variables = TemplateVariableResolver::resolve($invoice);
+
+    expect($variables['{{subtotal}}'])->toBe('₹100.00')
+        ->and($variables['{{tax_amount}}'])->toBe('₹18.00')
+        ->and($variables['{{amount_due}}'])->toBe('₹118.00');
+});
+
 test('renders template with variables substituted', function () {
     $template = 'Invoice #{{invoice_number}} for {{customer_name}}';
     $variables = [

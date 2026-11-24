@@ -87,6 +87,42 @@ it('promotes a draft to sent once the job succeeds', function () {
         ->and($invoice->fresh()->status)->toBe(InvoiceStatus::SENT);
 });
 
+it('does not send again when an earlier run already sent the delivery', function () {
+    Mail::fake();
+
+    $organization = createOrganizationWithLocation();
+    $customer = createCustomerWithLocation([], [], $organization);
+    $invoice = createInvoiceWithItems(['status' => 'draft'], null, $organization, $customer);
+
+    $delivery = EmailDelivery::factory()->create([
+        'organization_id' => $organization->id,
+        'invoice_id' => $invoice->id,
+    ]);
+
+    $job = new SendDocumentEmail($delivery, new DocumentMailer($invoice, new ContactCollection([
+        ['name' => '', 'email' => 'billing@customer.test'],
+    ])));
+
+    // Another run got the mail away while this job still held the queued copy,
+    // as a Cloud Tasks redelivery or a second dispatch would.
+    EmailDelivery::whereKey($delivery->id)->update([
+        'status' => EmailDeliveryStatus::SENT,
+        'attempts' => 1,
+        'sent_at' => '2026-11-20 09:30:00',
+    ]);
+
+    $job->handle();
+
+    Mail::assertNothingSent();
+
+    $delivery->refresh();
+
+    expect($delivery->status)->toBe(EmailDeliveryStatus::SENT)
+        ->and($delivery->attempts)->toBe(1)
+        ->and($delivery->sent_at->toDateTimeString())->toBe('2026-11-20 09:30:00')
+        ->and($invoice->fresh()->status)->toBe(InvoiceStatus::DRAFT);
+});
+
 it('marks the delivery failed and does not promote the invoice', function () {
     $organization = createOrganizationWithLocation();
     $customer = createCustomerWithLocation([], [], $organization);
