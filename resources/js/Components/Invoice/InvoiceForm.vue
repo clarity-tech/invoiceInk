@@ -1,38 +1,25 @@
 <script setup lang="ts">
 import { useForm, router, usePage } from '@inertiajs/vue3';
 import { ref, computed, provide, watch, onMounted } from 'vue';
-import { ChevronDown, Loader2, X } from 'lucide-vue-next';
+import { Loader2 } from 'lucide-vue-next';
 import { emailModalDialog } from '@/Components/lazyDialogs';
 import { Button } from '@/Components/ui/button';
-import { Checkbox } from '@/Components/ui/checkbox';
-import { Field } from '@/Components/ui/field';
-import { Input } from '@/Components/ui/input';
-import { Label } from '@/Components/ui/label';
-import { Select } from '@/Components/ui/select';
-import { Separator } from '@/Components/ui/separator';
-import { Textarea } from '@/Components/ui/textarea';
-import AddressLines from './AddressLines.vue';
 import DetailsCard from './Form/DetailsCard.vue';
 import ItemsCard from './Form/ItemsCard.vue';
 import PartiesCard from './Form/PartiesCard.vue';
 import ExtrasCard from './Form/ExtrasCard.vue';
 import { DocumentFormKey, InvoiceFormKey } from './Form/formContext';
 import SourceTaxesCard from './Form/SourceTaxesCard.vue';
-import AttachmentDropzone from './AttachmentDropzone.vue';
-import RecipientEditor from './RecipientEditor.vue';
 import { mergeRecipients } from '@/composables/useRecipients';
 import { useDocumentParties } from '@/composables/useDocumentParties';
 import { useLazyDialog } from '@/composables/useLazyDialog';
 import type { LineItem } from '@/composables/useInvoiceCalculator';
 import {
-    PAYMENT_TERM_OPTIONS,
     CUSTOM_TERM,
     dueFromTerm,
     termFromDates,
     type PaymentTerm,
 } from '@/composables/usePaymentTerms';
-import { formatBytes } from '@/composables/useFileAttachments';
-import { taxLabelFor } from '@/composables/useTaxLabel';
 import type {
     Invoice,
     Customer,
