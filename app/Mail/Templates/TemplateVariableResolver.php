@@ -16,16 +16,18 @@ use App\Models\Invoice;
 class TemplateVariableResolver
 {
     /**
+     * The amounts are the invoice's stored totals, the same figures as its PDF
+     * and `{{balance_due}}`. They used to be re-added from the line items, which
+     * know nothing of TDS or TCS, so the email and the PDF of such an invoice
+     * disagreed on what was owed.
+     *
      * @return array<string, string>
      */
     public static function resolve(Invoice $invoice): array
     {
-        $invoice->loadMissing(['customer', 'organization', 'items']);
+        $invoice->loadMissing(['customer', 'organization']);
 
         $currencyCode = $invoice->currency?->value ?? $invoice->currency ?? 'INR';
-        $subtotal = $invoice->items->sum(fn ($item) => $item->getLineTotal());
-        $total = $invoice->items->sum(fn ($item) => $item->getLineTotalWithTax());
-        $tax = $total - $subtotal;
 
         $orgEmail = $invoice->organization?->emails?->first()['email'] ?? '';
 
@@ -37,10 +39,10 @@ class TemplateVariableResolver
         return [
             '{{customer_name}}' => e($invoice->customer?->name ?? 'Customer'),
             '{{invoice_number}}' => e($invoice->invoice_number ?? ''),
-            '{{amount_due}}' => e((new Money($total, new Currency($currencyCode)))->format()),
+            '{{amount_due}}' => e((new Money((int) $invoice->total, new Currency($currencyCode)))->format()),
             '{{balance_due}}' => e((new Money($invoice->remaining_balance, new Currency($currencyCode)))->format()),
-            '{{subtotal}}' => e((new Money($subtotal, new Currency($currencyCode)))->format()),
-            '{{tax_amount}}' => e((new Money($tax, new Currency($currencyCode)))->format()),
+            '{{subtotal}}' => e((new Money((int) $invoice->subtotal, new Currency($currencyCode)))->format()),
+            '{{tax_amount}}' => e((new Money((int) $invoice->tax, new Currency($currencyCode)))->format()),
             '{{currency}}' => e($currencyCode),
             '{{due_date}}' => e($invoice->due_at?->format('M d, Y') ?? ''),
             '{{issue_date}}' => e($invoice->issued_at?->format('M d, Y') ?? ''),
